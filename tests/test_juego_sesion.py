@@ -10,9 +10,11 @@ from dataclasses import replace
 from fastapi.testclient import TestClient
 
 from navira.adapters.mapas_memoria import CatalogoMapasMemoria
+from navira.adapters.ordenes_memoria import RepositorioOrdenesMemoria
 from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
 from navira.application.juego import (
     AparicionNoDisponible,
+    ConsultarSesionJuego,
     EstadoSesion,
     JuegoNoDisponible,
     PropietarioOcupado,
@@ -20,6 +22,8 @@ from navira.application.juego import (
     SesionExpirada,
     UnirseAJuego,
 )
+from navira.application.ordenes import RegistrarOrdenHumana
+from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle
 from navira.domain.modelo import (
     ControlSobreviviente,
@@ -156,6 +160,56 @@ class JuegoSesionTests(unittest.TestCase):
         sin_cookie = TestClient(crear_app(unirse_juego=servicio), base_url="https://testserver")
         otra_cookie = sin_cookie.post("/juego/unirse", headers={"Origin": "https://testserver"})
         self.assertEqual(otra_cookie.status_code, 409)
+
+    def test_http_recuperacion_expirada_borra_cookie_y_responde_410(self) -> None:
+        ahora = [100.0]
+        sesiones = RepositorioSesionesMemoria(30.0, lambda: ahora[0])
+        servicio = UnirseAJuego(self.snapshots, CatalogoMapasMemoria((self.grafo,)), sesiones)
+        consulta = ConsultarSesionJuego(self.snapshots, sesiones, RepositorioOrdenesMemoria())
+        cliente = TestClient(
+            crear_app(unirse_juego=servicio, consultar_sesion_juego=consulta),
+            base_url="https://testserver",
+        )
+        unido = cliente.post("/juego/unirse", headers={"Origin": "https://testserver"})
+        self.assertEqual(unido.status_code, 200)
+        ahora[0] += 30.0
+
+        respuesta = cliente.get("/juego/mi-personaje")
+        self.assertEqual(respuesta.status_code, 410)
+        self.assertIn("max-age=0", respuesta.headers["set-cookie"].lower())
+
+    def test_http_accion_expirada_borra_cookie_y_responde_410(self) -> None:
+        ahora = [100.0]
+        sesiones = RepositorioSesionesMemoria(30.0, lambda: ahora[0])
+        servicio = UnirseAJuego(self.snapshots, CatalogoMapasMemoria((self.grafo,)), sesiones)
+        registrar = RegistrarOrdenHumana(
+            self.snapshots,
+            CatalogoMapasMemoria((self.grafo,)),
+            sesiones,
+            RepositorioOrdenesMemoria(),
+            PuertaDecisiones(),
+        )
+        cliente = TestClient(
+            crear_app(unirse_juego=servicio, registrar_orden_juego=registrar),
+            base_url="https://testserver",
+        )
+        unido = cliente.post("/juego/unirse", headers={"Origin": "https://testserver"})
+        self.assertEqual(unido.status_code, 200)
+        ahora[0] += 30.0
+
+        respuesta = cliente.post(
+            "/juego/accion",
+            headers={"Origin": "https://testserver"},
+            json={
+                "runId": self.partida.run_id,
+                "turno": 0,
+                "personajeId": unido.json()["jugadorId"],
+                "siguienteNodo": "N-4",
+                "accionId": "expired-action",
+            },
+        )
+        self.assertEqual(respuesta.status_code, 410)
+        self.assertIn("max-age=0", respuesta.headers["set-cookie"].lower())
 
     def test_dos_solicitudes_concurrentes_reservan_un_solo_propietario(self) -> None:
         def intentar_unirse() -> str:

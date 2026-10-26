@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-049 — Cobertura HTTP para expiración en las tres rutas
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: seguimiento autorizado de CAM-046; verificar el contrato de cookie expirada también al recuperar y enviar órdenes.
+- Especificación/tarea: SPEC-004, CA-004-07/T-25.
+- Motivo: CAM-046 probó la expiración a nivel de servicio y la ruta de unión; recuperación/acción usan sus propios handlers HTTP y deben conservar el mismo 410 y eliminación de cookie.
+- Archivos: `tests/test_juego_sesion.py`, sección de evidencia en `doc/pruebas.md`, `doc/estado-actual.md` y este historial.
+- Resultado: regresiones ASGI con reloj controlado verifican HTTP 410 y `Set-Cookie` de borrado para `GET /juego/mi-personaje` y `POST /juego/accion`; el test de unión también verifica que otra cookie recibe 409 en la partida ocupada.
+- Verificación: suite completa (`unittest discover -s tests -p 'test_*.py'`: 154 pruebas OK); `python3 scripts/check_docs.py` (69 Markdown en `doc/`, 71 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones del checker, `compileall` y `git diff --check` correctos. La suite enfocada de `test_juego_sesion.py` pasó 12 pruebas.
+- Límites: adaptador local de un proceso; no valida persistencia/revocación durable ni una cookie en distintos procesos.
+- Siguiente paso: terminar el recorrido end-to-end de accesibilidad con una sesión humana en una partida que siga activa.
+- Commit: commit individual local en `master` después de las verificaciones.
+
 ## CAM-048 — Sincronizar resumen raíz con el estado del juego
 
 - Fecha: 2026-10-26, Ecuador continental.

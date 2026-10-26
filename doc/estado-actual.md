@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio registrado: **CAM-048**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio registrado: **CAM-049**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -77,7 +77,7 @@ El checkout está en `master`. El puntero de seguimiento local `origin/master` o
 
 CAM-046 cierra el vencimiento local de P-12, no la persistencia/revocación productiva. CAM-047 verificó solo navegación/selección con teclado; la siguiente tarea local es ejecutar el flujo de órdenes y resultado en una partida de juego activa y probar con tecnologías de asistencia. Después continuar recuperación durable y pruebas integrales del juego. CAM-035 deja T-22 parcial y Dijkstra continúa activa. CAM-044 midió loopback, pero las rondas terminaron antes de alcanzar 150 turnos. AWS, TLS productivo, Budget, rondas oficiales y validación sísmica requieren evidencia/configuración adicional; no afirmar CI remoto, despliegue o seguridad sísmica.
 
-Verificación de CAM-046: suite backend completa (152 pruebas OK), `python3 scripts/check_docs.py` (69 Markdown/71 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones del checker, `compileall`, `git diff --check` y `frontend/npm run build` correctos. `test_juego_sesion.py` enfocado pasó 10 pruebas, incluido HTTP 410 con eliminación de cookie. El sistema de sesión continúa en memoria y los validadores documentales no verifican comportamiento de producción.
+Verificación de CAM-046: suite backend completa (152 pruebas OK), `python3 scripts/check_docs.py` (69 Markdown/71 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones del checker, `compileall`, `git diff --check` y `frontend/npm run build` correctos. `test_juego_sesion.py` enfocado pasó 10 pruebas, incluido HTTP 410 con eliminación de cookie. CAM-049 agrega cobertura HTTP 410 con borrado de cookie en recuperación/acción; resultados finales están en su entrada de cambios. El sistema de sesión continúa en memoria y los validadores documentales no verifican comportamiento de producción.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
