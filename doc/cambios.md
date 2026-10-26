@@ -203,6 +203,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: CAS y escenario solo en memoria; no hay reloj continuo, llamada HTTP/CLI, publicación, mapa real ni evaluación oficial. Estado final del juego y métricas de ronda permanecen pendientes.
 - Siguiente paso: proporcionar un ejecutor local documentado sobre el contexto demo y crear escenarios/semillas reproducibles con zombies.
 
+## CAM-017 — Ejecutor local de rondas demo
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada del usuario para construir Navira por fases; siguiente acción registrada en CAM-016.
+- Especificación/tareas: SPEC-001, P1-04 parcial; P1-05 continúa pendiente. No se completa la aceptación de la SPEC.
+- Rama: `feat/navira-auto-demo-cli`.
+- Motivo: hacer ejecutable y reproducible desde terminal el caso de uso de ronda automática, sin introducir reloj continuo ni persistencia nueva.
+- Archivos: `src/navira/demo.py`, `src/navira/simulador_demo.py`, `tests/test_simulador_demo.py`, README y documentos propietarios del flujo, módulo, pruebas, plan, SPEC-001 y estado.
+- Resultado: `python -m navira.simulador_demo --turnos N --semilla S [--mapa RUTA]` crea contexto efímero, completa rondas por CAS, emite JSON por línea y se detiene al no quedar sobrevivientes activos o alcanzar N turnos. El fixture predeterminado evacúa al único personaje en cuatro rondas.
+- Verificación: cuatro regresiones de `test_simulador_demo.py`; suite completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (80 pruebas OK); `python3 scripts/check_docs.py` (53 Markdown en `doc/`, 55 archivos comprobados), `python3 scripts/check_sdd.py`, ocho regresiones de `test_check_sdd.py`, `compileall` y `git diff --check` correctos. Smoke `PYTHONPATH=src python -m navira.simulador_demo --turnos 10 --semilla 41` produjo cuatro líneas JSON, movimientos D-001→D-002→D-003→D-004→D-005 y evacuación en el turno 3. Validación local, no mide reloj ni persistencia.
+- Límites: fixture sintético sin zombies; la semilla se incluye en el reporte y alimenta el generador inicial, pero no cambia el recorrido actual. No duerme entre turnos, mide tiempo, persiste al reiniciar, publica eventos ni evalúa el escenario oficial.
+- Siguiente paso: diseñar escenarios reproducibles con zombies para P1-05, después medir las tres rondas según SPEC-005.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

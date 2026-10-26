@@ -7,11 +7,13 @@ Manta ni como escenario oficial de evaluación.
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from pathlib import Path
 
 from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
-from navira.application.decidir_paso import DecidirPaso
+from navira.application.decidir_paso import DecidirPaso, ProveedorMapas
+from navira.application.snapshots import RepositorioSnapshots
 from navira.domain.mapa import Grafo, cargar_mapa
 from navira.domain.modelo import (
     EstadoPartida,
@@ -29,17 +31,23 @@ from navira.simulation.coordinador import (
 MAPA_DEMO_POR_DEFECTO = Path(__file__).resolve().parents[2] / "data/maps/demo-sintetico.json"
 
 
-def crear_servicio_demo(
+@dataclass(frozen=True, slots=True)
+class ContextoDemo:
+    """Dependencias efímeras compartidas por API demo y ejecutor local."""
+
+    grafo: Grafo
+    snapshots: RepositorioSnapshots
+    mapas: ProveedorMapas
+    servicio_decision: DecidirPaso
+    run_id: str
+
+
+def crear_contexto_demo(
     ruta_mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
     *,
     semilla: int = 31,
-) -> DecidirPaso:
-    """Crea una partida demo en decisiones sobre un snapshot versionado.
-
-    Siembra un sobreviviente en D-001, confirma versión cero en preparación y
-    aplica el coordinador una vez para abrir el turno de decisiones. Los
-    repositorios viven solo mientras vive el proceso.
-    """
+) -> ContextoDemo:
+    """Crea la partida descartable y expone sus dependencias locales."""
 
     grafo = Grafo(cargar_mapa(ruta_mapa))
     partida = Partida(
@@ -70,4 +78,20 @@ def crear_servicio_demo(
         raise RuntimeError("No se pudo confirmar la fase de decisiones demo.")
 
     mapas = CatalogoMapasMemoria((grafo,))
-    return DecidirPaso(snapshots, mapas)
+    return ContextoDemo(
+        grafo=grafo,
+        snapshots=snapshots,
+        mapas=mapas,
+        servicio_decision=DecidirPaso(snapshots, mapas),
+        run_id=partida.run_id,
+    )
+
+
+def crear_servicio_demo(
+    ruta_mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
+    *,
+    semilla: int = 31,
+) -> DecidirPaso:
+    """Compatibilidad para API: crea el contexto y devuelve su planificador."""
+
+    return crear_contexto_demo(ruta_mapa, semilla=semilla).servicio_decision

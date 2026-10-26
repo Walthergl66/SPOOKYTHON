@@ -37,6 +37,14 @@ uvicorn navira.main:app --app-dir src --reload
 
 La demo inicia al sobreviviente `S-DEMO-001` en `D-001`; el refugio sintético está en `D-005`. La primera llamada de turno `0` propone `D-002`. Para usar otro mapa de desarrollo, configura `NAVIRA_DEMO_MAP`; `NAVIRA_DEMO_SEED` fija la semilla del generador. `NAVIRA_DEMO=1` solo configura una partida en memoria para desarrollo: reiniciar el proceso reinicia el mundo.
 
+Para correr varias rondas automáticas localmente y guardar la salida JSONL:
+
+```bash
+PYTHONPATH=src python -m navira.simulador_demo --turnos 10 --semilla 31 > /tmp/navira-demo.jsonl
+```
+
+Opcionalmente, `--mapa ruta/al/mapa.json` usa otro mapa compatible. El ejecutor termina al evacuar o perder a todos los sobrevivientes activos, o al llegar al límite de turnos. Cada línea reporta el resultado de un turno. Este comando no espera dos segundos entre turnos y usa snapshots volátiles; no es una evaluación del reto ni una ejecución continua.
+
 La salud local se consulta en `GET /salud`. El contrato inicial del motor:
 
 ```bash
