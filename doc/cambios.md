@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-028 — Evaluación HTTP multi-turno en Manta
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario; siguiente acción de CAM-025/estado actual para medir `/paso` mientras el mundo avanza.
+- Especificación/tareas: SPEC-002, P2-03 y T-11 parciales; CA-002-04 parcial. No se verifica T-11 ni toda la SPEC.
+- Base Git: el usuario confirmó publicación y `git ls-remote` verificó que `origin/master` coincidía con `fa7ebd8` antes de esta tarea. El trabajo se realiza directamente en `master`, como pidió el usuario.
+- Resultado: nuevo CLI local crea contexto sobre el fixture Manta, sirve FastAPI con Uvicorn en loopback, consulta por HTTP a cada sobreviviente activo de cada turno y resuelve usando los destinos recibidos. Cada turno comparte snapshot; las fallas se contabilizan y se convierten en espera para completar la transición. La API no adquiere rutas nuevas. Se usa una clave aleatoria temporal que no se imprime.
+- Archivos: `src/navira/evaluacion_local.py`, `src/navira/carga_http.py`, `tests/test_evaluacion_local.py`; documentos propietarios de pruebas, módulos, plan, SPEC-002, índice, estado y reporte en [resultados](resultados/evaluacion-multi-turno-cam028.md).
+- Evidencia: una matriz de cinco turnos por cohorte con semilla `20261026`, perfil sintético `mixto` y hasta 200 workers produjo 91/374/911 solicitudes para 20/80/200 personas, todas HTTP 200 y 0 fallidas. p95 local: 20,712/52,781/109,847 ms. Duración total por cohorte: 0,320/0,809/1,841 s.
+- Límites: Uvicorn y cliente comparten host; no se espera el período de 2 s ni se ejecutan cinco minutos/rondas oficiales. No acredita p95 desplegado, T-11, supervivencia general, distribución oficial, exactitud cartográfica ni seguridad ante tsunami/sismo. T-11 y P2-03 siguen en curso.
+- Verificación: `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (98 pruebas OK); incluye integración HTTP real, avance de versión y replay de resultados del mundo con la misma semilla. `python3 scripts/check_docs.py` (59 Markdown en doc/, 61 archivos), `python3 scripts/check_sdd.py` (seis SPEC), `compileall` y `git diff --check` correctos. La matriz CLI produjo el reporte resumido versionado; JSON íntegro temporal en `/tmp/navira-evaluacion-local-cam028.json`. El commit local se creó, pero `git push origin master` falló porque Git no pudo leer credenciales HTTPS; el remoto sigue en `fa7ebd8`.
+- Siguiente paso: publicar el commit local CAM-028 cuando se restablezca autenticación de escritura; después medir con reloj real y duración requerida al confirmar parámetros P-09 y repetir desde el entorno remoto antes de afirmar objetivos de rendimiento.
+
 ## CAM-027 — Continuar en `master` y preservar commits por cambio
 
 - Fecha: 2026-10-26, Ecuador continental.

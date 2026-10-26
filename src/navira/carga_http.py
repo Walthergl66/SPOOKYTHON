@@ -32,6 +32,7 @@ class ResultadoSolicitud:
     latencia_ms: float
     estado_http: int | None
     correcta: bool
+    destino_recibido: str | None = None
 
 
 def _preparar_solicitudes(
@@ -77,7 +78,11 @@ def _preparar_solicitudes(
     return tuple(solicitudes)
 
 
-def _enviar(url: str, api_key: str, solicitud: SolicitudCarga, timeout: float) -> ResultadoSolicitud:
+def enviar_solicitud_http(
+    url: str, api_key: str, solicitud: SolicitudCarga, timeout: float
+) -> ResultadoSolicitud:
+    """Envía un paso autenticado y devuelve latencia, estado y destino recibido."""
+
     request = Request(
         url,
         data=solicitud.cuerpo,
@@ -87,10 +92,13 @@ def _enviar(url: str, api_key: str, solicitud: SolicitudCarga, timeout: float) -
     inicio = time.perf_counter()
     estado: int | None = None
     correcta = False
+    destino_recibido: str | None = None
     try:
         with urlopen(request, timeout=timeout) as response:
             estado = response.status
             cuerpo = json.loads(response.read())
+        if isinstance(cuerpo, dict):
+            destino_recibido = cuerpo.get("siguienteNodo")
         correcta = (
             estado == 200
             and isinstance(cuerpo, dict)
@@ -102,7 +110,12 @@ def _enviar(url: str, api_key: str, solicitud: SolicitudCarga, timeout: float) -
         error.read()
     except (URLError, TimeoutError, ValueError, OSError):
         pass
-    return ResultadoSolicitud((time.perf_counter() - inicio) * 1000, estado, correcta)
+    return ResultadoSolicitud(
+        (time.perf_counter() - inicio) * 1000,
+        estado,
+        correcta,
+        destino_recibido,
+    )
 
 
 def ejecutar_carga(
@@ -117,7 +130,7 @@ def ejecutar_carga(
     periodo_segundos: float = 2.0,
     timeout_segundos: float = 1.0,
     mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
-    enviar: Callable[[str, str, SolicitudCarga, float], ResultadoSolicitud] = _enviar,
+    enviar: Callable[[str, str, SolicitudCarga, float], ResultadoSolicitud] = enviar_solicitud_http,
 ) -> dict[str, object]:
     """Ejecuta ráfagas periódicas de decisiones repetidas sobre un snapshot.
 

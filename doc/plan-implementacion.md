@@ -52,7 +52,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P1-05 | Escenarios estocásticos — simulación | P1-01 y P1-04 | Demo genera semilla nueva si se omite, muestrea posiciones iniciales/fase de caminantes; replay multi-turno y posible divergencia de rutas entre semillas se prueban. Cohortes sintéticas 20/80/200 recorren tres turnos en el fixture Manta (CAM-025). Parcial: composición oficial P-09, reglas/eventos estocásticos, movimiento de horda P-07, persistencia/replay integral y evaluación HTTP/carga pendientes. | En curso |
 | P2-01 | Dijkstra y selección de refugio — rutas | P1-01 | Núcleo genérico considera tipo/distancia, cierres y peligros visibles; falta validar mapa real. | En curso |
 | P2-02 | `/paso` y API key — backend | P2-01 y P1-04 | Demo explícita recomienda ruta por HTTP sobre un snapshot activo; mundo oficial, idempotencia durable y operación completa pendientes. | En curso |
-| P2-03 | Integración y referencia — integración | P2-02 y P1-05 | Una ronda completa; luego tres rondas y reporte base. | Pendiente |
+| P2-03 | Integración y referencia — integración | P2-02 y P1-05 | Una ronda completa; luego tres rondas y reporte base. CAM-028 añade evaluación HTTP loopback multi-turno para cohortes 20/80/200; falta reloj de 2 s, duración oficial y entorno remoto. | En curso |
 | P3-01 | Búsqueda temporal acotada — rutas | P2-03 | Espera/avance, horizonte configurable y presupuesto medido. | Pendiente |
 | P3-02 | Predicción de corredores — rutas | P3-01 | No conoce dormidos; compara varias semillas con referencia. | Pendiente |
 | P3-03 | Selección de política — integración | P3-02 | Mejora demostrable sin romper latencia; conservar base si no mejora. | Pendiente |
