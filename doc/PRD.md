@@ -14,7 +14,7 @@ Disponer de un grafo de Manta de unas 300 intersecciones, calles con distancia/t
 
 ### PRD-02 — Simulación dinámica y reglas comunes
 
-Ejecutar zombies, turnos, bloqueos, mordidas y llegadas según las reglas del reto. Humano y automáticos usan un mismo mundo y resolutor. Prioridad: obligatoria. No convertir ambigüedades pendientes en reglas oficiales; ver [pendientes](pendientes.md).
+Ejecutar zombies, turnos, bloqueos, mordidas y llegadas según las reglas del reto. El escenario debe variar de forma estocástica entre ejecuciones; pequeñas diferencias de semilla, estado o eventos pueden cambiar rutas y resultados posteriores. Humano y automáticos usan un mismo mundo y resolutor. Prioridad: obligatoria. No convertir ambigüedades pendientes en reglas oficiales; ver [pendientes](pendientes.md).
 
 ### PRD-03 — Evacuación automática
 
@@ -34,7 +34,7 @@ Separar espectador, jugador, operador y servicio. El modo queda fijo por partida
 
 ### PRD-07 — Evaluación reproducible
 
-Ejecutar las tres rondas de cinco minutos con 20, 80 y 200 sobrevivientes y eventos requeridos. Conservar semillas, configuraciones, decisiones, versiones y resultados suficientes para auditar. Prioridad: obligatoria. Vivos, evacuados y pendientes se reportan separados.
+Ejecutar las tres rondas de cinco minutos con 20, 80 y 200 sobrevivientes y eventos requeridos. La ejecución ordinaria obtiene un estado aleatorio nuevo; al fijar semilla, versión, configuración, eventos y órdenes se puede reproducir esa ejecución. Conservar esos datos y resultados suficientes para auditar. Prioridad: obligatoria. Vivos, evacuados y pendientes se reportan separados.
 
 ### PRD-08 — Entrega utilizable y defendible
 

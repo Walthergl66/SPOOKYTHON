@@ -11,5 +11,6 @@ Un ADR documenta una elección duradera y su motivo. «Aceptada para diseño» n
 | [ADR-005](0005-prd-trd-oddd-sdd.md) | PRD/TRD, modelo OO + DDD y SDD trazable | Adoptada para el método | SPEC-006 y su evidencia; app pendiente. |
 | [ADR-006](0006-nombre-navira.md) | Nombre oficial Navira | Decisión explícita del usuario | Documentación vigente actualizada; paquete `navira` previsto. |
 | [ADR-007](0007-mapa-manta-y-evidencia-de-amenazas.md) | Fuentes de mapa y límites de seguridad por amenaza | Aceptada para dataset de simulación | Exportación OSM con metadatos del GAD Manta; validación de sismo pendiente. |
+| [ADR-008](0008-simulacion-estocastica-reproducible.md) | Mundo estocástico con reproducción por semilla y estado privado | Aceptada como requisito y diseño | Parcial: RNG walker/snapshot existe; inicialización completa y rondas no están implementadas. |
 
 Usar [plantilla](../plantillas/decision.md). Numeración correlativa, fecha, contexto, decisión, alternativas, consecuencias, pendientes y enlaces. No renumerar IDs ya citados. Para cambiar una decisión relevante, añadir ADR nuevo y marcar el anterior sustituido con enlace recíproco. Correcciones menores pueden aclararse sin fingir que la decisión original ya decía otra cosa.

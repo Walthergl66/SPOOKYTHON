@@ -18,6 +18,7 @@ Estado al 2026-10-26. Ninguna aclaración externa confirmada todavía. Las respu
 | P-12 | Sesión y expiración de propiedad humana | Una sesión/partida; definir duración/recuperación sin permitir robo o renacimiento. | No; cerrar antes de juego público. |
 | P-13 | Cobertura geográfica del mapa | Existe exportador OSM y fixture de 300 nodos, con cuatro refugios oficiales de tsunami y rutas dirigidas hasta ellos. Revisar que el recorte represente los barrios del reto y validar cobertura peatonal; no equivale a cartografía oficial exhaustiva. | No para el modelo genérico; sí para cerrar el mapa de evaluación. |
 | P-14 | Seguridad sísmica de refugios en Manta | Las capas consultadas del GAD identifican zonas seguras de evacuación por tsunami, no certifican los sitios ante terremotos. Conseguir microzonificación local y validación de suelo/estructura por sitio antes de etiquetar destinos como seguros ante sismos. | No para el fixture; sí para cualquier afirmación o uso de seguridad sísmica. |
+| P-15 | Distribuciones estocásticas de evaluación | El usuario confirma que el mundo debe variar y que pequeñas diferencias pueden cambiar su evolución. Definir/configurar rangos y distribuciones de posiciones, tipos, decisiones aleatorias y eventos sin inventar cantidades oficiales; P-09 y P-07 condicionan esos parámetros. | No para desarrollar el generador sintético; sí para congelar escenarios oficiales. |
 
 ## Riesgos de ejecución
 

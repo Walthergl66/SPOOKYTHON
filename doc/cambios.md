@@ -268,6 +268,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: fixture de simulación, no para navegación/evacuación real; cobertura completa de barrios y acceso peatonal no verificados; los límites de velocidad faltantes son valores de juego; zonas de tsunami no validan seguridad de terremoto. P-14 requiere microzonificación y validación de suelo/estructura. La SPEC y P1-01 permanecen parciales.
 - Siguiente paso: cerrar un commit individual en esta rama. Luego revisar visualmente cobertura y, por separado, buscar datos oficiales de microzonificación sísmica para Manta.
 
+## CAM-022 — Requisito de mundo estocástico y reproducción
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: aclaración del usuario: el simulador debe ser aleatorio y pequeños cambios pueden alterar rutas, hordas y la evolución del mundo.
+- Especificación/tareas: PRD-02/07, TRD-11, SPEC-001 CA-001-07/09, P1-05. T-24 se define para implementación futura; no está ejecutada.
+- Rama: `feat/navira-stochastic-simulation`.
+- Motivo: hacer explícita la variación estocástica y su efecto en cascada, conservando la capacidad de reproducir una partida concreta para depurar y comparar.
+- Archivos: ADR-008; contexto, PRD, TRD, ODDD, reglas, algoritmos, datos, pendientes P-15, plan, SPEC-001, trazabilidad, pruebas, estado e índices.
+- Resultado: el objetivo es una semilla nueva por defecto, muestrear estados/decisiones permitidos por reglas y guardar contexto/RNG privado para replay dentro de la misma versión. El planificador permanece estable para una solicitud sobre el mismo snapshot. Diferencias de entrada pueden divergir, sin prometer que todo cambio mínimo necesariamente cambie el resultado final.
+- Verificación: revisión de documentos propietarios y código actual (`demo.py`, `resolver.py`, `coordinador.py`); `python3 scripts/check_docs.py` (57 Markdown/59 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas), ocho pruebas de `test_check_sdd.py` y `git diff --check` correctos. No se ejecutaron pruebas de producto porque esta unidad solo especifica/documenta el requisito; T-24 queda pendiente de implementar.
+- Límites: el código actual solo aleatoriza parte de la ubicación de sobrevivientes y movimiento de caminantes; perfiles/ubicaciones zombie son prefijados, corredores siguen persecución y desempate por ID, horda no se mueve y la semilla por defecto es fija. Densidad oficial P-09 y movimiento de horda P-07 siguen abiertos. Este CAM registra y traza el requisito, no implementa el generador estocástico.
+- Siguiente paso: implementar P1-05 en una unidad de código: semilla de entropy por defecto con semilla explícita para replay, variación inicial parametrizada y pruebas de misma entrada/reproducción y divergencia controlada T-24. Mantener fuera de ese cambio cualquier distribución oficial sin fuente confirmada.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

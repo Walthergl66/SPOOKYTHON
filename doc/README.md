@@ -20,6 +20,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [estado-actual.md](estado-actual.md) | Evidencia de lo existente y siguiente acción | Se complete o interrumpa trabajo. |
 | [arquitectura.md](arquitectura.md) | Componentes, límites y dependencias | Cambien estructura o comunicaciones. |
 | [reglas-juego.md](reglas-juego.md) | Reglas de simulación y supuestos | Se confirme o cambie una regla. |
+| [decisiones/0008-simulacion-estocastica-reproducible.md](decisiones/0008-simulacion-estocastica-reproducible.md) | Aleatoriedad del mundo, reproducción y privacidad del generador | Cambien condiciones de estocasticidad o replay. |
 | [modos.md](modos.md) | Diferencias entre simulador y juego | Cambie control o experiencia. |
 | [flujos/roles.md](flujos/roles.md) | Actores, permisos y responsabilidades | Aparezca un actor o permiso. |
 | [flujos/simulador.md](flujos/simulador.md) | Ciclo del turno automático | Cambie secuencia o reloj. |

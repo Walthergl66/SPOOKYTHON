@@ -25,6 +25,8 @@ Si se optimizan turnos, la heurística debe ser una cota inferior en saltos; si 
 
 El prototipo aplica valores provisionales registrados en [pendientes](pendientes.md): caminante elige al azar una calle saliente en su fase de dos turnos; corredor persigue por ruta dirigida más corta hasta tres saltos, empate por ID de sobreviviente y objetivo fijo durante sus dos tramos; horda permanece fija; dormido usa radio topológico de dos saltos y no se mueve por defecto en el turno de activación. Dijkstra y el caso de uso están integrados; la app predeterminada todavía no inicia una partida ni carga mapa.
 
+El requisito del usuario amplía el diseño del simulador hacia escenarios estocásticos: muestrear posiciones/estados iniciales y opciones que las reglas permitan, de modo que cambios de semilla, eventos o estado puedan propagarse en rutas y resultados. El generador actual solo aleatoriza el movimiento del caminante y parte de las posiciones de sobrevivientes con semilla; los perfiles y ubicaciones zombie son fijos, el corredor sigue persecución determinista, la horda no se mueve y la CLI usa semilla fija predeterminada. Por tanto, el requisito todavía no está implementado completamente. La generación no debe inventar cantidades/distribuciones oficiales (P-09) ni una regla de movimiento de horda (P-07). Mantener la planificación de ruta estable para el mismo snapshot; las variaciones del mundo cambian el snapshot y fuerzan un nuevo cálculo.
+
 No bloquear todos los nodos alcanzables por cualquier corredor en cualquier futuro: puede inmovilizar todo el mapa. Usar riesgo acotado y comparar políticas. No usar la semilla del simulador para adivinar movimientos.
 
 ## Presupuesto de cálculo

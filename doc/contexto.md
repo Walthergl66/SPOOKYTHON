@@ -17,6 +17,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 5. Incorporar PRD, TRD, ODDD y SDD. El usuario confirmó ODDD como orientación a objetos y diseño guiado por dominio (OO + DDD); la adopción conserva stack, modos y alcance existentes.
 6. Establecer **Navira** como nombre de la app.
 7. Al incorporar lugares seguros en Manta, Ecuador, considerar amenazas de tsunami y terremoto.
+8. El simulador debe tener variación aleatoria de mundo y decisiones permitidas; cambios pequeños en semilla, estado o eventos pueden desviar la evolución posterior.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](ODDD.md), [SDD](SDD.md). Criterios por funcionalidad: [especificaciones](especificaciones/README.md).
 

@@ -9,7 +9,7 @@ Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conser
 | Nodo | ID, latitud, longitud | ID único, coordenadas válidas. |
 | Calle/segmento | ID físico, origen/destino, distancia, tipo, velocidad, dirección | Costo positivo; cruces reconocen el mismo segmento. |
 | Refugio | ID, nodo; capacidad solo si se activa extra | Nodo existente. |
-| Partida | `runId`, modo, escenario, versiones, semilla privada, estado | Un modo fijo y una partida activa. |
+| Partida | `runId`, modo, escenario, versiones, semilla y estado privado del generador, estado | Un modo fijo y una partida activa; aleatoriedad aislada por partida. |
 | Zombie | ID, tipo, nodo, fase, activación | Dormido oculto en proyección. |
 | Sobreviviente | ID, nodo, control, estado, refugio objetivo | Control humano/automático; activo/mordido/evacuado. |
 | Orden humana | Partida, turno, personaje, acción, secuencia, destino | Propiedad, idempotencia y cierre. |
@@ -41,7 +41,9 @@ Antes de fijar formato físico: medir tamaño de snapshots, límites vigentes de
 
 - Un solo escritor del mundo; proteger fase/turno esperado con condiciones de versión.
 - Persistir orden aceptada antes del acuse y marcar aplicación para evitar dobles movimientos.
-- Guardar configuración, versión de código/mapa, eventos, decisiones y estado aleatorio privado suficiente para reconstrucción.
+- Guardar configuración, versión de código/mapa, semilla, estado aleatorio privado, eventos, decisiones y órdenes suficiente para reconstrucción exacta dentro de la misma versión de reglas.
 - La semilla sola no reproduce decisiones humanas; también conservar su secuencia.
-- Una semilla igual no garantiza idénticos zombies en políticas distintas si cambia el objetivo perseguido. Comparar escenarios con esa limitación explícita.
+- Con la misma versión de código/mapa, configuración, semilla/estado, eventos y entradas externas, repetir debe reconstruir la secuencia. Cambiar cualquiera de ellos puede desviar llamadas posteriores al generador y modificar la partida completa.
+- Una semilla igual no garantiza idénticos zombies si cambian la versión del algoritmo, el orden de consumo aleatorio o los objetivos de persecución. Comparar escenarios con esa limitación explícita.
+- El generador y su estado son privados: no se incluyen en `/paso`, radio, panel ni observación pública. Se guardan únicamente en el estado interno necesario para recuperar/auditar.
 - Si recuperación segura no está implementada/verificada, reportarlo como limitación e interrumpir explícitamente tras un fallo.

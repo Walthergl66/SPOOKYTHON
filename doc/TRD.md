@@ -46,7 +46,7 @@ Registrar latencia del cliente, errores, timeouts, duración/fase de turnos, ret
 
 ### TRD-11 — Reproducción
 
-Conservar configuración, versión, semilla/estado privado necesario, eventos y órdenes/decisiones. Misma semilla no implica trayectorias iguales si cambia la persecución. Las órdenes humanas forman parte del registro de repetición. Detalle: [datos](datos.md).
+Cada partida nueva sin semilla explícita obtiene una semilla impredecible. Para reproducir una partida, conservar semilla, estado privado del generador, versiones de código/mapa, configuración, eventos, órdenes humanas y decisiones externas. Con entradas idénticas en la misma versión de reglas se reproduce la misma secuencia; cambiar entradas, estado o versión puede producir una cascada distinta. Una semilla sola no promete reproducción entre versiones del algoritmo. El generador y su estado nunca son observables para jugador, panel o motor. Detalle: [datos](datos.md).
 
 ### TRD-12 — Peligros y calles
 

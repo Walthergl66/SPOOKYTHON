@@ -28,6 +28,8 @@ Estado: implementación parcial del grafo, movimiento zombie, cierres programado
 - Mordida conocida no significa movimiento topológicamente inválido. El motor evita ese destino; si el jugador lo elige legalmente, el resolutor aplica la consecuencia. La horda sí restringe transitabilidad.
 - Un sobreviviente mordido no vuelve a decidir. Un evacuado deja de participar después de resolver su llegada de manera válida.
 - Un destino marcado como zona segura se interpreta siempre dentro de la amenaza y fuente que lo respalda. En el fixture actual, “Zona Segura” corresponde a los mapas de evacuación por tsunami del GAD Manta; no acredita seguridad ante terremotos ni sustituye alertas oficiales. Ver [fuentes y límites](mapa-manta.md).
+- El mundo usa una secuencia aleatoria privada por partida para seleccionar estados iniciales y decisiones que las reglas dejan al azar. Una modificación pequeña de la entrada puede desviar el recorrido y alterar rutas, encuentros, mordidas y evacuaciones siguientes.
+- La aleatoriedad no reemplaza las reglas: el corredor sigue persiguiendo según la regla configurada; la horda sigue bloqueando nodo y vecinos; sus movimientos quedan sometidos a P-07. El motor conserva respuesta estable para solicitudes repetidas sobre la misma instantánea.
 
 ## Supuestos pendientes de confirmar
 
@@ -43,7 +45,7 @@ Valores provisionales del prototipo: dormido detecta supervivientes a dos saltos
 | Medianoche | 5 minutos | 80 | Caminantes, corredores y hordas; colapso de un puente. |
 | Apocalipsis | 5 minutos | 200 | Todos los tipos; dos calles bloqueadas en vivo. |
 
-Cantidad de zombies y distribución no están definidas en la fuente; parametrizarlas y confirmar criterios (P-09). Los perfiles `libre`, `caminantes`, `mixto` y `horda` y la generación de 1–200 sobrevivientes son fixtures sintéticos para desarrollo; no fijan distribución ni dificultad oficial. Conservar escenarios, semillas y eventos para comparar versiones sin alterar la dificultad a favor de un algoritmo.
+Cantidad de zombies y distribución no están definidas en la fuente; parametrizarlas y confirmar criterios (P-09). Los perfiles `libre`, `caminantes`, `mixto` y `horda` y la generación de 1–200 sobrevivientes son fixtures sintéticos para desarrollo; no fijan distribución ni dificultad oficial. Conservar escenario, semilla, versión, eventos y órdenes para repetir una ejecución; no se promete que un cambio mínimo produzca siempre resultados distintos, sino que puede propagarse por las dependencias del mundo.
 
 ## Extras
 

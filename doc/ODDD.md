@@ -48,6 +48,8 @@ El código implementa `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimient
 4. Solo un coordinador modifica posiciones; aceptar orden no las cambia.
 5. La horda, cruces, dormidos y refugios siguen [reglas](reglas-juego.md), incluidos sus supuestos explícitos.
 6. Ningún consumidor observable recibe datos privados por compartir tipos o referencias mutables.
+7. La aleatoriedad pertenece al estado privado versionado de la partida; nunca se consulta desde planificadores o proyecciones.
+8. Repetir una decisión HTTP para la misma instantánea conserva su respuesta, aunque la trayectoria del mundo cambie en turnos posteriores.
 
 ## Casos de uso, repositorios y eventos
 
