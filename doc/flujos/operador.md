@@ -2,6 +2,8 @@
 
 Estado: diseño previsto. Primera interfaz administrativa: CLI; una interfaz web posterior debe usar autorización equivalente.
 
+CAM-050 añade un tablero local de demo sintética con inicio, pausa, continuación y reinicio. Se habilita solo con `NAVIRA_LOCAL_DEMO_CONTROL=1`, loopback y Origin same-host; no sustituye el panel administrativo productivo ni modifica eventos oficiales. El formulario configura perfil sintético y población, con semilla opcional solo en API. En el tablero no se muestra estado RNG ni se inventan métricas.
+
 ## Preparar e iniciar
 
 1. Autenticarse con credencial administrativa independiente.

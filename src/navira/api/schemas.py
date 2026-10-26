@@ -79,6 +79,16 @@ class RespuestaOrdenJuegoSchema(BaseModel):
     turno: int = Field(ge=0)
 
 
+class SolicitudIniciarDemoSchema(BaseModel):
+    """Configuración pública y sintética de una demo operada en localhost."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    escenario: Literal["libre", "caminantes", "mixto", "horda"] = "mixto"
+    sobrevivientes: int = Field(default=20, ge=1, le=200)
+    semilla: int | None = Field(default=None, ge=0)
+
+
 class NodoPanelSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

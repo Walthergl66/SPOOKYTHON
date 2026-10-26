@@ -35,6 +35,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [flujos/operador.md](flujos/operador.md) | Inicio, eventos y cierre de partidas | Cambien controles administrativos. |
 | [modulos/backend.md](modulos/backend.md) | Ubicación de responsabilidades backend | Se cree o mueva un caso de uso. |
 | [modulos/frontend.md](modulos/frontend.md) | Módulos y estados de interfaz | Se cree o mueva una pantalla. Estado del scaffold en `frontend/`; no sustituye los contratos del panel. |
+| [especificaciones/SPEC-007-panel-operador-local.md](especificaciones/SPEC-007-panel-operador-local.md) | Criterios del tablero y control local de demo | Cambie el flujo local de operación; no autoriza control administrativo público. |
 | [contratos/api.md](contratos/api.md) | Contrato HTTP y autenticación | Cambien rutas, cuerpos o errores. Estado y ejemplos de las proyecciones del panel incluyen CAM-031. |
 | [contratos/eventos.md](contratos/eventos.md) | Contrato WebSocket y orden de mensajes | Cambien eventos o recuperación. El canal de snapshots del panel se implementa localmente en CAM-032. |
 | [datos.md](datos.md) | Entidades, estados e identidad de versiones | Cambie persistencia o proyección. |
@@ -48,6 +49,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [resultados/evaluacion-multi-turno-cam028.md](resultados/evaluacion-multi-turno-cam028.md) | Medición HTTP loopback con avance de turnos y cohortes 20/80/200 | Nueva ejecución multi-turno; evidencia local exploratoria, no sustituye T-11 ni AWS. |
 | [resultados/evaluacion-cadencia-cam029.md](resultados/evaluacion-cadencia-cam029.md) | Cadencia objetivo de 2 s para evaluaciones HTTP multi-turno locales | Nueva medición temporizada; evidencia exploratoria, no sustituye T-11 ni AWS. |
 | [resultados/evaluacion-p501-cam044.md](resultados/evaluacion-p501-cam044.md) | Medición extendida local por HTTP loopback para cohortes 20/80/200 | Nueva ejecución P5-01; las partidas terminaron antes de 150 turnos, no acredita T-11 ni AWS. |
+| [resultados/panel-operador-local-cam050.md](resultados/panel-operador-local-cam050.md) | Evidencia de inicio/pausa manual del panel local y verificaciones de CAM-050 | Cambien el control local o se repita la inspección del tablero; no acredita despliegue productivo ni uso de emergencia. |
 | [resultados/busqueda-temporal-cam033.md](resultados/busqueda-temporal-cam033.md) | Tiempo de búsqueda temporal por llamada para cohortes sintéticas 20/80/200 | Nueva versión de algoritmo o ejecución comparativa; no es medición HTTP ni T-22. |
 | [resultados/comparacion-rutas-cam035.md](resultados/comparacion-rutas-cam035.md) | Comparación emparejada Dijkstra/temporal en tres turnos locales | Cambien política, semilla, mapa, perfiles o método comparativo. No reemplaza T-22/T-11. |
 | [costos.md](costos.md) | Estimación y gasto real | Cambie infraestructura o consumo. |

@@ -1,6 +1,7 @@
 """Rutas HTTP de la primera fase de Navira."""
 
 import asyncio
+import ipaddress
 import os
 from datetime import datetime, timezone
 from time import monotonic
@@ -18,6 +19,7 @@ from navira.api.schemas import (
     RespuestaUnirseJuegoSchema,
     SolicitudOrdenJuegoSchema,
     SolicitudPasoSchema,
+    SolicitudIniciarDemoSchema,
 )
 from navira.application.consultar_panel import ConsultarPanel, PanelNoDisponible
 from navira.application.juego import (
@@ -47,6 +49,69 @@ router = APIRouter()
 _PANEL_WS_INTERVAL_SECONDS = 0.25
 _PANEL_WS_HEARTBEAT_SECONDS = 2.0
 _COOKIE_SESION_JUGADOR = "navira_player_session"
+_HOSTS_LOOPBACK = {"localhost", "127.0.0.1", "::1"}
+
+
+@router.get("/demo/simulador", tags=["demo local"])
+async def estado_demo_simulador(request: Request) -> dict[str, object]:
+    """Describe el control de simulador cuando el proceso lo habilita en localhost."""
+
+    gestor = _control_demo_local(request)
+    _exigir_operador_local(request, exigir_origen=False)
+    return gestor.estado()
+
+
+@router.post("/demo/simulador/iniciar", tags=["demo local"])
+async def iniciar_demo_simulador(
+    solicitud: SolicitudIniciarDemoSchema,
+    request: Request,
+) -> dict[str, object]:
+    gestor = _control_demo_local(request)
+    _exigir_operador_local(request)
+    try:
+        return gestor.iniciar(
+            escenario=solicitud.escenario,
+            cantidad_sobrevivientes=solicitud.sobrevivientes,
+            semilla=solicitud.semilla,
+        )
+    except (OSError, ValueError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.post("/demo/simulador/pausar", tags=["demo local"])
+async def pausar_demo_simulador(request: Request) -> dict[str, object]:
+    gestor = _control_demo_local(request)
+    _exigir_operador_local(request)
+    try:
+        return gestor.pausar()
+    except RuntimeError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.post("/demo/simulador/reanudar", tags=["demo local"])
+async def reanudar_demo_simulador(request: Request) -> dict[str, object]:
+    gestor = _control_demo_local(request)
+    _exigir_operador_local(request)
+    try:
+        return gestor.reanudar()
+    except RuntimeError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.post("/demo/simulador/reiniciar", tags=["demo local"])
+async def reiniciar_demo_simulador(
+    solicitud: SolicitudIniciarDemoSchema,
+    request: Request,
+) -> dict[str, object]:
+    gestor = _control_demo_local(request)
+    _exigir_operador_local(request)
+    try:
+        return gestor.reiniciar(
+            escenario=solicitud.escenario,
+            cantidad_sobrevivientes=solicitud.sobrevivientes,
+        )
+    except (OSError, ValueError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @router.get("/salud", tags=["operación"])
@@ -60,7 +125,7 @@ async def salud() -> dict[str, str]:
 async def estado_panel(request: Request) -> dict[str, object]:
     """Lee snapshot confirmado con filtrado de zombies ocultos."""
 
-    consulta: ConsultarPanel | None = getattr(request.app.state, "consultar_panel", None)
+    consulta = _consulta_panel(request)
     if consulta is None:
         return {"estado": "sin_partida"}
     try:
@@ -73,7 +138,7 @@ async def estado_panel(request: Request) -> dict[str, object]:
 async def mapa_panel(request: Request) -> dict[str, object]:
     """Lee el grafo de la versión asociada a la partida activa."""
 
-    consulta: ConsultarPanel | None = getattr(request.app.state, "consultar_panel", None)
+    consulta = _consulta_panel(request)
     if consulta is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No hay mapa activo.")
     try:
@@ -240,7 +305,7 @@ async def observar_panel(websocket: WebSocket) -> None:
         return
 
     await websocket.accept()
-    consulta: ConsultarPanel | None = getattr(websocket.app.state, "consultar_panel", None)
+    consulta = _consulta_panel(websocket)
     ultima_clave: tuple[str, int] | None | object = object()
     ultimo_latido = monotonic()
     try:
@@ -286,6 +351,61 @@ def _origen_mismo_host(websocket: WebSocket) -> bool:
     except ValueError:
         return False
     return partes.scheme in {"http", "https"} and partes.netloc.casefold() == host.casefold()
+
+
+def _consulta_panel(request: Request | WebSocket) -> ConsultarPanel | None:
+    """Resuelve la proyección actual, incluida la partida local recién creada."""
+
+    consulta = getattr(request.app.state, "consultar_panel", None)
+    gestor = getattr(request.app.state, "control_simulador_demo", None)
+    return consulta or (gestor.consultar_panel if gestor is not None else None)
+
+
+def _control_demo_local(request: Request):
+    """Evita registrar controles operativos en el ensamblaje normal."""
+
+    if os.environ.get("NAVIRA_LOCAL_DEMO_CONTROL") != "1":
+        raise HTTPException(status_code=404, detail="El control local de demo está deshabilitado.")
+    gestor = getattr(request.app.state, "control_simulador_demo", None)
+    if gestor is None:
+        raise HTTPException(status_code=404, detail="El control local de demo está deshabilitado.")
+    return gestor
+
+
+def _exigir_operador_local(request: Request, *, exigir_origen: bool = True) -> None:
+    """Restringe el control efímero a localhost y al origen del navegador."""
+
+    cliente = request.client.host if request.client is not None else ""
+    try:
+        es_loopback = ipaddress.ip_address(cliente).is_loopback
+    except ValueError:
+        es_loopback = False
+    host = request.url.hostname
+    if not es_loopback or host not in _HOSTS_LOOPBACK:
+        raise HTTPException(status_code=403, detail="El control de demo solo acepta conexiones locales.")
+    if exigir_origen and not _origen_request_local_mismo_host(request):
+        raise HTTPException(status_code=403, detail="Origen no permitido.")
+
+
+def _origen_request_local_mismo_host(request: Request) -> bool:
+    """Compara hostname sin puerto, porque el proxy Vite cambia el puerto."""
+
+    origen = request.headers.get("origin")
+    host = request.headers.get("host")
+    if not origen or not host:
+        return False
+    try:
+        partes_origen = urlsplit(origen)
+        hostname_request = urlsplit(f"//{host}").hostname
+    except ValueError:
+        return False
+    return (
+        partes_origen.scheme in {"http", "https"}
+        and partes_origen.hostname is not None
+        and hostname_request is not None
+        and partes_origen.hostname.casefold() in _HOSTS_LOOPBACK
+        and hostname_request.casefold() in _HOSTS_LOOPBACK
+    )
 
 
 def _borrar_cookie_sesion(response: Response) -> None:
@@ -367,7 +487,8 @@ def _ahora_utc() -> str:
 async def paso(solicitud: SolicitudPasoSchema, request: Request) -> RespuestaPasoSchema:
     """Devuelve el siguiente destino usando el servicio ensamblado por la app."""
 
-    servicio = getattr(request.app.state, "decidir_paso", None) or DecidirPasoEspera()
+    gestor = getattr(request.app.state, "control_simulador_demo", None)
+    servicio = (gestor.decidir_paso if gestor is not None else None) or getattr(request.app.state, "decidir_paso", None) or DecidirPasoEspera()
     try:
         decision = servicio.ejecutar(
             SolicitudPaso(

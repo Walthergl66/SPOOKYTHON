@@ -118,6 +118,6 @@ npm ci
 npm run dev
 ```
 
-Para verificar el bundle: `npm run build`. El modo de la tarjeta solo cambia una vista previa. El panel muestra el modo real del servidor, métricas del snapshot y una ruta Dijkstra seleccionable; requiere partida activa para cargar el mapa/estado. La ruta no es una garantía de seguridad. El detalle está en [frontend](doc/modulos/frontend.md).
+Para verificar el bundle: `npm run build`. El tablero muestra el modo real del servidor, controles de demo local, mapa, métricas del snapshot y una ruta Dijkstra seleccionable. Para iniciar el simulador desde los controles, ejecuta el backend con `NAVIRA_LOCAL_DEMO_CONTROL=1`; la superficie está limitada al proceso local, no es administración pública. Sin ese opt-in el panel funciona en modo observación y explica cómo activarlo. La ruta no es una garantía de seguridad. El detalle está en [frontend](doc/modulos/frontend.md).
 
-Para mostrar el panel y controles humanos, inicia el backend con `NAVIRA_GAME_DEMO=1` y sigue [guía frontend](frontend/README.md); Vite reenvía `/panel`, `/juego` y `/ws` al servicio local. El estado se actualiza al cambiar la versión confirmada. El juego usa snapshots, sesión y órdenes en memoria, un único proceso y no ofrece replay durable ni recuperación de una caída.
+Para mostrar el panel de juego, inicia el backend con `NAVIRA_GAME_DEMO=1`; para operar una simulación desde el tablero, usa `NAVIRA_LOCAL_DEMO_CONTROL=1`. Sigue [guía frontend](frontend/README.md); Vite reenvía salud, panel, demo, juego y WebSocket al servicio local. El estado se actualiza al cambiar la versión confirmada. Las demos usan snapshots volátiles en un único proceso y no ofrecen replay durable ni recuperación de caída.

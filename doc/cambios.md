@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-050 — Tablero visual y control local del simulador
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario reportó que no podía iniciar el simulador desde el frontend y pidió acercar el diseño a la referencia de control cartográfico.
+- Especificación/tarea: SPEC-007, P4-03; CA-007-01..04/T-26; PRD-06, TRD-06/TRD-07.
+- Decisión: [ADR-015](decisiones/0015-control-local-de-demo.md). El control de operador de esta fase es local, opt-in y same-origin; no se crea control de administración público.
+- Motivo: el selector anterior solo cambiaba una vista previa y la app base arrancaba sin partida activa. El caso de uso automático no tenía reloj local conectado a controles del panel.
+- Archivos: nuevo `ControlSimuladorDemoLocal`, `RelojSimuladorLocal`, rutas `/demo/simulador/*`, esquema de configuración, UI de tablero y cliente frontend, proxy Vite, prueba `test_control_simulador_demo.py`; SPEC-007, frontend/backend, API, arquitectura, seguridad, flujo de operador, plan, pruebas, trazabilidad, README, estado, resultado e índice.
+- Resultado: panel de mapa central, controles de escenario/población, iniciar/pausar/continuar/reiniciar, métricas solo del snapshot, refugios representados y feed de snapshots. Una semilla omitida inicia un mundo nuevo. El backend mantiene la autoridad del turno y el panel consulta el mismo `runId`. Sin `NAVIRA_LOCAL_DEMO_CONTROL=1`, el frontend explica cómo habilitar la demo y el API no expone los controles.
+- Verificación: `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_control_simulador_demo.py'` (5); suite Python completa (159); `frontend/npm run build`; `python3 scripts/check_docs.py`; `python3 scripts/check_sdd.py`; suite de `test_check_sdd.py`; recorrido manual en `http://localhost:5173/` inició la partida en Manta y confirmó pausa estable durante 2,5 s. Evidencia detallada: [reporte CAM-050](resultados/panel-operador-local-cam050.md). Verificación local, no demuestra despliegue.
+- Límites: estado y reloj en memoria de un proceso; las demos son sintéticas y no guía de emergencia. Cadencia sostenida, persistencia, AWS, seguridad de operador público y T-19 integral quedan fuera.
+- Siguiente paso: completar el recorrido integral de órdenes y resultado del modo juego (T-19); después continuar medición sostenida P5-01 según sus criterios.
+- Commit: un commit individual de fase en `master` tras cerrar validaciones; sin publicación remota.
+
 ## CAM-049 — Cobertura HTTP para expiración en las tres rutas
 
 - Fecha: 2026-10-26, Ecuador continental.

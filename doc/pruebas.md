@@ -39,6 +39,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-23 | AWS y entrega | Salud/API/WebSocket, permisos/TLS, Budget, costos y entregables con evidencia real y enlaces comprobados. |
 | T-24 | Variación y reproducción estocástica | Configuración/semilla/versiones/entradas idénticas reproducen; otra semilla y una perturbación controlada pueden divergir; la misma instantánea HTTP conserva la decisión. |
 | T-25 | Caducidad de sesión humana local | TTL deslizante usa reloj monotónico; lectura válida renueva; una cookie vencida recibe 410 y ningún visitante distinto puede tomar el cupo/personaje reservado. No acredita expiración durable ni coordinación multiproceso. |
+| T-26 | Operación del simulador de demo local | Control oculto sin opt-in; loopback y same-origin requeridos; inicio/pausa/continuación/reinicio se reflejan en un run publicado por el panel y validan entrada. |
 
 ## Medición de la prueba de fuego
 
@@ -55,6 +56,10 @@ Rúbrica del endpoint: p95 ≤150 ms: 10; ≤300: 7; ≤500: 4; superior: 0. El 
 Ejecutar Dijkstra y política mejorada sobre los mismos escenarios, versiones y lista de semillas, con semillas de validación distintas de las de ajuste. Guardar parámetros y cambios del generador. No escoger solo ejecuciones favorables. Reportar vivos, evacuados y pendientes por separado. Las trayectorias pueden divergir por persecución aunque se repita semilla.
 
 ## Evidencia y comandos
+
+### T-26 — Control local y tablero del simulador
+
+`PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_control_simulador_demo -v` comprueba que las rutas están ocultas sin opt-in, que conexiones remotas/orígenes ajenos se rechazan, que una configuración fuera de rango recibe 422 y que iniciar/pausar publica el mismo `runId`, modo y mapa por HTTP. `cd frontend && npm run build` verifica compilación del tablero/control. Esto no certifica una superficie administrativa pública, persistencia, cadencia sostenida o despliegue.
 
 P0-04: desde `frontend/`, `npm ci && npm run build` verifica lockfile, TypeScript estricto y bundle de producción. La pantalla inicial soporta selección de modos con teclado mediante botones semánticos, estados `aria-pressed`, foco visible y movimiento reducido; revisar visualmente en anchos móvil y escritorio al cambiar el layout. `.github/workflows/ci.yml` ejecuta además la suite unittest y validadores documentales en GitHub Actions. La compilación local no demuestra que el workflow haya corrido en remoto.
 

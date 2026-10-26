@@ -14,6 +14,8 @@ Hacer comprensible la partida en vivo sin capacidad de alterar el mundo para esp
 
 P4-01 verificado en CAM-031 para el alcance de mapa, capas observables, ruta Dijkstra seleccionable y métricas. P4-02 implementado/verificado localmente en CAM-032 con snapshot inicial y por versión, heartbeat, rechazo cross-origin y reconexión a la versión vigente. La SPEC permanece `lista`: el juego aún no está conectado y falta completar accesibilidad/producto y validación desplegada.
 
+El panel de esta SPEC sigue siendo de solo lectura. Los controles de inicio/pausa/reinicio de la demo sintética local se especifican por separado en [SPEC-007](SPEC-007-panel-operador-local.md) y no cambian permisos de espectadores.
+
 ## Criterios de aceptación
 
 | Criterio | Comportamiento verificable | Pruebas |

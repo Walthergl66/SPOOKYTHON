@@ -10,6 +10,7 @@ Estado: referencias documentales; no representa funcionalidad implementada. Los 
 | [SPEC-004](especificaciones/SPEC-004-juego-humano.md) | PRD-05, PRD-06, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12 | CAM-036/037 implementan parte de P4B-01/02; CAM-038 inicia P4B-03/T-19; CAM-039/040 integran aparición, orden, deadline y runner local; CAM-041 muestra cuenta atrás, CAM-042 sugerencia de radio, CAM-043 recuperación local de sesión por cookie, CAM-045 accesibilidad parcial y CAM-046 cumple T-25 localmente. TLS, persistencia/reinicio, revocación productiva y T-14/T-15/T-19 integral pendientes. |
 | [SPEC-005](especificaciones/SPEC-005-aws-evaluacion.md) | PRD-06, PRD-07, PRD-08, TRD-02, TRD-06, TRD-08, TRD-10, TRD-11 | Metadatos de SPEC; AWS pendiente. |
 | [SPEC-006](especificaciones/SPEC-006-metodologia.md) | TRD-13 | Método documental; ver evidencia de la propia SPEC. |
+| [SPEC-007](especificaciones/SPEC-007-panel-operador-local.md) | PRD-06, TRD-06, TRD-07 | CAM-050/T-26 prueban arranque, control y lectura local del mismo run; despliegue y control de operador productivo fuera de alcance. |
 
 ## Cadena de ejemplo
 

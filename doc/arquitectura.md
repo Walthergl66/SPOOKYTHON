@@ -46,6 +46,7 @@ El diagrama describe flujo de ejecución. Las dependencias de código se definen
 | Panel → aplicación | Proyección observable | Lectura limitada; no usa credencial maestra. |
 | Panel → observación | `WS /ws/panel`, snapshots completos por versión | Origen del mismo host; memoria local; no ofrece replay durable. |
 | Operador → simulador | Inicio/cierre/eventos | Credencial administrativa distinta. |
+| Tablero local → demo sintética | `GET /demo/simulador` y operaciones de demo | Opt-in de proceso, loopback y origen same-host; no disponible en despliegue. |
 | Núcleo → almacenamiento | Puertos de aplicación | Rol IAM y adaptador de infraestructura. |
 
 Los contratos públicos previstos están en [API](contratos/api.md) y [eventos](contratos/eventos.md). Identidades y almacenamiento, en [datos](datos.md).

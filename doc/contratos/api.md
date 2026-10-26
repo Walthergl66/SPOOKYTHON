@@ -41,6 +41,14 @@ Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema invál
 | `POST /admin/partidas` | Operador | Iniciar partida si no hay una activa. |
 | `POST /admin/partidas/{runId}/finalizar` | Operador | Cierre explícito y motivo. |
 | `POST /admin/eventos` | Operador | Evento validado para un turno. |
+| `GET /demo/simulador` | Proceso local habilitado y loopback | Estado de una demo local. |
+| `POST /demo/simulador/{iniciar,pausar,reanudar,reiniciar}` | Proceso local habilitado, loopback y Origin same-host | Operación de un simulador sintético local; fuera del API público/productivo. |
+
+### Control de demo local
+
+CAM-050 agrega controles de desarrollo que solo se ensamblan si `NAVIRA_LOCAL_DEMO_CONTROL=1`. Cada inicio crea un run con escenario `libre`, `caminantes`, `mixto` o `horda`, población entre 1 y 200 y semilla opcional. Sin semilla, el backend genera una nueva. El proceso verifica IP cliente loopback y Host localhost; las operaciones POST además exigen Origin same-host. Si el flag no está activo, las rutas responden 404. El frontend no recibe clave de servicio.
+
+Esta superficie es solo para demo local. No configurarla detrás de un reverse proxy ni en AWS; un operador productivo requiere identidad, autorización y auditoría distintas. Pausar evita abrir un turno nuevo; un turno ya iniciado puede completar su resolución. Reiniciar genera otro run y otra semilla por defecto.
 
 Las rutas de panel evitan enviar `x-api-key` maestra al navegador. Tienen proyección y límites propios; no son una puerta de entrada al estado real. La CLI administrativa tampoco conserva secretos en argumentos o ejemplos versionados.
 

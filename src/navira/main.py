@@ -10,11 +10,12 @@ from navira.api.routes import router
 from navira.application.coordinador_juego import CoordinadorJuego
 from navira.application.decidir_paso import DecidirPasoEspera
 from navira.application.consultar_panel import ConsultarPanel
+from navira.application.control_simulador_demo import ControlSimuladorDemoLocal
 from navira.application.juego import ConsultarSesionJuego, RepositorioSesionesMemoria, UnirseAJuego
 from navira.application.ordenes import RegistrarOrdenHumana
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.application.reloj_juego import RelojJuegoLocal
-from navira.demo import MAPA_DEMO_POR_DEFECTO, crear_contexto_demo, crear_contexto_juego_demo
+from navira.demo import MAPA_DEMO_POR_DEFECTO, MAPA_MANTA_POR_DEFECTO, crear_contexto_demo, crear_contexto_juego_demo
 
 
 def crear_app(
@@ -24,6 +25,7 @@ def crear_app(
     registrar_orden_juego: RegistrarOrdenHumana | None = None,
     reloj_juego: RelojJuegoLocal | None = None,
     consultar_sesion_juego: ConsultarSesionJuego | None = None,
+    control_simulador_demo: ControlSimuladorDemoLocal | None = None,
 ) -> FastAPI:
     """Ensamblaje inyectable; sin servicio recibe espera determinista."""
 
@@ -36,6 +38,8 @@ def crear_app(
         finally:
             if reloj_juego is not None:
                 reloj_juego.detener()
+            if control_simulador_demo is not None:
+                control_simulador_demo.cerrar()
 
     aplicacion = FastAPI(
         title="Navira",
@@ -46,6 +50,7 @@ def crear_app(
     aplicacion.state.decidir_paso = servicio_decision or DecidirPasoEspera()
     aplicacion.state.consultar_panel = consultar_panel
     aplicacion.state.consultar_sesion_juego = consultar_sesion_juego
+    aplicacion.state.control_simulador_demo = control_simulador_demo
     aplicacion.state.unirse_juego = unirse_juego
     aplicacion.state.registrar_orden_juego = registrar_orden_juego
     aplicacion.include_router(router)
@@ -137,6 +142,11 @@ def _crear_app_configurada() -> FastAPI:
             semilla=semilla,
             escenario=escenario,
             cantidad_sobrevivientes=sobrevivientes,
+        )
+    if os.environ.get("NAVIRA_LOCAL_DEMO_CONTROL") == "1":
+        mapa = os.environ.get("NAVIRA_DEMO_MAP", str(MAPA_MANTA_POR_DEFECTO))
+        return crear_app(
+            control_simulador_demo=ControlSimuladorDemoLocal(mapa),
         )
     if os.environ.get("NAVIRA_DEMO") == "1":
         mapa = os.environ.get("NAVIRA_DEMO_MAP", str(MAPA_DEMO_POR_DEFECTO))

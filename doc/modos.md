@@ -1,6 +1,6 @@
 # Modos de uso
 
-Estado: los modos `simulador` y `juego` están modelados en dominio; el selector y sus flujos siguen pendientes. Arquitectura compartida: [ADR-002](decisiones/0002-dos-modos.md).
+Estado: los modos `simulador` y `juego` están modelados en dominio; el frontend permite cambiar la vista. CAM-050 permite operar solo una demo sintética local cuando el proceso lo habilita expresamente; esto no cambia el modo de una partida existente ni concede control al espectador. Arquitectura compartida: [ADR-002](decisiones/0002-dos-modos.md).
 
 | Aspecto | Simulador | Juego |
 |---|---|---|
@@ -24,6 +24,8 @@ Ambos modos comparten grafo, reloj, zombies, cierres, reglas de mordida y refugi
 - Durante una prueba oficial, mostrar observación y explicar que el juego está temporalmente ocupado.
 
 Controles iniciales: clic en vecino, botones con nombre de destino, Tab/Enter y «Esperar». No usar WASD sin definir cómo elegir entre vecinos de un grafo irregular. Movimiento visual con opción de reducir animación, foco visible y estados que no dependan solo de color.
+
+La demo sintética local tiene un control explícito de desarrollo, no un endpoint administrativo público. Se activa con `NAVIRA_LOCAL_DEMO_CONTROL=1`; el backend limita las operaciones a loopback y origen same-host. Despliegues no deben configurar este opt-in.
 
 ## Radio y final de partida
 

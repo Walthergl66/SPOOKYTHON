@@ -34,6 +34,7 @@ from navira.simulation.coordinador import (
 
 
 MAPA_DEMO_POR_DEFECTO = Path(__file__).resolve().parents[2] / "data/maps/demo-sintetico.json"
+MAPA_MANTA_POR_DEFECTO = Path(__file__).resolve().parents[2] / "data/maps/manta-hackathon-v1.json"
 _COMPOSICION_ZOMBIES_DEMO: dict[str, tuple[tuple[str, TipoZombie, EstadoZombie], ...]] = {
     "libre": (),
     "caminantes": (("Z-CAM-001", TipoZombie.CAMINANTE, EstadoZombie.ACTIVO),),
