@@ -32,7 +32,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-16 | Separación de modos | Rondas oficiales sin humanos ni cambio de modo; CAM-039 comprueba intención humana y NPC en el resolutor común. Radio sin datos ocultos sigue pendiente. |
 | T-17 | Paridad | Mismo estado e intenciones dan mismo resultado con control humano o automático; hay una regresión del resolutor, aún parcial. |
 | T-18 | Snapshot/recuperación | El coordinador genera estados completos; un adaptador local CAS bajo lock admite un solo escritor por versión. Persistencia durable y recuperación entre procesos siguen pendientes. |
-| T-19 | Accesibilidad | Juego y selección por teclado, foco visible y estados no basados solo en color. CAM-038 usa botones/fieldset nativos y mensajes `aria-live`; sin auditoría WCAG ni recorrido manual integral todavía. |
+| T-19 | Accesibilidad | Juego y selección por teclado, foco visible y estados no basados solo en color. CAM-038 usa botones/fieldset nativos y CAM-041 agrega el contador del deadline; sin auditoría WCAG ni recorrido manual integral todavía. |
 | T-20 | Documentación | Enlaces locales válidos e inventario completo. |
 | T-21 | Integridad SDD | IDs, requisitos, tareas, CA, pruebas y matriz coherentes; verificación exige CAM/evidencia. |
 | T-22 | Predicción | Comparación reproducible entre base y mejora con semillas/escenarios y límites de información declarados. |

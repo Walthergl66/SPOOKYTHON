@@ -18,6 +18,8 @@ CAM-038 ofrece entrada explícita y botones para esperar o elegir una calle diri
 
 CAM-039/040 incorporan `CoordinadorJuego` y el runner opt-in `NAVIRA_GAME_DEMO=1`: confirma aparición pendiente antes de mover zombies, abre `DECISIONES`, consume la última orden humana (o espera), decide NPC y resuelve con el motor común y CAS. `PuertaDecisiones` comparte `RLock` entre registro/cierre y rechaza órdenes nuevas desde el deadline monotónico de 1,7 s. `RelojJuegoLocal` programa ciclos de 2 s en un hilo del proceso. Es local y volátil: no coordina workers ni restaura una partida al reiniciar.
 
+CAM-041 agrega `decisionRestanteMs` a la proyección observable durante decisiones y lo dibuja en frontend como contador aproximado. El valor se calcula en servidor al proyectar snapshot; JavaScript solo reduce esa estimación y deshabilita botones al llegar a cero. Un retraso/red puede volverlo obsoleto y el backend valida otra vez al recibir la orden.
+
 ## Elegir una acción
 
 1. Recibir estado observable de la fase de decisión y hora límite del servidor.

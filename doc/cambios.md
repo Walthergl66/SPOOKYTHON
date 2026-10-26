@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-041 — Contador visual del deadline
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada para avanzar las fases y cerrar los criterios del juego humano.
+- Especificación/tarea: SPEC-004, P5-04 parcial; CA-004-06/T-19 parcial y TRD-03/05/06/09.
+- Motivo: mostrar al jugador cuánto tiempo aproximado queda para registrar su orden, manteniendo el deadline autoritativo en el backend.
+- Resultado: `GET /panel/estado` y sus snapshots WebSocket agregan `decisionRestanteMs` durante decisiones en modo juego. La UI estima un contador local, desactiva botones cuando llega a cero y permite que el servidor siga rechazando órdenes por su reloj monotónico; no se calcula usando hora del cliente como autoridad.
+- Archivos: `application/puerta_decisiones.py`, `application/consultar_panel.py`, esquema API, frontend `panel.ts`, `GameControls.tsx`, estilos; contratos API/eventos, flujo jugador, frontend backend, SPEC-004, pruebas, trazabilidad, plan, estado.
+- Decisión: publicar un restante truncado a milisegundos como dato de presentación. No añade un evento incremental por segundo ni cambia la secuencia del snapshot; la UI hace el decremento visual sobre una duración recibida.
+- Verificación: `test_coordinador_juego.py` confirma restante inicial y descendente con reloj controlado; suite enfocada coordinador/panel/demo (22 OK); suite backend completa (147 OK); build TypeScript/Vite correcto; validadores de docs/SDD, ocho regresiones SDD, `compileall` y `git diff --check` correctos.
+- Límites: contador puede desviarse por latencia o suspensión de pestaña, no se anuncia cada 100 ms a lectores de pantalla y el servidor siempre decide. Sin auditoría WCAG ni prueba manual completa de teclado; SPEC-004 no se verifica.
+- Siguiente paso: completar recorrido accesible y resultado, mantener radio pendiente según alcance, luego evaluar recuperación y seguridad de sesión.
+- Commit: commit local individual en `master` después de las validaciones declaradas.
+
 ## CAM-040 — Reloj y juego demo local
 
 - Fecha: 2026-10-26, Ecuador continental.

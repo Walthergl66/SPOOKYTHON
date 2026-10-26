@@ -143,6 +143,7 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .game-position span:first-child { color: var(--muted); font-size: 10px; }
 .game-position strong { color: var(--sea-bright); font: 600 13px var(--mono); }
 .game-position span:last-child { width: 100%; color: var(--dim); font-size: 10px; }
+.game-clock { margin: 0 0 10px; color: var(--amber); font: 600 11px var(--mono); }
 .game-moves { min-width: 0; margin: 0; padding: 0; border: 0; }
 .game-moves legend { margin-bottom: 8px; color: var(--muted); font-size: 10px; }
 .game-move-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }

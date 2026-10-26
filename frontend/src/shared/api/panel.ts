@@ -11,6 +11,7 @@ export interface PanelState {
   modo?: 'simulador' | 'juego'
   turno?: number
   fase?: string
+  decisionRestanteMs?: number | null
   mapVersion?: string
   snapshotVersion?: number
   zombies?: Array<{ id: string; tipo: string; nodo: string }>
@@ -91,6 +92,9 @@ export function parsePanelState(value: unknown): PanelState {
   if (typeof value.runId !== 'string' || (value.modo !== 'simulador' && value.modo !== 'juego') || typeof value.turno !== 'number' || typeof value.fase !== 'string' || typeof value.mapVersion !== 'string' || typeof value.snapshotVersion !== 'number' || !Array.isArray(value.zombies) || !Array.isArray(value.movimientosZombies) || !Array.isArray(value.sobrevivientes) || !Array.isArray(value.rutasPrevistas) || !Array.isArray(value.aristasBloqueadas) || !Array.isArray(value.segmentosBloqueados) || !Array.isArray(value.nodosHorda) || !isRecord(value.metricas)) {
     throw new Error('El servicio devolvió un snapshot incompleto para el panel.')
   }
+  if (value.decisionRestanteMs !== undefined && value.decisionRestanteMs !== null && (typeof value.decisionRestanteMs !== 'number' || !Number.isInteger(value.decisionRestanteMs) || value.decisionRestanteMs < 0)) {
+    throw new Error('El servicio devolvió el plazo de decisiones con un formato no válido.')
+  }
   const { metricas } = value
   if (typeof metricas.sobrevivientesActivos !== 'number' || typeof metricas.mordidos !== 'number' || typeof metricas.evacuados !== 'number' || typeof metricas.zombiesVisibles !== 'number') {
     throw new Error('El servicio devolvió métricas con un formato no válido.')
@@ -121,6 +125,7 @@ export function parsePanelState(value: unknown): PanelState {
     modo: value.modo,
     turno: value.turno,
     fase: value.fase,
+    decisionRestanteMs: value.decisionRestanteMs as number | null | undefined,
     mapVersion: value.mapVersion,
     snapshotVersion: value.snapshotVersion,
     zombies,

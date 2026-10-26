@@ -66,6 +66,14 @@ class PuertaDecisiones:
                 return None
             return self._deadline
 
+    def restante_ms(self, run_id: str, turno: int) -> int | None:
+        """Trunca el restante para mostrarlo sin sobreestimar el plazo."""
+
+        with self.lock:
+            if self._identidad != (run_id, turno) or self._deadline is None:
+                return None
+            return max(0, math.floor((self._deadline - self._reloj()) * 1000))
+
     def ahora(self) -> float:
         """Lee el mismo reloj monotónico usado para ordenar/cerrar."""
 

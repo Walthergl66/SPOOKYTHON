@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from navira.application.decidir_paso import DecidirPaso, SolicitudPaso, nodos_horda_visibles
+from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.domain.mapa import Grafo
 from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, FaseTurno, TipoZombie
 from navira.simulation.coordinador import SnapshotMundo
@@ -36,6 +37,7 @@ class ConsultarPanel:
     snapshots: ProveedorSnapshotsPanel
     mapas: ProveedorMapasPanel
     planificador: DecidirPaso | None = None
+    puerta_decisiones: PuertaDecisiones | None = None
 
     def version_estado(self) -> tuple[str, int] | None:
         """Lee solo la clave de cambio para que el transporte no reproyecte sin cambios."""
@@ -92,6 +94,15 @@ class ConsultarPanel:
             }
             for personaje in partida.sobrevivientes
         )
+        restante_decision_ms = (
+            self.puerta_decisiones.restante_ms(partida.run_id, partida.turno)
+            if (
+                self.puerta_decisiones is not None
+                and partida.modo.value == "juego"
+                and partida.fase is FaseTurno.DECISIONES
+            )
+            else None
+        )
         rutas_previstas = tuple(
             {
                 "sobrevivienteId": personaje.id,
@@ -115,6 +126,7 @@ class ConsultarPanel:
             "modo": partida.modo.value,
             "turno": partida.turno,
             "fase": partida.fase.value,
+            "decisionRestanteMs": restante_decision_ms,
             "mapVersion": partida.map_version,
             "snapshotVersion": snapshot.version,
             "zombies": tuple(

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PanelMap, PanelState } from '../../shared/api/panel'
 import { GameApiError, joinGame, sendGameOrder, type GameOrderInput, type GameOrderReceipt, type PlayerSession } from '../../shared/api/game'
 import type { PanelConnection } from '../../shared/realtime/panel'
@@ -22,6 +22,7 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
   const [session, setSession] = useState<PlayerSession | null>(null)
   const [activity, setActivity] = useState<Activity>({ kind: 'idle' })
   const pendingOrder = useRef<GameOrderInput | null>(null)
+  const [remainingMs, setRemainingMs] = useState<number | null>(null)
 
   const gameState = state?.estado === 'activa' && state.modo === 'juego' ? state : null
   const player = gameState && session && session.runId === gameState.runId
@@ -42,10 +43,24 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
     return [...byNode.entries()].map(([node, street]) => ({ node, street, risk: zombieNodes.has(node) }))
   }, [gameState, map, player])
 
+  useEffect(() => {
+    const serverRemaining = gameState?.decisionRestanteMs
+    if (serverRemaining === undefined || serverRemaining === null || gameState?.fase !== 'decisiones') {
+      setRemainingMs(null)
+      return
+    }
+    const deadlineLocal = performance.now() + serverRemaining
+    const refresh = () => setRemainingMs(Math.max(0, Math.ceil(deadlineLocal - performance.now())))
+    refresh()
+    const timer = window.setInterval(refresh, 100)
+    return () => window.clearInterval(timer)
+  }, [gameState?.decisionRestanteMs, gameState?.fase, gameState?.runId, gameState?.turno, gameState?.snapshotVersion])
+
   if (!modeSelected) return null
 
   const isGame = gameState !== null
   const turnOpen = gameState?.fase === 'decisiones'
+  const deadlineClosed = remainingMs === 0
   const panelFresh = connection === 'live'
   const busy = activity.kind === 'joining' || activity.kind === 'sending'
 
@@ -66,7 +81,7 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
   }
 
   const submit = async (destination: string, retry = false) => {
-    if (!gameState || !turnOpen || !session || !player || !gameState.runId || gameState.turno === undefined) return
+    if (!gameState || !turnOpen || deadlineClosed || !session || !player || !gameState.runId || gameState.turno === undefined) return
     const order = retry && pendingOrder.current ? pendingOrder.current : {
       runId: gameState.runId,
       turno: gameState.turno,
@@ -132,8 +147,9 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
         </div>
       ) : (
         <>
-          <div className="game-position"><span>Tu posición</span><strong>{player.nodo}</strong><span>{gameState?.fase === 'decisiones' ? 'Elige un vecino o espera.' : 'Los zombies se movieron; espera la siguiente fase de decisiones.'}</span></div>
-          <fieldset className="game-moves" disabled={!turnOpen || busy || !panelFresh}>
+          <div className="game-position"><span>Tu posición</span><strong>{player.nodo}</strong><span>{turnOpen ? 'Elige un vecino o espera.' : 'Los zombies se movieron; espera la siguiente fase de decisiones.'}</span></div>
+          {turnOpen && remainingMs !== null ? <p className="game-clock" aria-live="off">{deadlineClosed ? 'Tiempo agotado; esperando la resolución del servidor.' : `Cierre del servidor en ${(remainingMs / 1000).toFixed(1)} s`}</p> : null}
+          <fieldset className="game-moves" disabled={!turnOpen || deadlineClosed || busy || !panelFresh}>
             <legend>Calles disponibles</legend>
             <div className="game-move-list">
               <button type="button" className="game-move game-wait" onClick={() => void submit(player.nodo)}>
@@ -149,7 +165,7 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
               {choices.length === 0 ? <p className="game-no-moves">No hay calles abiertas disponibles; puedes esperar.</p> : null}
             </div>
           </fieldset>
-          {!turnOpen ? <p className="game-hint">Las órdenes solo se aceptan en la fase de decisiones.</p> : null}
+          {!turnOpen || deadlineClosed ? <p className="game-hint">Las órdenes solo se aceptan hasta el cierre indicado por el servidor.</p> : null}
           {!panelFresh ? <p className="game-hint">La vista está reconectando; los controles se desactivaron hasta recibir un snapshot reciente.</p> : null}
         </>
       )}

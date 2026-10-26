@@ -113,7 +113,7 @@ def crear_app_juego_demo(
     )
     return crear_app(
         contexto.servicio_decision,
-        ConsultarPanel(contexto.snapshots, contexto.mapas, contexto.servicio_decision),
+        ConsultarPanel(contexto.snapshots, contexto.mapas, contexto.servicio_decision, puerta),
         unirse,
         registrar,
         reloj,

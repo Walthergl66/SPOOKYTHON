@@ -9,6 +9,7 @@ from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.adapters.ordenes_memoria import RepositorioOrdenesMemoria
 from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
 from navira.application.coordinador_juego import CoordinadorJuego, JuegoIncompatible
+from navira.application.consultar_panel import ConsultarPanel
 from navira.application.decidir_paso import DecidirPaso
 from navira.application.juego import RepositorioSesionesMemoria, UnirseAJuego
 from navira.application.ordenes import OrdenIncompatible, RegistrarOrdenHumana
@@ -66,6 +67,13 @@ class CoordinadorJuegoTests(unittest.TestCase):
 
     def test_orden_humana_y_npc_se_resuelven_juntos_sin_repetir_zombies(self) -> None:
         decisiones = self.coordinador.preparar(self.run_id, version_esperada=1)
+        proyeccion = ConsultarPanel(
+            self.snapshots,
+            self.mapas,
+            self.coordinador.decidir,
+            self.puerta,
+        ).consultar_estado()
+        self.assertEqual(proyeccion["decisionRestanteMs"], 1700)
         humano = next(
             item for item in decisiones.partida.sobrevivientes
             if item.control.value == "humano"
@@ -83,6 +91,15 @@ class CoordinadorJuegoTests(unittest.TestCase):
         zombie_antes = decisiones.partida.zombies
         with self.assertRaisesRegex(JuegoIncompatible, "todavía no venció"):
             self.coordinador.resolver(self.run_id, version_esperada=decisiones.version)
+        self.reloj[0] = 100.9
+        proyeccion = ConsultarPanel(
+            self.snapshots,
+            self.mapas,
+            self.coordinador.decidir,
+            self.puerta,
+        ).consultar_estado()
+        self.assertGreater(proyeccion["decisionRestanteMs"], 700)
+        self.assertLessEqual(proyeccion["decisionRestanteMs"], 800)
         self.reloj[0] = 101.8
         resuelto, _ = self.coordinador.resolver(
             self.run_id,

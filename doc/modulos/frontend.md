@@ -1,6 +1,6 @@
 # Módulos frontend y estados de interfaz
 
-Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; el mapa es SVG sobre el grafo recibido, no Leaflet. CAM-038 agrega controles humanos para `POST /juego/unirse` y `POST /juego/accion`; CAM-040 ensambla el backend en modo demo local y el proxy Vite reenvía `/juego`. El selector solo cambia la vista; el servidor conserva autoridad de modo. No hay timer visible ni auditoría T-19 completa.
+Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; el mapa es SVG sobre el grafo recibido, no Leaflet. CAM-038 agrega controles humanos para `POST /juego/unirse` y `POST /juego/accion`; CAM-040 ensambla el backend en modo demo local y el proxy Vite reenvía `/juego`; CAM-041 muestra el restante informado por servidor. El selector solo cambia la vista; el servidor conserva autoridad de modo. El contador es informativo y auditoría T-19 sigue parcial.
 
 | Área | Responsabilidad | Estado que le corresponde |
 |---|---|---|
@@ -28,7 +28,7 @@ Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parc
 
 P4-01 permite consultas iniciales/manuales a `GET /panel/estado` y `GET /panel/mapa`. P4-02 añade snapshots completos por WebSocket, secuencia derivada de versión, heartbeat, aviso de desconexión/desactualización y reconexión. El backend omite zombies dormidos y la UI muestra modo real, métricas, grafo, refugios, cierres, hordas, movimientos confirmados y rutas previstas Dijkstra solo en fase de decisiones. El cliente acepta saltos porque cada snapshot reemplaza el estado completo y descarta repeticiones/estados antiguos de la misma partida. El canal depende del mismo proceso y almacenamiento en memoria; no hay replay durable, control multi-worker o despliegue. El mapa parcial de Manta no certifica seguridad sísmica.
 
-CAM-038 conecta la vista seleccionada «Jugar» a los contratos de sesión/orden: la cookie queda fuera de JS y los movimientos posibles salen de calles dirigidas abiertas no bloqueadas por horda. CAM-040 añade instancia sintética local con ciclo de 2 s y cierre servidor de 1,7 s. Se etiqueta el riesgo de zombie visible, pero el acuse no se presenta como movimiento confirmado. Faltan radio, contador visible, navegación/resultado completo y auditoría T-19; el build y smoke HTTP no equivalen a prueba completa de usabilidad.
+CAM-038 conecta la vista seleccionada «Jugar» a los contratos de sesión/orden: la cookie queda fuera de JS y los movimientos posibles salen de calles dirigidas abiertas no bloqueadas por horda. CAM-040 añade instancia sintética local con ciclo de 2 s y cierre servidor de 1,7 s; CAM-041 muestra un contador local basado en `decisionRestanteMs`. Se etiqueta riesgo zombie y el acuse no se presenta como movimiento confirmado. Faltan radio y auditoría T-19 completa; el contador visible y smoke HTTP no equivalen a prueba completa de usabilidad.
 
 ## Comprobación local
 

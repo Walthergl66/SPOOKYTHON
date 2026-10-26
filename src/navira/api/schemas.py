@@ -146,6 +146,7 @@ class PanelPartidaActivaSchema(BaseModel):
     modo: Literal["simulador", "juego"]
     turno: int
     fase: str
+    decisionRestanteMs: int | None = Field(default=None, ge=0)
     mapVersion: str
     snapshotVersion: int
     zombies: list[ZombiePanelSchema]
