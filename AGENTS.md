@@ -1,6 +1,8 @@
-# Instrucciones para agentes y colaboradores — MantaSafe
+# Instrucciones para agentes y colaboradores — Navira
 
 Estas instrucciones aplican a todo este repositorio. Las instrucciones actuales del usuario y las reglas superiores de la sesión prevalecen. No sustituyen las autorizaciones de ejecución, acceso a servicios o publicación.
+
+El nombre oficial del producto es **Navira**; usar `navira` para nuevos identificadores técnicos derivados del nombre. Conservar denominaciones antiguas solo al describir antecedentes históricos. No renombrar el directorio local `SPOOKYTHON` por iniciativa propia.
 
 ## 1. Primero revisar la documentación
 

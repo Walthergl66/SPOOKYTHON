@@ -9,5 +9,6 @@ Un ADR documenta una elección duradera y su motivo. «Aceptada para diseño» n
 | [ADR-003](0003-estado-y-turnos.md) | Versiones por partida/turno/fase y coordinador único | Aceptada para diseño | Pendiente. |
 | [ADR-004](0004-documentacion-y-continuidad.md) | `doc/` canónico y protocolo de incorporación | Adoptada en documentación | Archivos presentes y comprobador documental. |
 | [ADR-005](0005-prd-trd-oddd-sdd.md) | PRD/TRD, modelo OO + DDD y SDD trazable | Adoptada para el método | SPEC-006 y su evidencia; app pendiente. |
+| [ADR-006](0006-nombre-navira.md) | Nombre oficial Navira | Decisión explícita del usuario | Documentación vigente actualizada; paquete `navira` previsto. |
 
 Usar [plantilla](../plantillas/decision.md). Numeración correlativa, fecha, contexto, decisión, alternativas, consecuencias, pendientes y enlaces. No renumerar IDs ya citados. Para cambiar una decisión relevante, añadir ADR nuevo y marcar el anterior sustituido con enlace recíproco. Correcciones menores pueden aclararse sin fingir que la decisión original ya decía otra cosa.

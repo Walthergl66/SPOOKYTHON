@@ -1,4 +1,4 @@
-# PRD — Requisitos del producto MantaSafe
+# PRD — Requisitos del producto Navira
 
 Versión: 1. Fecha: 2026-10-26. Estado: base de producto documentada, sin aplicación implementada. Origen: [reto](referencias/reto-original.md), solicitudes del usuario en [contexto](contexto.md) y modos ya acordados. Este documento identifica necesidades y prioridades; las [especificaciones](especificaciones/README.md) concretan su aceptación sin duplicar los contratos.
 

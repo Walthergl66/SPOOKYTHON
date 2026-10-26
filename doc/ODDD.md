@@ -4,7 +4,7 @@ Versión: 1. Fecha: 2026-10-26. Interpretación confirmada por el usuario: OO + 
 
 ## Propósito y lenguaje común
 
-Representar reglas de MantaSafe con conceptos del juego, independientes de FastAPI y DynamoDB. Referencia conceptual: [DDD Reference de Eric Evans](https://www.domainlanguage.com/ddd/reference/). La aplicación concreta de este documento es una decisión del proyecto.
+Representar reglas de Navira con conceptos del juego, independientes de FastAPI y DynamoDB. Referencia conceptual: [DDD Reference de Eric Evans](https://www.domainlanguage.com/ddd/reference/). La aplicación concreta de este documento es una decisión del proyecto.
 
 | Término | Significado e identidad |
 |---|---|

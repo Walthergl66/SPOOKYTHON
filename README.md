@@ -1,4 +1,4 @@
-# MantaSafe — Escape de Manta Zombie
+# Navira — Escape de Manta Zombie
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 

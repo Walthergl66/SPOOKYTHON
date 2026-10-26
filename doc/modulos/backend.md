@@ -1,6 +1,6 @@
 # Módulos backend y dependencias
 
-Estado: estructura prevista; aún no existen estos módulos. Raíz de código propuesta: `src/mantasafe/`.
+Estado: estructura prevista; aún no existen estos módulos. Raíz de código propuesta: `src/navira/`, conforme al nombre oficial del producto.
 
 Lenguaje, contextos e invariantes: [ODDD](../ODDD.md). Requisitos técnicos: [TRD](../TRD.md); antes de implementar elegir la [SPEC](../especificaciones/README.md) correspondiente. La orientación a objetos no exige crear clases para funciones sin estado.
 

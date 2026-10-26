@@ -6,7 +6,7 @@ Estado: alcance acordado y diseño pendiente de implementación. Fecha: 2026-10-
 
 Track A «Escape de Manta Zombie»: construir en AWS un motor que recomiende el siguiente movimiento hacia un refugio mientras zombies y cierres de calles cambian el mapa. Es una demostración de rutas dinámicas aplicables a evacuación y despacho; no es un sistema validado para emergencias reales.
 
-Nombre de trabajo propuesto: **MantaSafe**, todavía modificable. El repositorio local está en `SPOOKYTHON`; ese nombre no obliga a cambiar el nombre del producto.
+Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previsto: `navira`; paquete backend previsto: `src/navira/`. MantaSafe fue únicamente el nombre de trabajo anterior y se conserva en referencias históricas. El directorio local continúa en `SPOOKYTHON`; no se ha solicitado renombrarlo. Decisión: [ADR-006](decisiones/0006-nombre-navira.md).
 
 ## Solicitudes explícitas del usuario
 
@@ -15,6 +15,7 @@ Nombre de trabajo propuesto: **MantaSafe**, todavía modificable. El repositorio
 3. Incorporar dos modos: simulador automático y juego en el que una persona aparece aleatoriamente y lleva su personaje a un refugio.
 4. Modularizar toda la documentación en `doc/`, registrar el contexto de cada cambio y crear un `AGENTS.md` que exija revisar los `.md` antes de trabajar.
 5. Incorporar PRD, TRD, ODDD y SDD. El usuario confirmó ODDD como orientación a objetos y diseño guiado por dominio (OO + DDD); la adopción conserva stack, modos y alcance existentes.
+6. Establecer **Navira** como nombre de la app.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](ODDD.md), [SDD](SDD.md). Criterios por funcionalidad: [especificaciones](especificaciones/README.md).
 

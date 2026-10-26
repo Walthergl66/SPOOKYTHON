@@ -2,6 +2,8 @@
 
 Estado: pendiente de ejecución. Última revisión: 2026-10-26. Fuentes: [contexto](contexto.md), [reto](referencias/reto-original.md) y [decisiones](decisiones/README.md). El [plan previo](referencias/plan-previo.md) es histórico; los documentos especializados actuales son la fuente de cada contrato o regla.
 
+Nombre vigente: **Navira**. Al crear el backend usar la raíz propuesta `src/navira/`; la ruta del plan histórico no es una instrucción actual de nomenclatura. Las tareas funcionales y sus IDs se mantienen.
+
 ## Orden y dependencias
 
 ```mermaid

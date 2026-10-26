@@ -1,4 +1,4 @@
-# TRD — Requisitos técnicos de MantaSafe
+# TRD — Requisitos técnicos de Navira
 
 Versión: 1. Fecha: 2026-10-26. Estado: requisitos documentados, sin implementación de producto. En este repositorio TRD significa Technical Requirements Document. Se deriva del [PRD](PRD.md), [reto](referencias/reto-original.md) y decisiones vigentes; no selecciona un stack nuevo.
 

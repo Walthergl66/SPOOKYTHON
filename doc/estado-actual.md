@@ -1,8 +1,10 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-004**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-005**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
+
+- Nombre oficial elegido por el usuario: **Navira**. Documentación vigente y paquete backend previsto `src/navira/` actualizados; decisión ADR-006. El directorio local sigue siendo `SPOOKYTHON`.
 
 - Existe documentación modular en `doc/`, README raíz y protocolo de incorporación en `AGENTS.md`.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
@@ -22,6 +24,10 @@
 ## Verificación de CAM-004
 
 Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos comprobados, seis SPEC y 22 requisitos identificados. SPEC-006 verificada; las otras cinco continúan listas, sin código. Ocho regresiones ejecutadas correctamente y comando enfocado a SPEC-004 comprobado. Propuesta SDD preservada íntegramente. Revisión, comandos, conteo por pasada y límites en [evidencia](resultados/verificacion-sdd.md).
+
+## Verificación de CAM-005
+
+`python3 scripts/check_docs.py` correcto: 53 Markdown en `doc/` y 55 archivos comprobados. `python3 scripts/check_sdd.py` correcto: seis especificaciones mantienen su trazabilidad y estado. Búsqueda de nombres revisada: la denominación anterior solo permanece en antecedentes explícitos y referencia histórica. No cambian scripts ni comportamiento funcional, por lo que no se añaden pruebas de aplicación.
 
 ## Lo que todavía no existe o no está verificado
 
@@ -50,4 +56,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-Ninguna implementación de aplicación iniciada. La metodología documental está incorporada y comprobada. Siguiente agente: leer `AGENTS.md`, revisar `doc/`, elegir SPEC y contrastar este estado contra los archivos antes de actuar. Si encuentra cambios posteriores a CAM-004, inspeccionarlos y actualizar este resumen, sin sobrescribir trabajo ajeno.
+Ninguna implementación de aplicación iniciada. La metodología documental está incorporada y comprobada; el nombre a usar es Navira. Siguiente agente: leer `AGENTS.md`, revisar `doc/`, elegir SPEC y contrastar este estado contra los archivos antes de actuar. Si encuentra cambios posteriores a CAM-005, inspeccionarlos y actualizar este resumen, sin sobrescribir trabajo ajeno.
