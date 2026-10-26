@@ -12,9 +12,10 @@ from navira.domain.modelo import (
     EstadoZombie,
     FaseTurno,
     Partida,
+    Sobreviviente,
     TipoZombie,
 )
-from navira.routing.dijkstra import PerfilCostos, seleccionar_refugio
+from navira.routing.dijkstra import PerfilCostos, Ruta, seleccionar_refugio
 from navira.simulation.coordinador import SnapshotMundo
 
 
@@ -76,6 +77,28 @@ class DecidirPaso:
         self._perfil = perfil
 
     def ejecutar(self, solicitud: SolicitudPaso) -> DecisionPaso:
+        snapshot, sobreviviente, grafo = self._obtener_contexto(solicitud)
+        ruta = self._seleccionar_ruta(snapshot, grafo, sobreviviente)
+        destino = ruta.siguiente_nodo if ruta is not None else None
+        return DecisionPaso(destino or sobreviviente.nodo)
+
+    def prever_ruta(self, solicitud: SolicitudPaso) -> tuple[str, ...]:
+        """Devuelve ruta dirigida desde el mismo snapshot y filtro que `/paso`.
+
+        Es una vista previa de decisión, no un movimiento confirmado ni una
+        garantía de seguridad. Si no hay ruta, la recomendación es esperar en
+        el nodo actual.
+        """
+
+        snapshot, sobreviviente, grafo = self._obtener_contexto(solicitud)
+        ruta = self._seleccionar_ruta(snapshot, grafo, sobreviviente)
+        if ruta is None:
+            return (sobreviviente.nodo,)
+        return (ruta.origen, *(calle.destino for calle in ruta.calles))
+
+    def _obtener_contexto(self, solicitud: SolicitudPaso) -> tuple[SnapshotMundo, Sobreviviente, Grafo]:
+        """Valida identidad temporal y carga el grafo antes de planificar."""
+
         try:
             snapshot = self._snapshots.obtener_activa()
         except RuntimeError as error:
@@ -99,8 +122,16 @@ class DecidirPaso:
         if grafo is None:
             raise PartidaNoDisponible("No está disponible la versión de mapa de la partida.")
         partida.validar_mapa(grafo.mapa)
-        nodos_bloqueados, aristas_peligrosas = _peligros_visibles(snapshot, grafo)
-        ruta = seleccionar_refugio(
+
+        return snapshot, sobreviviente, grafo
+
+    def _seleccionar_ruta(
+        self, snapshot: SnapshotMundo, grafo: Grafo, sobreviviente: Sobreviviente
+    ) -> Ruta | None:
+        """Usa exactamente los peligros observables de la recomendación HTTP."""
+
+        nodos_bloqueados, aristas_peligrosas = peligros_visibles(snapshot, grafo)
+        return seleccionar_refugio(
             grafo,
             sobreviviente.nodo,
             refugio_objetivo=sobreviviente.refugio_objetivo,
@@ -109,8 +140,6 @@ class DecidirPaso:
             nodos_bloqueados=frozenset(nodos_bloqueados),
             perfil=self._perfil,
         )
-        destino = ruta.siguiente_nodo if ruta is not None else None
-        return DecisionPaso(destino or sobreviviente.nodo)
 
     @staticmethod
     def _validar_turno(partida: Partida, solicitud: SolicitudPaso) -> None:
@@ -129,10 +158,10 @@ class DecidirPasoEspera:
         return DecisionPaso(siguiente_nodo=solicitud.nodo_actual)
 
 
-def _peligros_visibles(
+def peligros_visibles(
     snapshot: SnapshotMundo, grafo: Grafo
 ) -> tuple[set[str], frozenset[str]]:
-    """Bloquea ocupación zombie actual y cruces conocidos de este turno.
+    """Proyecta ocupación/horda y cruces visibles para decisión y panel.
 
     Solo considera zombies activos para no filtrar dormidos ocultos. Las hordas
     también bloquean vecinos entrantes/salientes según cierres vigentes.
@@ -145,22 +174,7 @@ def _peligros_visibles(
         if zombie.estado is not EstadoZombie.ACTIVO:
             continue
         nodos.add(zombie.nodo)
-        if zombie.tipo is TipoZombie.HORDA:
-            nodos.update(
-                calle.destino
-                for calle in grafo.calles_desde(
-                    zombie.nodo,
-                    aristas_cerradas=snapshot.aristas_cerradas,
-                    segmentos_cerrados=snapshot.segmentos_cerrados,
-                )
-            )
-            nodos.update(
-                calle.origen
-                for calle in grafo.mapa.calles
-                if calle.destino == zombie.nodo
-                and calle.id not in snapshot.aristas_cerradas
-                and calle.segmento_id not in snapshot.segmentos_cerrados
-            )
+    nodos.update(nodos_horda_visibles(snapshot, grafo))
 
     for movimiento in snapshot.movimientos_zombies:
         for tramo in movimiento.tramos:
@@ -172,3 +186,29 @@ def _peligros_visibles(
                 and calle.destino == tramo.origen
             )
     return nodos, frozenset(aristas_cruzadas)
+
+
+def nodos_horda_visibles(snapshot: SnapshotMundo, grafo: Grafo) -> frozenset[str]:
+    """Lista nodos ocupados o vecinos bloqueados por hordas ya visibles."""
+
+    bloqueados: set[str] = set()
+    for zombie in snapshot.partida.zombies:
+        if zombie.estado is not EstadoZombie.ACTIVO or zombie.tipo is not TipoZombie.HORDA:
+            continue
+        bloqueados.add(zombie.nodo)
+        bloqueados.update(
+            calle.destino
+            for calle in grafo.calles_desde(
+                zombie.nodo,
+                aristas_cerradas=snapshot.aristas_cerradas,
+                segmentos_cerrados=snapshot.segmentos_cerrados,
+            )
+        )
+        bloqueados.update(
+            calle.origen
+            for calle in grafo.mapa.calles
+            if calle.destino == zombie.nodo
+            and calle.id not in snapshot.aristas_cerradas
+            and calle.segmento_id not in snapshot.segmentos_cerrados
+        )
+    return frozenset(bloqueados)

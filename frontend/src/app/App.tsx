@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { CityMap } from '../features/map/CityMap'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
+import { loadPanelSnapshot, type PanelSnapshot } from '../shared/api/panel'
 import { BrandMark } from '../shared/ui/BrandMark'
 
 const modeCopy: Record<NaviraMode, { eyebrow: string; title: string; body: string }> = {
@@ -17,7 +19,41 @@ const modeCopy: Record<NaviraMode, { eyebrow: string; title: string; body: strin
 
 export function App() {
   const [mode, setMode] = useState<NaviraMode>('simulator')
+  const [selectedSurvivorId, setSelectedSurvivorId] = useState<string | undefined>()
+  const [snapshot, setSnapshot] = useState<PanelSnapshot | null>(null)
+  const [panelError, setPanelError] = useState<string | null>(null)
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null)
+  const [refreshCount, setRefreshCount] = useState(0)
+  const [loading, setLoading] = useState(true)
   const copy = modeCopy[mode]
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setLoading(true)
+    loadPanelSnapshot(controller.signal)
+      .then((nextSnapshot) => {
+        setSnapshot(nextSnapshot)
+        setPanelError(null)
+        setUpdatedAt(new Intl.DateTimeFormat('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date()))
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setPanelError(error instanceof Error ? error.message : 'El panel no está disponible.')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+    return () => controller.abort()
+  }, [refreshCount])
+
+  const state = snapshot?.state ?? null
+  const map = snapshot?.map ?? null
+  const active = state?.estado === 'activa'
+  const cityName = map?.version.includes('manta') ? 'Manta · Manabí' : map ? 'Mapa del escenario' : 'Manta · Manabí'
+  const mapLabel = map?.version.startsWith('navira-demo') ? 'MUNDO SINTÉTICO' : map ? 'MAPA DE SIMULACIÓN' : 'VISTA DE CIUDAD'
+  const statusLabel = active ? `TURNO ${state.turno} · ${(state.fase ?? 'desconocida').replaceAll('_', ' ')}` : state?.estado === 'sin_partida' ? 'SIN PARTIDA ACTIVA' : loading ? 'CARGANDO PROYECCIÓN' : 'DATOS NO DISPONIBLES'
+  const survivors = (active ? state.sobrevivientes : undefined)?.filter(({ estado: survivorState }) => survivorState === 'activo') ?? []
+  const selectedRouteOwner = survivors.some(({ id }) => id === selectedSurvivorId) ? selectedSurvivorId : survivors[0]?.id
 
   return (
     <main className="app-shell">
@@ -27,8 +63,8 @@ export function App() {
           <span className="brand-name">navira</span>
         </a>
         <div className="topbar-context">
-          <span className="context-pulse" aria-hidden="true" />
-          <span>MANTA, ECUADOR</span>
+          <span className={`context-pulse${active ? '' : ' is-idle'}`} aria-hidden="true" />
+          <span>{active && map && !map.version.includes('manta') ? 'ESCENARIO DE PRUEBA' : 'MANTA, ECUADOR'}</span>
           <span className="context-divider" aria-hidden="true" />
           <span className="context-label">PLATAFORMA DE EVACUACIÓN</span>
         </div>
@@ -51,6 +87,7 @@ export function App() {
             <ModeCard mode="simulator" selected={mode === 'simulator'} onSelect={setMode} />
             <ModeCard mode="game" selected={mode === 'game'} onSelect={setMode} />
           </div>
+          <p className="mode-note">Vista previa de modos · la selección todavía no inicia una partida.</p>
 
           <div className="mode-preview" aria-live="polite">
             <div className="preview-index">{mode === 'simulator' ? 'A' : 'B'}</div>
@@ -64,53 +101,74 @@ export function App() {
 
         <aside className="city-panel" aria-label="Estado del mapa de Manta">
           <div className="panel-topline">
-            <div><span className="panel-overline">VISTA DE CIUDAD</span><h2>Manta <span>·</span> Manabí</h2></div>
-            <span className="map-chip">MAPA BASE</span>
+            <div><span className="panel-overline">{mapLabel}</span><h2>{cityName}{active ? <span className="actual-mode"> · {state.modo === 'simulador' ? 'SIMULADOR' : 'JUEGO'}</span> : null}</h2></div>
+            <button className="refresh-button" type="button" onClick={() => setRefreshCount((count) => count + 1)} disabled={loading} aria-label="Actualizar estado del panel">
+              <span aria-hidden="true">↻</span> ACTUALIZAR
+            </button>
           </div>
 
-          <div className="map-stage" aria-label="Vista cartográfica en preparación">
-            <svg className="coastline" viewBox="0 0 700 720" role="img" aria-labelledby="map-title map-description" preserveAspectRatio="xMidYMid slice">
-              <title id="map-title">Silueta costera de Manta</title>
-              <desc id="map-description">Ilustración de referencia; el mapa interactivo aparecerá al iniciar una partida.</desc>
-              <path className="sea-shape" d="M0 0h250c-27 62-18 104-47 151-20 33 20 74-5 112-23 37-74 45-54 89 14 31 64 60 39 105-22 38-80 47-70 91 7 32 49 82 17 172H0z" />
-              <path className="coast-edge" d="M250 0c-27 62-18 104-47 151-20 33 20 74-5 112-23 37-74 45-54 89 14 31 64 60 39 105-22 38-80 47-70 91 7 32 49 82 17 172" />
-              <g className="street-lines" fill="none">
-                <path d="M235 34 327 76l22 95 82 27 29 104 105 49" />
-                <path d="m206 111 112 16 74 69 94 33 70 73 69 20" />
-                <path d="m195 218 113-91 29-51 99-42 98 22 71-26" />
-                <path d="m190 282 118-155 87 71-62 105 129 2 65 93 73-27" />
-                <path d="m159 352 149-225 25 139 105 12 84 79 94-59 49 64" />
-                <path d="m190 457 118-330 25 139-35 124 140-42 84 79 94-59 49 64" />
-                <path d="m169 551 139-424 60 229 94-167 84 79 94-59 49 64" />
-                <path d="m130 650 178-523 60 229 72 93 144-79 84 79 65-59" />
-                <path d="m305 690 3-563 60 229 72 93 144-79 84 79 65-59" />
-                <path d="M412 700 308 127l165 55 7 124-107 10 62 113 144-79 44 92" />
-                <path d="m513 706-40-524 7 124 95 82-95 48 62 113 82-34" />
-                <path d="m638 696-63-308-95 48 62 113 82-34 44 93" />
-              </g>
-              <g className="district-labels" aria-hidden="true">
-                <text x="354" y="101">TARQUI</text><text x="491" y="302">MANTA</text><text x="291" y="512">LOS ESTEROS</text><text x="508" y="602">BARBASQUILLO</text>
-              </g>
-              <g className="map-pin" transform="translate(459 258)"><circle r="19"/><circle className="pin-core" r="5"/><path d="M0 19v34"/></g>
-              <g className="map-pin map-pin-secondary" transform="translate(344 479)"><circle r="14"/><circle className="pin-core" r="4"/><path d="M0 14v27"/></g>
-              <text className="map-label" x="480" y="252">MANTA</text>
-              <g className="compass" transform="translate(633 73)"><circle r="24"/><path d="M0-15 5 4 0 1-5 4z"/><text x="0" y="-31">N</text></g>
-            </svg>
-            <div className="map-status"><span className="status-dot" /><span>Sin partida activa</span></div>
-            <div className="map-coordinate">0°57′ S&nbsp; 80°43′ O</div>
+          <div className="map-stage" aria-label="Mapa de la partida">
+            {map && state?.estado === 'activa' ? <CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} /> : <MapPlaceholder />}
+            <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite">
+              <span className={`status-dot${active ? '' : ' is-idle'}`} />
+              <span>{panelError ? 'SERVICIO DEL PANEL SIN CONEXIÓN' : statusLabel}</span>
+            </div>
+            <div className="map-coordinate">{map?.version ?? 'SIN VERSIÓN DE MAPA'}</div>
+          </div>
+
+          {active && state.metricas ? (
+            <div className="map-metrics" aria-label="Métricas de la instantánea">
+              <Metric label="ACTIVOS" value={state.metricas.sobrevivientesActivos} />
+              <Metric label="EVACUADOS" value={state.metricas.evacuados} />
+              <Metric label="MORDIDOS" value={state.metricas.mordidos} />
+              <Metric label="ZOMBIES VISIBLES" value={state.metricas.zombiesVisibles} />
+            </div>
+          ) : null}
+
+          {active && survivors.length > 0 ? (
+            <div className="route-selector">
+              <label htmlFor="survivor-route">RUTA PREVISTA</label>
+              <select id="survivor-route" value={selectedRouteOwner ?? ''} onChange={(event) => setSelectedSurvivorId(event.target.value)}>
+                {survivors.map((survivor) => <option key={survivor.id} value={survivor.id}>{survivor.id}</option>)}
+              </select>
+              <span>No confirma movimiento ni garantiza seguridad.</span>
+            </div>
+          ) : null}
+
+          <div className="map-legend" aria-label="Leyenda del mapa">
+            <span><i className="legend-refuge" /> Refugio</span>
+            <span><i className="legend-survivor" /> Sobreviviente</span>
+            <span><i className="legend-zombie" /> Zombie visible</span>
+            <span><i className="legend-route" /> Ruta prevista</span>
+            <span><i className="legend-trail" /> Trayecto confirmado</span>
+            <span><i className="legend-closure" /> Cierre</span>
           </div>
 
           <div className="city-panel-footer">
-            <div><span className="footer-mark">⌁</span><span>El mapa interactivo se activará con una partida.</span></div>
-            <span className="north-mark">ECUADOR <b>↓</b></span>
+            <span>{panelError ? panelError : state?.estado === 'sin_partida' ? 'Esperando una partida para mostrar el mapa.' : updatedAt ? `Consulta recibida ${updatedAt} · actualización manual` : 'El panel solo muestra estado confirmado por el servidor.'}</span>
+            <span className="north-mark">NO ES UNA GUÍA DE EMERGENCIA</span>
           </div>
         </aside>
       </section>
 
       <footer className="app-footer">
         <span>NAVIRA <span className="footer-separator">/</span> EVACUACIÓN DINÁMICA</span>
-        <span>PROTOTIPO DE SIMULACIÓN <span className="footer-separator">·</span> NO ES UNA GUÍA DE EMERGENCIA</span>
+        <span>SIMULACIÓN DE HACKATHON <span className="footer-separator">·</span> SIN GARANTÍA DE SEGURIDAD REAL</span>
       </footer>
     </main>
+  )
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return <div className="metric"><span>{label}</span><strong>{value}</strong></div>
+}
+
+function MapPlaceholder() {
+  return (
+    <div className="map-placeholder" role="img" aria-label="No hay un mapa de partida activo">
+      <span className="placeholder-orbit" aria-hidden="true"><span /><span /><span /></span>
+      <strong>El mapa aparecerá aquí.</strong>
+      <span>Sin datos cartográficos de una partida activa.</span>
+    </div>
   )
 }

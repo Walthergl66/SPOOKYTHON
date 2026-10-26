@@ -1,6 +1,6 @@
 # Seguridad y límites de confianza
 
-Estado: requisitos de implementación, no controles ya verificados.
+Estado: controles parciales. El panel HTTP local proyecta únicamente mapas versionados, zombies activos, movimientos visibles y métricas permitidas; no publica dormidos, semillas o RNG. Sesión, límites de frecuencia, TLS, orígenes y permisos en despliegue siguen pendientes.
 
 ## Identidades
 

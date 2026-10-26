@@ -27,7 +27,7 @@ En el código, `Calle.id` identifica un sentido dirigido y `Calle.segmento_id` e
 
 **Real privado:** todos los zombies, activaciones, generador aleatorio, estados de control y datos necesarios para recuperar. **Observable:** zombies visibles, trayectorias permitidas, sobrevivientes, bloqueos y datos públicos de refugios. Credenciales y estado aleatorio no pertenecen a ninguna respuesta de panel o recomendación.
 
-El resolutor privado conserva todos los zombies; el caso de uso `/paso` solo considera activos para bloquear ocupación y cruces del turno. No lee dormidos al calcular su ruta, y no los incluye en errores/respuestas. La proyección de panel y radio todavía no está implementada.
+El resolutor privado conserva todos los zombies; el caso de uso `/paso` solo considera activos para bloquear ocupación y cruces del turno. No lee dormidos al calcular su ruta, y no los incluye en errores/respuestas. `application/consultar_panel.py` publica mapa y snapshot sin dormidos, semillas, RNG ni escenario privado; añade rutas dirigidas calculadas con la política compartida y peligros visibles del estado actual. No proyecta radio ni eventos futuros; sincronización durable y permisos del panel en despliegue siguen pendientes.
 
 ## Versiones
 

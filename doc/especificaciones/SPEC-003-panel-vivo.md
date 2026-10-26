@@ -12,6 +12,8 @@ Evidencia: pendiente
 
 Hacer comprensible la partida en vivo sin capacidad de alterar el mundo para espectadores. Fuentes: [espectador](../flujos/espectador.md), [eventos](../contratos/eventos.md), [frontend](../modulos/frontend.md). No requiere controles administrativos web ni un diseño visual no aprobado.
 
+P4-01 verificado en CAM-031 para el alcance de mapa, capas observables, ruta Dijkstra seleccionable y métricas con consulta manual. CA-003-02 y sincronización/frescura quedan en P4-02; esta SPEC permanece lista y no se declara verificada integralmente.
+
 ## Criterios de aceptación
 
 | Criterio | Comportamiento verificable | Pruebas |

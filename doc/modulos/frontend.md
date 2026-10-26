@@ -18,14 +18,16 @@ Estado: base React + TypeScript + Vite implementada en `frontend/`; no hay clien
 - `frontend/src/app/`: composición de la pantalla inicial y selección local entre simulador y juego.
 - `frontend/src/features/mode/`: tarjetas accesibles de modo; la selección solo altera la vista previa.
 - `frontend/src/shared/ui/`: marca vectorial reutilizable.
+- `frontend/src/shared/api/panel.ts`: cliente HTTP GET y validación runtime de esquema/mapVersion.
+- `frontend/src/features/map/`: SVG del grafo, refugios, entidades observables, cierres y trayectos zombie confirmados.
 - `frontend/src/styles.css`: tokens visuales, layout responsivo y preferencia de movimiento reducido.
 - `frontend/README.md`: inicio local y límites de esta base.
 
-`GET /panel/estado`, `GET /panel/mapa`, sesión, WebSocket, selección de personajes y controles aún no existen. No mostrar la silueta ilustrativa como cartografía ni inferir estado de una partida a partir de ella. El criterio CA-003-01 sigue pendiente hasta integrar una proyección real que oculte zombies dormidos y peligros privados.
+P4-01 implementa consultas iniciales/manuales a `GET /panel/estado` y `GET /panel/mapa`, con validación de respuestas y comparación de versión. El backend omite zombies dormidos y la UI muestra el modo real, métricas separadas, grafo, refugios, cierres, áreas de horda, movimientos confirmados y rutas completas previstas por Dijkstra para seleccionar un personaje. La ruta usa el mismo snapshot/peligros que `/paso`, pero es una predicción y no garantiza seguridad. No hay reloj de frescura del servidor ni WebSocket. CA-003-02 sigue parcial; CA-003-01/03/04 requieren validar el panel completo. El mapa real de Manta disponible tiene alcance parcial y sus anclas no certifican seguridad sísmica.
 
 ## Comprobación local
 
-Desde `frontend/`, `npm ci` instala el lockfile y `npm run build` valida TypeScript y produce el bundle Vite. `.github/workflows/ci.yml` define las verificaciones backend/frontend en push a `master` y pull request; esta configuración se revisó localmente, pero el workflow remoto no se ha ejecutado ni publicado.
+Desde `frontend/`, `npm ci` instala el lockfile y `npm run build` valida TypeScript y produce el bundle Vite. En desarrollo, Vite reenvía `/panel` a `127.0.0.1:8000`. `.github/workflows/ci.yml` define las verificaciones backend/frontend en push a `master` y pull request; esta configuración se revisó localmente, pero el workflow remoto no se ha ejecutado ni publicado.
 
 ## Reglas
 

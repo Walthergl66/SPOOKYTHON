@@ -6,10 +6,11 @@ from fastapi import FastAPI
 
 from navira.api.routes import router
 from navira.application.decidir_paso import DecidirPasoEspera
-from navira.demo import MAPA_DEMO_POR_DEFECTO, crear_servicio_demo
+from navira.application.consultar_panel import ConsultarPanel
+from navira.demo import MAPA_DEMO_POR_DEFECTO, crear_contexto_demo
 
 
-def crear_app(servicio_decision=None) -> FastAPI:
+def crear_app(servicio_decision=None, consultar_panel: ConsultarPanel | None = None) -> FastAPI:
     """Ensamblaje inyectable; sin servicio recibe espera determinista."""
 
     aplicacion = FastAPI(
@@ -18,6 +19,7 @@ def crear_app(servicio_decision=None) -> FastAPI:
         version="0.1.0",
     )
     aplicacion.state.decidir_paso = servicio_decision or DecidirPasoEspera()
+    aplicacion.state.consultar_panel = consultar_panel
     aplicacion.include_router(router)
     return aplicacion
 
@@ -31,13 +33,15 @@ def crear_app_demo(
 ) -> FastAPI:
     """Arranca explícitamente el mundo sintético local para desarrollo."""
 
+    contexto = crear_contexto_demo(
+        ruta_mapa,
+        semilla=semilla,
+        escenario=escenario,
+        cantidad_sobrevivientes=cantidad_sobrevivientes,
+    )
     return crear_app(
-        crear_servicio_demo(
-            ruta_mapa,
-            semilla=semilla,
-            escenario=escenario,
-            cantidad_sobrevivientes=cantidad_sobrevivientes,
-        )
+        contexto.servicio_decision,
+        ConsultarPanel(contexto.snapshots, contexto.mapas, contexto.servicio_decision),
     )
 
 

@@ -1,6 +1,6 @@
 # Contratos HTTP
 
-Estado: `/salud` y `/paso` tienen implementación local; la app puede ensamblar el caso de uso con snapshot/mapa en memoria para usar Dijkstra. El punto de entrada predeterminado aún usa espera porque no carga un mundo. No hay endpoints desplegados. Solo el formato obligatorio de `/paso` y el estado mínimo provienen del reto; las rutas adicionales son diseño del equipo.
+Estado: `/salud`, `/paso`, `GET /panel/estado` y `GET /panel/mapa` tienen implementación local. Las rutas de panel son de solo lectura; el estado sin partida devuelve `{"estado":"sin_partida"}` y el mapa requiere una partida activa. No hay endpoints desplegados. Solo el formato obligatorio de `/paso` y el estado mínimo provienen del reto; las rutas adicionales son diseño del equipo.
 
 La configuración local optativa `NAVIRA_DEMO=1` acepta `NAVIRA_DEMO_MAP`, `NAVIRA_DEMO_SEED`, `NAVIRA_DEMO_SCENARIO` y `NAVIRA_DEMO_SURVIVORS` para iniciar el fixture sintético. Una semilla configurada hace reproducible el inicio; si se omite, el proceso genera una semilla nueva. La semilla/estado privado no forma parte del contrato HTTP. El cliente `python -m navira.carga_http` puede enviar solicitudes concurrentes a `/paso`; requiere una configuración coincidente en servidor/cliente y `NAVIRA_API_KEY` en el entorno del cliente. No cambia el contrato HTTP ni expone configuración de demo en las rutas. Las ráfagas repiten el mismo snapshot y sirven para medir la ruta de decisión; no simulan avance del reloj ni supervivencia.
 
@@ -41,6 +41,12 @@ Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema invál
 | `POST /admin/eventos` | Operador | Evento validado para un turno. |
 
 Las rutas de panel evitan enviar `x-api-key` maestra al navegador. Tienen proyección y límites propios; no son una puerta de entrada al estado real. La CLI administrativa tampoco conserva secretos en argumentos o ejemplos versionados.
+
+### Panel HTTP de solo lectura — implementación parcial
+
+`GET /panel/estado` devuelve `sin_partida` cuando no se inyecta una partida activa; para una ronda activa devuelve run, modo, turno, fase, versión de snapshot/mapa, sobrevivientes, zombies activos, movimientos de zombies visibles, cierres, áreas de horda, rutas previstas dirigidas para personajes activos y métricas por modo. Zombies que siguen dormidos, escenario privado y estado/semilla del generador se omiten completamente. Una ruta es una vista previa calculada desde el mismo snapshot/política de `/paso`, no un movimiento confirmado ni garantía de seguridad. `GET /panel/mapa` devuelve únicamente el grafo versionado asociado a la partida activa (nodos, sentidos de calle y refugios); sin partida o versión disponible responde 503. Ambos son GET de solo lectura y no exigen la clave maestra del motor.
+
+Los campos concretos se fijan en los esquemas OpenAPI de la aplicación y sus pruebas ASGI. El panel consulta estado/mapa al abrir y bajo solicitud manual; hasta implementar `WS /ws` en P4-02, no hay actualización automática ni garantía de datos frescos. La proyección de ruta se limita a los personajes activos del snapshot; no es evaluación temporal futura.
 
 ## Orden humana
 

@@ -1,13 +1,14 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-030**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-031**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
 - Nombre oficial elegido por el usuario: **Navira**. Documentación vigente y paquete backend previsto `src/navira/` actualizados; decisión ADR-006. El directorio local sigue siendo `SPOOKYTHON`.
 
 - Existe documentación modular en `doc/`, README raíz y protocolo de incorporación en `AGENTS.md`.
-- P0-04: existe scaffold React + TypeScript + Vite en `frontend/`, selector local de simulador/juego y vista costera explícitamente ilustrativa. `npm ci` y `npm run build` pasan localmente. `.github/workflows/ci.yml` define jobs Python y frontend; aún no se ha ejecutado en GitHub Actions. No hay integración API, mapa interactivo, sesión ni WebSocket.
+- P0-04: existe scaffold React + TypeScript + Vite en `frontend/`, selector local de simulador/juego y `.github/workflows/ci.yml`; build/suite Python pasan localmente. El workflow aún no se ha ejecutado en GitHub Actions. La integración inicial manual del panel está limitada al progreso parcial de P4-01 descrito a continuación; sesión y WebSocket no existen.
+- P4-01 verificado en CAM-031: `GET /panel/estado` y `GET /panel/mapa` proyectan snapshots/mapa versionados; ocultan dormidos y estado aleatorio privado. El frontend valida respuesta/versiones, dibuja calles, refugios, sobrevivientes, zombies visibles, movimientos confirmados, cierres/hordas, métricas y ruta prevista Dijkstra seleccionable; permite actualización manual. P4-02 (WebSocket/frescura automática) no está implementada; sin partida el panel muestra estado vacío.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -55,17 +56,17 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Backend y `/paso` | Contrato y política Dijkstra; inicio demo local explícito | Configurar mundo real, persistencia, idempotencia y medir latencia bajo carga. |
 | Simulador | Demo con semilla nueva opcional, estado inicial aleatorio y replay local explícito; resolución/ronda con RNG privado y CAS en memoria | Distribución oficial parametrizada, composición/eventos, movimiento de horda, replay durable/versionado entre despliegues, DynamoDB, reloj/publicación y escenarios oficiales pendientes. |
 | Grafo de Manta | Fixture de 300 nodos y cuatro zonas seguras de tsunami generado | Validar cobertura representativa de barrios/rutas peatonales y evaluar amenazas sísmicas con fuentes competentes; el fixture no es para navegación real. |
-| Frontend y juego | Scaffold/vista previa local; sin integración, mapa vivo o controles de juego | Ejecutar workflow en remoto; completar P4-01/P4-02 y P4B-01..03 con API, proyección observable y sesión verificadas. |
+| Frontend y juego | P4-01 mapa/ruta seleccionable verificados; sin actualización en vivo o controles de juego | Completar P4-02 (WebSocket/reconexión) y P4B-01..03; desplegar workflow para observar CI remoto. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
 | Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
-| Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028 y CAM-029 son commits locales separados | Publicar los dos commits cuando haya una ruta de escritura que acepte cambios de Git. |
+| Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028..CAM-031 están como commits locales separados | Publicar los commits locales cuando haya una ruta de escritura que acepte cambios de Git. |
 
-El checkout local está en `master`; CAM-028, CAM-029 y CAM-030 tienen commits separados. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. Los intentos previos de push no pudieron leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; no se ha vuelto a intentar publicar. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
+El checkout local está en `master`; CAM-028, CAM-029, CAM-030 y CAM-031 tienen commits separados. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. Los intentos previos de push no pudieron leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; no se ha vuelto a intentar publicar. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-CAM-030 completó el criterio local de P0-04: frontend mínimo, lockfile, build y CI configurado; los 100 tests Python y validadores documentales también pasaron. Próxima acción local: preparar P4-01 sobre la proyección real del backend; primero revisar qué endpoint de consulta y filtrado observable puede ofrecer el estado versionado sin revelar dormidos. No conectar el panel a datos inventados. P4-02 requiere transporte/reanudación; juego humano requiere P4B. Continúan P-07/P-09, T-11, P2-03/P5-01, AWS y persistencia durable. No afirmar que el workflow remoto se ejecutó ni que existe seguridad sísmica.
+CAM-031 verificó P4-01: el panel lee mapa/snapshot activos sin credencial maestra, valida formato/versiones, muestra modo/métricas, calcula rutas con la política de `/paso`, filtra dormidos/RNG y permite elegir una ruta. Se hizo recorrido visual con la fixture parcial Manta y proxy Vite. Siguiente tarea: P4-02 para eventos, frescura automática y recuperación/reconexión; completar T-15 y volver a verificar CA-003-02. SPEC-003 no está completa. Continúan AWS, persistencia durable, T-11, P2-03/P5-01 y P-07/P-09. No afirmar que el workflow remoto se ejecutó ni que existe seguridad sísmica.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
@@ -74,6 +75,8 @@ Verificación de CAM-028: suite completa `PYTHONPATH=src /tmp/navira-env/bin/pyt
 Verificación de CAM-029: suite completa (100 pruebas), `python3 scripts/check_docs.py` (60 Markdown/62 archivos), `python3 scripts/check_sdd.py`, `compileall` y `git diff --check` correctos. La matriz CLI 20/80/200 se ejecutó a 2 s por tres turnos; cifras y límites en [reporte CAM-029](resultados/evaluacion-cadencia-cam029.md). Commit individual local creado; consola no pudo autenticar y GitHub rechazó la escritura del árbol remoto, por lo que `origin/master` no se actualizó.
 
 Verificación CAM-030: `frontend/npm ci` (24 paquetes, cero vulnerabilidades reportadas), `frontend/npm run build` correcto con Vite 8.3.5 y TypeScript 7.0.2; suite backend (`PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py'`) 100 pruebas correctas; validadores doc y SDD correctos con 60 Markdown; pantalla inspeccionada en navegador local a ancho móvil. `npm run build` falló primero por declaración de CSS ausente, corregida en `vite-env.d.ts`; no quedan errores. El workflow no se ha ejecutado en remoto. El backend/frontend no están integrados.
+
+Verificación CAM-031: suite completa (106 pruebas), `python3 scripts/check_docs.py` (60 Markdown/62 archivos), `python3 scripts/check_sdd.py`, ocho pruebas de `test_check_sdd.py`, `compileall`, `git diff --check`, `npm ci` y `npm run build` correctos. Una medición local única de `consultar_estado()` dio 12,12/42,68/101,47 ms para 20/80/200 sobrevivientes; no son percentiles ni medición HTTP remota. Vite se conectó por proxy a Uvicorn y mostró versión de mapa, selector de ruta, métricas y capas. Aún no se ha probado evento/reconexión; el mapa es fixture parcial y no uso de emergencia.
 
 ## Dependencias externas
 

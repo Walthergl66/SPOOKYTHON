@@ -17,7 +17,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-01 | Caminante con fase | Una calle cada dos turnos. |
 | T-02 | Corredor y bloqueos | Dos pasos legales; trayectoria completa y objetivo según regla acordada. |
 | T-03 | Horda | Nodo y vecinos intransitables. |
-| T-04 | Dormido | No visible ni utilizable por motor antes de activación. |
+| T-04 | Dormido | No visible ni utilizable por motor antes de activación; la proyección pública omite ID, nodo y movimiento de zombies que continúan dormidos. `test_panel.py` cubre el panel; filtrado del motor permanece cubierto por pruebas del planificador. |
 | T-05 | Coincidencia/cruce | Mordida final o sentido opuesto, incluidos ambos tramos de corredor. |
 | T-06 | Orden de turno | Misma fase del mundo para todos; zombies antes de decisiones. |
 | T-07 | Cierre en vivo | El grafo filtra arista dirigida o segmento físico cerrado; una regresión confirma activación por turno en el coordinador en memoria. |

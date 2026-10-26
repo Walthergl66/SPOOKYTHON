@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-031 — Proyección inicial de mapa y estado para el panel
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario de las fases pendientes, con commits individuales en `master`.
+- Especificación/requisitos/tareas: SPEC-003 sigue lista; PRD-04/06 y TRD-05/07/09; P4-01 verificado para mapa/capas/ruta/métricas con consulta manual. P4-02/CA-003-02 continúa pendiente. T-04 y primer tramo de ruta tienen regresiones.
+- Motivo: alimentar el panel con un snapshot confirmado y una versión de mapa coherente, evitando exponer dormidos o estado privado.
+- Resultado: `GET /panel/estado` devuelve sin partida o proyección activa; `GET /panel/mapa` entrega el grafo de la versión activa. Ambas lecturas no requieren API key maestra ni mutan el mundo. La proyección incluye rutas dirigidas completas por sobreviviente activo con la política Dijkstra/peligros visibles compartida con `/paso`. La UI valida formato y versión, permite elegir personaje para dibujar su ruta, presenta modo real del servidor y deja el selector de modo como vista previa.
+- Archivos principales: `src/navira/application/consultar_panel.py`, schemas/rutas/API y ensamblaje; `tests/test_panel.py`; `frontend/src/shared/api/panel.ts`, `features/map/CityMap.tsx`, `app/App.tsx`, estilos y proxy Vite. Documentos propietarios: contratos, datos, módulos, espectador, seguridad, pruebas, SPEC-003, trazabilidad, plan, índice, README y estado.
+- Decisión/ADR: se sigue la ruta de lectura limitada ya prevista en `doc/contratos/api.md` y el flujo de espectador; no altera `/paso` o el contrato del reto, por lo que no requiere ADR nueva.
+- Verificación: suite completa (106 pruebas OK), `python3 scripts/check_docs.py` (60 Markdown en `doc/`, 62 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas) y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'` (8 pruebas OK); `compileall`, `git diff --check`, `npm ci` (24 paquetes, cero vulnerabilidades reportadas) y `npm run build` correctos. Smoke navegador local con Uvicorn/Vite y fixture Manta: muestra versión `manta-osm-d76772f9d9e9`, 300 nodos y 4 refugios. Una medición local única de `consultar_estado()` observó 12,12/42,68/101,47 ms para cohortes 20/80/200; no son percentiles ni medición del endpoint remoto.
+- Límites: la fixture tiene cobertura parcial, no certifica seguridad sísmica ni es guía de emergencia. Las rutas se limitan al snapshot y no predicen futuro o garantizan seguridad. No hay consulta automática/WebSocket/reconexión ni endpoint de panel desplegado. El CI remoto no se ejecutó.
+- Siguiente acción: P4-02 implementa transporte de eventos/frescura/reconexión; los criterios de actualización en vivo quedan pendientes.
+- Commit: commit individual de P4-01 en `master`, registrado tras cerrar sus verificaciones.
+
 ## CAM-030 — Base compilable del frontend y CI
 
 - Fecha: 2026-10-26, Ecuador continental.

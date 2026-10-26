@@ -7,7 +7,20 @@ npm ci
 npm run dev
 ```
 
-La pantalla inicial presenta los modos simulador y juego, con una vista cartográfica ilustrativa de Manta. El selector solo cambia la vista previa; no inicia partidas ni se conecta al backend. El panel en vivo, capas reales, refugios, rutas, métricas y sincronización pertenecen a P4-01/P4-02 y requieren los contratos de panel/eventos.
+La pantalla presenta los modos simulador y juego. El selector cambia solo la vista previa; no inicia partidas ni altera el modo actual del servidor. Si el backend entrega una partida activa, el panel dibuja el grafo, refugios, entidades visibles, cierres, áreas de horda, movimientos confirmados, rutas Dijkstra por personaje y métricas desde `/panel/mapa` y `/panel/estado`. La consulta es inicial/manual; no hay WebSocket ni predicción temporal todavía.
+
+Para visualizar la fixture Manta local, iniciar primero el backend desde la raíz del repositorio:
+
+```bash
+NAVIRA_DEMO=1 \
+NAVIRA_DEMO_MAP=data/maps/manta-hackathon-v1.json \
+NAVIRA_DEMO_SEED=31 \
+NAVIRA_DEMO_SCENARIO=mixto \
+NAVIRA_DEMO_SURVIVORS=20 \
+PYTHONPATH=src .venv/bin/uvicorn navira.main:app --app-dir src --reload
+```
+
+Luego iniciar Vite en otra terminal. Su proxy local reenvía las rutas `/panel` a `127.0.0.1:8000`. La fixture de Manta tiene cobertura parcial y los refugios de tsunami no están certificados ante sismos; la app no es una guía de emergencia.
 
 Para comprobar la salida de producción:
 

@@ -2,7 +2,7 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** `/salud` y `POST /paso` arrancan localmente. Con `NAVIRA_DEMO=1`, el proceso inicializa un mundo sintético local y `/paso` usa Dijkstra para recomendar el siguiente nodo hacia un refugio. Sin ese opt-in, conserva la espera determinista (`nodoActual`). Existe una pantalla inicial React para elegir la vista previa de simulador o juego, pero no inicia ni se conecta a partidas. El mapa demo del backend no representa Manta; el panel vivo, reloj de producción, persistencia durable y despliegue AWS siguen pendientes.
+**Estado real al 26 de octubre de 2026:** `/salud` y `POST /paso` arrancan localmente. Con `NAVIRA_DEMO=1`, el proceso inicializa un mundo sintético y `/paso` usa Dijkstra. Existe una pantalla React con selector de vista previa y un panel inicial que consulta manualmente proyecciones de solo lectura de una partida activa. El mapa sintético no representa Manta; la fixture OSM de Manta es parcial. WebSocket, reloj de producción, persistencia durable y despliegue AWS siguen pendientes.
 
 ## Empezar
 
@@ -118,4 +118,6 @@ npm ci
 npm run dev
 ```
 
-Para verificar el bundle: `npm run build`. El selector alterna una descripción de los dos modos; el mapa es una ilustración costera y la interfaz informa que no hay una partida activa. No es todavía el panel vivo ni una herramienta de navegación. El detalle está en [frontend](doc/modulos/frontend.md).
+Para verificar el bundle: `npm run build`. El modo de la tarjeta solo cambia una vista previa. El panel muestra el modo real del servidor, métricas del snapshot y una ruta Dijkstra seleccionable; requiere partida activa para cargar el mapa/estado. La ruta no es una garantía de seguridad. El detalle está en [frontend](doc/modulos/frontend.md).
+
+Para mostrar la fixture de Manta, inicia el backend como se describe en [guía frontend](frontend/README.md); Vite reenvía las consultas `/panel` al servicio local. La actualización del estado es manual, sin WebSocket.
