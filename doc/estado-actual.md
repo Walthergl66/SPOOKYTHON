@@ -1,12 +1,13 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-029**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-030**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
 - Nombre oficial elegido por el usuario: **Navira**. Documentación vigente y paquete backend previsto `src/navira/` actualizados; decisión ADR-006. El directorio local sigue siendo `SPOOKYTHON`.
 
 - Existe documentación modular en `doc/`, README raíz y protocolo de incorporación en `AGENTS.md`.
+- P0-04: existe scaffold React + TypeScript + Vite en `frontend/`, selector local de simulador/juego y vista costera explícitamente ilustrativa. `npm ci` y `npm run build` pasan localmente. `.github/workflows/ci.yml` define jobs Python y frontend; aún no se ha ejecutado en GitHub Actions. No hay integración API, mapa interactivo, sesión ni WebSocket.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -54,23 +55,25 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Backend y `/paso` | Contrato y política Dijkstra; inicio demo local explícito | Configurar mundo real, persistencia, idempotencia y medir latencia bajo carga. |
 | Simulador | Demo con semilla nueva opcional, estado inicial aleatorio y replay local explícito; resolución/ronda con RNG privado y CAS en memoria | Distribución oficial parametrizada, composición/eventos, movimiento de horda, replay durable/versionado entre despliegues, DynamoDB, reloj/publicación y escenarios oficiales pendientes. |
 | Grafo de Manta | Fixture de 300 nodos y cuatro zonas seguras de tsunami generado | Validar cobertura representativa de barrios/rutas peatonales y evaluar amenazas sísmicas con fuentes competentes; el fixture no es para navegación real. |
-| Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
+| Frontend y juego | Scaffold/vista previa local; sin integración, mapa vivo o controles de juego | Ejecutar workflow en remoto; completar P4-01/P4-02 y P4B-01..03 con API, proyección observable y sesión verificadas. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
 | Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
 | Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028 y CAM-029 son commits locales separados | Publicar los dos commits cuando haya una ruta de escritura que acepte cambios de Git. |
 
-El checkout local está en `master`, dos commits por delante de `origin/master`. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. CAM-028 y CAM-029 están comprometidos localmente en commits separados. El push de consola no pudo leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; `git ls-remote` confirmó que el remoto no cambió. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
+El checkout local está en `master`; CAM-028, CAM-029 y CAM-030 tienen commits separados. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. Los intentos previos de push no pudieron leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; no se ha vuelto a intentar publicar. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-CAM-029 añadió cadencia monotónica configurable y ejecutó tres turnos por cohorte a 2 s; el p95 local fue 18,017/54,593/103,734 ms para 20/80/200 sobrevivientes, sin fallos ni ciclos tardíos en esa muestra. Ver [reporte](resultados/evaluacion-cadencia-cam029.md). Los commits CAM-028 y CAM-029 están en el checkout local; consola y conexión GitHub no pudieron escribir en el remoto. Siguiente: publicar cuando exista una ruta de escritura aceptada, y confirmar o parametrizar la composición oficial P-09 sin inventar valores antes de ejecutar rondas de 150 turnos en el entorno de evaluación. T-11, P2-03 y P5-01 siguen incompletos; el reloj de producción, AWS y persistencia durable permanecen pendientes. P-07 también condiciona las reglas de horda. No declarar seguridad sísmica ni rendimiento sostenido a partir de esta medición local.
+CAM-030 completó el criterio local de P0-04: frontend mínimo, lockfile, build y CI configurado; los 100 tests Python y validadores documentales también pasaron. Próxima acción local: preparar P4-01 sobre la proyección real del backend; primero revisar qué endpoint de consulta y filtrado observable puede ofrecer el estado versionado sin revelar dormidos. No conectar el panel a datos inventados. P4-02 requiere transporte/reanudación; juego humano requiere P4B. Continúan P-07/P-09, T-11, P2-03/P5-01, AWS y persistencia durable. No afirmar que el workflow remoto se ejecutó ni que existe seguridad sísmica.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
 Verificación de CAM-028: suite completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (98 pruebas OK), `python3 scripts/check_docs.py` (59 Markdown/61 archivos), `python3 scripts/check_sdd.py` (seis SPEC), `compileall` y `git diff --check` correctos. Matriz local de cinco turnos por cohorte con Uvicorn loopback; cifras y limitaciones en [reporte CAM-028](resultados/evaluacion-multi-turno-cam028.md). No equivale a medición remota ni reloj de dos segundos.
 
 Verificación de CAM-029: suite completa (100 pruebas), `python3 scripts/check_docs.py` (60 Markdown/62 archivos), `python3 scripts/check_sdd.py`, `compileall` y `git diff --check` correctos. La matriz CLI 20/80/200 se ejecutó a 2 s por tres turnos; cifras y límites en [reporte CAM-029](resultados/evaluacion-cadencia-cam029.md). Commit individual local creado; consola no pudo autenticar y GitHub rechazó la escritura del árbol remoto, por lo que `origin/master` no se actualizó.
+
+Verificación CAM-030: `frontend/npm ci` (24 paquetes, cero vulnerabilidades reportadas), `frontend/npm run build` correcto con Vite 8.3.5 y TypeScript 7.0.2; suite backend (`PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py'`) 100 pruebas correctas; validadores doc y SDD correctos con 60 Markdown; pantalla inspeccionada en navegador local a ancho móvil. `npm run build` falló primero por declaración de CSS ausente, corregida en `vite-env.d.ts`; no quedan errores. El workflow no se ha ejecutado en remoto. El backend/frontend no están integrados.
 
 ## Dependencias externas
 

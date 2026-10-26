@@ -6,7 +6,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../PRD.md)/[TRD](../
 |---|---|---|
 | [SPEC-001](SPEC-001-mundo-simulacion.md) | Grafo, mundo y simulación | En curso; generador local estocástico parcial, no verificada integralmente. |
 | [SPEC-002](SPEC-002-motor-paso.md) | Motor, `/paso` y mejora temporal | Lista con referencia base antes de predicción. |
-| [SPEC-003](SPEC-003-panel-vivo.md) | Observación en vivo | Lista, sin frontend. |
+| [SPEC-003](SPEC-003-panel-vivo.md) | Observación en vivo | Lista; CAM-030 añade base frontend/vista previa, pero las CA del panel vivo continúan pendientes. |
 | [SPEC-004](SPEC-004-juego-humano.md) | Control humano | Lista con supuestos de sesión explícitos. |
 | [SPEC-005](SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Lista con dependencias externas pendientes. |
 | [SPEC-006](SPEC-006-metodologia.md) | Incorporación PRD/TRD/ODDD/SDD | Ver estado y evidencia en su archivo. |

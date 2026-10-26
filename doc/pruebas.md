@@ -55,6 +55,8 @@ Ejecutar Dijkstra y política mejorada sobre los mismos escenarios, versiones y 
 
 ## Evidencia y comandos
 
+P0-04: desde `frontend/`, `npm ci && npm run build` verifica lockfile, TypeScript estricto y bundle de producción. La pantalla inicial soporta selección de modos con teclado mediante botones semánticos, estados `aria-pressed`, foco visible y movimiento reducido; revisar visualmente en anchos móvil y escritorio al cambiar el layout. `.github/workflows/ci.yml` ejecuta además la suite unittest y validadores documentales en GitHub Actions. La compilación local no demuestra que el workflow haya corrido en remoto.
+
 Cada reporte debe incluir revisión de código, mapa, escenario, semilla, modo, parámetros, origen del cliente, fechas, métricas y limitaciones. Guardar en `doc/resultados/` cuando existan; no crear resultados ficticios.
 
 Comprobación documental disponible: `python3 scripts/check_docs.py`. El resto de comandos se documentará tras crear la aplicación; no suponer que `pytest`, un benchmark o un build ya están configurados.

@@ -2,6 +2,21 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-030 — Base compilable del frontend y CI
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario para avanzar las fases restantes, creando un commit separado por fase.
+- Especificación/requisitos/tareas: SPEC-003 lista; PRD-04/PRD-06, TRD-05/07/09; P0-04 verificada por sus criterios locales. CA-003-01..04 permanecen pendientes porque no hay panel conectado.
+- Motivo: habilitar una base frontend ejecutable y automatizar verificaciones antes de construir el panel real.
+- Resultado: scaffold React + TypeScript + Vite, vista inicial responsiva Navira, selector local de los modos simulador/juego y estado explícito sin partida. La imagen costera es ilustrativa, no cartografía de navegación. Workflow Actions ejecuta suite backend/validadores y build frontend para push a `master` o pull request.
+- Archivos: `frontend/` (fuentes, lockfile y guía local), `.github/workflows/ci.yml`, `.gitignore`, README raíz, módulos frontend, pruebas, SPEC índice, plan, estado e historial.
+- Decisión: sin ADR; no se cambia arquitectura documentada ni contrato, y se conserva React/TypeScript/Vite previsto. Leaflet continúa pendiente para mapa interactivo.
+- Validación: `npm ci` y `npm run build` (correctos; 24 paquetes, cero vulnerabilidades reportadas); suite completa backend (100 pruebas); `python3 scripts/check_docs.py` y `python3 scripts/check_sdd.py` correctos; revisión del árbol de accesibilidad y captura local en viewport móvil. `git diff --check` se ejecutará al cierre.
+- Validación no ejecutada: workflow remoto porque el cambio aún no está publicado; no se afirma CI de GitHub exitoso.
+- Límites: selector solo cambia copy; no inicia partidas ni consume `/panel/estado`, `/panel/mapa` o WebSocket. No se implementa mapa vivo, controles, sesión o comportamiento offline.
+- Siguiente acción: diseñar P4-01 contra snapshot/proyección observable y contratos reales existentes, preservando ocultamiento de dormidos; seguir con un commit independiente por fase.
+- Commit: se registra después de cerrar y verificar la fase.
+
 ## CAM-029 — Evaluador HTTP con cadencia configurable
 
 - Fecha: 2026-10-26, Ecuador continental.
