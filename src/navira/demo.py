@@ -64,6 +64,7 @@ def crear_contexto_demo(
     *,
     semilla: int = 31,
     escenario: str = "libre",
+    cantidad_sobrevivientes: int = 1,
 ) -> ContextoDemo:
     """Crea una partida sintética reproducible y expone sus dependencias.
 
@@ -71,23 +72,43 @@ def crear_contexto_demo(
     densidad, balance ni distribución de una ronda oficial.
     """
 
+    if (
+        isinstance(cantidad_sobrevivientes, bool)
+        or not isinstance(cantidad_sobrevivientes, int)
+        or not 1 <= cantidad_sobrevivientes <= 200
+    ):
+        raise ValueError("La población debe ser un entero entre 1 y 200.")
     grafo = Grafo(cargar_mapa(ruta_mapa))
     if escenario not in ESCENARIOS_DEMO:
         opciones = ", ".join(sorted(ESCENARIOS_DEMO))
         raise ValueError(f"Escenario demo desconocido: {escenario}. Opciones: {opciones}.")
     zombies = ESCENARIOS_DEMO[escenario]
+    rng = random.Random(semilla)
+    nodos_refugio = {refugio.nodo for refugio in grafo.mapa.refugios}
+    nodos_inicio = tuple(
+        nodo.id for nodo in grafo.mapa.nodos if nodo.id not in nodos_refugio
+    )
+    if not nodos_inicio:
+        raise ValueError("El mapa demo requiere al menos un nodo que no sea refugio.")
+    if cantidad_sobrevivientes == 1 and "D-001" in grafo.mapa.nodos_por_id:
+        posiciones = ("D-001",)
+    else:
+        posiciones = tuple(rng.choice(nodos_inicio) for _ in range(cantidad_sobrevivientes))
     partida = Partida(
         run_id="navira-demo-local",
         modo=ModoPartida.SIMULADOR,
         escenario=f"demo-sintetico-{escenario}",
         map_version=grafo.mapa.version,
-        sobrevivientes=(Sobreviviente("S-DEMO-001", "D-001"),),
+        sobrevivientes=tuple(
+            Sobreviviente(f"S-DEMO-{indice:03d}", nodo)
+            for indice, nodo in enumerate(posiciones, start=1)
+        ),
         zombies=zombies,
         estado=EstadoPartida.ACTIVA,
         turno=0,
         fase=FaseTurno.PREPARACION,
     )
-    inicial = crear_snapshot_inicial(partida, grafo, rng=random.Random(semilla))
+    inicial = crear_snapshot_inicial(partida, grafo, rng=rng)
     snapshots = AlmacenSnapshotsMemoria()
     if not snapshots.insertar_inicial(inicial):
         raise RuntimeError("No se pudo crear la partida demo inicial.")
@@ -119,6 +140,7 @@ def crear_servicio_demo(
     *,
     semilla: int = 31,
     escenario: str = "libre",
+    cantidad_sobrevivientes: int = 1,
 ) -> DecidirPaso:
     """Compatibilidad para API: crea el contexto y devuelve su planificador."""
 
@@ -126,4 +148,5 @@ def crear_servicio_demo(
         ruta_mapa,
         semilla=semilla,
         escenario=escenario,
+        cantidad_sobrevivientes=cantidad_sobrevivientes,
     ).servicio_decision

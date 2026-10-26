@@ -229,6 +229,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: mapa lineal sintético, un sobreviviente, ubicaciones fijas de inicio y cuatro perfiles reducidos; no son las rondas oficiales (20/80/200 sobrevivientes) ni fijan la distribución de zombies del reto. P-09 continúa abierto para tamaño/balance oficial. Sin reloj de 2 segundos, persistencia durable ni medición oficial.
 - Siguiente paso: completar poblaciones/condiciones de P1-05 cuando se confirme densidad zombie y contar con mapa de evaluación; después integrar tres rondas según SPEC-005.
 
+## CAM-019 — Cohortes sintéticas para el ejecutor
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación del usuario; extensión incremental de P1-05 después de CAM-018.
+- Especificación/tareas: SPEC-001, CA-001-08 y P1-05 parcial; T-10. T-11 no se ejecuta con este cambio.
+- Rama: `feat/navira-evaluation-populations`.
+- Motivo: permitir recorrer los tamaños 20/80/200 del reto con el mismo núcleo local mientras se prepara el dataset real.
+- Archivos: `src/navira/demo.py`, `src/navira/simulador_demo.py`, `tests/test_simulador_demo.py`, README y documentos propietarios de datos, reglas, flujo, módulo, pruebas, plan, pendientes, SPEC-001 y estado.
+- Resultado: `--sobrevivientes` acepta de 1 a 200; posiciones iniciales no refugio se distribuyen reproduciblemente por semilla. Población inicial se registra por turno. Si el fixture carece de nodos suficientes, pueden coincidir personajes.
+- Verificación: ocho pruebas de `test_simulador_demo.py`; suite completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (84 pruebas OK), incluye poblaciones 20/80/200; `python3 scripts/check_docs.py` (53 Markdown en `doc/`, 55 archivos comprobados), `python3 scripts/check_sdd.py`, ocho regresiones de `test_check_sdd.py`, `compileall` y `git diff --check` correctos. Smoke del CLI con 200 sobrevivientes produjo JSONL de un turno (12.683 bytes). No es carga HTTP ni una medición de rendimiento.
+- Límites: poblaciones sobre cinco nodos sintéticos no simulan 20/80/200 ubicaciones realistas, no producen concurrencia HTTP ni verifican T-11, dos segundos, p95, disponibilidad o supervivencia de evaluación. La distribución zombie oficial P-09 sigue pendiente.
+- Siguiente paso: añadir mapa representativo de Manta y ejecutar la población a través del cliente HTTP bajo las ráfagas definidas en T-11; evitar afirmar resultados oficiales antes de esas mediciones.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

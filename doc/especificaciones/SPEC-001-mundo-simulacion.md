@@ -23,6 +23,7 @@ Ejecutar un único mundo de Manta con reglas comunes para humano/automáticos, c
 | CA-001-05 | Snapshot publicado es completo y una reejecución no duplica turno; reiniciar partida no reutiliza decisiones. | T-10, T-18 |
 | CA-001-06 | Mismas intenciones y estado producen mismo resultado con control humano/automático. | T-17 |
 | CA-001-07 | Escenario sintético y semilla idénticos reproducen los reportes; el reporte de demo omite zombies que siguen dormidos. | T-10 |
+| CA-001-08 | El generador demo crea exactamente la población solicitada (1–200), fuera de nodos refugio, con posiciones repetibles por semilla. | T-10 |
 
 ## Plan y módulos
 

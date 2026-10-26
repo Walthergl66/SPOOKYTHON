@@ -12,7 +12,7 @@ Estado al 2026-10-26. Ninguna aclaración externa confirmada todavía. Las respu
 | P-06 | Región, cuenta y permisos AWS | `us-east-1` propuesta; acceso y Budget no verificados. | No; sí afecta despliegue. |
 | P-07 | Movimiento exacto de horda «casi inmóvil» | Prototipo mantiene la horda estática; confirmar si debe moverse y en qué condiciones. | No. |
 | P-08 | Calles dirigidas, puentes y cierres | El núcleo acepta cierre por arista dirigida o segmento físico completo. Falta confirmar qué ID entrega cada evento oficial. | No. |
-| P-09 | Cantidad zombie y dificultad inicial | La demo local ya tiene perfiles reducidos con semillas para desarrollar reglas; no corresponden a las rondas oficiales de 20/80/200 sobrevivientes. Falta fijar densidad y distribución de zombies para las rondas completas, y confirmar las condiciones oficiales de evaluación. | No. |
+| P-09 | Cantidad zombie y dificultad inicial | La demo local tiene perfiles reducidos y cohortes 20/80/200 con semilla para pruebas sintéticas; no corresponden a las rondas oficiales. Falta fijar densidad y distribución de zombies para las rondas completas y confirmar las condiciones oficiales de evaluación. | No. |
 | P-10 | Tamaño del equipo y repositorio remoto | Supuesto dos/tres integrantes; no hay remoto verificado. | No. |
 | P-11 | TLS origen, certificados y dominio | Resolver camino autenticado de extremo a extremo antes de publicar juego/API. | No; sí afecta publicación. |
 | P-12 | Sesión y expiración de propiedad humana | Una sesión/partida; definir duración/recuperación sin permitir robo o renacimiento. | No; cerrar antes de juego público. |

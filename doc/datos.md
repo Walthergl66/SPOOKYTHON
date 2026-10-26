@@ -19,6 +19,8 @@ Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conser
 
 `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` ya existen como dataclasses inmutables en `src/navira/domain/modelo.py`. La partida fija modo, versión de mapa, estado, turno y fase; `validar_mapa()` comprueba referencias. `SnapshotMundo` conserva en memoria el estado completo, cierres, eventos programados/aplicados y estado aleatorio privado. La aplicación de movimientos y transición versionada entre fases están implementadas en memoria. El snapshot durable y la escritura condicional siguen pendientes.
 
+El generador demo admite cohortes de 1 a 200 sobrevivientes; con más de uno elige por semilla entre nodos no refugio. En el mapa actual (cinco nodos, cuatro elegibles) pueden coincidir varios personajes. La capacidad de compartir intersección es un detalle del fixture sintético, no una regla de despliegue ni de seguridad.
+
 En el código, `Calle.id` identifica un sentido dirigido y `Calle.segmento_id` el tramo físico. Las dos direcciones de una misma calle comparten segmento; las calles paralelas usan IDs físicos distintos. El mapa valida IDs únicos, coordenadas WGS84, distancia/velocidad positivas, categorías reconocidas y referencias a nodos existentes. `Mapa.validar_mapa_evaluacion()` exige cuatro refugios en nodos distintos y, por defecto, al menos 200 nodos; ese umbral aproximado no sustituye el requisito objetivo de unas 300 intersecciones. El fixture de cuatro nodos es sintético.
 
 ## Estado real y observable

@@ -49,7 +49,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P1-02 | Entidades, modos e intenciones — dominio | P0-02 | Un mundo y un resolutor para humano/automático. | En curso |
 | P1-03 | Zombies y mordidas — simulación | P1-02 | T-01 a T-06 cubiertas, visibilidad validada y supuestos identificados. | En curso |
 | P1-04 | Reloj, eventos y snapshots — simulación | P1-03 | Turnos versionados; bootstrap demo, caso de uso y CLI local completan rondas en memoria. Reloj continuo/durable pendientes. | En curso |
-| P1-05 | Tres escenarios — simulación | P1-01 y P1-04 | Configuraciones y semillas reproducibles. Hay perfiles sintéticos de desarrollo con un sobreviviente y zombies, pero faltan escenarios completos de 20/80/200 sobrevivientes. | En curso |
+| P1-05 | Tres escenarios — simulación | P1-01 y P1-04 | Configuraciones/semillas reproducibles y cohortes sintéticas 20/80/200 implementadas sobre el mapa demo. Sigue en curso: faltan mapa/datos de Manta, distribución zombie oficial, cierres de escenario y pruebas HTTP/carga. | En curso |
 | P2-01 | Dijkstra y selección de refugio — rutas | P1-01 | Núcleo genérico considera tipo/distancia, cierres y peligros visibles; falta validar mapa real. | En curso |
 | P2-02 | `/paso` y API key — backend | P2-01 y P1-04 | Demo explícita recomienda ruta por HTTP sobre un snapshot activo; mundo oficial, idempotencia durable y operación completa pendientes. | En curso |
 | P2-03 | Integración y referencia — integración | P2-02 y P1-05 | Una ronda completa; luego tres rondas y reporte base. | Pendiente |

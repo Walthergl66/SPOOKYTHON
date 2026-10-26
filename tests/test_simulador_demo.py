@@ -50,6 +50,23 @@ class EjecutorDemoTests(unittest.TestCase):
             ["Z-HOR-001"],
         )
 
+    def test_admite_poblaciones_de_evaluacion_sinteticas(self) -> None:
+        for poblacion in (20, 80, 200):
+            with self.subTest(poblacion=poblacion):
+                reportes = ejecutar_demo(
+                    turnos=1,
+                    semilla=53,
+                    escenario="libre",
+                    cantidad_sobrevivientes=poblacion,
+                )
+
+                self.assertEqual(reportes[0]["sobrevivientesIniciales"], poblacion)
+                self.assertEqual(len(reportes[0]["movimientosSobrevivientes"]), poblacion)
+
+    def test_rechaza_poblacion_superior_al_maximo_de_prueba(self) -> None:
+        with self.assertRaisesRegex(ValueError, "entre 1 y 200"):
+            ejecutar_demo(cantidad_sobrevivientes=201)
+
     def test_rechaza_cantidad_de_turnos_no_positiva(self) -> None:
         with self.assertRaises(SystemExit) as error:
             main(["--turnos", "0"])

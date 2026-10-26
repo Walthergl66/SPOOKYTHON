@@ -18,6 +18,7 @@ def ejecutar_demo(
     turnos: int = 10,
     semilla: int = 31,
     escenario: str = "libre",
+    cantidad_sobrevivientes: int = 1,
     ruta_mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
 ) -> tuple[dict[str, object], ...]:
     """Ejecuta hasta N rondas, deteniéndose cuando no queden activos."""
@@ -27,7 +28,12 @@ def ejecutar_demo(
     if isinstance(semilla, bool) or not isinstance(semilla, int):
         raise ValueError("La semilla debe ser un entero.")
 
-    contexto = crear_contexto_demo(ruta_mapa, semilla=semilla, escenario=escenario)
+    contexto = crear_contexto_demo(
+        ruta_mapa,
+        semilla=semilla,
+        escenario=escenario,
+        cantidad_sobrevivientes=cantidad_sobrevivientes,
+    )
     rondas = EjecutarRondaAutomatica(contexto.snapshots, contexto.mapas)
     reportes: list[dict[str, object]] = []
 
@@ -52,6 +58,7 @@ def ejecutar_demo(
                 "turno": partida.turno,
                 "versionMapa": partida.map_version,
                 "escenario": partida.escenario,
+                "sobrevivientesIniciales": cantidad_sobrevivientes,
                 "movimientosSobrevivientes": [
                     {
                         "id": movimiento.sobreviviente_id,
@@ -108,6 +115,7 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
     parser.add_argument("--turnos", type=_entero_positivo, default=10)
     parser.add_argument("--semilla", type=_entero, default=31)
     parser.add_argument("--escenario", choices=sorted(ESCENARIOS_DEMO), default="libre")
+    parser.add_argument("--sobrevivientes", type=_entero_positivo, default=1)
     parser.add_argument("--mapa", type=Path, default=MAPA_DEMO_POR_DEFECTO)
     args = parser.parse_args(argv)
     destino = salida if salida is not None else sys.stdout
@@ -116,6 +124,7 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
             turnos=args.turnos,
             semilla=args.semilla,
             escenario=args.escenario,
+            cantidad_sobrevivientes=args.sobrevivientes,
             ruta_mapa=args.mapa,
         )
     except (OSError, ValueError, RuntimeError, KeyError) as exc:

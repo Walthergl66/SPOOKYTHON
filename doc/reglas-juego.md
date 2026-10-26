@@ -42,7 +42,7 @@ Valores provisionales del prototipo: dormido detecta supervivientes a dos saltos
 | Medianoche | 5 minutos | 80 | Caminantes, corredores y hordas; colapso de un puente. |
 | Apocalipsis | 5 minutos | 200 | Todos los tipos; dos calles bloqueadas en vivo. |
 
-Cantidad de zombies y distribución no están definidas en la fuente; parametrizarlas y confirmar criterios (P-09). Conservar escenarios, semillas y eventos para comparar versiones sin alterar la dificultad a favor de un algoritmo.
+Cantidad de zombies y distribución no están definidas en la fuente; parametrizarlas y confirmar criterios (P-09). Los perfiles `libre`, `caminantes`, `mixto` y `horda` y la generación de 1–200 sobrevivientes son fixtures sintéticos para desarrollo; no fijan distribución ni dificultad oficial. Conservar escenarios, semillas y eventos para comparar versiones sin alterar la dificultad a favor de un algoritmo.
 
 ## Extras
 

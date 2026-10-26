@@ -40,10 +40,10 @@ La demo inicia al sobreviviente `S-DEMO-001` en `D-001`; el refugio sintético e
 Para correr varias rondas automáticas localmente y guardar la salida JSONL:
 
 ```bash
-PYTHONPATH=src python -m navira.simulador_demo --escenario mixto --turnos 10 --semilla 31 > /tmp/navira-demo.jsonl
+PYTHONPATH=src python -m navira.simulador_demo --escenario mixto --sobrevivientes 20 --turnos 10 --semilla 31 > /tmp/navira-demo.jsonl
 ```
 
-Perfiles disponibles: `libre`, `caminantes`, `mixto` y `horda`. `--mapa ruta/al/mapa.json` permite elegir otro mapa que contenga los nodos del perfil. El ejecutor termina al evacuar o perder a todos los sobrevivientes activos, o al llegar al límite de turnos. Cada línea reporta el resultado observable de un turno y excluye zombies que siguen dormidos. Estos perfiles son pequeños fixtures de desarrollo con un sobreviviente; no son las rondas oficiales. El comando no espera dos segundos entre turnos y usa snapshots volátiles.
+Perfiles disponibles: `libre`, `caminantes`, `mixto` y `horda`; `--sobrevivientes` admite de 1 a 200 personajes con posiciones iniciales reproducibles. `--mapa ruta/al/mapa.json` permite elegir otro mapa que contenga los nodos del perfil. En el mapa incluido las posiciones se reparten al azar entre cuatro nodos y pueden coincidir. El ejecutor termina al evacuar o perder a todos los sobrevivientes activos, o al llegar al límite de turnos. Cada línea reporta el resultado observable de un turno y excluye zombies que siguen dormidos. Esto es una simulación sintética del dominio; no es la prueba concurrente del endpoint ni sustituye las rondas oficiales. El comando no espera dos segundos entre turnos y usa snapshots volátiles.
 
 La salud local se consulta en `GET /salud`. El contrato inicial del motor:
 
