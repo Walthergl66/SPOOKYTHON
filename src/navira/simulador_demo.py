@@ -16,7 +16,7 @@ from navira.domain.modelo import EstadoSobreviviente, EstadoZombie
 def ejecutar_demo(
     *,
     turnos: int = 10,
-    semilla: int = 31,
+    semilla: int | None = None,
     escenario: str = "libre",
     cantidad_sobrevivientes: int = 1,
     ruta_mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
@@ -25,8 +25,8 @@ def ejecutar_demo(
 
     if isinstance(turnos, bool) or not isinstance(turnos, int) or turnos < 1:
         raise ValueError("El número de turnos debe ser un entero positivo.")
-    if isinstance(semilla, bool) or not isinstance(semilla, int):
-        raise ValueError("La semilla debe ser un entero.")
+    if semilla is not None and (isinstance(semilla, bool) or not isinstance(semilla, int)):
+        raise ValueError("La semilla debe ser un entero o None.")
 
     contexto = crear_contexto_demo(
         ruta_mapa,
@@ -80,7 +80,7 @@ def ejecutar_demo(
                 "evacuados": list(resultado.evacuados),
                 "sobrevivientesActivos": activos,
                 "estadoPartida": partida.estado.value,
-                "semilla": semilla,
+                "semilla": contexto.semilla,
             }
         )
         if activos == 0:
@@ -113,7 +113,12 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
         description="Ejecuta rondas automáticas en el mapa sintético de Navira."
     )
     parser.add_argument("--turnos", type=_entero_positivo, default=10)
-    parser.add_argument("--semilla", type=_entero, default=31)
+    parser.add_argument(
+        "--semilla",
+        type=_entero,
+        default=None,
+        help="semilla reproducible; si se omite, se genera una nueva para esta ejecución",
+    )
     parser.add_argument("--escenario", choices=sorted(ESCENARIOS_DEMO), default="libre")
     parser.add_argument("--sobrevivientes", type=_entero_positivo, default=1)
     parser.add_argument("--mapa", type=Path, default=MAPA_DEMO_POR_DEFECTO)

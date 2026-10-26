@@ -4,7 +4,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../PRD.md)/[TRD](../
 
 | ID | Funcionalidad | Situación inicial |
 |---|---|---|
-| [SPEC-001](SPEC-001-mundo-simulacion.md) | Grafo, mundo y simulación | Lista para tareas autorizadas, sin código. |
+| [SPEC-001](SPEC-001-mundo-simulacion.md) | Grafo, mundo y simulación | En curso; generador local estocástico parcial, no verificada integralmente. |
 | [SPEC-002](SPEC-002-motor-paso.md) | Motor, `/paso` y mejora temporal | Lista con referencia base antes de predicción. |
 | [SPEC-003](SPEC-003-panel-vivo.md) | Observación en vivo | Lista, sin frontend. |
 | [SPEC-004](SPEC-004-juego-humano.md) | Control humano | Lista con supuestos de sesión explícitos. |

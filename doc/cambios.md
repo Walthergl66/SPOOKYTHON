@@ -281,6 +281,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: el código actual solo aleatoriza parte de la ubicación de sobrevivientes y movimiento de caminantes; perfiles/ubicaciones zombie son prefijados, corredores siguen persecución y desempate por ID, horda no se mueve y la semilla por defecto es fija. Densidad oficial P-09 y movimiento de horda P-07 siguen abiertos. Este CAM registra y traza el requisito, no implementa el generador estocástico.
 - Siguiente paso: implementar P1-05 en una unidad de código: semilla de entropy por defecto con semilla explícita para replay, variación inicial parametrizada y pruebas de misma entrada/reproducción y divergencia controlada T-24. Mantener fuera de ese cambio cualquier distribución oficial sin fuente confirmada.
 
+## CAM-023 — Semilla nueva y estado inicial estocástico de demo
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada del usuario y aclaración de que cambios pequeños pueden alterar rutas, hordas y evolución; implementación de P1-05 bajo ADR-008.
+- Especificación/tareas: SPEC-001, P1-05; CA-001-07/08/09 y T-24 parciales.
+- Rama: `feat/navira-stochastic-simulation`; commit individual `feat: randomize Navira demo simulations`.
+- Motivo: dejar de repetir un mundo fijo cuando inicia una partida nueva y conservar entrada suficiente para reproducir ejecuciones locales.
+- Archivos: `src/navira/demo.py`, `src/navira/simulador_demo.py`, `src/navira/main.py`, pruebas demo/CLI, `README.md` y documentos propietarios de contrato, algoritmos, datos, flujo, pruebas, plan, SPEC e índice, trazabilidad, estado y este historial.
+- Resultado: semilla de 64 bits generada desde entropía si no se indica; los inicios de sobrevivientes/zombies y la fase de caminantes se muestrean desde RNG privado; el CLI informa la semilla efectiva y permite replay al fijarla. Cada demo recibe runId distinto. Se conserva composición sintética fija; no se modifica persecución de corredor ni regla de horda.
+- Verificación: suite completa con `/tmp/navira-env` (92 pruebas OK); `python3 scripts/check_docs.py` (57 Markdown/59 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho pruebas `test_check_sdd.py`, `compileall` y `git diff --check` correctos. T-24 cubre reproducción local y variación, no replay durable ni ejecución oficial.
+- Límites: P1-05 sigue parcial. Distribución/cantidad oficial (P-09), movimiento de horda (P-07), eventos estocásticos, persistencia durable y carga con el mundo avanzando siguen pendientes. La divergencia puede ocurrir, no se garantiza que cada mínima perturbación cambie todo resultado.
+- Siguiente paso: acordar/configurar escenarios solo con fuentes de reglas confirmadas, resolver P-09 y P-07 antes de variar composición y horda.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

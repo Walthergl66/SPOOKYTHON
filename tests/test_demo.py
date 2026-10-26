@@ -9,33 +9,46 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from navira.application.decidir_paso import SolicitudPaso
-from navira.demo import crear_contexto_demo, crear_servicio_demo
+from navira.demo import crear_contexto_demo
 from navira.main import _crear_app_configurada, crear_app, crear_app_demo
 
 
 class DemoBootstrapTests(unittest.TestCase):
+    def test_nueva_partida_obtiene_semilla_y_run_id_independientes(self) -> None:
+        with patch("navira.demo.secrets.randbits", side_effect=(101, 202)):
+            primera = crear_contexto_demo()
+            segunda = crear_contexto_demo()
+
+        self.assertEqual((primera.semilla, segunda.semilla), (101, 202))
+        self.assertNotEqual(primera.run_id, segunda.run_id)
+
     def test_demo_abre_turno_activo_y_planifica_hacia_refugio(self) -> None:
-        servicio = crear_servicio_demo()
+        contexto = crear_contexto_demo(semilla=31)
+        sobreviviente = contexto.snapshots.obtener(contexto.run_id).partida.sobrevivientes[0]
 
-        decision = servicio.ejecutar(SolicitudPaso("S-DEMO-001", "D-001", 0))
+        decision = contexto.servicio_decision.ejecutar(
+            SolicitudPaso(sobreviviente.id, sobreviviente.nodo, 0)
+        )
 
-        self.assertEqual(decision.siguiente_nodo, "D-002")
+        self.assertIn(decision.siguiente_nodo, contexto.grafo.vecinos_desde(sobreviviente.nodo))
 
     def test_app_demo_usa_planificador_en_la_ruta_http(self) -> None:
-        app = crear_app_demo()
+        contexto = crear_contexto_demo(semilla=31)
+        sobreviviente = contexto.snapshots.obtener(contexto.run_id).partida.sobrevivientes[0]
+        app = crear_app_demo(semilla=31)
         with patch.dict(os.environ, {"NAVIRA_API_KEY": "demo-test-key"}, clear=True):
             respuesta = TestClient(app).post(
                 "/paso",
                 headers={"x-api-key": "demo-test-key"},
                 json={
-                    "sobrevivienteId": "S-DEMO-001",
-                    "nodoActual": "D-001",
+                    "sobrevivienteId": sobreviviente.id,
+                    "nodoActual": sobreviviente.nodo,
                     "turno": 0,
                 },
             )
 
         self.assertEqual(respuesta.status_code, 200)
-        self.assertEqual(respuesta.json(), {"siguienteNodo": "D-002"})
+        self.assertEqual(set(respuesta.json()), {"siguienteNodo"})
 
     def test_app_demo_admite_la_misma_cohorte_para_pruebas_http(self) -> None:
         contexto = crear_contexto_demo(semilla=17, cantidad_sobrevivientes=20)

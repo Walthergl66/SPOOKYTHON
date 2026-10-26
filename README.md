@@ -35,7 +35,7 @@ export NAVIRA_DEMO=1
 uvicorn navira.main:app --app-dir src --reload
 ```
 
-La demo inicia al sobreviviente `S-DEMO-001` en `D-001`; el refugio sintético está en `D-005`. La primera llamada de turno `0` propone `D-002`. Para usar otro mapa de desarrollo, configura `NAVIRA_DEMO_MAP`; `NAVIRA_DEMO_SEED` fija la semilla del generador. `NAVIRA_DEMO=1` solo configura una partida en memoria para desarrollo: reiniciar el proceso reinicia el mundo.
+La demo ubica sobrevivientes y zombies aleatoriamente en nodos elegibles con ruta dirigida al refugio sintético de `D-005`; la recomendación depende de la semilla y del estado inicial. Para usar otro mapa de desarrollo, configura `NAVIRA_DEMO_MAP`; `NAVIRA_DEMO_SEED` fija la semilla para repetir una partida. Si se omite, se genera una semilla nueva. `NAVIRA_DEMO=1` solo configura una partida en memoria para desarrollo: reiniciar el proceso reinicia el mundo.
 
 Para correr varias rondas automáticas localmente y guardar la salida JSONL:
 

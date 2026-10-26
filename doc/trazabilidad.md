@@ -4,7 +4,7 @@ Estado: referencias documentales; no representa funcionalidad implementada. Los 
 
 | Especificación | Requisitos cubiertos | Tareas/pruebas y situación |
 |---|---|---|
-| [SPEC-001](especificaciones/SPEC-001-mundo-simulacion.md) | PRD-01, PRD-02, TRD-03, TRD-04, TRD-05, TRD-09, TRD-11, TRD-12 | Implementación parcial; CA-001-09/T-24 añaden estocasticidad/reproducción pendientes. |
+| [SPEC-001](especificaciones/SPEC-001-mundo-simulacion.md) | PRD-01, PRD-02, TRD-03, TRD-04, TRD-05, TRD-09, TRD-11, TRD-12 | Implementación parcial; CAM-023 cubre semilla nueva/replay local y muestreo inicial; T-24 integral pendiente. |
 | [SPEC-002](especificaciones/SPEC-002-motor-paso.md) | PRD-03, PRD-09, TRD-01, TRD-02, TRD-05, TRD-06, TRD-09, TRD-12 | Metadatos de SPEC; producto pendiente. |
 | [SPEC-003](especificaciones/SPEC-003-panel-vivo.md) | PRD-04, PRD-06, TRD-05, TRD-06, TRD-07, TRD-09 | Metadatos de SPEC; producto pendiente. |
 | [SPEC-004](especificaciones/SPEC-004-juego-humano.md) | PRD-05, PRD-06, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12 | Metadatos de SPEC; producto pendiente. |

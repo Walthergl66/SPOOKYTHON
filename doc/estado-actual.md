@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-022**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-023**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -28,7 +28,7 @@
 - En `feat/navira-evaluation-populations` `--sobrevivientes` admite de 1 a 200 y posiciones iniciales reproducibles por semilla fuera de los refugios. Pruebas verifican cohortes sintéticas de 20, 80 y 200. Por el fixture de cinco nodos, las posiciones pueden coincidir; no es prueba HTTP/carga T-11 ni evaluación real. CAM-019 cuenta con ocho pruebas específicas y suite completa de 84.
 - En `feat/navira-http-load-runner` el bootstrap demo admite variables para escenario, semilla y población; `python -m navira.carga_http` envía ráfagas concurrentes a `/paso` y resume respuestas/percentiles. Uvicorn local respondió correctamente en una ráfaga de 20, 80 y 200; evidencia en `doc/resultados/carga-local-cam020.md`. No equivale a T-11: una sola pasada, mismo host y snapshot sin avanzar. Suite completa 88; comprobador documental ve 54 Markdown/56 archivos.
 - En `feat/navira-manta-hazard-map` se añadió `scripts/exportar_mapa_manta.py` y el fixture versionado `data/maps/manta-hackathon-v1.json`: 300 nodos, 599 sentidos dirigidos y cuatro refugios distintos tomados de puntos “Zona Segura” de tsunami publicados por el GAD Manta. Cada nodo exportado puede alcanzar uno de los refugios por calles dirigidas. Sidecar registra OpenStreetMap/ODbL, extracción y snaps de 32,9–43,4 m. Dos pruebas de integridad validan el artefacto y que el estado sísmico se mantenga como no evaluado. CAM-021; rama de fase preparada para commit individual.
-- CAM-022 incorpora el requisito explícito de un mundo estocástico con variación por ejecución y efectos en cascada posibles, sin sacrificar replay por semilla y versión. ADR-008, CA-001-09 y T-24 definen contrato/aceptación; **esto documenta el comportamiento objetivo, no lo implementa**. La demo actual sigue parcialmente fija: perfiles y ubicaciones zombie son prefijados, horda estática, corredores siguen persecución/desempate determinista y la CLI usa semilla predeterminada 31.
+- CAM-022 documentó el requisito de mundo estocástico y replay. CAM-023 implementa parcialmente ese requisito en demo: sin semilla crea una de 64 bits desde entropía, muestrea posiciones de sobrevivientes/zombies y fase inicial de caminantes; CLI registra semilla efectiva y semillas explícitas reproducen JSONL dentro de esta versión. No cambia la composición fija de perfiles, la persecución determinista del corredor ni la inmovilidad provisional de horda.
 
 ## Verificación histórica de CAM-003
 
@@ -50,7 +50,7 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Área | Estado | Evidencia pendiente |
 |---|---|---|
 | Backend y `/paso` | Contrato y política Dijkstra; inicio demo local explícito | Configurar mundo real, persistencia, idempotencia y medir latencia bajo carga. |
-| Simulador | Resolución y ronda automática por caso de uso con CAS en memoria; algunos movimientos ya usan RNG privado | Aleatoriedad completa por partida, semilla impredecible por defecto, distribución parametrizada, replay versionado, DynamoDB, reloj/publicación y escenarios oficiales pendientes. |
+| Simulador | Demo con semilla nueva opcional, estado inicial aleatorio y replay local explícito; resolución/ronda con RNG privado y CAS en memoria | Distribución oficial parametrizada, composición/eventos, movimiento de horda, replay durable/versionado entre despliegues, DynamoDB, reloj/publicación y escenarios oficiales pendientes. |
 | Grafo de Manta | Fixture de 300 nodos y cuatro zonas seguras de tsunami generado | Validar cobertura representativa de barrios/rutas peatonales y evaluar amenazas sísmicas con fuentes competentes; el fixture no es para navegación real. |
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
@@ -62,9 +62,9 @@ El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-020 conserva
 
 ## Próxima acción concreta
 
-Siguiente: implementar P1-05 bajo ADR-008: semilla aleatoria nueva por defecto, posiciones/estados iniciales variables y opciones aleatorias donde las reglas lo permiten; conservar replay exacto dentro de la misma versión y probar T-24. Antes de fijar la composición oficial, resolver P-09; la dinámica de horda sigue P-07. Después integrar el mapa Manta a escenarios y ejecutar carga con el mundo avanzando. P-13/P-14, persistencia durable/CAS, reloj continuo y evaluación oficial permanecen pendientes. No declarar seguridad sísmica ni rendimiento hasta validar sus respectivas fuentes/mediciones.
+Siguiente: continuar P1-05 definiendo escenarios/configuración estocástica solo con reglas confirmadas; resolver P-09 para composición y P-07 para movimiento de horda antes de variar esas reglas. Extender T-24 a recuperación/versionado durable y trayectorias de varias rondas, luego integrar el mapa Manta a escenarios y medir carga con mundo avanzando. P-13/P-14, persistencia durable/CAS, reloj continuo y evaluación oficial permanecen pendientes. No declarar seguridad sísmica ni rendimiento hasta validar sus respectivas fuentes/mediciones.
 
-Comandos documentales: `python3 scripts/check_docs.py` (56 Markdown/58 archivos), `python3 scripts/check_sdd.py` (estructura válida, seis SPEC), ocho regresiones de `test_check_sdd.py`; suite completa en `/tmp/navira-env`: 90 pruebas OK; `compileall` y `git diff --check` correctos tras CAM-021. `python -m pip install -e .` y smoke de Uvicorn local demo completados; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
+Verificación de CAM-023: `python3 scripts/check_docs.py` (57 Markdown/59 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (92 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
 ## Dependencias externas
 
@@ -72,4 +72,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo genérico en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016; ejecutor CLI en CAM-017; escenarios zombie sintéticos en CAM-018; cohortes sintéticas en CAM-019; cliente de carga en CAM-020; fixture geográfico parcial de Manta y evidencia por amenaza en CAM-021; requisito de simulación estocástica/replay en CAM-022. Rama de trabajo: `feat/navira-stochastic-simulation`. P0-01 está verificado; P0-02, P1-01/02/03/04/05 y P2-01/02 siguen parciales o en curso. SPEC-001/002 no están verificadas.
+La base API quedó en CAM-006; grafo genérico en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016; ejecutor CLI en CAM-017; escenarios zombie sintéticos en CAM-018; cohortes sintéticas en CAM-019; cliente de carga en CAM-020; fixture geográfico parcial de Manta y evidencia por amenaza en CAM-021; requisito de simulación estocástica/replay en CAM-022 y generador estocástico base en CAM-023. Rama de trabajo: `feat/navira-stochastic-simulation`. P0-01 está verificado; P0-02, P1-01/02/03/04/05 y P2-01/02 siguen parciales o en curso. SPEC-001/002 no están verificadas.

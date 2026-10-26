@@ -7,6 +7,8 @@ Manta ni como escenario oficial de evaluación.
 from __future__ import annotations
 
 import random
+import secrets
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -32,20 +34,19 @@ from navira.simulation.coordinador import (
 
 
 MAPA_DEMO_POR_DEFECTO = Path(__file__).resolve().parents[2] / "data/maps/demo-sintetico.json"
-ESCENARIOS_DEMO: dict[str, tuple[Zombie, ...]] = {
+_COMPOSICION_ZOMBIES_DEMO: dict[str, tuple[tuple[str, TipoZombie, EstadoZombie], ...]] = {
     "libre": (),
-    "caminantes": (
-        Zombie("Z-CAM-001", TipoZombie.CAMINANTE, "D-003"),
-    ),
+    "caminantes": (("Z-CAM-001", TipoZombie.CAMINANTE, EstadoZombie.ACTIVO),),
     "mixto": (
-        Zombie("Z-COR-001", TipoZombie.CORREDOR, "D-005"),
-        Zombie("Z-DOR-001", TipoZombie.DORMIDO, "D-003", estado=EstadoZombie.DORMIDO),
+        ("Z-COR-001", TipoZombie.CORREDOR, EstadoZombie.ACTIVO),
+        ("Z-DOR-001", TipoZombie.DORMIDO, EstadoZombie.DORMIDO),
     ),
     "horda": (
-        Zombie("Z-HOR-001", TipoZombie.HORDA, "D-003"),
-        Zombie("Z-DOR-002", TipoZombie.DORMIDO, "D-005", estado=EstadoZombie.DORMIDO),
+        ("Z-HOR-001", TipoZombie.HORDA, EstadoZombie.ACTIVO),
+        ("Z-DOR-002", TipoZombie.DORMIDO, EstadoZombie.DORMIDO),
     ),
 }
+ESCENARIOS_DEMO = _COMPOSICION_ZOMBIES_DEMO
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,19 +58,20 @@ class ContextoDemo:
     mapas: ProveedorMapas
     servicio_decision: DecidirPaso
     run_id: str
+    semilla: int
 
 
 def crear_contexto_demo(
     ruta_mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
     *,
-    semilla: int = 31,
+    semilla: int | None = None,
     escenario: str = "libre",
     cantidad_sobrevivientes: int = 1,
 ) -> ContextoDemo:
-    """Crea una partida sintética reproducible y expone sus dependencias.
+    """Crea una partida con estado inicial aleatorio y expone dependencias.
 
-    Los perfiles solo se definen para el mapa demo incluido; no representan
-    densidad, balance ni distribución de una ronda oficial.
+    Sin semilla explícita, obtiene una semilla de la entropía del sistema.
+    Los perfiles son fixtures; no representan distribuciones oficiales.
     """
 
     if (
@@ -78,24 +80,26 @@ def crear_contexto_demo(
         or not 1 <= cantidad_sobrevivientes <= 200
     ):
         raise ValueError("La población debe ser un entero entre 1 y 200.")
+    if semilla is not None and (isinstance(semilla, bool) or not isinstance(semilla, int)):
+        raise ValueError("La semilla debe ser un entero o None.")
     grafo = Grafo(cargar_mapa(ruta_mapa))
     if escenario not in ESCENARIOS_DEMO:
         opciones = ", ".join(sorted(ESCENARIOS_DEMO))
         raise ValueError(f"Escenario demo desconocido: {escenario}. Opciones: {opciones}.")
-    zombies = ESCENARIOS_DEMO[escenario]
-    rng = random.Random(semilla)
+    semilla_real = secrets.randbits(64) if semilla is None else semilla
+    rng = random.Random(semilla_real)
     nodos_refugio = {refugio.nodo for refugio in grafo.mapa.refugios}
-    nodos_inicio = tuple(
-        nodo.id for nodo in grafo.mapa.nodos if nodo.id not in nodos_refugio
-    )
+    nodos_inicio = _nodos_inicio_elegibles(grafo, nodos_refugio)
     if not nodos_inicio:
-        raise ValueError("El mapa demo requiere al menos un nodo que no sea refugio.")
-    if cantidad_sobrevivientes == 1 and "D-001" in grafo.mapa.nodos_por_id:
-        posiciones = ("D-001",)
+        raise ValueError("El mapa demo requiere un nodo transitable con ruta a algún refugio.")
+    if cantidad_sobrevivientes <= len(nodos_inicio):
+        posiciones = tuple(rng.sample(nodos_inicio, cantidad_sobrevivientes))
     else:
         posiciones = tuple(rng.choice(nodos_inicio) for _ in range(cantidad_sobrevivientes))
+    zombies = _crear_zombies_demo(escenario, nodos_inicio, posiciones, rng)
+    run_id = f"navira-demo-{uuid.uuid4().hex}"
     partida = Partida(
-        run_id="navira-demo-local",
+        run_id=run_id,
         modo=ModoPartida.SIMULADOR,
         escenario=f"demo-sintetico-{escenario}",
         map_version=grafo.mapa.version,
@@ -132,13 +136,14 @@ def crear_contexto_demo(
         mapas=mapas,
         servicio_decision=DecidirPaso(snapshots, mapas),
         run_id=partida.run_id,
+        semilla=semilla_real,
     )
 
 
 def crear_servicio_demo(
     ruta_mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
     *,
-    semilla: int = 31,
+    semilla: int | None = None,
     escenario: str = "libre",
     cantidad_sobrevivientes: int = 1,
 ) -> DecidirPaso:
@@ -150,3 +155,64 @@ def crear_servicio_demo(
         escenario=escenario,
         cantidad_sobrevivientes=cantidad_sobrevivientes,
     ).servicio_decision
+
+
+def _nodos_inicio_elegibles(grafo: Grafo, refugios: set[str]) -> tuple[str, ...]:
+    """Devuelve nodos no-refugio desde los que existe ruta dirigida a refugio."""
+
+    predecesores: dict[str, list[str]] = {nodo.id: [] for nodo in grafo.mapa.nodos}
+    for calle in grafo.mapa.calles:
+        predecesores[calle.destino].append(calle.origen)
+
+    alcanzables = set(refugios)
+    frontera = list(refugios)
+    while frontera:
+        destino = frontera.pop()
+        for origen in predecesores[destino]:
+            if origen not in alcanzables:
+                alcanzables.add(origen)
+                frontera.append(origen)
+
+    return tuple(
+        nodo.id
+        for nodo in grafo.mapa.nodos
+        if nodo.id not in refugios and nodo.id in alcanzables
+    )
+
+
+def _crear_zombies_demo(
+    escenario: str,
+    nodos_elegibles: tuple[str, ...],
+    posiciones_sobrevivientes: tuple[str, ...],
+    rng: random.Random,
+) -> tuple[Zombie, ...]:
+    """Muestrea ubicaciones y fases donde el prototipo ya tiene variación permitida.
+
+    Las hordas conservan su regla provisional de inmovilidad y los perfiles no
+    alteran cantidad ni composición, pendientes de P-07 y P-09.
+    """
+
+    composicion = _COMPOSICION_ZOMBIES_DEMO.get(escenario)
+    if composicion is None:
+        raise ValueError(f"Escenario demo desconocido: {escenario}.")
+    disponibles = tuple(
+        nodo for nodo in nodos_elegibles if nodo not in set(posiciones_sobrevivientes)
+    ) or nodos_elegibles
+    if composicion and not disponibles:
+        raise ValueError("El mapa demo requiere nodos elegibles para ubicar zombies.")
+
+    if len(composicion) <= len(disponibles):
+        posiciones = rng.sample(disponibles, len(composicion))
+    else:
+        posiciones = [rng.choice(disponibles) for _ in composicion]
+
+    return tuple(
+        Zombie(
+            identificador,
+            tipo,
+            nodo,
+            estado=estado,
+            fase_movimiento=rng.randrange(2) if tipo is TipoZombie.CAMINANTE else 0,
+        )
+        for (identificador, tipo, estado), nodo in zip(composicion, posiciones, strict=True)
+    )

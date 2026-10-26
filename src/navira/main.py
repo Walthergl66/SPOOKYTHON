@@ -25,7 +25,7 @@ def crear_app(servicio_decision=None) -> FastAPI:
 def crear_app_demo(
     *,
     ruta_mapa=MAPA_DEMO_POR_DEFECTO,
-    semilla: int = 31,
+    semilla: int | None = None,
     escenario: str = "libre",
     cantidad_sobrevivientes: int = 1,
 ) -> FastAPI:
@@ -46,7 +46,8 @@ def _crear_app_configurada() -> FastAPI:
 
     if os.environ.get("NAVIRA_DEMO") == "1":
         mapa = os.environ.get("NAVIRA_DEMO_MAP", str(MAPA_DEMO_POR_DEFECTO))
-        semilla = int(os.environ.get("NAVIRA_DEMO_SEED", "31"))
+        valor_semilla = os.environ.get("NAVIRA_DEMO_SEED")
+        semilla = int(valor_semilla) if valor_semilla is not None else None
         escenario = os.environ.get("NAVIRA_DEMO_SCENARIO", "libre")
         sobrevivientes = int(os.environ.get("NAVIRA_DEMO_SURVIVORS", "1"))
         return crear_app_demo(
