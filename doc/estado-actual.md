@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-028**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-029**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -57,18 +57,20 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
-| Rendimiento/supervivencia | Evaluación HTTP local exploratoria CAM-028; no oficial | Rondas de cinco minutos, temporización de dos segundos y medición desde el entorno real. |
-| Repositorio remoto y commits | `origin/master` verificado en `fa7ebd8` al iniciar CAM-028; CAM-028 quedó comprometido localmente | Publicar el commit local al restablecer autenticación de escritura. |
+| Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
+| Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028 y CAM-029 son commits locales separados | Publicar los dos commits cuando haya una ruta de escritura que acepte cambios de Git. |
 
-El checkout local está en `master`, un commit por delante de `origin/master`. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. El commit local CAM-028 no se pudo publicar porque Git no pudo leer credenciales HTTPS. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
+El checkout local está en `master`, dos commits por delante de `origin/master`. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. CAM-028 y CAM-029 están comprometidos localmente en commits separados. El push de consola no pudo leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; `git ls-remote` confirmó que el remoto no cambió. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-Siguiente para completar la publicación solicitada: restablecer autenticación GitHub de escritura y publicar `master` (un commit local pendiente). Después, repetir el evaluador con el período de dos segundos y la duración/rondas requeridas cuando los parámetros oficiales estén confirmados; luego medir desde el entorno de evaluación/AWS. T-11 y P2-03 siguen incompletos porque CAM-028 es una corrida local rápida. Resolver P-09 antes de afirmar composiciones oficiales y P-07 antes de cambiar la dinámica de horda. Persistencia durable/CAS, reloj continuo y evaluación oficial permanecen pendientes. No declarar seguridad sísmica ni rendimiento hasta validar sus respectivas fuentes/mediciones.
+CAM-029 añadió cadencia monotónica configurable y ejecutó tres turnos por cohorte a 2 s; el p95 local fue 18,017/54,593/103,734 ms para 20/80/200 sobrevivientes, sin fallos ni ciclos tardíos en esa muestra. Ver [reporte](resultados/evaluacion-cadencia-cam029.md). Los commits CAM-028 y CAM-029 están en el checkout local; consola y conexión GitHub no pudieron escribir en el remoto. Siguiente: publicar cuando exista una ruta de escritura aceptada, y confirmar o parametrizar la composición oficial P-09 sin inventar valores antes de ejecutar rondas de 150 turnos en el entorno de evaluación. T-11, P2-03 y P5-01 siguen incompletos; el reloj de producción, AWS y persistencia durable permanecen pendientes. P-07 también condiciona las reglas de horda. No declarar seguridad sísmica ni rendimiento sostenido a partir de esta medición local.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
 Verificación de CAM-028: suite completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (98 pruebas OK), `python3 scripts/check_docs.py` (59 Markdown/61 archivos), `python3 scripts/check_sdd.py` (seis SPEC), `compileall` y `git diff --check` correctos. Matriz local de cinco turnos por cohorte con Uvicorn loopback; cifras y limitaciones en [reporte CAM-028](resultados/evaluacion-multi-turno-cam028.md). No equivale a medición remota ni reloj de dos segundos.
+
+Verificación de CAM-029: suite completa (100 pruebas), `python3 scripts/check_docs.py` (60 Markdown/62 archivos), `python3 scripts/check_sdd.py`, `compileall` y `git diff --check` correctos. La matriz CLI 20/80/200 se ejecutó a 2 s por tres turnos; cifras y límites en [reporte CAM-029](resultados/evaluacion-cadencia-cam029.md). Commit individual local creado; consola no pudo autenticar y GitHub rechazó la escritura del árbol remoto, por lo que `origin/master` no se actualizó.
 
 ## Dependencias externas
 
@@ -76,7 +78,7 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo genérico en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016; ejecutor CLI en CAM-017; escenarios zombie sintéticos en CAM-018; cohortes sintéticas en CAM-019; cliente de carga en CAM-020; fixture geográfico parcial de Manta y evidencia por amenaza en CAM-021; requisito de simulación estocástica/replay en CAM-022; generador base en CAM-023, replay multi-turno en CAM-024; cohortes sintéticas Manta en CAM-025; evaluación HTTP multi-turno exploratoria en CAM-028. Rama local de trabajo: `master`. P0-01 está verificado; P0-02, P1-01/02/03/04/05 y P2-01/02 siguen parciales o en curso. SPEC-001/002 no están verificadas.
+La base API quedó en CAM-006; grafo genérico en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016; ejecutor CLI en CAM-017; escenarios zombie sintéticos en CAM-018; cohortes sintéticas en CAM-019; cliente de carga en CAM-020; fixture geográfico parcial de Manta y evidencia por amenaza en CAM-021; requisito de simulación estocástica/replay en CAM-022; generador base en CAM-023, replay multi-turno en CAM-024; cohortes sintéticas Manta en CAM-025; evaluación HTTP multi-turno exploratoria en CAM-028 y cadencia temporizada local en CAM-029. Rama local de trabajo: `master`. P0-01 está verificado; P0-02, P1-01/02/03/04/05 y P2-01/02 siguen parciales o en curso. SPEC-001/002 no están verificadas.
 
 ## Transferencia CAM-026
 

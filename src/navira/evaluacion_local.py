@@ -106,7 +106,7 @@ def _servidor_loopback(aplicacion, *, timeout_inicio: float = 10.0) -> Iterator[
 
 
 def _validar_parametros(
-    *, turnos: int, concurrencia: int, timeout_segundos: float
+    *, turnos: int, concurrencia: int, timeout_segundos: float, periodo_segundos: float
 ) -> None:
     if isinstance(turnos, bool) or not isinstance(turnos, int) or not 1 <= turnos <= 150:
         raise ValueError("Los turnos deben ser un entero entre 1 y 150.")
@@ -118,6 +118,8 @@ def _validar_parametros(
         raise ValueError("La concurrencia debe ser un entero entre 1 y 200.")
     if not math.isfinite(timeout_segundos) or timeout_segundos <= 0:
         raise ValueError("El timeout debe ser un número finito mayor que cero.")
+    if not math.isfinite(periodo_segundos) or periodo_segundos <= 0:
+        raise ValueError("El período debe ser un número finito mayor que cero.")
 
 
 def _resumir_latencias(latencias: list[float]) -> dict[str, float | None]:
@@ -145,6 +147,7 @@ def ejecutar_evaluacion_local(
     escenario: str = "mixto",
     concurrencia: int = 200,
     timeout_segundos: float = 1.0,
+    periodo_segundos: float = 2.0,
     mapa: str | Path = MAPA_MANTA_POR_DEFECTO,
 ) -> dict[str, object]:
     """Consulta `/paso` por sobreviviente en cada turno y resuelve esas órdenes.
@@ -159,6 +162,7 @@ def ejecutar_evaluacion_local(
         turnos=turnos,
         concurrencia=concurrencia,
         timeout_segundos=timeout_segundos,
+        periodo_segundos=periodo_segundos,
     )
     if sobrevivientes not in POBLACIONES_EVALUACION:
         raise ValueError("La cohorte debe ser 20, 80 o 200 sobrevivientes.")
@@ -178,10 +182,22 @@ def ejecutar_evaluacion_local(
     estados_http: Counter[str] = Counter()
     fallidas = 0
     turnos_reporte: list[dict[str, object]] = []
-    inicio_evaluacion = time.perf_counter()
+    inicio_evaluacion = 0.0
+    inicios_turno: list[float] = []
+    retrasos_inicio_ms: list[float] = []
+    turnos_fuera_de_periodo = 0
 
     with _clave_temporal(clave), _servidor_loopback(aplicacion) as url:
-        for _ in range(turnos):
+        inicio_evaluacion = time.perf_counter()
+        for indice_turno in range(turnos):
+            inicio_objetivo = inicio_evaluacion + indice_turno * periodo_segundos
+            espera = inicio_objetivo - time.perf_counter()
+            if espera > 0:
+                time.sleep(espera)
+            inicio_turno = time.perf_counter()
+            retraso_inicio_ms = max(0.0, (inicio_turno - inicio_objetivo) * 1000)
+            inicios_turno.append(inicio_turno)
+            retrasos_inicio_ms.append(retraso_inicio_ms)
             snapshot = contexto.snapshots.obtener(contexto.run_id)
             if snapshot is None:
                 raise RuntimeError("El snapshot desapareció durante la evaluación.")
@@ -276,9 +292,16 @@ def ejecutar_evaluacion_local(
                 intenciones=tuple(intenciones),
             )
             final = resuelto.partida
+            duracion_turno_ms = (time.perf_counter() - inicio_turno) * 1000
+            periodo_cumplido = duracion_turno_ms <= periodo_segundos * 1000
             turnos_reporte.append(
                 {
                     "turno": partida.turno,
+                    "inicioDesdeInicioMs": round((inicio_turno - inicio_evaluacion) * 1000, 3),
+                    "intervaloInicioAnteriorMs": round(
+                        (inicio_turno - inicios_turno[-2]) * 1000, 3
+                    ) if len(inicios_turno) > 1 else None,
+                    "retrasoInicioMs": round(retraso_inicio_ms, 3),
                     "versionInicial": snapshot.version,
                     "versionResuelta": resuelto.version,
                     "sobrevivientesConsultados": len(activos),
@@ -297,8 +320,12 @@ def ejecutar_evaluacion_local(
                         for persona in final.sobrevivientes
                     ),
                     "estadoPartida": final.estado.value,
+                    "duracionTurnoMs": round(duracion_turno_ms, 3),
+                    "periodoCumplido": periodo_cumplido,
                 }
             )
+            if not periodo_cumplido:
+                turnos_fuera_de_periodo += 1
             if final.estado.value == "finalizada":
                 break
 
@@ -338,12 +365,16 @@ def ejecutar_evaluacion_local(
         "sobrevivientesActivosFinales": activos_finales,
         "evacuadosTotales": evacuados,
         "mordidosTotales": mordidos,
+        "periodoObjetivoSegundos": periodo_segundos,
         "duracionTotalSegundos": round(time.perf_counter() - inicio_evaluacion, 3),
-        "temporizacion": "avance inmediato entre turnos; no simula el reloj de 2 segundos",
+        "turnosFueraDePeriodo": turnos_fuera_de_periodo,
+        "retrasoInicioMsMaximo": round(max(retrasos_inicio_ms, default=0.0), 3),
+        "temporizacion": "inicio de turnos alineado a una cadencia monotónica configurable",
         "turnos": turnos_reporte,
         "limites": [
             "servidor y cliente comparten máquina; no mide latencia de AWS ni internet",
             "perfil sintético, no representa dificultad ni distribución oficial",
+            "la temporización local no equivale al reloj continuo ni al entorno de evaluación desplegado",
             "no acredita cobertura cartográfica ni seguridad ante tsunami o terremoto",
             "las fallas HTTP producen espera local para permitir continuar la evaluación",
         ],
@@ -358,6 +389,7 @@ def ejecutar_matriz_local(
     escenario: str = "mixto",
     concurrencia: int = 200,
     timeout_segundos: float = 1.0,
+    periodo_segundos: float = 2.0,
     mapa: str | Path = MAPA_MANTA_POR_DEFECTO,
 ) -> dict[str, object]:
     """Ejecuta cada población solicitada como una partida aislada reproducible."""
@@ -372,6 +404,7 @@ def ejecutar_matriz_local(
             escenario=escenario,
             concurrencia=concurrencia,
             timeout_segundos=timeout_segundos,
+            periodo_segundos=periodo_segundos,
             mapa=mapa,
         )
         for poblacion in poblaciones
@@ -384,6 +417,7 @@ def ejecutar_matriz_local(
         "semillaSolicitada": semilla,
         "escenario": escenario,
         "concurrenciaMaxima": concurrencia,
+        "periodoObjetivoSegundos": periodo_segundos,
         "resultados": resultados,
         "limite": "no sustituye T-11 ni las rondas oficiales en su entorno de evaluación",
     }
@@ -416,6 +450,16 @@ def _timeout(valor: str) -> float:
     return numero
 
 
+def _periodo(valor: str) -> float:
+    try:
+        numero = float(valor)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("debe ser numérico") from exc
+    if not math.isfinite(numero) or numero <= 0:
+        raise argparse.ArgumentTypeError("debe ser finito y mayor que cero")
+    return numero
+
+
 def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
     """Punto de entrada: `python -m navira.evaluacion_local`."""
 
@@ -434,6 +478,12 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
     )
     parser.add_argument("--concurrencia", type=_positivo, default=200)
     parser.add_argument("--timeout-segundos", type=_timeout, default=1.0)
+    parser.add_argument(
+        "--periodo-segundos",
+        type=_periodo,
+        default=2.0,
+        help="cadencia objetivo entre inicios de turno (por defecto: 2 segundos)",
+    )
     parser.add_argument("--mapa", type=Path, default=MAPA_MANTA_POR_DEFECTO)
     args = parser.parse_args(argv)
     destino = salida if salida is not None else sys.stdout
@@ -445,6 +495,7 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
             escenario=args.escenario,
             concurrencia=args.concurrencia,
             timeout_segundos=args.timeout_segundos,
+            periodo_segundos=args.periodo_segundos,
             mapa=args.mapa,
         )
     except (OSError, ValueError, RuntimeError, KeyError) as exc:

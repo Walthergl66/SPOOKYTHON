@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-029 — Evaluador HTTP con cadencia configurable
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario; siguiente paso de CAM-028 para medir el evaluador con el período de dos segundos que requiere T-11.
+- Especificación/requisitos/tareas: SPEC-002, CA-002-04 parcial, P2-03 y P5-01 en curso; T-11 parcial. No verifica la SPEC.
+- Base Git: `master`, commit `4f943d8`; conserva el commit CAM-028 separado.
+- Resultado: `evaluacion_local.py` programa inicios con reloj monotónico, admite `periodo_segundos`/`--periodo-segundos` (2 s por defecto), y reporta intervalos, retrasos y duración/cumplimiento del período por turno. Las solicitudes siguen leyendo una sola versión por turno y se resuelven después de la tanda HTTP.
+- Archivos: `src/navira/evaluacion_local.py`, `tests/test_evaluacion_local.py`; documentos propietarios del módulo, pruebas, plan, SPEC-002, trazabilidad, índice, estado y [reporte CAM-029](resultados/evaluacion-cadencia-cam029.md).
+- Evidencia local: tres turnos por cohorte 20/80/200 con mapa `manta-osm-d76772f9d9e9`, escenario sintético `mixto`, semilla `20261026`, concurrencia máxima 200 y cadencia 2 s. 877 solicitudes, cero fallos HTTP, p95 18,017/54,593/103,734 ms, ciclos máximos 59,078/207,267/479,105 ms y retraso máximo de inicio 0,176/0,072/0,074 ms. Los datos completos y límites están en el reporte.
+- Límites: corrida local única y corta; no son 150 turnos, no dura cinco minutos por ronda, no usa poblaciones oficiales de zombies ni cliente remoto/AWS. No verifica T-11 ni latencia sostenida, supervivencia general, persistencia durable, cartografía para uso real o seguridad sísmica. P-07 y P-09 siguen abiertos.
+- Verificación: prueba enfocada `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_evaluacion_local.py' -v` (5 pruebas correctas); suite completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (100 pruebas correctas); `python3 scripts/check_docs.py` (60 Markdown en doc/, 62 archivos comprobados); `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas); `PYTHONPATH=src /tmp/navira-env/bin/python -m compileall -q src tests` y `git diff --check` correctos. Corrida CLI guardada temporalmente en `/tmp/navira-evaluacion-local-cam029.json`; el resumen versionado está en el reporte. El cambio quedó en un commit individual local. `git push origin master` no pudo leer credenciales HTTPS; la conexión GitHub también rechazó crear el árbol remoto con HTTP 403 `Resource not accessible by integration`. `git ls-remote` confirmó que `origin/master` permaneció en `fa7ebd8`; no se afirma publicado.
+- Siguiente paso: cerrar P-09/parámetros de escenario antes de identificar poblaciones oficiales; luego ejecutar 150 turnos por ronda y medir en el entorno de evaluación. Mientras tanto el evaluador admite `--turnos 150 --periodo-segundos 2`, pero una corrida local no cierra la evaluación oficial.
+
 ## CAM-028 — Evaluación HTTP multi-turno en Manta
 
 - Fecha: 2026-10-26, Ecuador continental.

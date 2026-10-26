@@ -15,6 +15,7 @@ class EvaluacionLocalTests(unittest.TestCase):
             semilla=20261026,
             escenario="mixto",
             concurrencia=4,
+            periodo_segundos=0.01,
         )
 
         self.assertEqual(reporte["medicion"], "exploratoria_local_http_loopback")
@@ -36,6 +37,7 @@ class EvaluacionLocalTests(unittest.TestCase):
             "semilla": 20261026,
             "escenario": "mixto",
             "concurrencia": 4,
+            "periodo_segundos": 0.01,
         }
         primero = ejecutar_evaluacion_local(**argumentos)
         segundo = ejecutar_evaluacion_local(**argumentos)
@@ -57,6 +59,26 @@ class EvaluacionLocalTests(unittest.TestCase):
     def test_rechaza_cohorte_fuera_de_la_matriz_definida(self) -> None:
         with self.assertRaisesRegex(ValueError, "20, 80 o 200"):
             ejecutar_evaluacion_local(sobrevivientes=40)
+
+    def test_alinea_inicio_de_turnos_a_la_cadencia_configurada(self) -> None:
+        reporte = ejecutar_evaluacion_local(
+            sobrevivientes=20,
+            turnos=2,
+            semilla=20261026,
+            concurrencia=4,
+            periodo_segundos=0.2,
+        )
+
+        self.assertEqual(reporte["periodoObjetivoSegundos"], 0.2)
+        turnos = reporte["turnos"]
+        self.assertGreaterEqual(turnos[1]["intervaloInicioAnteriorMs"], 190)
+        self.assertGreaterEqual(turnos[1]["inicioDesdeInicioMs"], 190)
+        self.assertIn("duracionTurnoMs", turnos[0])
+        self.assertIn("periodoCumplido", turnos[0])
+
+    def test_rechaza_periodo_no_positivo(self) -> None:
+        with self.assertRaisesRegex(ValueError, "período"):
+            ejecutar_evaluacion_local(sobrevivientes=20, periodo_segundos=0)
 
 
 if __name__ == "__main__":

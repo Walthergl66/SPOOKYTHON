@@ -47,6 +47,14 @@ Perfiles disponibles: `libre`, `caminantes`, `mixto` y `horda`; `--sobreviviente
 
 El fixture de Manta también se puede usar para recorridos sintéticos, por ejemplo con `--mapa data/maps/manta-hackathon-v1.json`. CAM-025 documenta una ejecución de tres turnos con semilla fija y cohortes de 20/80/200; no es una evaluación oficial ni una recomendación de evacuación real.
 
+Para evaluar decisiones HTTP mientras avanza el mundo, el ejecutor local inicia Uvicorn en loopback y consulta `/paso` por cada sobreviviente activo. Los inicios se alinean a una cadencia monotónica de dos segundos (configurable) y el reporte registra latencias y retrasos:
+
+```bash
+PYTHONPATH=src python -m navira.evaluacion_local --turnos 3 --poblaciones 20 80 200 --concurrencia 200 --semilla 20261026 --periodo-segundos 2
+```
+
+CAM-029 documenta esta prueba corta de tres turnos por cohorte. Es evidencia local exploratoria; no sustituye los 150 turnos de cada ronda oficial ni una medición desde AWS o el entorno del evaluador.
+
 Para medir localmente la respuesta HTTP de `/paso`, ejecuta el servidor con la misma configuración y luego corre el cliente desde otra terminal:
 
 ```bash
