@@ -1,6 +1,6 @@
 # Motor de rutas y predicción
 
-Estado: propuesta por etapas. No hay supervivencia ni tiempos medidos.
+Estado: movimiento zombie y resolución de un turno implementados parcialmente en `src/navira/simulation/resolver.py`; búsqueda de rutas, simulador continuo, supervivencia y tiempos siguen sin medir.
 
 ## Referencia inicial
 
@@ -20,6 +20,8 @@ Si se optimizan turnos, la heurística debe ser una cota inferior en saltos; si 
 - Corredor: objetivo probable a tres saltos, dos movimientos y alternativas por empate; reevaluar al cambiar sobrevivientes.
 - Horda: nodo y vecindad bloqueados; dinámica exacta pendiente de confirmación.
 - Dormido: el motor no conoce posición antes de activarse. Al aparecer, recalcular como caminante.
+
+El prototipo aplica valores provisionales registrados en [pendientes](pendientes.md): caminante elige al azar una calle saliente en su fase de dos turnos; corredor persigue por ruta dirigida más corta hasta tres saltos, empate por ID de sobreviviente y objetivo fijo durante sus dos tramos; horda permanece fija; dormido usa radio topológico de dos saltos y no se mueve por defecto en el turno de activación. No existe aún el planificador Dijkstra que consulta `/paso`.
 
 No bloquear todos los nodos alcanzables por cualquier corredor en cualquier futuro: puede inmovilizar todo el mapa. Usar riesgo acotado y comparar políticas. No usar la semilla del simulador para adivinar movimientos.
 

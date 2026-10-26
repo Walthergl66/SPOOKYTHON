@@ -82,6 +82,7 @@ class Zombie:
     nodo: str
     estado: EstadoZombie = EstadoZombie.ACTIVO
     turno_activacion: int | None = None
+    fase_movimiento: int = 0
 
     def __post_init__(self) -> None:
         if not self.id.strip() or not self.nodo.strip():
@@ -94,6 +95,8 @@ class Zombie:
             raise ValueError("Solo un zombie de tipo dormido puede estar en estado dormido.")
         if self.turno_activacion is not None and self.turno_activacion < 0:
             raise ValueError("El turno de activación no puede ser negativo.")
+        if self.fase_movimiento not in (0, 1):
+            raise ValueError("La fase de movimiento del caminante debe ser 0 o 1.")
 
 
 @dataclass(frozen=True, slots=True)

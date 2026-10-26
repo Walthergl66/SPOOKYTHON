@@ -1,6 +1,6 @@
 # Flujo del simulador y del turno
 
-Estado: diseño previsto. Fuente de reglas: [reglas](../reglas-juego.md). Identidades: [datos](../datos.md).
+Estado: `resolver_turno()` implementa localmente una fase pura de zombies, decisiones y resolución conjunta; el reloj, persistencia y publicación todavía son diseño. Fuente de reglas: [reglas](../reglas-juego.md). Identidades: [datos](../datos.md).
 
 ## Ciclo
 

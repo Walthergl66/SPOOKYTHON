@@ -1,6 +1,6 @@
 # Módulos backend y dependencias
 
-Estado: implementación por fases. `src/navira/api/` contiene esquemas, autenticación y rutas HTTP; `src/navira/application/decidir_paso.py` ofrece temporalmente espera determinista; `src/navira/domain/` contiene grafo y entidades/intenciones compartidas. El dataset real de Manta, resolutor, simulación, persistencia y planificador todavía no existen.
+Estado: implementación por fases. `src/navira/api/` contiene esquemas, autenticación y rutas HTTP; `src/navira/application/decidir_paso.py` ofrece temporalmente espera determinista; `src/navira/domain/` contiene grafo y entidades/intenciones; `src/navira/simulation/resolver.py` ejecuta un turno en memoria. El dataset real de Manta, reloj, persistencia, API conectada al planificador y evaluación siguen pendientes.
 
 Lenguaje, contextos e invariantes: [ODDD](../ODDD.md). Requisitos técnicos: [TRD](../TRD.md); antes de implementar elegir la [SPEC](../especificaciones/README.md) correspondiente. La orientación a objetos no exige crear clases para funciones sin estado.
 
@@ -8,7 +8,7 @@ Lenguaje, contextos e invariantes: [ODDD](../ODDD.md). Requisitos técnicos: [TR
 |---|---|---|---|
 | `domain/` | Grafo, entidades, transitabilidad, mordidas y llegadas | Importar FastAPI/boto3, usar HTTP o decidir permisos web | `test_mapa.py` y `test_modelo.py` validan mapa, estado y contexto de intención. |
 | `routing/` | Dijkstra, A* temporal, riesgos y selección de refugio | Modificar mundo, leer dormidos o mezclar unidades | Casos de ruta y comparación de políticas. |
-| `simulation/` | Reloj, fases, zombies, eventos y resolución | Mantener la única copia de estado o ejecutar coordinadores duplicados | Escenarios y reproducción. |
+| `simulation/` | Reloj, fases, zombies, eventos y resolución | Mantener la única copia de estado o ejecutar coordinadores duplicados | `test_resolver.py` cubre movimientos y mordidas en grafos pequeños; reloj/eventos aún pendientes. |
 | `application/` | Preparar turno, decidir paso, iniciar/finalizar partida; puertos de I/O | Depender de esquemas HTTP o SDK AWS | Casos de uso con adaptadores en memoria. En esta fase solo existe la decisión inicial de espera. |
 | `player/` | Aparición, propiedad lógica y orden humana por turno | Autorizar con cookies directamente o mover posiciones | Idempotencia y cierre de acciones. |
 | `api/` | Esquemas, autenticación, HTTP y WebSocket | Implementar reglas o búsqueda dentro de controladores | Pruebas de contrato. |

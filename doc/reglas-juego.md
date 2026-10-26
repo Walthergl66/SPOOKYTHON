@@ -1,6 +1,6 @@
 # Reglas del mundo
 
-Estado: requisitos transcritos y supuestos explícitos; implementación pendiente. Fuente: [reto](referencias/reto-original.md). Dudas: [pendientes](pendientes.md).
+Estado: implementación parcial del grafo, movimiento zombie y resolución de intenciones en `src/navira/`; el reloj, los eventos coordinados y los escenarios siguen pendientes. Fuente: [reto](referencias/reto-original.md). Dudas: [pendientes](pendientes.md).
 
 ## Reglas obligatorias
 
@@ -31,6 +31,8 @@ Estado: requisitos transcritos y supuestos explícitos; implementación pendient
 ## Supuestos pendientes de confirmar
 
 Activación/fase inicial de dormidos (P-02), objetivo y desempate del corredor (P-03), seguridad de refugios y orden de llegada (P-04), eficiencia y supervivencia oficial (P-05), movimiento de hordas (P-07), calles dirigidas y bloqueo de ambos sentidos (P-08). No presentar estas interpretaciones como texto oficial.
+
+Valores provisionales del prototipo: dormido detecta supervivientes a dos saltos no dirigidos al inicio de la fase zombie y espera el resto de ese turno; el corredor elige superviviente por menor distancia dirigida y después por ID, manteniendo objetivo durante sus dos pasos; hordas quedan estáticas; mordida se resuelve antes de evacuar. La activación del dormido en el mismo turno es configurable. Cierres aceptan ID de arista o segmento físico. Cambiar estos supuestos requiere registrar la aclaración fuente.
 
 ## Escenarios obligatorios
 

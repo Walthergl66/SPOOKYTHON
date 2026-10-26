@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-008**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-009**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -16,6 +16,7 @@
 - En `feat/navira-backend-base` existe la base FastAPI en `src/navira/`, `/salud`, `/paso` con autenticación y esquemas, y fixtures de contrato/mapa. El endpoint usa temporalmente una política de espera determinista; todavía no hay cálculo de rutas.
 - En `feat/navira-map-graph` existe `src/navira/domain/mapa.py`: modelo de nodo/calle/refugio, carga JSON, adyacencia dirigida y validación de cierres por arista/segmento. Diez pruebas de dominio pasan. El fixture es sintético y no representa Manta.
 - En `feat/navira-world-model` existe `src/navira/domain/modelo.py`: partida con modo/turno/fase fijos, sobrevivientes, zombies e intención ligada a su partida y fase. Siete pruebas pasan; todavía no hay resolutor de movimiento.
+- En `feat/navira-zombie-resolution` existe `src/navira/simulation/resolver.py`: resolución en memoria de una fase completa con movimiento zombie, intenciones humanas/automáticas, mordidas y evacuación. Las once pruebas del resolutor y 36 pruebas totales pasan. Reglas aún provisionales; no integra reloj, persistencia, snapshots ni visibilidad del estado dormido.
 
 ## Verificación histórica de CAM-003
 
@@ -37,7 +38,7 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Área | Estado | Evidencia pendiente |
 |---|---|---|
 | Backend y `/paso` | Base implementada, arranque sin verificar | Instalar dependencias, ejecutar HTTP y completar pruebas de contrato; conectar planificador después. |
-| Simulador | Pendiente | Turnos y escenarios ejecutados. |
+| Simulador | Resolución de una fase implementada parcialmente | Reloj, transiciones entre turnos, eventos, snapshots, escenarios y ejecución continua pendientes. |
 | Grafo de Manta | Modelo genérico implementado; dataset pendiente | Área y exportación reproducible de OpenStreetMap con unas 300 intersecciones y cuatro refugios. |
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
@@ -45,11 +46,11 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Rendimiento/supervivencia | Sin medir | Reportes de las tres rondas. |
 | Repositorio remoto y commits | No verificado | URL y comprobación del historial. |
 
-El repositorio local tiene un remoto Git configurado. CAM-006 conserva la base del backend en su commit y rama; CAM-007 está en curso en una rama distinta. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
+El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-009 conservan fases separadas en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-Completar P1-01 desde `feat/navira-map-graph` con datos geográficos reproducibles y barrios/refugios reales; luego añadir entidades/intenciones y simulación según [SPEC-001](especificaciones/SPEC-001-mundo-simulacion.md). P0-01/P0-02 también requieren ejecutar y comprobar el endpoint HTTP antes de marcarlos verificados. No presentar la espera inicial como planificador. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Continuar con P1-04 en una rama nueva: ciclo de turno, eventos y snapshots completos/versionados sobre el resolutor de CAM-009. P1-01 sigue necesitando datos geográficos reproducibles de Manta; P1-03 permanece parcial porque reglas de visibilidad/configuración aún no están completas. P0-01/P0-02 también requieren ejecutar y comprobar el endpoint HTTP antes de marcarlos verificados. No presentar la espera inicial como planificador. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
 Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. `python -m pip install -e .` completó en el entorno temporal `/tmp/navira-env`; el comando de arranque del README aún no se ha ejecutado. Cuando se verifique, registrar versiones y resultados, sin confundir comandos previstos con ejecutados.
 
@@ -59,4 +60,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base de API quedó en CAM-006; el modelo del mapa sigue parcial en CAM-007; entidades e intenciones siguen parciales en CAM-008. La rama actual es `feat/navira-world-model`. Continuar desde ella y mantener P1-01/P1-02 en curso hasta completar mapa real y resolver movimientos. Si hay cambios posteriores a CAM-008, inspeccionarlos antes de editar.
+La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución pura de un turno en CAM-009. La rama actual de esta fase es `feat/navira-zombie-resolution`. Tras cerrar su commit, iniciar P1-04 en una nueva rama desde esta rama. Mantener P1-01, P1-02 y P1-03 parciales; la SPEC-001 no está verificada.
