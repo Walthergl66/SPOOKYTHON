@@ -5,8 +5,8 @@ Estado: implementada
 Requisitos: PRD-01, PRD-04, TRD-07, TRD-09
 Tareas: P4-04
 Pruebas: T-27
-Cambio: CAM-055
-Evidencia: [reporte CAM-051](../resultados/mapa-cartografico-3d-cam051.md), [reporte CAM-052](../resultados/movimiento-mapa-cam052.md), [reporte CAM-053](../resultados/limites-mapa-cam053.md), [reporte CAM-054](../resultados/ampliacion-mapa-cam054.md), [reporte CAM-055](../resultados/ampliacion-50km-mapa-cam055.md)
+Cambio: CAM-056
+Evidencia: [reporte CAM-051](../resultados/mapa-cartografico-3d-cam051.md), [reporte CAM-052](../resultados/movimiento-mapa-cam052.md), [reporte CAM-053](../resultados/limites-mapa-cam053.md), [reporte CAM-054](../resultados/ampliacion-mapa-cam054.md), [reporte CAM-055](../resultados/ampliacion-50km-mapa-cam055.md), [reporte CAM-056](../resultados/reduccion-15km-mapa-cam056.md)
 
 ## Objetivo y alcance
 
@@ -30,6 +30,6 @@ La primera implementación ofrece estilo oscuro, edificios extruidos cuando los 
 
 P4-04 sustituye la capa SVG por un componente MapLibre. Las transiciones visuales usan snapshots públicos consecutivos; no cambian el dominio, el contrato de `/paso`, el grafo versionado ni el estado autoritativo. El WebSocket vuelve a resolver el proveedor del panel durante la observación para seguir una partida local recién creada. Para calzar rutas curvas con la red real, una evolución debe conservar geometría completa OSM en el grafo público; esta versión conecta los nodos seleccionados con las coordenadas actuales.
 
-La cámara, el límite de arrastre y la máscara visual usan la ventana descrita en [mapa-manta.md](../mapa-manta.md), ampliada aproximadamente 50 km por lado respecto de la ventana anterior. El recorte evita mostrar tiles exteriores al área cartográfica seleccionada para la demo. La ampliación no extiende el fixture de calles ni el territorio simulado. No es un polígono administrativo ni prueba que el fixture cubra todo Manta.
+La cámara, el límite de arrastre y la máscara visual usan la ventana descrita en [mapa-manta.md](../mapa-manta.md), extendida aproximadamente 15 km por lado respecto del rectángulo de extracción OSM. El recorte evita mostrar tiles exteriores al área cartográfica seleccionada para la demo. La ventana no extiende el fixture de calles ni el territorio simulado. No es un polígono administrativo ni prueba que el fixture cubra todo Manta.
 
 Validación manual en navegador con el proveedor de tiles accesible, compilación Vite/TypeScript y regresiones backend del canal de snapshots. No hay herramienta de test de componentes configurada. El mapa depende de conexión a internet para tiles; el uso público de OpenFreeMap no tiene SLA. El fixture de rutas sigue siendo parcial, y los refugios no están certificados para amenaza sísmica.

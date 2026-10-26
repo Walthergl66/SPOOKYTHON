@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-056 — Reducir el encuadre cartográfico a 15 km por lado
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: solicitud del usuario para reducir la extensión del mapa a 15 km.
+- Especificación/tarea: SPEC-008 CA-008-07, P4-04/T-27; continuidad visual de CAM-055 y ADR-016.
+- Motivo: la vista de aproximadamente 50 km por lado dejaba el área central de Manta demasiado pequeña.
+- Archivos: `frontend/src/features/map/CityMap.tsx`; mapa Manta, frontend, SPEC-008, ADR-016, plan, pruebas, trazabilidad, índices, estado, resultado e historial.
+- Resultado: se configura una ventana aproximadamente 15 km fuera de cada borde del rectángulo OSM de extracción. Límites WGS84: oeste `-80.890`, sur `-1.103`, este `-80.540`, norte `-0.799`. Cámara, máscara y restricciones de pan/zoom siguen usando el mismo rectángulo.
+- Límites: el cambio solo modifica el encuadre del basemap; no amplía los 300 nodos/599 aristas del fixture. No es un límite administrativo ni muestra simulación fuera del fixture.
+- Verificación: `npm run build` correcto con aviso conocido de chunk MapLibre >500 kB; `python3 scripts/check_docs.py` (80 Markdown/82 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), ocho regresiones del checker y `git diff --check` correctos. El navegador local cargó cartografía/atribución, mostró escala 5 km y mantuvo el zoom-out limitado a la vista general. Evidencia: [reporte CAM-056](resultados/reduccion-15km-mapa-cam056.md).
+- Siguiente paso: continuar con la prueba controlada del error del proveedor/WebGL (P4-04/T-27).
+- Commit: individual en `master` tras validación; revisar historial Git local para el hash.
+
 ## CAM-055 — Ampliar el encuadre cartográfico 50 km por lado
 
 - Fecha: 2026-10-26, Ecuador continental.
