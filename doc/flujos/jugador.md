@@ -1,0 +1,30 @@
+# Flujo del jugador
+
+Estado: diseño previsto. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
+
+## Entrar
+
+1. Seleccionar «Jugar». Comprobar partida de juego habilitada y cupo de control.
+2. Crear/recuperar sesión temporal segura; alias opcional. Un segundo visitante observa, no toma el personaje ocupado.
+3. Registrar solicitud de aparición; incorporarla al inicio de un turno antes del movimiento zombie. Si ya pasó esa fase, esperar el siguiente turno y mostrarlo.
+4. Seleccionar aleatoriamente nodo transitable, fuera de refugios, sin solapamiento zombie inicial y con camino vigente a un refugio. No garantizar que siga siendo seguro después.
+5. Confirmar personaje/nodo; si no hay candidatos, informar y no inventar un punto inválido.
+
+## Elegir una acción
+
+1. Recibir estado observable de la fase de decisión y hora límite del servidor.
+2. Elegir vecino o espera. Mostrar peligros conocidos y sugerencia opcional de la radio.
+3. Enviar orden con partida, turno, personaje e ID de acción.
+4. Mostrar «enviando»; después «recibida» solo tras confirmación persistida. Permitir reemplazarla hasta el cierre.
+5. Ignorar duplicados y rechazar órdenes de otro turno o sesión. El orden se resuelve mediante secuencia del servidor, no el reloj del navegador.
+6. Mostrar el movimiento al recibir el resultado autoritativo. Muchos clics no producen pasos extra.
+
+Solo se cambia destino cuando existe una nueva orden válida recibida dentro del plazo. Una orden inválida no elimina otra válida ya confirmada. Sin orden, espera; no activar control automático por sorpresa.
+
+## Desconexión y final
+
+El mundo continúa sin el navegador. Al reconectar se recupera la sesión y una instantánea completa: el personaje pudo esperar, llegar o morir. No volver a crear otro personaje por refrescar. La radio y el panel usan solo información observable.
+
+Estados: `esperando_aparicion → activo → evacuado | mordido`; una interrupción de partida se comunica por separado. Un timeout del cliente no es una victoria ni una derrota por sí mismo. Al terminar mostrar motivo, turnos y distancia; regresar al selector sin reiniciar una partida ajena.
+
+Aceptación: recorrido completo con teclado y mouse, aparición válida, órdenes idempotentes, un paso por turno, reconexión sin revivir y reglas iguales a las de NPC.
