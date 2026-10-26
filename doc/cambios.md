@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-048 — Sincronizar resumen raíz con el estado del juego
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: revisión de coherencia documental al continuar P4B-03 después de CAM-046/047.
+- Especificación/tarea: SPEC-004 y documentación de incorporación.
+- Motivo: el resumen visible al comenzar desde README todavía afirmaba que el juego carecía de radio y expiración local, y el índice de SPEC-004 no registraba CAM-046/047.
+- Archivos: `README.md`, `doc/especificaciones/README.md` y este historial.
+- Resultado: README distingue expiración local de la política productiva pendiente; índice SPEC-004 incorpora evidencia reciente y sus límites.
+- Verificación: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py`, ocho regresiones del checker y `git diff --check`.
+- Límites: corrección documental; no cambia ni prueba comportamiento de la app.
+- Siguiente paso: completar recorrido end-to-end de teclado/lector de pantalla dentro de una partida activa.
+- Commit: commit documental individual local en `master` tras las comprobaciones.
+
 ## CAM-047 — Recorrido manual de teclado parcial
 
 - Fecha: 2026-10-26, Ecuador continental.

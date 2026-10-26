@@ -2,7 +2,7 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** `/salud`, `POST /paso`, panel HTTP y `WS /ws/panel` están implementados localmente. `NAVIRA_DEMO=1` inicia el simulador sintético. `NAVIRA_GAME_DEMO=1` inicia un juego sintético local con sesión humana, aparición aleatoria y reloj servidor de dos segundos. El mundo y la sesión se pierden al reiniciar; TLS/despliegue, persistencia durable, expiración de sesión, radio y recuperación tras caída siguen pendientes. El fixture OSM de Manta es parcial.
+**Estado real al 26 de octubre de 2026:** `/salud`, `POST /paso`, panel HTTP y `WS /ws/panel` están implementados localmente. `NAVIRA_DEMO=1` inicia el simulador sintético. `NAVIRA_GAME_DEMO=1` inicia un juego sintético local con sesión humana, aparición aleatoria y reloj servidor de dos segundos. La demo incluye Radio Navira, recuperación de sesión en el mismo proceso y TTL deslizante configurable de 30 minutos; al vencer devuelve HTTP 410 y conserva el cupo del personaje para esa partida. Mundo, sesión y reserva se pierden al reiniciar; TLS/despliegue, persistencia durable, recuperación tras caída y política productiva de revocación siguen pendientes. El fixture OSM de Manta es parcial.
 
 ## Empezar
 

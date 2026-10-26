@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio en preparación: **CAM-046**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio registrado: **CAM-048**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
