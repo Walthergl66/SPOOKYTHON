@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-025**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-026**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -60,11 +60,11 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Rendimiento/supervivencia | Sin medir | Reportes de las tres rondas. |
 | Repositorio remoto y commits | No verificado | URL y comprobación del historial. |
 
-El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-020 conservan cambios en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
+El checkout local está en `main`, que contiene los 20 commits de las fases anteriores y el commit documental CAM-026. Se eliminaron las ramas locales `feat/navira-*` y el `master` local después de comprobar que todos sus commits están contenidos en `main`. El push de `main` no se completó: Git no tiene credenciales HTTPS disponibles, SSH no tiene una clave aceptada y la integración GitHub conectada devolvió 403 al crear la referencia. El navegador de esta sesión aparece desconectado. Por eso `origin/master` sigue siendo la única rama remota y no se ha cambiado la rama predeterminada ni eliminado ese ref. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-Siguiente: preparar una medición local repetida de `/paso` mientras avanza el mundo por turnos usando el fixture Manta y cohortes sintéticas; registrar latencia, errores y estado de partida por separado. Mantener la prueba como exploración, no como evaluación oficial. Resolver P-09 antes de afirmar composiciones oficiales y P-07 antes de cambiar la dinámica de horda. Persistencia durable/CAS, reloj continuo y evaluación oficial permanecen pendientes. No declarar seguridad sísmica ni rendimiento hasta validar sus respectivas fuentes/mediciones.
+Siguiente para completar la solicitud vigente: restablecer autenticación GitHub con escritura, publicar `main`, hacerla rama predeterminada y retirar `origin/master` después de verificar el cambio. Luego retomar la siguiente tarea técnica: medir repetidamente `/paso` mientras avanza el mundo con el fixture Manta y cohortes sintéticas, como exploración y no evaluación oficial. Resolver P-09 antes de afirmar composiciones oficiales y P-07 antes de cambiar la dinámica de horda. Persistencia durable/CAS, reloj continuo y evaluación oficial permanecen pendientes. No declarar seguridad sísmica ni rendimiento hasta validar sus respectivas fuentes/mediciones.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
@@ -74,4 +74,8 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo genérico en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016; ejecutor CLI en CAM-017; escenarios zombie sintéticos en CAM-018; cohortes sintéticas en CAM-019; cliente de carga en CAM-020; fixture geográfico parcial de Manta y evidencia por amenaza en CAM-021; requisito de simulación estocástica/replay en CAM-022; generador base en CAM-023, replay multi-turno en CAM-024 y cohortes sintéticas sobre mapa Manta en CAM-025. Rama de trabajo: `feat/navira-manta-simulation-cohorts`. P0-01 está verificado; P0-02, P1-01/02/03/04/05 y P2-01/02 siguen parciales o en curso. SPEC-001/002 no están verificadas.
+La base API quedó en CAM-006; grafo genérico en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016; ejecutor CLI en CAM-017; escenarios zombie sintéticos en CAM-018; cohortes sintéticas en CAM-019; cliente de carga en CAM-020; fixture geográfico parcial de Manta y evidencia por amenaza en CAM-021; requisito de simulación estocástica/replay en CAM-022; generador base en CAM-023, replay multi-turno en CAM-024 y cohortes sintéticas sobre mapa Manta en CAM-025. Rama local de trabajo: `main`. P0-01 está verificado; P0-02, P1-01/02/03/04/05 y P2-01/02 siguen parciales o en curso. SPEC-001/002 no están verificadas.
+
+## Transferencia CAM-026
+
+El historial local fue consolidado en la rama `main`, pero todavía no está publicado. Para terminar el cambio solicitado: restablecer autenticación GitHub con permiso de escritura, publicar `main`, configurarla como rama predeterminada, verificar el remoto y entonces retirar `master` remoto. Las ramas locales `feat/navira-*` y `master` ya se borraron tras verificar que `main` contiene sus commits. No borrar `origin/master` antes de cambiar/verificar la rama predeterminada. Una vez habilitado el push, publicar `main`, incluido el commit documental CAM-026.

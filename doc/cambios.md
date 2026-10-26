@@ -2,6 +2,16 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-026 — Consolidación local en `main` y publicación pendiente
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario pide eliminar ramas de fase, trabajar directamente en `main` y subir los cambios.
+- Motivo: centralizar en `main` el historial de implementación ya integrado y ajustar el flujo de trabajo según la instrucción actual.
+- Resultado local: se creó `main` desde `e5e9e749adb93af73dbcdd095fe8cb2d8d23042b`; incluye los 20 commits posteriores a `master`. No se creó un commit de merge porque la rama de trabajo ya descendía directamente de `master`.
+- Verificación remota: el remoto solo tiene `master` en `6e3e9c02e21e64c25b185b14ac5544bdf69dab99`. `git push --set-upstream origin main` falló porque Git no pudo solicitar credenciales HTTPS en esta sesión. La integración GitHub conectada rechazó crear `main` con HTTP 403 y el navegador no tiene sesión iniciada.
+- Límite: `main` aún no está en GitHub ni es rama predeterminada; no se eliminó `origin/master`. La eliminación de ramas locales se completa después de registrar este cambio y verificar que todas estén contenidas en `main`.
+- Siguiente paso: habilitar una sesión GitHub con escritura, publicar `main`, cambiar y comprobar la rama predeterminada, y luego borrar las referencias obsoletas según [estado actual](estado-actual.md).
+
 ## CAM-001 — Análisis y plan inicial
 
 - Fecha: 2026-10-26.
