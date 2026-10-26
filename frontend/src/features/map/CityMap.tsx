@@ -19,6 +19,9 @@ type FeatureCollection = { type: 'FeatureCollection'; features: Feature[] }
 const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfreemap.org/styles/dark'
 const BUILDING_TILES = 'https://tiles.openfreemap.org/planet'
 const MAP_CENTER: Position = [-80.720, -0.954]
+// Matches the documented OSM extraction window used for Navira's Manta fixture.
+// It is a display/data extent, not Manta's official administrative boundary.
+const MANTA_BOUNDS: [Position, Position] = [[-80.755, -0.967], [-80.675, -0.935]]
 
 setWorkerUrl(mapWorkerUrl)
 
@@ -49,8 +52,10 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
         style: STYLE_URL,
         center: MAP_CENTER,
         zoom: 15.2,
-        pitch: 52,
-        bearing: -18,
+        pitch: 30,
+        bearing: -8,
+        maxBounds: MANTA_BOUNDS,
+        renderWorldCopies: false,
         canvasContextAttributes: { antialias: true },
       })
     } catch {
@@ -63,7 +68,7 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
     instance.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-right')
     instance.once('load', () => {
       initialized = true
-      fitMapToNodes(instance, map)
+      fitMapToMantaArea(instance)
       addMapLayers(instance, latestDataRef.current, latestActorsRef.current)
       setReady(true)
       setMapError(null)
@@ -80,6 +85,13 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
       instance.remove()
     }
   }, [])
+
+  useEffect(() => {
+    const instance = mapRef.current
+    if (!ready || !instance) return
+    instance.setMaxBounds(MANTA_BOUNDS)
+    fitMapToMantaArea(instance)
+  }, [map.version, ready])
 
   useEffect(() => {
     const instance = mapRef.current
@@ -139,15 +151,14 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   )
 }
 
-/** Frames the complete fixture on first load so public actor positions are inside the visible map. */
-function fitMapToNodes(mapInstance: MapLibreMap, map: PanelMap) {
-  if (map.nodos.length === 0) return
-  const longitudes = map.nodos.map((node) => node.lng)
-  const latitudes = map.nodos.map((node) => node.lat)
+/** Frames the documented Manta data window instead of surrounding regions. */
+function fitMapToMantaArea(mapInstance: MapLibreMap) {
   mapInstance.fitBounds(
-    [[Math.min(...longitudes), Math.min(...latitudes)], [Math.max(...longitudes), Math.max(...latitudes)]],
-    { padding: 56, maxZoom: 14.3, duration: 0 },
+    MANTA_BOUNDS,
+    { padding: 32, maxZoom: 14.3, duration: 0 },
   )
+  // Keep zoom-out at the scale that fits the whole declared area in this viewport.
+  mapInstance.setMinZoom(mapInstance.getZoom())
 }
 
 function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: FeatureCollection) {
@@ -224,6 +235,35 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
     layout: { 'text-field': ['get', 'label'], 'text-offset': [0, 1.25], 'text-size': 11, 'text-allow-overlap': false },
     paint: { 'text-color': '#e8fff2', 'text-halo-color': '#142034', 'text-halo-width': 1.4 },
   })
+
+  // The inner ring leaves the documented Manta extraction window visible and
+  // paints a dark mask over provider tiles everywhere outside it.
+  map.addSource('navira-outside-manta-mask', { type: 'geojson', data: outsideMantaMask() as never })
+  map.addLayer({
+    id: 'navira-outside-manta-mask',
+    source: 'navira-outside-manta-mask',
+    type: 'fill',
+    paint: { 'fill-color': '#111827', 'fill-opacity': 0.98 },
+  })
+}
+
+function outsideMantaMask() {
+  const [[west, south], [east, north]] = MANTA_BOUNDS
+  const [outerWest, outerSouth, outerEast, outerNorth] = [-83, -3, -78, 2]
+  const polygon = (ring: number[][]) => ({
+    type: 'Feature',
+    properties: {},
+    geometry: { type: 'Polygon', coordinates: [ring] },
+  })
+  return {
+    type: 'FeatureCollection',
+    features: [
+      polygon([[outerWest, outerSouth], [west, outerSouth], [west, outerNorth], [outerWest, outerNorth], [outerWest, outerSouth]]),
+      polygon([[east, outerSouth], [outerEast, outerSouth], [outerEast, outerNorth], [east, outerNorth], [east, outerSouth]]),
+      polygon([[west, outerNorth], [east, outerNorth], [east, north], [west, north], [west, outerNorth]]),
+      polygon([[west, outerSouth], [east, outerSouth], [east, south], [west, south], [west, outerSouth]]),
+    ],
+  }
 }
 
 /** Projects only public panel data into local GeoJSON; no gameplay state is sent to the tile provider. */

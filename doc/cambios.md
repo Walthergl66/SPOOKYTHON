@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-053 — Limitar el mapa al recorte de Manta
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: solicitud del usuario para abarcar solo Manta y evitar navegar o mostrar cartografía exterior.
+- Especificación/tarea: SPEC-008 CA-008-07, P4-04/T-27; relacionado con ADR-016.
+- Motivo: el mapa vectorial podía mostrar áreas exteriores al recorrer la cámara; el encuadre anterior dependía solo de los nodos centrales del fixture y no enmascaraba el basemap.
+- Archivos: `frontend/src/features/map/CityMap.tsx`; SPEC-008, ADR-016, mapa Manta, módulo frontend, plan, pruebas, trazabilidad, README, estado, resultado CAM-053 e historial.
+- Resultado: se utiliza como límite el rectángulo de extracción OSM del fixture, se ajusta el encuadre completo, se restringe el pan con `maxBounds`, se deshabilita alejar más allá de la vista general, se desactivan copias del mundo y se enmascara el exterior con fondo oscuro. Esto no afirma que el rectángulo sea el límite administrativo oficial ni que el grafo cubra toda Manta.
+- Verificación: `cd frontend && npm run build`; recorrido en el navegador local observó mapa y atribución, máscara exterior, arrastre limitado y vistas 3D/2D; demo sintética local de 20 sobrevivientes avanzó hasta el turno 9. `python3 scripts/check_docs.py` (77 Markdown/79 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), regresiones de `test_check_sdd.py` (8) y `git diff --check` correctos. Evidencia: [reporte CAM-053](resultados/limites-mapa-cam053.md).
+- Límites: fixture parcial, tiles externos requieren conexión y el proveedor no ofrece SLA. La máscara no afecta el mundo ni el grafo. No se verifica límite administrativo, seguridad de refugios, precisión vial ni uso de emergencia.
+- Siguiente paso: probar la falla controlada de tiles/WebGL de P4-04; después continuar el recorrido integral del modo humano T-19.
+- Commit: commit individual de CAM-053 en `master` tras las validaciones; no implica publicación remota.
+
 ## CAM-052 — Movimiento visible de actores y sincronización de nuevos runs
 
 - Fecha: 2026-10-26, Ecuador continental.

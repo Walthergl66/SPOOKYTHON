@@ -5,8 +5,8 @@ Estado: implementada
 Requisitos: PRD-01, PRD-04, TRD-07, TRD-09
 Tareas: P4-04
 Pruebas: T-27
-Cambio: CAM-052
-Evidencia: [reporte CAM-051](../resultados/mapa-cartografico-3d-cam051.md), [reporte CAM-052](../resultados/movimiento-mapa-cam052.md)
+Cambio: CAM-053
+Evidencia: [reporte CAM-051](../resultados/mapa-cartografico-3d-cam051.md), [reporte CAM-052](../resultados/movimiento-mapa-cam052.md), [reporte CAM-053](../resultados/limites-mapa-cam053.md)
 
 ## Objetivo y alcance
 
@@ -24,9 +24,12 @@ La primera implementación ofrece estilo oscuro, edificios extruidos cuando los 
 | CA-008-04 | Falla del proveedor/WebGL muestra un estado comprensible y la interfaz mantiene disponibles las estadísticas/control; el build de frontend compila. | T-27 |
 | CA-008-05 | Cuando llega un snapshot de una partida en curso, cada actor cuya posición confirmada cambió se interpola por el trayecto entre nodos; respeta movimiento reducido y nunca modifica el estado del servidor. | T-27 |
 | CA-008-06 | Al iniciar o reiniciar una partida, la cámara encuadra el fixture y el WebSocket sigue el nuevo `runId` sin exigir recarga o actualización manual. | T-27 |
+| CA-008-07 | El mapa encuadra y limita la navegación a la ventana de extracción OSM documentada para el fixture Manta; cartografía fuera de esa ventana se oculta, no hay copias del mundo y no se puede alejar más que la vista general. Esta ventana no afirma ser el límite administrativo de Manta. | T-27 |
 
 ## Plan y límites
 
 P4-04 sustituye la capa SVG por un componente MapLibre. Las transiciones visuales usan snapshots públicos consecutivos; no cambian el dominio, el contrato de `/paso`, el grafo versionado ni el estado autoritativo. El WebSocket vuelve a resolver el proveedor del panel durante la observación para seguir una partida local recién creada. Para calzar rutas curvas con la red real, una evolución debe conservar geometría completa OSM en el grafo público; esta versión conecta los nodos seleccionados con las coordenadas actuales.
+
+La cámara, el límite de arrastre y la máscara visual usan el rectángulo de extracción OSM de [mapa-manta.md](../mapa-manta.md). El recorte evita mostrar tiles de regiones exteriores al área cartográfica de la demo. No es un polígono administrativo ni prueba que el fixture cubra todo Manta.
 
 Validación manual en navegador con el proveedor de tiles accesible, compilación Vite/TypeScript y regresiones backend del canal de snapshots. No hay herramienta de test de componentes configurada. El mapa depende de conexión a internet para tiles; el uso público de OpenFreeMap no tiene SLA. El fixture de rutas sigue siendo parcial, y los refugios no están certificados para amenaza sísmica.

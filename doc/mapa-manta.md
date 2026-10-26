@@ -8,6 +8,8 @@ Las calles parten de la API de datos de OpenStreetMap, recortada al rectángulo 
 
 El frontend consulta tiles vectoriales de OpenFreeMap basados en OpenStreetMap para dibujar calles, etiquetas y huellas de edificios del área visible. MapLibre presenta extrusión 3D cuando los tiles incluyen alturas; no inventa altura para edificios sin dato. Esta capa visual no amplía ni modifica el fixture de simulación y el proveedor público no ofrece SLA. Las rutas del fixture unen nodos conservados, por lo que no siempre siguen la curvatura de calles del mapa base. Véanse [ADR-016](decisiones/0016-mapa-maplibre-openfreemap.md) y [SPEC-008](especificaciones/SPEC-008-mapa-cartografico-3d.md).
 
+CAM-053 reutiliza el mismo rectángulo WGS84 de extracción como ventana visual: sur `-0.967`, oeste `-80.755`, norte `-0.935`, este `-80.675`. La cámara encuadra ese recorte, limita el arrastre y dibuja una máscara opaca en el exterior; alejar más allá del encuadre completo queda deshabilitado. Es una ventana práctica para esta demo basada en el recorte de datos, **no es el polígono administrativo oficial ni acredita cobertura de toda la ciudad**. Si el fixture cambia de extensión, actualizar también los límites del mapa.
+
 Cuatro destinos se transcribieron de las capas “Zonas Seguras” de los mapas de evacuación por tsunami publicados por la Dirección de Ambiente y Riesgos del GAD Manta:
 
 | ID | Lugar | Parroquia | Ajuste a red vial |
