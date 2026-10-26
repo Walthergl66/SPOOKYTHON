@@ -43,7 +43,9 @@ Para correr varias rondas automáticas localmente y guardar la salida JSONL:
 PYTHONPATH=src python -m navira.simulador_demo --escenario mixto --sobrevivientes 20 --turnos 10 --semilla 31 > /tmp/navira-demo.jsonl
 ```
 
-Perfiles disponibles: `libre`, `caminantes`, `mixto` y `horda`; `--sobrevivientes` admite de 1 a 200 personajes con posiciones iniciales reproducibles. `--mapa ruta/al/mapa.json` permite elegir otro mapa que contenga los nodos del perfil. En el mapa incluido las posiciones se reparten al azar entre cuatro nodos y pueden coincidir. El ejecutor termina al evacuar o perder a todos los sobrevivientes activos, o al llegar al límite de turnos. Cada línea reporta el resultado observable de un turno y excluye zombies que siguen dormidos. Esto es una simulación sintética del dominio; no es la prueba concurrente del endpoint ni sustituye las rondas oficiales. El comando no espera dos segundos entre turnos y usa snapshots volátiles.
+Perfiles disponibles: `libre`, `caminantes`, `mixto` y `horda`; `--sobrevivientes` admite de 1 a 200 personajes con posiciones iniciales reproducibles al fijar semilla. `--mapa ruta/al/mapa.json` permite elegir otro mapa que contenga los nodos del perfil. En el mapa incluido las posiciones se reparten al azar entre cuatro nodos y pueden coincidir. El ejecutor termina al evacuar o perder a todos los sobrevivientes activos, o al llegar al límite de turnos. Cada línea reporta el resultado observable de un turno y excluye zombies que siguen dormidos. Esto es una simulación sintética del dominio; no es la prueba concurrente del endpoint ni sustituye las rondas oficiales. El comando no espera dos segundos entre turnos y usa snapshots volátiles.
+
+El fixture de Manta también se puede usar para recorridos sintéticos, por ejemplo con `--mapa data/maps/manta-hackathon-v1.json`. CAM-025 documenta una ejecución de tres turnos con semilla fija y cohortes de 20/80/200; no es una evaluación oficial ni una recomendación de evacuación real.
 
 Para medir localmente la respuesta HTTP de `/paso`, ejecuta el servidor con la misma configuración y luego corre el cliente desde otra terminal:
 

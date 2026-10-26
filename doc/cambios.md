@@ -307,6 +307,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: no verifica persistencia/recovery durable, múltiples versiones del algoritmo, eventos oficiales, mapa Manta ni que toda semilla distinta produzca divergencia. No cierra P1-05.
 - Siguiente paso: ejecutar cohortes sintéticas reproducibles de 20/80/200 sobre el fixture Manta y documentar un reporte exploratorio; después medir integración de `/paso` con avance de mundo.
 
+## CAM-025 — Cohortes sintéticas sobre el fixture Manta
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: siguiente subpaso autorizado por el usuario para continuar la construcción por fases y probar el generador estocástico sobre la ciudad real modelada en el fixture disponible.
+- Especificación/tareas: SPEC-001, P1-01/P1-05 parciales; CA-001-01/08/09 y T-07/T-24 parciales. No cierra P2-03 ni T-11.
+- Rama: `feat/navira-manta-simulation-cohorts`; commit individual `test: exercise stochastic cohorts on Manta map`.
+- Motivo: comprobar que el mapa versionado de 300 nodos funciona con el muestreo de inicio y el resolutor de rondas, antes de llevar el motor a medición HTTP.
+- Archivos: `tests/test_simulacion_mapa_manta.py`, `doc/resultados/simulacion-manta-cam025.md`, README y documentos propietarios de mapa, flujo, pruebas, plan, SPEC, índice e historial.
+- Resultado: con perfil `mixto`, semilla `20261026` y hasta tres turnos, cohortes sintéticas de 20/80/200 produjeron 2/8/28 evacuados, cero mordidos y 18/72/172 activos al final. Los movimientos comprobados son vecinos dirigidos o espera. La semilla/mapa/versión están en el reporte.
+- Verificación: suite completa con `/tmp/navira-env` (95 pruebas OK); `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones SDD, `compileall` y `git diff --check` correctos. El reporte no registra mediciones de latencia/carga.
+- Límites: ensayo local único sobre perfiles reducidos; no son ejecuciones oficiales ni muestras independientes, no valida seguridad sísmica/cobertura cartográfica ni garantiza rutas reales. P-07, P-09, P-13 y P-14 continúan abiertos.
+- Siguiente paso: ensayar `/paso` con avance del mundo por turnos en local y medición repetida, manteniendo separadas latencia HTTP y métricas de supervivencia.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.
