@@ -26,7 +26,7 @@ flowchart TD
     Runtime --> CW[CloudWatch]
 ```
 
-El diagrama describe flujo de ejecución. Las dependencias de código se definen en [módulos backend](modulos/backend.md): aplicación define los puertos de persistencia; los adaptadores los implementan. El dominio no importa FastAPI o boto3. La planificación CPU se aísla del servidor HTTP para no bloquearlo.
+El diagrama describe flujo de ejecución. Las dependencias de código se definen en [módulos backend](modulos/backend.md): aplicación define los puertos de persistencia; los adaptadores los implementan. `RepositorioSnapshots` ya existe y su adaptador actual es solo local/en memoria; DynamoDB no está conectado. El dominio no importa FastAPI o boto3. La planificación CPU se aísla del servidor HTTP para no bloquearlo.
 
 ## Autoridad y concurrencia
 

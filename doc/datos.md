@@ -1,6 +1,6 @@
 # Modelo de datos y consistencia
 
-Estado: nodos, calles dirigidas, refugios y grafo validados están implementados en `src/navira/domain/mapa.py`; el coordinador en memoria crea snapshots completos por fase y conserva cierres/eventos en `src/navira/simulation/coordinador.py`. Mapa real de Manta y almacenamiento/confirmación condicional siguen pendientes. Decisión de consistencia: [ADR-003](decisiones/0003-estado-y-turnos.md).
+Estado: nodos, calles dirigidas, refugios y grafo validados están implementados en `src/navira/domain/mapa.py`; `simulation/coordinador.py` crea snapshots completos por fase y `application/snapshots.py` los confirma mediante un puerto CAS. El adaptador `adapters/snapshots_memoria.py` solo sirve en un proceso local; mapa real de Manta y almacenamiento/confirmación durable siguen pendientes. Decisión de consistencia: [ADR-003](decisiones/0003-estado-y-turnos.md).
 
 Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conserva la fuente de campos/versiones; ODDD enlaza el modelo sin imponer otra base de datos o un item único para toda la partida.
 
@@ -31,7 +31,7 @@ El motor recibe información de todos los sobrevivientes necesaria para estimar 
 
 Identidad mínima de una instantánea: `(runId, turno, fase, mapVersion)`; el prototipo agrega una versión monotónica para distinguir cada transición. El coordinador genera snapshots de decisión y resolución completos y permite abrir el siguiente turno solo desde una resolución confirmada por el llamador. Decisiones incorporan esa identidad y sobreviviente/nodo actual. Un reinicio de partida genera nuevo `runId` aunque el turno vuelva a cero.
 
-DynamoDB será la fuente de verdad prevista. Preparar una versión completa y confirmar un manifiesto/puntero de publicación; los consumidores no leen fragmentos a medio escribir. La lectura inmediata que depende de una escritura confirmada debe ser consistente en la tabla, no depender de un índice eventualmente actualizado.
+DynamoDB será la fuente de verdad prevista. La aplicación define un puerto `RepositorioSnapshots` con escritura condicional por versión; el adaptador actual solo coordina hilos del proceso y no es durable. El adaptador DynamoDB debe preparar una versión completa y confirmar un manifiesto/puntero de publicación; los consumidores no leen fragmentos a medio escribir. La lectura inmediata que depende de una escritura confirmada debe ser consistente en la tabla, no depender de un índice eventualmente actualizado.
 
 Antes de fijar formato físico: medir tamaño de snapshots, límites vigentes del servicio y unidades facturables. Si un snapshot requiere fragmentos, publicar solo al confirmar el conjunto; no asumir que un item puede crecer sin límite. Definir retención y exportación; no borrar evidencia de evaluación mediante expiración prematura.
 

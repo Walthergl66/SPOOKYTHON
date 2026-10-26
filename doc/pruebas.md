@@ -31,7 +31,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-15 | Reconexión | Estado confirmado, sin detener mundo o revivir. |
 | T-16 | Separación de modos | Rondas oficiales sin humanos ni cambio de modo. |
 | T-17 | Paridad | Mismo estado e intenciones dan mismo resultado con control humano o automático; hay una regresión del resolutor, aún parcial. |
-| T-18 | Snapshot/recuperación | El coordinador genera estados completos con versiones y rechaza versiones obsoletas localmente; persistencia atómica y recuperación entre procesos siguen pendientes. |
+| T-18 | Snapshot/recuperación | El coordinador genera estados completos; un adaptador local CAS bajo lock admite un solo escritor por versión. Persistencia durable y recuperación entre procesos siguen pendientes. |
 | T-19 | Accesibilidad | Juego y selección por teclado, foco visible y estados no basados solo en color. |
 | T-20 | Documentación | Enlaces locales válidos e inventario completo. |
 | T-21 | Integridad SDD | IDs, requisitos, tareas, CA, pruebas y matriz coherentes; verificación exige CAM/evidencia. |
@@ -67,3 +67,5 @@ Las entidades e intenciones tienen regresiones con `python -m unittest discover 
 El resolutor de un turno tiene regresiones con `python -m unittest discover -s tests -p 'test_resolver.py' -v` (11 pruebas). Cubren fases de caminante, dos tramos de corredor, horda, despertar, espera en movimiento inválido, mordidas por nodo y cada cruce, prioridad de mordida sobre llegada y uso del mismo resolutor en ambos modos. La regla exacta de dormidos, desempate del corredor y llegada siguen configurables/provisionales; esta suite no verifica ocultamiento de información.
 
 El coordinador y reloj local tienen regresiones con `python -m unittest discover -s tests -p 'test_coordinador.py' -v` (7 pruebas). Cubren snapshots/versiones, flujo de decisión y resolución separados para juego, cierre en turno objetivo y aplicación única, versión obsoleta, apertura del turno siguiente, referencias inválidas y plazo monotónico. No prueban escritura condicional real, concurrencia de procesos, recuperación durable ni un bucle de reloj continuo.
+
+El puerto de persistencia y el adaptador local tienen regresiones con `python -m unittest discover -s tests -p 'test_snapshots_persistidos.py' -v` (3 pruebas). Cubren ciclo CAS completo, rechazo de versión antigua, inserción duplicada y carrera de dos hilos donde solo un escritor gana. No prueban DynamoDB, múltiples procesos/hosts, apagado abrupto ni recuperación durable.
