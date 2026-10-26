@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from contextlib import nullcontext
 from dataclasses import dataclass
-from threading import RLock
 from typing import Protocol
 
 from navira.application.decidir_paso import ProveedorMapas, nodos_horda_visibles
 from navira.application.juego import EstadoSesion, RepositorioSesiones
+from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.application.snapshots import RepositorioSnapshots
 from navira.domain.modelo import (
     ControlSobreviviente,
@@ -58,7 +58,7 @@ class RegistrarOrdenHumana:
     mapas: ProveedorMapas
     sesiones: RepositorioSesiones
     ordenes: RepositorioOrdenes
-    candado_turno: RLock | None = None
+    puerta_decisiones: PuertaDecisiones | None = None
 
     def ejecutar(
         self,
@@ -72,7 +72,8 @@ class RegistrarOrdenHumana:
     ) -> OrdenHumana:
         # La misma puerta debe proteger la resolución para que una orden que
         # compita con el cierre quede inequívocamente antes o después de ella.
-        with self.candado_turno if self.candado_turno is not None else nullcontext():
+        puerta = self.puerta_decisiones
+        with puerta.lock if puerta is not None else nullcontext():
             return self._ejecutar(
                 token,
                 run_id=run_id,
@@ -92,6 +93,7 @@ class RegistrarOrdenHumana:
         siguiente_nodo: str,
         accion_id: str,
     ) -> OrdenHumana:
+        puerta = self.puerta_decisiones
         if not token:
             raise SesionNoAutorizada("Se requiere la sesión propietaria.")
         sesion = self.sesiones.obtener(token)
@@ -115,6 +117,9 @@ class RegistrarOrdenHumana:
             if _contenido(anterior) != _contenido(propuesta):
                 raise OrdenIdempotenciaConflict("accionId ya fue usado con otro contenido.")
             return anterior
+
+        if puerta is not None and not puerta.acepta(run_id, turno):
+            raise OrdenIncompatible("La ventana de decisiones de este turno está cerrada.")
 
         snapshot = self.snapshots.obtener(run_id)
         if snapshot is None:

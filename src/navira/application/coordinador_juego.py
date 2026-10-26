@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from threading import RLock
-
 from navira.application.decidir_paso import DecidirPaso, ProveedorMapas, SolicitudPaso
 from navira.application.juego import UnirseAJuego
 from navira.application.ordenes import OrdenHumana, RepositorioOrdenes
+from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.application.snapshots import (
     RepositorioSnapshots,
     SnapshotObsoleto,
@@ -35,7 +35,7 @@ class JuegoIncompatible(RuntimeError):
 class CoordinadorJuego:
     """Abre decisiones y resuelve órdenes humanas/NPC con CAS.
 
-    `candado_turno` debe compartirse con `RegistrarOrdenHumana`. El lock es
+    `puerta_decisiones` debe compartirse con `RegistrarOrdenHumana`. El lock es
     local a un proceso; CAS sigue siendo la defensa de versión y no sustituye
     almacenamiento durable ni coordinación entre procesos.
     """
@@ -45,13 +45,29 @@ class CoordinadorJuego:
     unirse: UnirseAJuego
     ordenes: RepositorioOrdenes
     decidir: DecidirPaso
-    candado_turno: RLock
+    puerta_decisiones: PuertaDecisiones
     reglas: ConfiguracionReglas = ConfiguracionReglas()
+    ventana_decisiones_s: float = 1.7
 
-    def preparar(self, run_id: str, *, version_esperada: int) -> SnapshotMundo:
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.ventana_decisiones_s) or self.ventana_decisiones_s <= 0:
+            raise ValueError("La ventana de decisiones debe ser positiva y finita.")
+
+    def preparar(
+        self,
+        run_id: str,
+        *,
+        version_esperada: int,
+        inicio_turno_monotonic_s: float | None = None,
+    ) -> SnapshotMundo:
         """Abre la fase de decisiones sin volver a mover zombies al reintentar."""
 
-        with self.candado_turno:
+        with self.puerta_decisiones.lock:
+            inicio = (
+                self.puerta_decisiones.ahora()
+                if inicio_turno_monotonic_s is None
+                else inicio_turno_monotonic_s
+            )
             snapshot = self._leer_juego(run_id, version_esperada)
             if snapshot.partida.fase is FaseTurno.RESUELTA:
                 snapshot = abrir_siguiente_turno_persistido(
@@ -76,6 +92,11 @@ class CoordinadorJuego:
                     version_esperada=actual.version,
                     configuracion=self.reglas,
                 )
+                self.puerta_decisiones.abrir(
+                    run_id,
+                    snapshot.partida.turno,
+                    deadline_monotonic_s=inicio + self.ventana_decisiones_s,
+                )
             if snapshot.partida.fase is not FaseTurno.DECISIONES:
                 raise JuegoIncompatible("La partida no quedó abierta a decisiones.")
             return snapshot
@@ -88,10 +109,12 @@ class CoordinadorJuego:
     ) -> tuple[SnapshotMundo, ResultadoTurno]:
         """Consume la última orden humana y decide NPC antes de una resolución."""
 
-        with self.candado_turno:
+        with self.puerta_decisiones.lock:
             snapshot = self._leer_juego(run_id, version_esperada)
             if snapshot.partida.fase is not FaseTurno.DECISIONES:
                 raise JuegoIncompatible("Solo se resuelve una fase de decisiones abierta.")
+            if not self.puerta_decisiones.cerrar_si_vencida(run_id, snapshot.partida.turno):
+                raise JuegoIncompatible("La ventana de decisiones todavía no venció.")
             grafo = self._grafo(snapshot)
             ultima_por_personaje = {
                 orden.personaje_id: orden

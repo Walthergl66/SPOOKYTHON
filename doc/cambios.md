@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-040 — Reloj y juego demo local
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada del usuario para implementar las fases pendientes y mantener commits separados.
+- Especificación/tarea: SPEC-004, P5-04 parcial; PRD-05/06, TRD-03/04/05/06/09/12; T-12/T-14/T-15/T-16/T-19 parciales. No verifica SPEC-004 ni completa P5-04.
+- Motivo: hacer ejecutable localmente el juego humano sobre el coordinador CAM-039, con cierre de turno autoritativo y recuperación del mismo personaje al volver a unirse.
+- Resultado: `PuertaDecisiones` comparte lock y deadline monotónico; rechaza órdenes nuevas al vencimiento y conserva los acuses idempotentes. `RelojJuegoLocal` arranca/detiene con lifespan ASGI, abre ventanas de 1,7 s y alinea ciclos nominales de 2 s. `NAVIRA_GAME_DEMO=1` ensambla juego sintético y servicios efímeros. Vite reenvía `/juego` junto a panel/WebSocket.
+- Archivos: coordinador/puerta/reloj de aplicación, ensamblaje `main.py`, `demo.py`, tests del coordinador y `test_demo.py`, `frontend/vite.config.ts`, README raíz/frontend; contratos API, módulos, flujos de jugador/simulador, pruebas, SPEC-004, trazabilidad, plan, pendientes y estado.
+- Decisión: el game demo es opt-in y usa mapa sintético, un hilo/proceso, snapshots/sesiones/órdenes en memoria. No altera el modo demo del simulador ni el contrato `/paso`. Cualquier despliegue requiere TLS, expiración/revocación de sesión y almacenamiento/coordinación durables.
+- Verificación: suite completa (147 pruebas OK); `frontend/npm run build`; `python3 scripts/check_docs.py` (67 Markdown/69 archivos); `python3 scripts/check_sdd.py` (seis SPEC) y regresiones del validador (8 OK); `compileall`, `git diff --check`. Smoke HTTP ASGI con semilla 45 avanzó de turno 0 a 1 y una segunda llamada a unirse devolvió el mismo `jugadorId`; es una sola ejecución local, no métrica sostenida.
+- Límites: no hay temporizador visible en UI, radio, sesión con expiración, recuperación tras caída/reinicio, persistencia durable, multi-worker, TLS/despliegue ni prueba sostenida de cadencia. El fixture demo no representa Manta. P5-04 y T-14/T-15/T-19 permanecen parciales.
+- Siguiente paso: completar UI de deadline/resultado y la recuperación tras desconexión; revisar seguridad de sesión y luego retomar P5-02 antes de considerar despliegue.
+- Commit: se crea commit local individual en `master`.
+
 ## CAM-039 — Integración local del ciclo de juego
 
 - Fecha: 2026-10-26, Ecuador continental.

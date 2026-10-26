@@ -7,7 +7,7 @@ npm ci
 npm run dev
 ```
 
-La pantalla presenta los modos simulador y juego. El selector cambia solo la vista previa; no inicia partidas ni altera el modo actual del servidor. Si el backend entrega una partida activa, el panel dibuja el grafo, refugios, entidades visibles, cierres, áreas de horda, movimientos confirmados, rutas Dijkstra por personaje y métricas desde `/panel/mapa` y `/panel/estado`. En CAM-032 recibe snapshots completos por `/ws/panel`, muestra conexión/desactualización y reconecta con backoff; el botón conserva la consulta manual.
+La pantalla presenta los modos simulador y juego. El selector solo cambia la vista; el servidor define el modo activo. Si el backend entrega una partida activa, el panel dibuja el grafo, refugios, entidades visibles, cierres, áreas de horda, movimientos confirmados, rutas Dijkstra por personaje y métricas desde `/panel/mapa` y `/panel/estado`. En CAM-032 recibe snapshots completos por `/ws/panel`; los controles humanos llaman `/juego/unirse` y `/juego/accion` cuando el backend tiene juego activo.
 
 Para visualizar la fixture Manta local, iniciar primero el backend desde la raíz del repositorio:
 
@@ -20,7 +20,7 @@ NAVIRA_DEMO_SURVIVORS=20 \
 PYTHONPATH=src .venv/bin/uvicorn navira.main:app --app-dir src --reload
 ```
 
-Luego iniciar Vite en otra terminal. Su proxy local reenvía `/panel` y `/ws` a `127.0.0.1:8000`. El WebSocket de desarrollo conserva la cabecera de origen del navegador para que el backend pueda aplicar su validación same-host a través del proxy. La fixture de Manta tiene cobertura parcial y los refugios de tsunami no están certificados ante sismos; la app no es una guía de emergencia.
+Para jugar localmente, iniciar el backend con `NAVIRA_GAME_DEMO=1` (en lugar de `NAVIRA_DEMO=1`) y después Vite. Su proxy reenvía `/panel`, `/juego` y `/ws` a `127.0.0.1:8000`; conserva el origen del navegador para validación same-host. Este modo usa el mapa demo sintético, reloj de dos segundos y almacenamiento efímero; no es despliegue ni guía de emergencia. El fixture de Manta tiene cobertura parcial y sus zonas seguras de tsunami no están certificadas ante sismos.
 
 Para comprobar la salida de producción:
 

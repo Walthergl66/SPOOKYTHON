@@ -2,7 +2,7 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** `/salud`, `POST /paso`, el panel HTTP de solo lectura y `WS /ws/panel` están implementados localmente. Con `NAVIRA_DEMO=1`, el proceso inicia un mundo sintético en memoria y `/paso` recomienda con Dijkstra. El panel de React consume mapas versionados, rutas/capas observables y snapshots completos con heartbeat y reconexión. El selector simulador/juego sigue siendo vista previa y no inicia partidas. El fixture OSM de Manta es parcial; reloj de producción, persistencia durable, juego humano y despliegue AWS siguen pendientes.
+**Estado real al 26 de octubre de 2026:** `/salud`, `POST /paso`, panel HTTP y `WS /ws/panel` están implementados localmente. `NAVIRA_DEMO=1` inicia el simulador sintético. `NAVIRA_GAME_DEMO=1` inicia un juego sintético local con sesión humana, aparición aleatoria y reloj servidor de dos segundos. El mundo y la sesión se pierden al reiniciar; TLS/despliegue, persistencia durable, expiración de sesión, radio y recuperación tras caída siguen pendientes. El fixture OSM de Manta es parcial.
 
 ## Empezar
 
@@ -35,7 +35,7 @@ export NAVIRA_DEMO=1
 uvicorn navira.main:app --app-dir src --reload
 ```
 
-La demo ubica sobrevivientes y zombies aleatoriamente en nodos elegibles con ruta dirigida al refugio sintético de `D-005`; la recomendación depende de la semilla y del estado inicial. Para usar otro mapa de desarrollo, configura `NAVIRA_DEMO_MAP`; `NAVIRA_DEMO_SEED` fija la semilla para repetir una partida. Si se omite, se genera una semilla nueva. `NAVIRA_DEMO=1` solo configura una partida en memoria para desarrollo: reiniciar el proceso reinicia el mundo.
+La demo ubica sobrevivientes y zombies aleatoriamente en nodos elegibles con ruta dirigida al refugio sintético de `D-005`; la recomendación depende de la semilla y del estado inicial. Para usar otro mapa de desarrollo, configura `NAVIRA_DEMO_MAP`; `NAVIRA_DEMO_SEED` fija la semilla para repetir una partida. Si se omite, se genera una semilla nueva. `NAVIRA_DEMO=1` solo configura un simulador en memoria para desarrollo. Para jugar con una persona usa `NAVIRA_GAME_DEMO=1` en lugar de esa variable; el runner arranca con la aplicación y pierde su estado al reiniciar. Ambos modos usan el mapa demo sintético, no Manta ni una guía de evacuación.
 
 Para correr varias rondas automáticas localmente y guardar la salida JSONL:
 
@@ -120,4 +120,4 @@ npm run dev
 
 Para verificar el bundle: `npm run build`. El modo de la tarjeta solo cambia una vista previa. El panel muestra el modo real del servidor, métricas del snapshot y una ruta Dijkstra seleccionable; requiere partida activa para cargar el mapa/estado. La ruta no es una garantía de seguridad. El detalle está en [frontend](doc/modulos/frontend.md).
 
-Para mostrar la fixture de Manta, inicia el backend como se describe en [guía frontend](frontend/README.md); Vite reenvía `/panel` y `/ws` al servicio local. El estado se actualiza en vivo al cambiar la versión confirmada, además de la consulta manual. La conexión usa snapshots completos en memoria; no ofrece replay durable o coordinación multi-proceso.
+Para mostrar el panel y controles humanos, inicia el backend con `NAVIRA_GAME_DEMO=1` y sigue [guía frontend](frontend/README.md); Vite reenvía `/panel`, `/juego` y `/ws` al servicio local. El estado se actualiza al cambiar la versión confirmada. El juego usa snapshots, sesión y órdenes en memoria, un único proceso y no ofrece replay durable ni recuperación de una caída.

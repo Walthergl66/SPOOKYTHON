@@ -16,7 +16,7 @@ CAM-037 implementa `POST /juego/accion`: la sesión se valida desde la cookie y 
 
 CAM-038 ofrece entrada explícita y botones para esperar o elegir una calle dirigida abierta. Usa estado del snapshot para la posición; no permite elegir durante una fase distinta, conexión desactualizada o al ver solo modo simulador. Tras un reintento de red reutiliza el mismo `accionId`. El modo demo predeterminado no tiene sesión de juego ensamblada, así que mostrará que no hay partida jugable; la interfaz no crea ni altera una partida por sí misma.
 
-CAM-039 incorpora `CoordinadorJuego`: confirma aparición pendiente antes de mover zombies, abre/retoma `DECISIONES`, toma la última orden humana del turno (o espera si no existe), pide decisión a los NPC y confirma todas las intenciones con el mismo resolutor y CAS. El mismo `RLock` debe inyectarse en coordinador y servicio de órdenes para serializar resolución/registro; su alcance es un proceso. El coordinador expone pasos explícitos y todavía no programa el cierre de 1,7 s ni un bucle de dos segundos. No se debe invocar `resolver()` antes del cierre temporal al añadir el runner.
+CAM-039/040 incorporan `CoordinadorJuego` y el runner opt-in `NAVIRA_GAME_DEMO=1`: confirma aparición pendiente antes de mover zombies, abre `DECISIONES`, consume la última orden humana (o espera), decide NPC y resuelve con el motor común y CAS. `PuertaDecisiones` comparte `RLock` entre registro/cierre y rechaza órdenes nuevas desde el deadline monotónico de 1,7 s. `RelojJuegoLocal` programa ciclos de 2 s en un hilo del proceso. Es local y volátil: no coordina workers ni restaura una partida al reiniciar.
 
 ## Elegir una acción
 

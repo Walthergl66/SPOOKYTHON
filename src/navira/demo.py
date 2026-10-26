@@ -67,6 +67,8 @@ def crear_contexto_demo(
     semilla: int | None = None,
     escenario: str = "libre",
     cantidad_sobrevivientes: int = 1,
+    modo: ModoPartida = ModoPartida.SIMULADOR,
+    preparar_inicial: bool = True,
 ) -> ContextoDemo:
     """Crea una partida con estado inicial aleatorio y expone dependencias.
 
@@ -82,6 +84,8 @@ def crear_contexto_demo(
         raise ValueError("La población debe ser un entero entre 1 y 200.")
     if semilla is not None and (isinstance(semilla, bool) or not isinstance(semilla, int)):
         raise ValueError("La semilla debe ser un entero o None.")
+    if not isinstance(modo, ModoPartida):
+        raise ValueError("El modo demo no es válido.")
     grafo = Grafo(cargar_mapa(ruta_mapa))
     if escenario not in ESCENARIOS_DEMO:
         opciones = ", ".join(sorted(ESCENARIOS_DEMO))
@@ -100,7 +104,7 @@ def crear_contexto_demo(
     run_id = f"navira-demo-{uuid.uuid4().hex}"
     partida = Partida(
         run_id=run_id,
-        modo=ModoPartida.SIMULADOR,
+        modo=modo,
         escenario=f"demo-sintetico-{escenario}",
         map_version=grafo.mapa.version,
         sobrevivientes=tuple(
@@ -117,17 +121,18 @@ def crear_contexto_demo(
     if not snapshots.insertar_inicial(inicial):
         raise RuntimeError("No se pudo crear la partida demo inicial.")
 
-    decisiones, _ = preparar_turno_versionado(
-        inicial,
-        grafo,
-        version_esperada=inicial.version,
-    )
-    if not snapshots.guardar_si_version(
-        partida.run_id,
-        inicial.version,
-        decisiones,
-    ):
-        raise RuntimeError("No se pudo confirmar la fase de decisiones demo.")
+    if preparar_inicial:
+        decisiones, _ = preparar_turno_versionado(
+            inicial,
+            grafo,
+            version_esperada=inicial.version,
+        )
+        if not snapshots.guardar_si_version(
+            partida.run_id,
+            inicial.version,
+            decisiones,
+        ):
+            raise RuntimeError("No se pudo confirmar la fase de decisiones demo.")
 
     mapas = CatalogoMapasMemoria((grafo,))
     return ContextoDemo(
@@ -137,6 +142,25 @@ def crear_contexto_demo(
         servicio_decision=DecidirPaso(snapshots, mapas),
         run_id=partida.run_id,
         semilla=semilla_real,
+    )
+
+
+def crear_contexto_juego_demo(
+    ruta_mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
+    *,
+    semilla: int | None = None,
+    escenario: str = "libre",
+    cantidad_sobrevivientes: int = 1,
+) -> ContextoDemo:
+    """Prepara un juego sintético en PREPARACION para la entrada humana."""
+
+    return crear_contexto_demo(
+        ruta_mapa,
+        semilla=semilla,
+        escenario=escenario,
+        cantidad_sobrevivientes=cantidad_sobrevivientes,
+        modo=ModoPartida.JUEGO,
+        preparar_inicial=False,
     )
 
 

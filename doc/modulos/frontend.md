@@ -1,6 +1,6 @@
 # Módulos frontend y estados de interfaz
 
-Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; el mapa es SVG sobre el grafo recibido, no Leaflet. CAM-038 agrega una pantalla de control humano que consume `POST /juego/unirse` y `POST /juego/accion`, presenta vecinos dirigidos disponibles, espera y acuse. El selector no inicia una partida; si la instancia no publica un mundo activo en modo juego, la UI explica que no puede entrar. El backend aún no ensambla un ciclo jugable.
+Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; el mapa es SVG sobre el grafo recibido, no Leaflet. CAM-038 agrega controles humanos para `POST /juego/unirse` y `POST /juego/accion`; CAM-040 ensambla el backend en modo demo local y el proxy Vite reenvía `/juego`. El selector solo cambia la vista; el servidor conserva autoridad de modo. No hay timer visible ni auditoría T-19 completa.
 
 | Área | Responsabilidad | Estado que le corresponde |
 |---|---|---|
@@ -28,11 +28,11 @@ Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parc
 
 P4-01 permite consultas iniciales/manuales a `GET /panel/estado` y `GET /panel/mapa`. P4-02 añade snapshots completos por WebSocket, secuencia derivada de versión, heartbeat, aviso de desconexión/desactualización y reconexión. El backend omite zombies dormidos y la UI muestra modo real, métricas, grafo, refugios, cierres, hordas, movimientos confirmados y rutas previstas Dijkstra solo en fase de decisiones. El cliente acepta saltos porque cada snapshot reemplaza el estado completo y descarta repeticiones/estados antiguos de la misma partida. El canal depende del mismo proceso y almacenamiento en memoria; no hay replay durable, control multi-worker o despliegue. El mapa parcial de Manta no certifica seguridad sísmica.
 
-CAM-038 conecta la vista seleccionada «Jugar» a los contratos de sesión/orden: recuperación se hace al pulsar entrar (la cookie se guarda fuera de JS), y los movimientos posibles salen de las calles dirigidas que no estén cerradas ni bloqueadas por horda. Se etiqueta el riesgo de zombie visible, pero el servidor permite que la persona decida. El acuse no se presenta como movimiento confirmado. Faltan radio, deadline/contador autoritativo, navegación/resultado completo, instancia ensamblada y T-19 automatizada; el build acredita TypeScript/empacado, no usabilidad end-to-end.
+CAM-038 conecta la vista seleccionada «Jugar» a los contratos de sesión/orden: la cookie queda fuera de JS y los movimientos posibles salen de calles dirigidas abiertas no bloqueadas por horda. CAM-040 añade instancia sintética local con ciclo de 2 s y cierre servidor de 1,7 s. Se etiqueta el riesgo de zombie visible, pero el acuse no se presenta como movimiento confirmado. Faltan radio, contador visible, navegación/resultado completo y auditoría T-19; el build y smoke HTTP no equivalen a prueba completa de usabilidad.
 
 ## Comprobación local
 
-Desde `frontend/`, `npm ci` instala el lockfile y `npm run build` valida TypeScript y produce el bundle Vite. En desarrollo, Vite reenvía `/panel` y `/ws` a `127.0.0.1:8000`. `.github/workflows/ci.yml` define las verificaciones backend/frontend en push a `master` y pull request; esta configuración se revisó localmente, pero el workflow remoto no se ha ejecutado ni publicado.
+Desde `frontend/`, `npm ci` instala el lockfile y `npm run build` valida TypeScript y produce el bundle Vite. En desarrollo, Vite reenvía `/panel`, `/juego` y `/ws` a `127.0.0.1:8000`. `.github/workflows/ci.yml` define las verificaciones backend/frontend en push a `master` y pull request; el workflow remoto no se afirma como ejecutado.
 
 ## Reglas
 

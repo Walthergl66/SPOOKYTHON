@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 import unittest
 from unittest.mock import patch
 
@@ -102,6 +103,37 @@ class DemoBootstrapTests(unittest.TestCase):
             )
 
         self.assertEqual(respuesta.status_code, 200)
+
+    def test_juego_demo_opt_in_arranca_reloj_y_reutiliza_personaje(self) -> None:
+        configuracion = {
+            "NAVIRA_GAME_DEMO": "1",
+            "NAVIRA_DEMO_SEED": "45",
+            "NAVIRA_DEMO_SCENARIO": "libre",
+            "NAVIRA_DEMO_SURVIVORS": "1",
+            "NAVIRA_COOKIE_SECURE": "0",
+        }
+        with patch.dict(os.environ, configuracion, clear=True):
+            app = _crear_app_configurada()
+            with TestClient(app, base_url="https://testserver") as client:
+                primera = client.post("/juego/unirse", headers={"Origin": "https://testserver"})
+                self.assertEqual(primera.status_code, 200)
+                run_id = primera.json()["runId"]
+                limite = time.monotonic() + 3.0
+                estado = client.get("/panel/estado").json()
+                while estado.get("turno", 0) < 1 and time.monotonic() < limite:
+                    time.sleep(0.05)
+                    estado = client.get("/panel/estado").json()
+                segunda = client.post("/juego/unirse", headers={"Origin": "https://testserver"})
+
+                self.assertEqual(estado["modo"], "juego")
+                self.assertGreaterEqual(estado["turno"], 1)
+                self.assertEqual(segunda.status_code, 200)
+                self.assertEqual(segunda.json()["jugadorId"], primera.json()["jugadorId"])
+                self.assertEqual(sum(
+                    personaje["control"] == "humano"
+                    for personaje in estado["sobrevivientes"]
+                ), 1)
+                self.assertEqual(segunda.json()["runId"], run_id)
 
     def test_demo_se_activa_solo_con_variable_explicita(self) -> None:
         with patch.dict(os.environ, {}, clear=True):

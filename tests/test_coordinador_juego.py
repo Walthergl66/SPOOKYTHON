@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import random
 import unittest
-from threading import RLock
 
 from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.adapters.ordenes_memoria import RepositorioOrdenesMemoria
@@ -12,10 +11,11 @@ from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
 from navira.application.coordinador_juego import CoordinadorJuego, JuegoIncompatible
 from navira.application.decidir_paso import DecidirPaso
 from navira.application.juego import RepositorioSesionesMemoria, UnirseAJuego
-from navira.application.ordenes import RegistrarOrdenHumana
+from navira.application.ordenes import OrdenIncompatible, RegistrarOrdenHumana
+from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle
 from navira.domain.modelo import EstadoPartida, FaseTurno, ModoPartida, Partida, Sobreviviente, TipoZombie, Zombie
-from navira.simulation.coordinador import crear_snapshot_inicial, preparar_turno_versionado
+from navira.simulation.coordinador import crear_snapshot_inicial
 
 
 def crear_grafo() -> Grafo:
@@ -36,7 +36,8 @@ class CoordinadorJuegoTests(unittest.TestCase):
         self.snapshots = AlmacenSnapshotsMemoria()
         self.sesiones = RepositorioSesionesMemoria()
         self.ordenes = RepositorioOrdenesMemoria()
-        self.puerta = RLock()
+        self.reloj = [100.0]
+        self.puerta = PuertaDecisiones(lambda: self.reloj[0])
         self.run_id = "juego-integracion"
         partida = Partida(
             run_id=self.run_id,
@@ -71,7 +72,7 @@ class CoordinadorJuegoTests(unittest.TestCase):
         )
         grafo = self.grafo
         vecino = next(calle.destino for calle in grafo.calles_desde(humano.nodo))
-        self.servicio_orden.ejecutar(
+        orden = self.servicio_orden.ejecutar(
             self.jugador.token,
             run_id=self.run_id,
             turno=decisiones.partida.turno,
@@ -80,6 +81,9 @@ class CoordinadorJuegoTests(unittest.TestCase):
             accion_id="accion-integrada",
         )
         zombie_antes = decisiones.partida.zombies
+        with self.assertRaisesRegex(JuegoIncompatible, "todavía no venció"):
+            self.coordinador.resolver(self.run_id, version_esperada=decisiones.version)
+        self.reloj[0] = 101.8
         resuelto, _ = self.coordinador.resolver(
             self.run_id,
             version_esperada=decisiones.version,
@@ -87,6 +91,26 @@ class CoordinadorJuegoTests(unittest.TestCase):
         humano_resuelto = next(item for item in resuelto.partida.sobrevivientes if item.id == humano.id)
         self.assertEqual(humano_resuelto.nodo, vecino)
         self.assertEqual(decisiones.partida.zombies, zombie_antes)
+        self.assertEqual(
+            self.servicio_orden.ejecutar(
+                self.jugador.token,
+                run_id=self.run_id,
+                turno=decisiones.partida.turno,
+                personaje_id=humano.id,
+                siguiente_nodo=vecino,
+                accion_id="accion-integrada",
+            ),
+            orden,
+        )
+        with self.assertRaisesRegex(OrdenIncompatible, "ventana"):
+            self.servicio_orden.ejecutar(
+                self.jugador.token,
+                run_id=self.run_id,
+                turno=decisiones.partida.turno,
+                personaje_id=humano.id,
+                siguiente_nodo=vecino,
+                accion_id="accion-tardia",
+            )
         with self.assertRaises(JuegoIncompatible):
             self.coordinador.resolver(self.run_id, version_esperada=resuelto.version)
 
@@ -107,7 +131,8 @@ class CoordinadorJuegoTests(unittest.TestCase):
         sesiones = RepositorioSesionesMemoria()
         unirse = UnirseAJuego(snapshots, self.mapas, sesiones)
         ordenes = RepositorioOrdenesMemoria()
-        puerta = RLock()
+        reloj = [200.0]
+        puerta = PuertaDecisiones(lambda: reloj[0])
         coordinador = CoordinadorJuego(
             snapshots,
             self.mapas,
@@ -116,14 +141,10 @@ class CoordinadorJuegoTests(unittest.TestCase):
             DecidirPaso(snapshots, self.mapas),
             puerta,
         )
-        decisiones, _ = preparar_turno_versionado(
-            inicial,
-            self.grafo,
-            version_esperada=inicial.version,
-        )
-        self.assertTrue(snapshots.guardar_si_version(run_id, inicial.version, decisiones))
+        decisiones = coordinador.preparar(run_id, version_esperada=inicial.version)
         sesion_jugador = unirse.ejecutar()
         self.assertIsNone(sesion_jugador.sesion.nodo)
+        reloj[0] = 201.8
         resuelto, _ = coordinador.resolver(run_id, version_esperada=decisiones.version)
         siguiente = coordinador.preparar(run_id, version_esperada=resuelto.version)
         jugador = next(
