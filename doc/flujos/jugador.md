@@ -1,6 +1,6 @@
 # Flujo del jugador
 
-Estado: sesión/aparición inicial local en CAM-036; órdenes, interfaz y ciclo de juego siguen pendientes. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
+Estado: sesión/aparición y órdenes locales en CAM-036/037; UI inicial de controles en CAM-038. El ciclo de juego todavía no conecta todas estas piezas y el juego no es end-to-end. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
 
 ## Entrar
 
@@ -13,6 +13,8 @@ Estado: sesión/aparición inicial local en CAM-036; órdenes, interfaz y ciclo 
 CAM-036 implementa `POST /juego/unirse` por inyección de aplicación, una cookie HttpOnly/Secure/SameSite estricta y una aparición aleatoria reproducible al usar el RNG privado del servidor únicamente dentro del coordinador de aparición. Solo considera sobrevivientes y zombies activos para evitar dar al jugador acceso a dormidos; requiere ruta vigente a refugio y excluye refugios/ocupación. Si la fase ya no es PREPARACION, la sesión queda pendiente; el coordinador aún debe llamar `incorporar_aparicion_pendiente()` antes de mover zombies en el siguiente turno. No hay expiración/revocación confirmadas ni persistencia durable.
 
 CAM-037 implementa `POST /juego/accion`: la sesión se valida desde la cookie y se contrasta con run/personaje. En `DECISIONES` se acepta espera o calle vecina abierta; bloqueo de horda se rechaza, pero el riesgo de zombie activo no invalida una intención. La última orden válida de ese personaje/turno sustituye la previa; el mismo `accionId` y cuerpo devuelve el acuse original, uno distinto produce conflicto. Secuencia y estado se calculan en el servidor. El acuse no afirma movimiento confirmado. El adaptador es local y el coordinador todavía no consume órdenes ni comparte cierre atómico con el registro; el corte temporal del turno sigue pendiente en P-16.
+
+CAM-038 ofrece entrada explícita y botones para esperar o elegir una calle dirigida abierta. Usa estado del snapshot para la posición; no permite elegir durante una fase distinta, conexión desactualizada o al ver solo modo simulador. Tras un reintento de red reutiliza el mismo `accionId`. El modo demo predeterminado no tiene sesión de juego ensamblada, así que mostrará que no hay partida jugable; la interfaz no crea ni altera una partida por sí misma.
 
 ## Elegir una acción
 

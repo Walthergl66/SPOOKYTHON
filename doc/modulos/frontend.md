@@ -1,6 +1,6 @@
 # Módulos frontend y estados de interfaz
 
-Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; el mapa es SVG sobre el grafo recibido, no Leaflet. La selección de modo sigue siendo una vista previa: no inicia partidas ni órdenes humanas.
+Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; el mapa es SVG sobre el grafo recibido, no Leaflet. CAM-038 agrega una pantalla de control humano que consume `POST /juego/unirse` y `POST /juego/accion`, presenta vecinos dirigidos disponibles, espera y acuse. El selector no inicia una partida; si la instancia no publica un mundo activo en modo juego, la UI explica que no puede entrar. El backend aún no ensambla un ciclo jugable.
 
 | Área | Responsabilidad | Estado que le corresponde |
 |---|---|---|
@@ -21,10 +21,14 @@ Estado: base React + TypeScript + Vite y panel manual/en vivo implementados parc
 - `frontend/src/shared/api/panel.ts`: cliente HTTP GET y validación runtime de esquema/mapVersion.
 - `frontend/src/shared/realtime/panel.ts`: WebSocket de solo lectura, validación de sobres, cursor por partida, estado live/stale y reconexión exponencial.
 - `frontend/src/features/map/`: SVG del grafo, refugios, entidades observables, cierres y trayectos zombie confirmados.
+- `frontend/src/features/game/GameControls.tsx`: unión, estado propio y controles de orden accesibles por teclado/mouse, deshabilitados en fase incorrecta o al perder frescura del panel.
+- `frontend/src/shared/api/game.ts`: cliente same-origin con validación runtime para sesión y acuse; la cookie HttpOnly no se expone a JavaScript.
 - `frontend/src/styles.css`: tokens visuales, layout responsivo y preferencia de movimiento reducido.
 - `frontend/README.md`: inicio local y límites de esta base.
 
 P4-01 permite consultas iniciales/manuales a `GET /panel/estado` y `GET /panel/mapa`. P4-02 añade snapshots completos por WebSocket, secuencia derivada de versión, heartbeat, aviso de desconexión/desactualización y reconexión. El backend omite zombies dormidos y la UI muestra modo real, métricas, grafo, refugios, cierres, hordas, movimientos confirmados y rutas previstas Dijkstra solo en fase de decisiones. El cliente acepta saltos porque cada snapshot reemplaza el estado completo y descarta repeticiones/estados antiguos de la misma partida. El canal depende del mismo proceso y almacenamiento en memoria; no hay replay durable, control multi-worker o despliegue. El mapa parcial de Manta no certifica seguridad sísmica.
+
+CAM-038 conecta la vista seleccionada «Jugar» a los contratos de sesión/orden: recuperación se hace al pulsar entrar (la cookie se guarda fuera de JS), y los movimientos posibles salen de las calles dirigidas que no estén cerradas ni bloqueadas por horda. Se etiqueta el riesgo de zombie visible, pero el servidor permite que la persona decida. El acuse no se presenta como movimiento confirmado. Faltan radio, deadline/contador autoritativo, navegación/resultado completo, instancia ensamblada y T-19 automatizada; el build acredita TypeScript/empacado, no usabilidad end-to-end.
 
 ## Comprobación local
 

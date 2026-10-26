@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio en preparación: **CAM-037**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio en preparación: **CAM-038**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -15,6 +15,7 @@
 - P3-03 evaluado parcialmente en CAM-035: temporal sumó 15 evacuados en 27 pares sintéticos de tres turnos, sin cambiar las mordidas observadas. La prueba se repitió con resultados deterministas. Dijkstra sigue activa porque no hay comparación HTTP concurrente, ronda larga ni reglas confirmadas.
 - P4B-01 implementa parcialmente en CAM-036 un caso de uso de sesión humana propietaria, cookie de sesión opaca y aparición aleatoria local con CAS. Siete pruebas enfocadas pasan; el hook de aparición pendiente todavía no está integrado al coordinador y no hay órdenes humanas ni UI jugable. Las sesiones son volátiles y no expiran. Verificación de cierre: suite 134 pruebas OK, validadores documental/SDD y ocho regresiones SDD OK, `compileall`, `git diff --check` y build frontend correctos.
 - P4B-02 implementa parcialmente en CAM-037 el endpoint `POST /juego/accion`, autorización de sesión y almacenamiento local idempotente con secuencia/reemplazo. Diez pruebas enfocadas pasan. El repositorio no es durable ni está integrado al resolutor; el deadline y el cierre concurrente atómico del turno siguen pendientes (P-16).
+- P4B-03 inicia en CAM-038 controles web de sesión, espera y selección de calles. El build y smoke del panel con simulador activo pasan. El servidor demo no tiene partida modo juego, por lo que no se verificó una partida humana end-to-end; radio, deadline y resultado completo pendientes.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -62,7 +63,7 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Backend y `/paso` | Contrato y política Dijkstra; inicio demo local explícito | Configurar mundo real, persistencia, idempotencia y medir latencia bajo carga. |
 | Simulador | Demo con semilla nueva opcional, estado inicial aleatorio y replay local explícito; resolución/ronda con RNG privado y CAS en memoria | Distribución oficial parametrizada, composición/eventos, movimiento de horda, replay durable/versionado entre despliegues, DynamoDB, reloj/publicación y escenarios oficiales pendientes. |
 | Grafo de Manta | Fixture de 300 nodos y cuatro zonas seguras de tsunami generado | Validar cobertura representativa de barrios/rutas peatonales y evaluar amenazas sísmicas con fuentes competentes; el fixture no es para navegación real. |
-| Frontend y juego | P4-01/P4-02 verificados localmente; P4B-01/P4B-02 parcialmente implementadas en CAM-036/037; controles y ciclo jugable ausentes | P4B-03 controles/UI; conectar ciclo de juego, deadline, aparición y consumo de órdenes; publicar commits locales cuando exista acceso remoto. |
+| Frontend y juego | P4-01/P4-02 verificados localmente; P4B-01..03 parciales en CAM-036..038; no hay ciclo humano end-to-end | P5-04 integrar aparición, órdenes, resolución y resultado; P-16 cierre; luego accesibilidad/recovery completa y publicar cuando haya acceso remoto. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
 | Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
@@ -72,7 +73,7 @@ El checkout local está en `master`; CAM-028..CAM-035 se mantienen como commits 
 
 ## Próxima acción concreta
 
-CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. En curso: cerrar CAM-037/P4B-02 con validación y commit individual. Siguiente fase: P4B-03, controles y estado humano en la interfaz; después integrar sesión/aparición/órdenes con el ciclo de juego y el cierre monotónico antes de afirmar que es jugable. P2-03/T-11, P5/AWS y reglas oficiales siguen pendientes por evidencia/recursos externos. No afirmar CI remoto, despliegue o seguridad sísmica.
+CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. CAM-036..038 dejan sesión, registro y controles UI locales parcialmente implementados, pero no constituyen una partida jugable. Siguiente paso: P5-04, integrar aparición antes de movimiento zombie, bandeja idempotente, resolución con intenciones automáticas/humanas y proyección del resultado; resolver P-16 con deadline/cierre coordinado. P2-03/T-11, AWS y reglas oficiales siguen pendientes por evidencia/recursos externos. No afirmar CI remoto, despliegue o seguridad sísmica.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
@@ -94,6 +95,8 @@ Verificación de CAM-035: suite completa (127 pruebas OK); `python3 scripts/chec
 Verificación de CAM-036: suite completa (134 pruebas OK), incluidas siete pruebas de `test_juego_sesion.py`; `python3 scripts/check_docs.py` (67 Markdown/69 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas), ocho pruebas del validador SDD, `compileall`, `git diff --check` y `frontend/npm run build` correctos. El endpoint requiere inyección explícita; hook de ciclo, órdenes, persistencia y expiración no cubiertos.
 
 Verificación de CAM-037: suite completa (144 pruebas OK), incluidas 10 pruebas de `test_ordenes_juego.py`; `python3 scripts/check_docs.py` (67 Markdown/69 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas), ocho pruebas del validador SDD, `compileall`, `git diff --check` y `frontend/npm run build` correctos. `POST /juego/accion` requiere inyección explícita; repositorio volátil, sin integración con el ciclo ni deadline monotónico.
+
+Verificación de CAM-038: suite backend completa (144 pruebas OK); `python3 scripts/check_docs.py` (67 Markdown/69 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas), ocho pruebas del validador SDD, `compileall`, `git diff --check` y `frontend/npm run build` correctos. Smoke de navegador vio panel en vivo del simulador; no se probó juego humano por falta de backend de juego ensamblado.
 
 ## Dependencias externas
 

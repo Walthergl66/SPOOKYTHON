@@ -32,7 +32,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-16 | Separación de modos | Rondas oficiales sin humanos ni cambio de modo. |
 | T-17 | Paridad | Mismo estado e intenciones dan mismo resultado con control humano o automático; hay una regresión del resolutor, aún parcial. |
 | T-18 | Snapshot/recuperación | El coordinador genera estados completos; un adaptador local CAS bajo lock admite un solo escritor por versión. Persistencia durable y recuperación entre procesos siguen pendientes. |
-| T-19 | Accesibilidad | Juego y selección por teclado, foco visible y estados no basados solo en color. |
+| T-19 | Accesibilidad | Juego y selección por teclado, foco visible y estados no basados solo en color. CAM-038 usa botones/fieldset nativos y mensajes `aria-live`; sin auditoría WCAG ni recorrido manual integral todavía. |
 | T-20 | Documentación | Enlaces locales válidos e inventario completo. |
 | T-21 | Integridad SDD | IDs, requisitos, tareas, CA, pruebas y matriz coherentes; verificación exige CAM/evidencia. |
 | T-22 | Predicción | Comparación reproducible entre base y mejora con semillas/escenarios y límites de información declarados. |
@@ -90,6 +90,8 @@ El caso de uso de `/paso` tiene pruebas con `python -m unittest discover -s test
 `test_juego_sesion.py` cubre P4B-01 local: sesión única por partida, dos intentos concurrentes, aparición reproducible en nodo no refugio con ruta, sesión idempotente por cookie, ausencia de candidato sin reservar cupo, partida de juego activa, espera fuera de fase PREPARACION, hook de incorporación previo a movimiento zombie y Origin/cookie HttpOnly-Secure-SameSite. No cubre expiración/revocación P-12, DynamoDB, múltiples procesos, controles de acciones o recorrido de interfaz.
 
 `test_ordenes_juego.py` cubre P4B-02/T-13/T-14 parcialmente (10 pruebas): cookie y propiedad, `Origin`, snapshot como autoridad de posición, fase/turno, vecino dirigido/cierre, bloqueo de horda, aceptación de riesgo por zombie activo, espera, idempotencia concurrente, conflicto al reutilizar `accionId` con otro cuerpo, reemplazo por secuencia del servidor y ausencia de movimiento al registrar. El adaptador es memoria; aún no se prueba el consumo por el resolutor, cierre concurrente del turno, reloj límite, durable/multi-worker ni UI. Esto no completa T-14.
+
+CAM-038 del frontend se comprueba con `cd frontend && npm run build`, que ejecuta TypeScript estricto y bundle Vite. El árbol accesible del navegador confirma botones de selección nativos y estados descriptivos; la prueba visual local muestra la pantalla contra un simulador activo, no un juego ensamblado. No hay un runner de pruebas de componentes en el proyecto; no se declara T-19 completo ni recorrido humano end-to-end.
 
 `test_simulacion_mapa_manta.py` ejecuta tres turnos de perfiles sintéticos sobre el fixture de Manta con 20/80/200 sobrevivientes, semilla fija y regla de movimiento del fixture; comprueba versión de mapa, inicios fuera de refugios y pasos vecinos o de espera. No verifica exactitud cartográfica ni seguridad de los refugios. El resultado exploratorio reproducible está en [CAM-025](resultados/simulacion-manta-cam025.md); no es una ronda oficial ni una medición de carga.
 

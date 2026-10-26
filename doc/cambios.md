@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-038 — Controles humanos en frontend
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario de las fases restantes, con un commit individual por fase en `master`.
+- Especificación/tarea: SPEC-004, P4B-03 parcial; inicia evidencia T-19 sin completar T-19 ni verificar la SPEC.
+- Motivo: convertir la selección «Jugar» en una interfaz que consuma sesión/órdenes y deje claro el momento en que una intención fue recibida frente al movimiento confirmado.
+- Resultado: el panel añade controles de unión, posición propia, espera y vecinos dirigidos habilitados; muestra peligro observable por zombies activos, bloqueos de horda, envío, acuse/error y reintento de red con el mismo `accionId`. Los controles se deshabilitan cuando el snapshot no está fresco o no se aceptan decisiones. La identidad se recupera mediante cookie same-origin HttpOnly, sin guardar token en JavaScript. El modo juego informa que la instancia predeterminada no tiene partida habilitada.
+- Decisión: reutilizar el mapa/snapshot de `WS /ws/panel` y los contratos CAM-036/037; no hacer movimiento optimista ni crear partidas desde la selección de modo.
+- Archivos: `frontend/src/features/game/GameControls.tsx`, `frontend/src/shared/api/game.ts`, `frontend/src/app/App.tsx`, `frontend/src/styles.css`; módulos frontend, flujo de jugador, pruebas, SPEC-004, trazabilidad, plan, estado e historial.
+- Verificación: `frontend/npm run build` compila TypeScript y Vite; suite backend completa (144 pruebas OK); `python3 scripts/check_docs.py` (67 Markdown/69 archivos); `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas); ocho pruebas del validador SDD; `compileall` y `git diff --check` correctos. Smoke de navegador local mostró snapshot real del simulador, selector de modo y estado en vivo. No hubo recorrido de los controles de una partida porque el backend demo no ensambla un modo de juego activo.
+- Límites: UI inicial, sin radio ni temporizador/cierre autoritativo; el backend aún no arma el ciclo humano y el endpoint puede responder 503 en la app predeterminada. No se acredita recorrido jugable, T-19 WCAG, durable, reconexión de sesión tras reinicio, seguridad real del mapa ni despliegue.
+- Siguiente acción: P5-04, ensamblar un ciclo local modo juego que llame aparición antes de zombies, consuma orden humana junto a órdenes automáticas y publique resultados confirmados; definir cierre monotónico/atómico (P-16) antes de T-14 integral.
+- Commit: individual local en `master` después de validaciones locales.
+
 ## CAM-037 — Órdenes humanas idempotentes
 
 - Fecha: 2026-10-26, Ecuador continental.

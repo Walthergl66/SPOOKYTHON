@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CityMap } from '../features/map/CityMap'
+import { GameControls } from '../features/game/GameControls'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { loadPanelMap, loadPanelSnapshot, type PanelSnapshot, type PanelState } from '../shared/api/panel'
 import { subscribePanel, type PanelConnection, type PanelCursor } from '../shared/realtime/panel'
@@ -196,6 +197,14 @@ export function App() {
               <span>No confirma movimiento ni garantiza seguridad.</span>
             </div>
           ) : null}
+
+          <GameControls
+            modeSelected={mode === 'game'}
+            state={state}
+            map={map}
+            connection={connection}
+            onJoined={setSelectedSurvivorId}
+          />
 
           <div className="map-legend" aria-label="Leyenda del mapa">
             <span><i className="legend-refuge" /> Refugio</span>
