@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-034**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-035**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -10,8 +10,9 @@
 - P0-04: existe scaffold React + TypeScript + Vite en `frontend/`, selector local de simulador/juego y `.github/workflows/ci.yml`; build/suite Python pasan localmente. El workflow aún no se ha ejecutado en GitHub Actions.
 - P4-01 verificado en CAM-031: `GET /panel/estado` y `GET /panel/mapa` proyectan snapshots/mapa versionados; ocultan dormidos y estado aleatorio privado. El frontend valida respuesta/versiones, dibuja calles, refugios, sobrevivientes, zombies visibles, movimientos confirmados, cierres/hordas, métricas y ruta prevista Dijkstra seleccionable.
 - P4-02 verificado localmente en CAM-032: `WS /ws/panel` envía snapshot completo al conectar/cambiar versión y heartbeat; backend cubierto por prueba de reconexión, secuencia posterior y cambio de partida. El frontend implementa estados de conexión viva/desactualizada/reconexión y backoff; el smoke navegador confirmó el estado vivo. No hay outbox, replay durable ni multi-worker; el modo juego sigue siendo vista previa.
-- P3-01 verificado como núcleo aislado en CAM-033: búsqueda temporal acotada con espera, cierres y exposición futura inyectada; la política HTTP no la consume y aún no existe pronóstico. La medición única local serial no valida T-11, T-22, servicio HTTP ni rondas oficiales.
-- P3-02 parcial en CAM-034: pronóstico por escenarios de amenazas activas, con entradas observables mínimas, mezcla de fase privada desconocida y supuestos declarados para corredor/horda. No se conecta a `/paso`; faltan contraste con semillas independientes, selección P3-03 y reglas oficiales pendientes.
+- P3-01 verificado como núcleo aislado en CAM-033: búsqueda temporal acotada con espera, cierres y exposición futura inyectada; la política HTTP no la consume. La medición serial no valida T-11 ni servicio HTTP.
+- P3-02 parcial en CAM-034: pronóstico por escenarios de amenazas activas, con entradas observables mínimas, mezcla de fase privada desconocida y supuestos declarados para corredor/horda. No se conecta a `/paso`; las reglas oficiales siguen pendientes.
+- P3-03 evaluado parcialmente en CAM-035: temporal sumó 15 evacuados en 27 pares sintéticos de tres turnos, sin cambiar las mordidas observadas. La prueba se repitió con resultados deterministas. Dijkstra sigue activa porque no hay comparación HTTP concurrente, ronda larga ni reglas confirmadas.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -63,13 +64,13 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
 | Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
-| Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028..CAM-034 están como commits locales separados al cerrar esta fase | Publicar los commits locales cuando haya una ruta de escritura que acepte cambios de Git. |
+| Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028..CAM-035 están como commits locales separados al cerrar esta fase | Publicar los commits locales cuando haya una ruta de escritura que acepte cambios de Git. |
 
-El checkout local está en `master`; CAM-028..CAM-034 se mantienen como commits separados. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. Los intentos previos de push no pudieron leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; no se ha vuelto a intentar publicar. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
+El checkout local está en `master`; CAM-028..CAM-035 se mantienen como commits separados. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. Los intentos previos de push no pudieron leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; no se ha vuelto a intentar publicar. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-CAM-034 entrega un pronóstico por escenarios con supuestos provisionales, todavía no conectado a la política. Siguiente acción: P3-03, comparar Dijkstra y ruta temporal con pronósticos comunes y semillas declaradas; integrar solo si hay mejora replicable sin romper latencia. Después avanzar P4B-01 si P2-03 se puede habilitar sin datos/reglas faltantes. Continúan juego humano, AWS, persistencia durable, T-11, P2-03/P5-01 y P-07/P-09. No afirmar CI remoto, despliegue o seguridad sísmica.
+CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. Siguiente paso local: P4B-01, sesión/aparición en memoria con tests de propiedad y límites; P2-03/T-11, P5/AWS y reglas oficiales quedan pendientes por evidencia/recursos que no se pueden inventar. No afirmar CI remoto, despliegue o seguridad sísmica.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
@@ -85,6 +86,8 @@ Verificación CAM-032: ver [entrada de cambio](cambios.md#cam-032-websocket-de-s
 Verificación de CAM-033: suite completa (120 pruebas OK), incluidos ocho casos de `test_ruta_temporal.py`; `python3 scripts/check_docs.py` (63 Markdown/65 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones del validador, `compileall`, `git diff --check` y `frontend/npm run build` correctos. Evidencia de una pasada serial para cohortes sintéticas 20/80/200 en [reporte](resultados/busqueda-temporal-cam033.md). No representa comparación T-22 ni medición HTTP.
 
 Verificación de CAM-034: suite completa (125 pruebas OK), incluidas cinco de `test_prediccion_rutas.py`; `python3 scripts/check_docs.py` (64 Markdown/66 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones del validador, `compileall`, `git diff --check` y `frontend/npm run build` correctos. El modelo solo transforma observaciones construidas por el consumidor; la integración debe garantizar que provengan de la proyección pública y nunca de dormidos/estado privado.
+
+Verificación de CAM-035: suite completa (127 pruebas OK); `python3 scripts/check_docs.py` (66 Markdown/68 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho pruebas del validador, `compileall`, `git diff --check` y `frontend/npm run build` correctos. Matriz de 27 pares ejecutada dos veces; evacuados/mordidos/activos, fallbacks y deltas coincidieron entre repeticiones. El tiempo de recomendación es local y no HTTP.
 
 ## Dependencias externas
 

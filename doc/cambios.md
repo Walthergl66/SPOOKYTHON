@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-035 — Comparación emparejada de políticas de ruta
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada del usuario de las fases restantes, con un commit individual por fase en `master`.
+- Especificación/tarea: SPEC-002, P3-03 y T-22 parcial; usa P3-01/CAM-033 y P3-02/CAM-034. No completa T-11 ni SPEC-002.
+- Motivo: comparar Dijkstra y la candidata temporal bajo mundos emparejados, conservando línea base ante límites o falta de evidencia operativa.
+- Resultado: CLI reproducible `python -m navira.evaluacion_rutas`; avanza ambos mundos de forma independiente con misma semilla/perfil/población y un snapshot versionado, calcula recomendaciones desde proyección observable, aplica el mismo resolutor y reporta evacuados/mordidos/activos, fallback y tiempos de funciones.
+- Decisión: [ADR-012](decisiones/0012-seleccion-politica-baseline.md). Dijkstra se mantiene activa en `/paso`; el candidato temporal queda solo en el evaluador hasta reglas y medición HTTP concurrente.
+- Archivos: `src/navira/evaluacion_rutas.py`, `src/navira/routing/prediccion.py` (búsqueda de objetivo de corredor acotada por alcance), `tests/test_evaluacion_rutas.py`; pruebas, módulo backend, SPEC-002, plan, matriz, reporte, ADR e índices/estado.
+- Verificación/evidencia: 27 pares (3 perfiles sintéticos × 3 semillas × poblaciones 20/80/200), 3 turnos por partida, repetidos dos veces con idénticos resultados de mundo; ver [reporte CAM-035](resultados/comparacion-rutas-cam035.md). Temporal sumó 15 evacuados, igualó mordidas; fue mejor en 15 pares, igual en 12, peor en ninguno. Suite completa (`127` pruebas OK), `python3 scripts/check_docs.py` (66 Markdown/68 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructurales), pruebas del validador SDD (8 OK), `compileall`, `git diff --check` y `frontend/npm run build` correctos. Suma de observaciones, no inferencia estadística ni supervivencia.
+- Límites: los mundos son sintéticos y cortos; el predictor conserva supuestos provisionales; el tiempo reportado es de funciones locales, no HTTP/latencia concurrente. `2.027` recomendaciones recurrieron a Dijkstra por falta de ruta dentro del horizonte/limitación. T-22 es parcial y T-11 pendiente.
+- Siguiente acción: completar validación end-to-end de P3-03/T-11 cuando corresponda, sin activar temporal en `/paso` antes de verificar p95 desde cliente y reglas aceptadas. Después priorizar sesión de juego local, manteniendo AWS/publicación como dependencias externas.
+- Commit: individual local en `master`, tras cerrar verificaciones.
+
 ## CAM-034 — Pronóstico observable de amenazas por escenarios
 
 - Fecha: 2026-10-26, Ecuador continental.

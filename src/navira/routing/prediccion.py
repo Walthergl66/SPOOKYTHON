@@ -223,11 +223,30 @@ def _objetivo_visible(
     aristas_cerradas: frozenset[str],
     segmentos_cerrados: frozenset[str],
 ) -> str | None:
-    candidatos = []
-    for sobreviviente_id, destino in sobrevivientes:
-        distancia = _distancia_hops(grafo, origen, destino, aristas_cerradas, segmentos_cerrados)
-        if distancia <= alcance:
-            candidatos.append((distancia, sobreviviente_id, destino))
+    sobrevivientes_por_nodo: dict[str, list[str]] = {}
+    for sobreviviente_id, nodo in sobrevivientes:
+        sobrevivientes_por_nodo.setdefault(nodo, []).append(sobreviviente_id)
+    if origen in sobrevivientes_por_nodo:
+        return origen
+
+    distancias = {origen: 0}
+    cola = deque([origen])
+    candidatos: list[tuple[int, str, str]] = []
+    while cola:
+        nodo = cola.popleft()
+        distancia = distancias[nodo]
+        if distancia >= alcance:
+            continue
+        for calle in grafo.calles_desde(
+            nodo, aristas_cerradas=aristas_cerradas, segmentos_cerrados=segmentos_cerrados
+        ):
+            if calle.destino in distancias:
+                continue
+            nueva_distancia = distancia + 1
+            distancias[calle.destino] = nueva_distancia
+            for sobreviviente_id in sobrevivientes_por_nodo.get(calle.destino, ()):
+                candidatos.append((nueva_distancia, sobreviviente_id, calle.destino))
+            cola.append(calle.destino)
     return min(candidatos)[2] if candidatos else None
 
 
@@ -258,30 +277,6 @@ def _primer_paso(
                 return entrada[1] if entrada is not None else None
             cola.append(calle.destino)
     return None
-
-
-def _distancia_hops(
-    grafo: Grafo,
-    origen: str,
-    destino: str,
-    aristas_cerradas: frozenset[str],
-    segmentos_cerrados: frozenset[str],
-) -> int:
-    if origen == destino:
-        return 0
-    cola = deque([(origen, 0)])
-    visitados = {origen}
-    while cola:
-        nodo, distancia = cola.popleft()
-        for calle in grafo.calles_desde(
-            nodo, aristas_cerradas=aristas_cerradas, segmentos_cerrados=segmentos_cerrados
-        ):
-            if calle.destino == destino:
-                return distancia + 1
-            if calle.destino not in visitados:
-                visitados.add(calle.destino)
-                cola.append((calle.destino, distancia + 1))
-    return 10**9
 
 
 def _acumular_ocupacion(destino: dict[str, float], estados: Mapping[object, float]) -> None:
