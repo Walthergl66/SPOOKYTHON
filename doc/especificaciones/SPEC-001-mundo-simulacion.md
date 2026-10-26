@@ -22,9 +22,9 @@ Ejecutar un único mundo de Manta con reglas comunes para humano/automáticos, c
 | CA-001-04 | Llegada y mordida se resuelven en el orden configurado, sin evacuar un mordido en ese turno. | T-09 |
 | CA-001-05 | Snapshot publicado es completo y una reejecución no duplica turno; reiniciar partida no reutiliza decisiones. | T-10, T-18 |
 | CA-001-06 | Mismas intenciones y estado producen mismo resultado con control humano/automático. | T-17 |
-| CA-001-07 | Escenario, semilla, versiones, configuración y entradas externas idénticos reproducen el reporte dentro de la misma versión; el reporte omite zombies dormidos. | Parcial: T-24 de demo local; T-10 y recuperación/reporte integral pendientes |
+| CA-001-07 | Escenario, semilla, versiones, configuración y entradas externas idénticos reproducen el reporte dentro de la misma versión; el reporte omite zombies dormidos. | Parcial: T-24 reproduce cinco turnos locales y oculta dormidos; T-10 durable y recuperación/reporte integral pendientes |
 | CA-001-08 | El generador demo crea exactamente la población solicitada (1–200), fuera de nodos refugio, con posiciones repetibles por semilla. | T-10 |
-| CA-001-09 | Las partidas nuevas usan estado aleatorio independiente; cambiar semilla/estado/eventos puede divergir en ubicaciones, movimiento zombie y rutas posteriores. Se respetan reglas y la misma instantánea conserva decisión HTTP estable. | Parcial: semilla nueva y posiciones/fase inicial aleatorias en demo; composición/eventos oficiales y T-10 integral pendientes |
+| CA-001-09 | Las partidas nuevas usan estado aleatorio independiente; cambiar semilla/estado/eventos puede divergir en ubicaciones, movimiento zombie y rutas posteriores. Se respetan reglas y la misma instantánea conserva decisión HTTP estable. | Parcial: semilla nueva, posiciones/fase inicial aleatorias, divergencia de rutas entre semillas y decisión estable al repetir snapshot; composición/eventos oficiales y persistencia integral pendientes (T-10, T-24) |
 
 ## Plan y módulos
 

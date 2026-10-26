@@ -39,6 +39,30 @@ class EjecutorDemoTests(unittest.TestCase):
             otra_semilla[0]["movimientosZombies"],
         )
 
+    def test_reproduce_trayectoria_de_varios_turnos_y_otra_semilla_cambia_rutas(self) -> None:
+        primero = ejecutar_demo(
+            turnos=5, semilla=41, escenario="caminantes", cantidad_sobrevivientes=20
+        )
+        repetido = ejecutar_demo(
+            turnos=5, semilla=41, escenario="caminantes", cantidad_sobrevivientes=20
+        )
+        perturbado = ejecutar_demo(
+            turnos=5, semilla=42, escenario="caminantes", cantidad_sobrevivientes=20
+        )
+
+        self.assertEqual(primero, repetido)
+
+        def rutas(reportes):
+            return tuple(
+                tuple(
+                    (paso["id"], paso["desde"], paso["hasta"])
+                    for paso in reporte["movimientosSobrevivientes"]
+                )
+                for reporte in reportes
+            )
+
+        self.assertNotEqual(rutas(primero), rutas(perturbado))
+
     def test_semilla_omitida_genera_y_reporta_la_semilla_real(self) -> None:
         reporte = ejecutar_demo(turnos=1)
 

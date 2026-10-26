@@ -32,6 +32,17 @@ class DemoBootstrapTests(unittest.TestCase):
 
         self.assertIn(decision.siguiente_nodo, contexto.grafo.vecinos_desde(sobreviviente.nodo))
 
+    def test_repetir_solicitud_no_avanza_ni_cambia_decision_del_snapshot(self) -> None:
+        contexto = crear_contexto_demo(semilla=303)
+        sobreviviente = contexto.snapshots.obtener(contexto.run_id).partida.sobrevivientes[0]
+        solicitud = SolicitudPaso(sobreviviente.id, sobreviviente.nodo, 0)
+
+        primera = contexto.servicio_decision.ejecutar(solicitud)
+        repetida = contexto.servicio_decision.ejecutar(solicitud)
+
+        self.assertEqual(primera, repetida)
+        self.assertEqual(contexto.snapshots.obtener(contexto.run_id).version, 1)
+
     def test_app_demo_usa_planificador_en_la_ruta_http(self) -> None:
         contexto = crear_contexto_demo(semilla=31)
         sobreviviente = contexto.snapshots.obtener(contexto.run_id).partida.sobrevivientes[0]

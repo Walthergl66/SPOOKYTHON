@@ -294,6 +294,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: P1-05 sigue parcial. Distribución/cantidad oficial (P-09), movimiento de horda (P-07), eventos estocásticos, persistencia durable y carga con el mundo avanzando siguen pendientes. La divergencia puede ocurrir, no se garantiza que cada mínima perturbación cambie todo resultado.
 - Siguiente paso: acordar/configurar escenarios solo con fuentes de reglas confirmadas, resolver P-09 y P-07 antes de variar composición y horda.
 
+## CAM-024 — Replay estocástico multi-turno y estabilidad del snapshot
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación del usuario para trabajar la siguiente fase; refinamiento de T-24 tras implementar semilla nueva y muestreo inicial en CAM-023.
+- Especificación/tareas: SPEC-001, P1-05; CA-001-07/09 y T-24 parciales.
+- Rama: `feat/navira-stochastic-replay-validation`; commit individual `test: verify stochastic replay across turns`.
+- Motivo: verificar replay de una trayectoria y posible divergencia de rutas, además de asegurar que la aleatoriedad del mundo no vuelve aleatoria una decisión repetida sobre el mismo snapshot.
+- Archivos: `tests/test_simulador_demo.py`, `tests/test_demo.py`, documentos propietarios de pruebas, SPEC-001, plan, trazabilidad, estado e historial.
+- Resultado: la misma configuración/semilla reproduce cinco turnos con 20 sobrevivientes; otra semilla cambia la secuencia de rutas en un caso de prueba controlado. Repetir `/paso` sobre el mismo snapshot conserva respuesta y versión.
+- Verificación: suite completa con `/tmp/navira-env` (94 pruebas OK); `python3 scripts/check_docs.py` (57 Markdown/59 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones SDD, `compileall` y `git diff --check` correctos. La repetición, divergencia controlada y snapshot se verifican por pruebas locales.
+- Límites: no verifica persistencia/recovery durable, múltiples versiones del algoritmo, eventos oficiales, mapa Manta ni que toda semilla distinta produzca divergencia. No cierra P1-05.
+- Siguiente paso: ejecutar cohortes sintéticas reproducibles de 20/80/200 sobre el fixture Manta y documentar un reporte exploratorio; después medir integración de `/paso` con avance de mundo.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.
