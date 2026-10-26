@@ -120,8 +120,9 @@ export function App() {
 
   return (
     <main className="app-shell">
+      <a className="skip-link" href="#main-content">Saltar al contenido</a>
       <header className="topbar">
-        <a className="brand" href="#inicio" aria-label="Navira, inicio">
+        <a className="brand" href="#main-content" aria-label="Navira, inicio">
           <BrandMark />
           <span className="brand-name">navira</span>
         </a>
@@ -134,7 +135,7 @@ export function App() {
         <div className="topbar-version">BETA <span>·</span> 0.1</div>
       </header>
 
-      <section className="welcome-grid" id="inicio" aria-labelledby="welcome-title">
+      <section className="welcome-grid" id="main-content" tabIndex={-1} aria-labelledby="welcome-title">
         <div className="welcome-copy">
           <div className="section-kicker"><span>01</span> CENTRO DE CONTROL</div>
           <h1 id="welcome-title">Una ciudad.<br /><em>Dos formas</em> de vivirla.</h1>

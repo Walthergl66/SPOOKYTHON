@@ -9,7 +9,7 @@
   -webkit-font-smoothing: antialiased;
   --ink: #e5e9e6;
   --muted: #98a6a4;
-  --dim: #6c7b7a;
+  --dim: #8a9895;
   --line: rgba(193, 213, 207, .14);
   --sea: #92c8b8;
   --sea-bright: #b0e2d2;
@@ -22,7 +22,10 @@
 body { margin: 0; min-width: 320px; min-height: 100vh; }
 button, a { font: inherit; }
 a { color: inherit; text-decoration: none; }
-button:focus-visible, a:focus-visible { outline: 2px solid var(--sea-bright); outline-offset: 4px; }
+button:focus-visible, a:focus-visible, select:focus-visible { outline: 2px solid var(--sea-bright); outline-offset: 4px; }
+.skip-link { position: fixed; z-index: 20; top: 10px; left: 10px; padding: 10px 13px; border: 1px solid var(--sea-bright); background: var(--panel); color: var(--ink); transform: translateY(calc(-100% - 16px)); }
+.skip-link:focus-visible { transform: translateY(0); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .app-shell { min-height: 100vh; overflow: hidden; background: radial-gradient(ellipse at 81% 54%, rgba(42, 77, 75, .22), transparent 37%), var(--night); }
 .topbar { height: 82px; padding: 0 clamp(24px, 6.3vw, 104px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
@@ -75,7 +78,7 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .sea-shape { fill: #17282d; }
 .coast-edge { fill: none; stroke: rgba(121, 174, 163, .6); stroke-width: 1.6; stroke-dasharray: 2 5; }
 .street-lines { stroke: rgba(195, 211, 198, .19); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
-.district-labels { fill: rgba(200, 213, 201, .46); font: 9px var(--mono); letter-spacing: 2px; }
+.district-labels { fill: #a9b6b1; font: 9px var(--mono); letter-spacing: 2px; }
 .map-pin circle:first-child { fill: rgba(142, 207, 180, .16); stroke: rgba(142, 207, 180, .66); stroke-width: 1.2; }
 .map-pin .pin-core { fill: #a8dfc4; stroke: none; }
 .map-pin path { stroke: rgba(142, 207, 180, .7); stroke-width: 1.2; }
@@ -150,6 +153,7 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .game-radio small { color: var(--dim); font-size: 9px; line-height: 1.5; }
 .game-radio-action { justify-self: start; padding: 7px 10px; border: 1px solid rgba(84, 205, 183, .38); border-radius: 7px; background: rgba(84, 205, 183, .09); color: var(--sea-bright); font-size: 10px; font-weight: 700; cursor: pointer; }
 .game-radio-action:disabled { cursor: not-allowed; opacity: .5; }
+.game-radio-action:hover:not(:disabled) { border-color: var(--sea-bright); background: rgba(84, 205, 183, .18); }
 .game-moves { min-width: 0; margin: 0; padding: 0; border: 0; }
 .game-moves legend { margin-bottom: 8px; color: var(--muted); font-size: 10px; }
 .game-move-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }

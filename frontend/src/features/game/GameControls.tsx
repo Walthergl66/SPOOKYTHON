@@ -185,7 +185,10 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
       ) : (
         <>
           <div className="game-position"><span>Tu posición</span><strong>{player.nodo}</strong><span>{turnOpen ? 'Elige un vecino o espera.' : 'Los zombies se movieron; espera la siguiente fase de decisiones.'}</span></div>
-          {turnOpen && remainingMs !== null ? <p className="game-clock" aria-live="off">{deadlineClosed ? 'Tiempo agotado; esperando la resolución del servidor.' : `Cierre del servidor en ${(remainingMs / 1000).toFixed(1)} s`}</p> : null}
+          {turnOpen && remainingMs !== null ? <>
+            <p className="game-clock" aria-live="off">{deadlineClosed ? 'Tiempo agotado; esperando la resolución del servidor.' : `Cierre del servidor en ${(remainingMs / 1000).toFixed(1)} s`}</p>
+            <span className="sr-only" aria-live="polite">{deadlineClosed ? 'La ventana de decisiones terminó.' : remainingMs <= 500 ? 'Queda menos de medio segundo para enviar una orden.' : ''}</span>
+          </> : null}
           {turnOpen ? (
             <aside className="game-radio" aria-labelledby="game-radio-title">
               <div>

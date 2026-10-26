@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-045 — Accesibilidad de navegación y tiempo de juego
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada de P4B-03/P5-04; revisión de navegación por teclado, foco y estados del juego.
+- Especificación/tarea: SPEC-004, P4B-03 parcial; CA-004-06/T-19 parcial.
+- Motivo: dar acceso directo al contenido y hacer visibles los estados de foco y reloj sin depender de color ni anunciar cada actualización de 100 ms.
+- Resultado: enlace inicial «Saltar al contenido» apunta al panel principal; botones, enlaces y selector tienen foco `:focus-visible`; el token `--dim` alcanza 4,61:1 sobre el fondo `#1c3032`; el reloj conserva lectura visual y anuncia por lector de pantalla solo al quedar medio segundo y al terminar. La ruta de radio tiene respuesta hover.
+- Archivos: `frontend/src/app/App.tsx`, `frontend/src/features/game/GameControls.tsx`, `frontend/src/styles.css`; pruebas, frontend, SPEC-004, trazabilidad, plan, estado.
+- Decisión: conservar elementos HTML nativos y una actualización accesible por umbrales, manteniendo el countdown de 100 ms solo visual.
+- Verificación: revisión de las directrices Web Interface Guidelines y del código; build TypeScript/Vite, validadores docs/SDD y regresiones del checker se ejecutan para cerrar esta CAM.
+- Límites: contraste calculado para tokens y fondos base, no auditoría WCAG automatizada; falta recorrido manual con teclado/lector de pantalla en una partida real. T-19 no se marca completo.
+- Siguiente paso: ejercicio manual de entrada, reintento, orden y resultado con teclado/lector de pantalla y controles responsive.
+- Commit: commit local individual en `master` después de las validaciones.
+
 ## CAM-044 — Medición P5-01 extendida de loopback
 
 - Fecha: 2026-10-26, Ecuador continental.
