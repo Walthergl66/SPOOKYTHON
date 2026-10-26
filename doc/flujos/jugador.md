@@ -1,11 +1,11 @@
 # Flujo del jugador
 
-Estado: sesión/aparición y órdenes locales en CAM-036/037; UI inicial en CAM-038; coordinador local parcial en CAM-039. El ciclo consume órdenes, pero todavía no hay runner con deadline/reloj ensamblado y el juego no es end-to-end. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
+Estado: sesión/aparición y órdenes locales en CAM-036/037; coordinador/reloj demo en CAM-039/040; contador, radio y recuperación UI en CAM-041..043. El modo de juego solo se ensambla con opt-in local y no ofrece persistencia durable ni despliegue. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
 
 ## Entrar
 
-1. Seleccionar «Jugar». Comprobar partida de juego habilitada y cupo de control.
-2. Crear/recuperar sesión temporal segura; alias opcional. Un segundo visitante observa, no toma el personaje ocupado.
+1. Seleccionar «Jugar». Comprobar partida de juego habilitada y consultar `GET /juego/mi-personaje` con la cookie existente.
+2. Si la sesión existe, recuperar personaje/posición del snapshot y última orden; si no existe (403), mostrar entrada explícita y después crear/recuperar sesión con `POST /juego/unirse`. Un segundo visitante observa, no toma el personaje ocupado.
 3. Registrar solicitud de aparición; incorporarla al inicio de un turno antes del movimiento zombie. Si ya pasó esa fase, esperar el siguiente turno y mostrarlo.
 4. Seleccionar aleatoriamente nodo transitable, fuera de refugios, sin solapamiento zombie inicial y con camino vigente a un refugio. No garantizar que siga siendo seguro después.
 5. Confirmar personaje/nodo; si no hay candidatos, informar y no inventar un punto inválido.
@@ -22,6 +22,8 @@ CAM-041 agrega `decisionRestanteMs` a la proyección observable durante decision
 
 CAM-042 muestra en Radio Navira el siguiente tramo de `rutasPrevistas` asociado al personaje activo. El texto lo presenta como sugerencia del servidor basada en el snapshot observable, nunca como seguridad garantizada. «Usar sugerencia» manda una orden explícita por el mismo endpoint y acuse; si el tramo no coincide con una calle actualmente elegible, no se ofrece el botón. No hay endpoint separado de radio ni acción automática.
 
+CAM-043 agrega `GET /juego/mi-personaje`: al seleccionar el modo humano, el cliente recupera sesión solo si ya existe la cookie HttpOnly. La API obtiene posición/estado desde el snapshot actual y la última orden desde el repositorio local. Sin cookie se mantiene el botón de entrada; no se crea un personaje de manera automática. La recuperación funciona tras recarga en el mismo proceso y no tras reiniciar el servicio.
+
 ## Elegir una acción
 
 1. Recibir estado observable de la fase de decisión y hora límite del servidor.
@@ -35,7 +37,7 @@ Solo se cambia destino cuando existe una nueva orden válida recibida dentro del
 
 ## Desconexión y final
 
-El mundo continúa sin el navegador. Al reconectar se recupera la sesión y una instantánea completa: el personaje pudo esperar, llegar o morir. No volver a crear otro personaje por refrescar. La radio y el panel usan solo información observable.
+El mundo continúa sin el navegador. Al reconectar se consulta la sesión propietaria y el panel recibe una instantánea completa: el personaje pudo esperar, llegar o morir. No volver a crear otro personaje por refrescar. La sesión del adaptador actual se pierde al reiniciar el servidor. La radio y el panel usan solo información observable.
 
 Estados: `esperando_aparicion → activo → evacuado | mordido`; una interrupción de partida se comunica por separado. Un timeout del cliente no es una victoria ni una derrota por sí mismo. Al terminar mostrar motivo, turnos y distancia; regresar al selector sin reiniciar una partida ajena.
 

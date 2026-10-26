@@ -7,7 +7,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../PRD.md)/[TRD](../
 | [SPEC-001](SPEC-001-mundo-simulacion.md) | Grafo, mundo y simulación | En curso; generador local estocástico parcial, no verificada integralmente. |
 | [SPEC-002](SPEC-002-motor-paso.md) | Motor, `/paso` y mejora temporal | CAM-033/034 implementan núcleo temporal y pronóstico exploratorio; CAM-035 evalúa 27 pares locales y mantiene Dijkstra activa. T-11/T-22, integración de producción y verificación integral siguen pendientes. |
 | [SPEC-003](SPEC-003-panel-vivo.md) | Observación en vivo | Lista; CAM-031 verifica mapa/proyección manual y CAM-032 transporte local con snapshots completos, heartbeat y reconexión. CA-003-01/03/04 y validación integral siguen pendientes. |
-| [SPEC-004](SPEC-004-juego-humano.md) | Control humano | CAM-036/037 implementan parcialmente sesión/aparición y órdenes locales; CAM-038 inicia controles frontend; CAM-039/040 integran ciclo demo; CAM-041/042 muestran timer y sugerencia de radio opcional. Falta persistencia/reinicio, sesión expirable, TLS, resultado y T-14/T-15/T-19 integral. |
+| [SPEC-004](SPEC-004-juego-humano.md) | Control humano | CAM-036/037 implementan parcialmente sesión/aparición y órdenes locales; CAM-038 inicia controles frontend; CAM-039/040 integran ciclo demo; CAM-041/042 muestran timer y radio opcional; CAM-043 recupera sesión existente tras recarga local. Falta persistencia/reinicio, sesión expirable, TLS, resultado y T-14/T-15/T-19 integral. |
 | [SPEC-005](SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Lista con dependencias externas pendientes. |
 | [SPEC-006](SPEC-006-metodologia.md) | Incorporación PRD/TRD/ODDD/SDD | Ver estado y evidencia en su archivo. |
 

@@ -34,6 +34,28 @@ class RespuestaUnirseJuegoSchema(BaseModel):
     nodo: str | None = None
 
 
+class UltimaOrdenSesionSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    accionId: str
+    turno: int = Field(ge=0)
+    siguienteNodo: str
+    secuencia: int = Field(ge=1)
+
+
+class RespuestaSesionJuegoSchema(BaseModel):
+    """Snapshot mínimo para que la cookie recupere únicamente su personaje."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    runId: str
+    jugadorId: str
+    estado: Literal["esperando_aparicion", "activo"]
+    nodo: str | None = None
+    estadoPersonaje: Literal["activo", "mordido", "evacuado"] | None = None
+    ultimaOrden: UltimaOrdenSesionSchema | None = None
+
+
 class SolicitudOrdenJuegoSchema(BaseModel):
     """Orden del jugador; la identidad se contrasta con la cookie propietaria."""
 

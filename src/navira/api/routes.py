@@ -14,6 +14,7 @@ from navira.api.schemas import (
     RespuestaMapaPanelSchema,
     RespuestaOrdenJuegoSchema,
     RespuestaPasoSchema,
+    RespuestaSesionJuegoSchema,
     RespuestaUnirseJuegoSchema,
     SolicitudOrdenJuegoSchema,
     SolicitudPasoSchema,
@@ -21,8 +22,10 @@ from navira.api.schemas import (
 from navira.application.consultar_panel import ConsultarPanel, PanelNoDisponible
 from navira.application.juego import (
     AparicionNoDisponible,
+    ConsultarSesionJuego,
     JuegoNoDisponible,
     PropietarioOcupado,
+    SesionNoEncontrada,
     UnirseAJuego,
 )
 from navira.application.ordenes import (
@@ -116,6 +119,46 @@ async def unirse_juego(request: Request, response: Response) -> dict[str, object
         "jugadorId": resultado.sesion.sobreviviente_id,
         "estado": resultado.sesion.estado.value,
         "nodo": resultado.sesion.nodo,
+    }
+
+
+@router.get(
+    "/juego/mi-personaje",
+    response_model=RespuestaSesionJuegoSchema,
+    tags=["juego"],
+)
+async def recuperar_sesion_juego(request: Request, response: Response) -> dict[str, object]:
+    """Lee la sesión ya asociada a la cookie; nunca reserva personaje nuevo."""
+
+    response.headers["Cache-Control"] = "no-store"
+    servicio: ConsultarSesionJuego | None = getattr(
+        request.app.state, "consultar_sesion_juego", None
+    )
+    if servicio is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="La recuperación del modo juego no está habilitada.",
+        )
+    try:
+        actual = servicio.ejecutar(request.cookies.get(_COOKIE_SESION_JUGADOR))
+    except SesionNoEncontrada as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+    except JuegoNoDisponible as error:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
+
+    orden = actual.ultima_orden
+    return {
+        "runId": actual.sesion.run_id,
+        "jugadorId": actual.sesion.sobreviviente_id,
+        "estado": actual.sesion.estado.value,
+        "nodo": actual.nodo,
+        "estadoPersonaje": actual.estado_personaje,
+        "ultimaOrden": {
+            "accionId": orden.accion_id,
+            "turno": orden.turno,
+            "siguienteNodo": orden.siguiente_nodo,
+            "secuencia": orden.secuencia,
+        } if orden is not None else None,
     }
 
 

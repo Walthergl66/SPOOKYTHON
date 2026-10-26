@@ -133,6 +133,83 @@ class ResultadoUnirse:
 
 
 @dataclass(frozen=True, slots=True)
+class OrdenSesionActual:
+    """Campos mínimos de una orden recibida que se pueden mostrar al dueño."""
+
+    accion_id: str
+    turno: int
+    siguiente_nodo: str
+    secuencia: int
+
+
+class OrdenRecuperable(Protocol):
+    accion_id: str
+    turno: int
+    siguiente_nodo: str
+    secuencia: int
+
+
+class ProveedorUltimaOrden(Protocol):
+    def obtener_ultima(self, run_id: str, personaje_id: str) -> OrdenRecuperable | None: ...
+
+
+class SesionNoEncontrada(PermissionError):
+    """La cookie no identifica una sesión de jugador recuperable."""
+
+
+@dataclass(frozen=True, slots=True)
+class EstadoSesionActual:
+    """Estado privado mínimo para restaurar la vista de la persona propietaria."""
+
+    sesion: SesionJugador
+    nodo: str | None
+    estado_personaje: str | None
+    ultima_orden: OrdenSesionActual | None
+
+
+@dataclass(frozen=True, slots=True)
+class ConsultarSesionJuego:
+    """Recupera exclusivamente el personaje asociado a una cookie existente."""
+
+    snapshots: RepositorioSnapshots
+    sesiones: RepositorioSesiones
+    ordenes: ProveedorUltimaOrden
+
+    def ejecutar(self, token: str | None) -> EstadoSesionActual:
+        if not token:
+            raise SesionNoEncontrada("Se requiere la sesión propietaria.")
+        sesion = self.sesiones.obtener(token)
+        if sesion is None:
+            raise SesionNoEncontrada("La sesión de juego no existe o ya no está disponible.")
+        snapshot = self.snapshots.obtener(sesion.run_id)
+        if snapshot is None or snapshot.partida.modo is not ModoPartida.JUEGO:
+            raise JuegoNoDisponible("La partida de esta sesión ya no está disponible.")
+        personaje = next(
+            (item for item in snapshot.partida.sobrevivientes if item.id == sesion.sobreviviente_id),
+            None,
+        )
+        if personaje is None and sesion.estado is EstadoSesion.ACTIVO:
+            raise JuegoNoDisponible("No se pudo recuperar el personaje de la sesión.")
+        ultima = self.ordenes.obtener_ultima(sesion.run_id, sesion.sobreviviente_id)
+        orden = (
+            OrdenSesionActual(
+                accion_id=ultima.accion_id,
+                turno=ultima.turno,
+                siguiente_nodo=ultima.siguiente_nodo,
+                secuencia=ultima.secuencia,
+            )
+            if ultima is not None
+            else None
+        )
+        return EstadoSesionActual(
+            sesion=sesion,
+            nodo=personaje.nodo if personaje is not None else None,
+            estado_personaje=personaje.estado.value if personaje is not None else None,
+            ultima_orden=orden,
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class UnirseAJuego:
     """Abre o recupera la única sesión humana y solicita una aparición válida.
 

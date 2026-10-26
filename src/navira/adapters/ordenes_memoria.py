@@ -24,6 +24,17 @@ class RepositorioOrdenesMemoria(RepositorioOrdenes):
         with self._lock:
             return self._por_accion.get((run_id, personaje_id, accion_id))
 
+    def obtener_ultima(self, run_id: str, personaje_id: str) -> OrdenHumana | None:
+        """Recupera la última intención recibida de este personaje en el run."""
+
+        with self._lock:
+            candidatas = (
+                orden
+                for (partida, _turno, personaje), orden in self._ultima_por_personaje_turno.items()
+                if partida == run_id and personaje == personaje_id
+            )
+            return max(candidatas, key=lambda orden: orden.secuencia, default=None)
+
     def registrar(self, orden: OrdenHumana) -> OrdenHumana:
         clave_accion = (orden.run_id, orden.personaje_id, orden.accion_id)
         clave_turno = (orden.run_id, orden.turno, orden.personaje_id)

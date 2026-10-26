@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-043 — Recuperar la sesión humana al reconectar
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada de las fases; cerrar la recuperación de la UI después de CAM-042.
+- Especificación/tarea: SPEC-004, P4B-01/P4B-03/P5-04 parcial; CA-004-02/04, T-13/T-15/T-18.
+- Motivo: restaurar la identidad propietaria tras una recarga sin volver a crear un personaje ni tomar la sesión ajena.
+- Resultado: `GET /juego/mi-personaje` valida únicamente la cookie opaca existente y devuelve la identidad propia, estado y posición actual del personaje desde el snapshot, además de la última orden del repositorio local. El frontend consulta al seleccionar el modo juego y recupera el personaje; 403 significa que no hay sesión y conserva el botón explícito de entrada. El GET no reserva cupo ni cambia el mundo.
+- Archivos: caso de uso de recuperación, puerto/adaptador de órdenes, esquema y ruta API, ensamblaje demo, cliente y controles frontend; contrato, flujo, módulo, pruebas, SPEC-004, trazabilidad, plan, estado.
+- Decisión: posición y estado del personaje vienen del mundo confirmado y no del dato inicial de sesión; la orden se presenta como recibida, no como movimiento aplicado. El endpoint es de lectura y la cookie mantiene `SameSite=Strict`.
+- Verificación: pruebas enfocadas de órdenes/sesión (19 OK); suite completa backend (149 OK); build TypeScript/Vite; `python3 scripts/check_docs.py` (67 Markdown/69 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones SDD, `compileall` y `git diff --check` correctos.
+- Límites: solo memoria de un proceso; recargar restaura la sesión mientras no se reinicie el servidor. No hay expiración, revocación, store durable, coordinación multi-worker ni prueba manual completa de navegación.
+- Siguiente paso: continuar P5-01 con medición extendida local de cadencia; recuperación durable y TLS requieren fase de persistencia/infraestructura.
+- Commit: commit local individual en `master` al completar validación.
+
 ## CAM-042 — Sugerencia de radio en controles humanos
 
 - Fecha: 2026-10-26, Ecuador continental.

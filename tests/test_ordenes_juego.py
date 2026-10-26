@@ -19,6 +19,7 @@ from navira.application.ordenes import (
     RegistrarOrdenHumana,
     SesionNoAutorizada,
 )
+from navira.application.juego import ConsultarSesionJuego
 from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle
 from navira.domain.modelo import (
     EstadoPartida,
@@ -218,6 +219,48 @@ class OrdenesJuegoTests(unittest.TestCase):
         self.assertEqual(accepted.json(), {"accionId": "http-1", "secuencia": 1, "estado": "recibida", "turno": 0})
         self.assertNotIn("token", accepted.text)
         self.assertEqual(client.post("/juego/accion", json=body, headers={"Origin": "https://evil.example"}).status_code, 403)
+
+    def test_endpoint_recupera_solo_sesion_existente_y_posicion_actual(self) -> None:
+        consulta = ConsultarSesionJuego(self.snapshots, self.sesiones, self.ordenes)
+        client = TestClient(crear_app(
+            unirse_juego=self.unirse,
+            registrar_orden_juego=self.servicio,
+            consultar_sesion_juego=consulta,
+        ), base_url="https://testserver")
+        client.cookies.set("navira_player_session", self.session.token, path="/juego")
+        self.enviar(action="restaurable", destino="N-3")
+
+        snapshot = self.snapshots.obtener("run-ordenes")
+        actualizados = tuple(
+            replace(personaje, nodo="N-2") if personaje.id == self.personaje else personaje
+            for personaje in snapshot.partida.sobrevivientes
+        )
+        movido = replace(snapshot, partida=replace(snapshot.partida, sobrevivientes=actualizados), version=snapshot.version + 1)
+        self.assertTrue(self.snapshots.guardar_si_version("run-ordenes", snapshot.version, movido))
+
+        response = client.get("/juego/mi-personaje")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["cache-control"], "no-store")
+        self.assertEqual(response.json(), {
+            "runId": "run-ordenes",
+            "jugadorId": self.personaje,
+            "estado": "activo",
+            "nodo": "N-2",
+            "estadoPersonaje": "activo",
+            "ultimaOrden": {
+                "accionId": "restaurable",
+                "turno": 0,
+                "siguienteNodo": "N-3",
+                "secuencia": 1,
+            },
+        })
+
+    def test_endpoint_recuperacion_no_crea_sesion_si_falta_cookie(self) -> None:
+        consulta = ConsultarSesionJuego(self.snapshots, self.sesiones, self.ordenes)
+        response = TestClient(crear_app(consultar_sesion_juego=consulta)).get("/juego/mi-personaje")
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(len(self.snapshots.obtener("run-ordenes").partida.sobrevivientes), 2)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PanelMap, PanelState } from '../../shared/api/panel'
-import { GameApiError, joinGame, sendGameOrder, type GameOrderInput, type GameOrderReceipt, type PlayerSession } from '../../shared/api/game'
+import { GameApiError, joinGame, restoreGameSession, sendGameOrder, type GameOrderInput, type GameOrderReceipt, type PlayerSession } from '../../shared/api/game'
 import type { PanelConnection } from '../../shared/realtime/panel'
 
 interface GameControlsProps {
@@ -13,6 +13,9 @@ interface GameControlsProps {
 
 type Activity =
   | { kind: 'idle' }
+  | { kind: 'recovering' }
+  | { kind: 'recovered'; session: PlayerSession }
+  | { kind: 'recovery-error'; message: string }
   | { kind: 'joining' }
   | { kind: 'sending' }
   | { kind: 'accepted'; receipt: GameOrderReceipt }
@@ -23,6 +26,7 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
   const [activity, setActivity] = useState<Activity>({ kind: 'idle' })
   const pendingOrder = useRef<GameOrderInput | null>(null)
   const [remainingMs, setRemainingMs] = useState<number | null>(null)
+  const [recoveryAttempt, setRecoveryAttempt] = useState(0)
 
   const gameState = state?.estado === 'activa' && state.modo === 'juego' ? state : null
   const player = gameState && session && session.runId === gameState.runId
@@ -64,13 +68,37 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
     return () => window.clearInterval(timer)
   }, [gameState?.decisionRestanteMs, gameState?.fase, gameState?.runId, gameState?.turno, gameState?.snapshotVersion])
 
+  useEffect(() => {
+    if (!modeSelected || !gameState) return
+    const controller = new AbortController()
+    setActivity({ kind: 'recovering' })
+    restoreGameSession(controller.signal)
+      .then((restored) => {
+        setSession(restored)
+        onJoined(restored.playerId)
+        setActivity({ kind: 'recovered', session: restored })
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return
+        if (error instanceof GameApiError && error.status === 403) {
+          setActivity({ kind: 'idle' })
+          return
+        }
+        setActivity({
+          kind: 'recovery-error',
+          message: error instanceof Error ? error.message : 'No se pudo consultar la sesión guardada.',
+        })
+      })
+    return () => controller.abort()
+  }, [modeSelected, gameState?.runId, recoveryAttempt, onJoined])
+
   if (!modeSelected) return null
 
   const isGame = gameState !== null
   const turnOpen = gameState?.fase === 'decisiones'
   const deadlineClosed = remainingMs === 0
   const panelFresh = connection === 'live'
-  const busy = activity.kind === 'joining' || activity.kind === 'sending'
+  const busy = activity.kind === 'recovering' || activity.kind === 'joining' || activity.kind === 'sending'
 
   const enterGame = async () => {
     setActivity({ kind: 'joining' })
@@ -134,8 +162,9 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
         <div className="game-entry">
           <p>Entra con una sesión temporal. El servidor elige tu punto inicial y guarda la cookie fuera de JavaScript.</p>
           <button className="game-primary" type="button" onClick={enterGame} disabled={busy || !panelFresh}>
-            {activity.kind === 'joining' ? 'Entrando…' : 'Entrar a la partida'}
+            {activity.kind === 'recovering' ? 'Comprobando sesión…' : activity.kind === 'joining' ? 'Entrando…' : 'Entrar a la partida'}
           </button>
+          {activity.kind === 'recovery-error' ? <button type="button" className="game-retry" onClick={() => setRecoveryAttempt((attempt) => attempt + 1)}>Reintentar recuperación</button> : null}
           {!panelFresh ? <span className="game-hint">Esperando una conexión reciente con el servidor.</span> : null}
         </div>
       ) : session.runId !== gameState?.runId ? (
@@ -196,6 +225,8 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
       )}
 
       <div className={`game-feedback${activity.kind === 'error' ? ' is-error' : ''}`} aria-live="polite" role="status">
+        {activity.kind === 'recovered' ? <><strong>Sesión recuperada</strong><span>{activity.session.lastOrder ? `Última orden recibida: turno ${activity.session.lastOrder.turn}, destino ${activity.session.lastOrder.destination}. La posición actual se toma del snapshot del servidor.` : 'Tu personaje se recuperó desde la cookie y el snapshot actual del servidor.'}</span></> : null}
+        {activity.kind === 'recovery-error' ? <><strong>No se pudo recuperar la sesión guardada.</strong><span>{activity.message}</span></> : null}
         {activity.kind === 'accepted' ? <><strong>Orden recibida · #{activity.receipt.secuencia}</strong><span>El movimiento se confirmará cuando el servidor resuelva el turno {activity.receipt.turno}.</span></> : null}
         {activity.kind === 'error' ? <><strong>No se pudo confirmar la orden.</strong><span>{activity.message}</span>{activity.canRetry && pendingOrder.current ? <button type="button" className="game-retry" onClick={() => void submit(pendingOrder.current?.siguienteNodo ?? '', true)}>Reintentar con la misma acción</button> : null}</> : null}
       </div>

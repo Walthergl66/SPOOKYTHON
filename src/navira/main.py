@@ -10,7 +10,7 @@ from navira.api.routes import router
 from navira.application.coordinador_juego import CoordinadorJuego
 from navira.application.decidir_paso import DecidirPasoEspera
 from navira.application.consultar_panel import ConsultarPanel
-from navira.application.juego import RepositorioSesionesMemoria, UnirseAJuego
+from navira.application.juego import ConsultarSesionJuego, RepositorioSesionesMemoria, UnirseAJuego
 from navira.application.ordenes import RegistrarOrdenHumana
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.application.reloj_juego import RelojJuegoLocal
@@ -23,6 +23,7 @@ def crear_app(
     unirse_juego: UnirseAJuego | None = None,
     registrar_orden_juego: RegistrarOrdenHumana | None = None,
     reloj_juego: RelojJuegoLocal | None = None,
+    consultar_sesion_juego: ConsultarSesionJuego | None = None,
 ) -> FastAPI:
     """Ensamblaje inyectable; sin servicio recibe espera determinista."""
 
@@ -44,6 +45,7 @@ def crear_app(
     )
     aplicacion.state.decidir_paso = servicio_decision or DecidirPasoEspera()
     aplicacion.state.consultar_panel = consultar_panel
+    aplicacion.state.consultar_sesion_juego = consultar_sesion_juego
     aplicacion.state.unirse_juego = unirse_juego
     aplicacion.state.registrar_orden_juego = registrar_orden_juego
     aplicacion.include_router(router)
@@ -117,6 +119,7 @@ def crear_app_juego_demo(
         unirse,
         registrar,
         reloj,
+        ConsultarSesionJuego(contexto.snapshots, sesiones, ordenes),
     )
 def _crear_app_configurada() -> FastAPI:
     """Activa demo solo con opt-in explícito del proceso local."""

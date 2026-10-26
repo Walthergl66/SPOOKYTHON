@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio en preparación: **CAM-042**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio en preparación: **CAM-043**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -13,10 +13,10 @@
 - P3-01 verificado como núcleo aislado en CAM-033: búsqueda temporal acotada con espera, cierres y exposición futura inyectada; la política HTTP no la consume. La medición serial no valida T-11 ni servicio HTTP.
 - P3-02 parcial en CAM-034: pronóstico por escenarios de amenazas activas, con entradas observables mínimas, mezcla de fase privada desconocida y supuestos declarados para corredor/horda. No se conecta a `/paso`; las reglas oficiales siguen pendientes.
 - P3-03 evaluado parcialmente en CAM-035: temporal sumó 15 evacuados en 27 pares sintéticos de tres turnos, sin cambiar las mordidas observadas. La prueba se repitió con resultados deterministas. Dijkstra sigue activa porque no hay comparación HTTP concurrente, ronda larga ni reglas confirmadas.
-- P4B-01 implementa parcialmente en CAM-036 un caso de uso de sesión humana propietaria, cookie opaca y aparición aleatoria con CAS. CAM-039/040 conecta aparición pendiente antes del movimiento zombie. Las sesiones siguen en memoria y no expiran.
+- P4B-01 implementa parcialmente en CAM-036 un caso de uso de sesión humana propietaria, cookie opaca y aparición aleatoria con CAS. CAM-039/040 conecta aparición pendiente antes del movimiento zombie; CAM-043 permite recuperar posición actual/última orden por cookie después de una recarga en el mismo proceso. Las sesiones siguen en memoria y no expiran.
 - P4B-02 implementa parcialmente en CAM-037 el endpoint `POST /juego/accion`, autorización e idempotencia local. CAM-040 consume la última orden, rechaza fuera del deadline de 1,7 s y serializa registro/resolución con puerta monotónica de un proceso.
-- P4B-03 inicia en CAM-038 controles web; CAM-040 añade proxy Vite para `/juego`; CAM-041 muestra restante informativo y CAM-042 permite usar de forma explícita la ruta sugerida del snapshot por radio. T-19 accesibilidad integral y resultado completo siguen pendientes.
-- P5-04 parcial en CAM-039..042: `NAVIRA_GAME_DEMO=1` ensambla modo sintético y runner local de dos segundos. Pruebas del coordinador y smoke ASGI confirman orden común con NPC, aparición en fase correcta, cierre temporal, cuenta atrás informativa y sesión única. CAM-042 presenta en frontend una sugerencia tomada de la ruta observable ya proyectada. No es cadencia sostenida ni juego productivo; no hay persistencia/recuperación tras reinicio, expiración de sesión, TLS o coordinación multi-proceso.
+- P4B-03 inicia en CAM-038 controles web; CAM-040 añade proxy Vite para `/juego`; CAM-041 muestra restante informativo, CAM-042 permite usar ruta sugerida por radio y CAM-043 recupera la sesión al seleccionar el modo humano. T-19 accesibilidad integral y resultado completo siguen pendientes.
+- P5-04 parcial en CAM-039..043: `NAVIRA_GAME_DEMO=1` ensambla modo sintético y runner local de dos segundos. Pruebas del coordinador y smoke ASGI confirman orden común con NPC, aparición en fase correcta, cierre temporal, cuenta atrás informativa y sesión única. CAM-042 presenta en frontend una sugerencia tomada de la ruta observable; CAM-043 verifica recuperación HTTP de la sesión, posición actual y última orden. No es cadencia sostenida ni juego productivo; no hay persistencia/recuperación tras reinicio, expiración de sesión, TLS o coordinación multi-proceso.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -64,17 +64,17 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Backend y `/paso` | Contrato y política Dijkstra; inicio demo local explícito | Configurar mundo real, persistencia, idempotencia y medir latencia bajo carga. |
 | Simulador | Demo con semilla nueva opcional, estado inicial aleatorio y replay local explícito; resolución/ronda con RNG privado y CAS en memoria | Distribución oficial parametrizada, composición/eventos, movimiento de horda, replay durable/versionado entre despliegues, DynamoDB, reloj/publicación y escenarios oficiales pendientes. |
 | Grafo de Manta | Fixture de 300 nodos y cuatro zonas seguras de tsunami generado | Validar cobertura representativa de barrios/rutas peatonales y evaluar amenazas sísmicas con fuentes competentes; el fixture no es para navegación real. |
-| Frontend y juego | P4-01/P4-02 verificados localmente; P4B-01..03 y P5-04 parciales en CAM-036..042; modo juego sintético muestra timer y sugerencia opcional de radio | Recuperación durable tras reinicio, expiración de sesión, TLS, T-14/T-15/T-19 integral y verificación de cadencia sostenida. |
+| Frontend y juego | P4-01/P4-02 verificados localmente; P4B-01..03 y P5-04 parciales en CAM-036..043; modo juego sintético muestra timer, radio y recuperación de cookie en el mismo proceso | Recuperación durable tras reinicio, expiración de sesión, TLS, T-14/T-15/T-19 integral y verificación de cadencia sostenida. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
 | Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
-| Repositorio remoto y commits | Al inicio de CAM-039 `origin/master` coincidía con HEAD `7bd4cb2`; los commits previos ya están publicados | Publicar este y siguientes commits cuando se completen. |
+| Repositorio remoto y commits | Último puntero `origin/master` observado localmente: `7bd4cb2`; CAM-039..043 constan como cinco commits locales posteriores | Push autorizado previamente falló con HTTP 403; estos cinco commits no están publicados según el puntero local observado. |
 
-El checkout está en `master`; al inicio de CAM-039 `origin/master` coincidía con HEAD `7bd4cb2`, por lo que los commits previos ya estaban publicados. Intentos anteriores de push fallaron por credenciales/HTTP 403, pero no describen el estado remoto actual. AWS sigue pendiente.
+El checkout está en `master`. El puntero de seguimiento local `origin/master` observado en CAM-043 sigue en `7bd4cb2`; CAM-039..043 quedan cinco commits locales por delante. Un push previo fue rechazado por HTTP 403; no se declara nada publicado. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. CAM-042 añade sugerencia de radio explícita en la UI, pero no cierra P4B-03/P5-04. Siguiente paso: verificar recorrido de reconexión/idempotencia y teclado; luego medir P5-01 local durante una ventana extendida. Persistencia, TLS y AWS no se pueden declarar listos sin infraestructura y evidencia externas. P2-03/T-11 y reglas oficiales siguen pendientes; no afirmar CI remoto, despliegue o seguridad sísmica.
+CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. CAM-043 restaura la sesión humana en el mismo proceso con pruebas HTTP de cookie y snapshot vigente. Siguiente paso: medir P5-01 local durante una ventana extendida y revisar accesibilidad del recorrido. Persistencia durable, TLS y AWS necesitan infraestructura y evidencia externas; P2-03/T-11 y reglas oficiales siguen pendientes. No afirmar CI remoto, despliegue o seguridad sísmica.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
