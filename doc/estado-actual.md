@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-014**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-015**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -20,7 +20,8 @@
 - En `feat/navira-snapshot-cas` la aplicación define `RepositorioSnapshots` y casos de uso para confirmar preparación/resolución con CAS; `AlmacenSnapshotsMemoria` usa lock para que un solo hilo confirme cada versión. El total local es 46 pruebas. El adaptador sigue siendo no durable y limitado a un proceso.
 - En `feat/navira-api-contract-tests` se instalaron dependencias de prueba opcionales; cinco pruebas ASGI validan `/salud`, API key y esquema de `/paso`. Uvicorn local respondió 200 en salud y solicitud válida, 401 sin credencial. `/paso` sigue siendo espera determinista. La suite total actual tiene 51 pruebas.
 - En `feat/navira-dijkstra` existe `src/navira/routing/dijkstra.py`: búsqueda dirigida por costo en metros ponderados por factor configurable de tipo; closures de arista/segmento y nodos de peligro visibles; selección de refugio y desempates estables. Siete pruebas cubren el núcleo genérico; `/paso` todavía no lo consume.
-- En `feat/navira-step-planner` `DecidirPaso` consulta snapshot activo y catálogo de mapas inyectados, valida identidad/turno/fase y usa Dijkstra evitando zombies activos, horda, cierres y cruces opuestos conocidos; no consulta dormidos. La ruta HTTP mapea 404/409/503. Pruebas integradas pasan, pero `main.app` aún usa espera porque no hay inicializador de partida/mapa.
+- En `feat/navira-step-planner` `DecidirPaso` consulta snapshot activo y catálogo de mapas inyectados, valida identidad/turno/fase y usa Dijkstra evitando zombies activos, horda, cierres y cruces opuestos conocidos; no consulta dormidos. La ruta HTTP mapea 404/409/503. Pruebas integradas pasan.
+- En `feat/navira-demo-bootstrap` el opt-in `NAVIRA_DEMO=1` carga `data/maps/demo-sintetico.json`, crea una partida efímera en memoria, abre la fase de decisiones con el coordinador y ensambla `DecidirPaso`. La API recomienda `D-002` desde `D-001`; mapa no oficial, sin zombies ni reloj continuo. Sin opt-in, la app conserva espera.
 
 ## Verificación histórica de CAM-003
 
@@ -41,7 +42,7 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 
 | Área | Estado | Evidencia pendiente |
 |---|---|---|
-| Backend y `/paso` | Contrato y política Dijkstra integrada por inyección | Configurar inicio de mundo/mapa, persistencia, idempotencia y medir latencia bajo carga. |
+| Backend y `/paso` | Contrato y política Dijkstra; inicio demo local explícito | Configurar mundo real, persistencia, idempotencia y medir latencia bajo carga. |
 | Simulador | Resolución, fases y CAS en memoria parciales | DynamoDB, bucle de reloj, publicación, escenarios y ejecución continua pendientes. |
 | Grafo de Manta | Modelo genérico implementado; dataset pendiente | Área y exportación reproducible de OpenStreetMap con unas 300 intersecciones y cuatro refugios. |
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
@@ -54,9 +55,9 @@ El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-014 conserva
 
 ## Próxima acción concreta
 
-Continuar con un inicio local explícito que cargue mapa/configuración y cree una partida en un repositorio, para que el app factory use `DecidirPaso` en una corrida controlada. El punto de entrada predeterminado aún espera. P1-04 requiere persistencia durable/CAS entre hosts; P1-01 requiere dataset reproducible de Manta; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar ronda. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Avanzar a escenarios reproducibles con configuración explícita y pruebas del turno completo. Uvicorn con `NAVIRA_DEMO=1` ya respondió en smoke local; la demo está en memoria y no tiene reloj continuo. P1-04 requiere persistencia durable/CAS entre hosts; P1-01 requiere dataset reproducible de Manta; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar ronda. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
-Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. `python -m pip install -e .` completó en el entorno temporal `/tmp/navira-env`; el comando de arranque del README aún no se ha ejecutado. Cuando se verifique, registrar versiones y resultados, sin confundir comandos previstos con ejecutados.
+Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. Suite completa en `/tmp/navira-env`: 70 pruebas OK. `python -m pip install -e .` y smoke de Uvicorn local demo completados; sin medición de rendimiento ni persistencia externa.
 
 ## Dependencias externas
 
@@ -64,4 +65,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; política HTTP con snapshot inyectado en CAM-014. La rama actual es `feat/navira-step-planner`. P0-01 está verificado; P0-02, P1-04, P2-01 y P2-02 siguen en curso. Mantener P1-01/02/03 parciales; SPEC-001/002 no están verificadas.
+La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015. Rama de trabajo: `feat/navira-demo-bootstrap`. P0-01 está verificado; P0-02, P1-04, P2-01 y P2-02 siguen en curso. Mantener P1-01/02/03 parciales; SPEC-001/002 no están verificadas.

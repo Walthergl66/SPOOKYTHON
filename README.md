@@ -2,7 +2,7 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** `/salud` y `POST /paso` arrancan localmente y sus contratos HTTP tienen pruebas automatizadas y smoke test con Uvicorn. El caso de uso puede elegir una ruta Dijkstra si se ensambla con snapshot/mapa; la app principal no carga todavía una partida y por eso responde con espera determinista (`nodoActual`). No hay mapa real, persistencia durable ni despliegue AWS.
+**Estado real al 26 de octubre de 2026:** `/salud` y `POST /paso` arrancan localmente. Con `NAVIRA_DEMO=1`, el proceso inicializa un mundo sintético local y `/paso` usa Dijkstra para recomendar el siguiente nodo hacia un refugio. Sin ese opt-in, conserva la espera determinista (`nodoActual`). El mapa demo no representa Manta; no hay todavía dataset real, reloj continuo, persistencia durable ni despliegue AWS.
 
 ## Empezar
 
@@ -31,8 +31,11 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 export NAVIRA_API_KEY='local-navira-key-change-me'
+export NAVIRA_DEMO=1
 uvicorn navira.main:app --app-dir src --reload
 ```
+
+La demo inicia al sobreviviente `S-DEMO-001` en `D-001`; el refugio sintético está en `D-005`. La primera llamada de turno `0` propone `D-002`. Para usar otro mapa de desarrollo, configura `NAVIRA_DEMO_MAP`; `NAVIRA_DEMO_SEED` fija la semilla del generador. `NAVIRA_DEMO=1` solo configura una partida en memoria para desarrollo: reiniciar el proceso reinicia el mundo.
 
 La salud local se consulta en `GET /salud`. El contrato inicial del motor:
 
@@ -40,10 +43,10 @@ La salud local se consulta en `GET /salud`. El contrato inicial del motor:
 curl -X POST http://127.0.0.1:8000/paso \
   -H 'content-type: application/json' \\
   -H 'x-api-key: local-navira-key-change-me' \\
-  -d '{"sobrevivienteId":"S-0089","nodoActual":"N-0117","turno":142}'
+  -d '{"sobrevivienteId":"S-DEMO-001","nodoActual":"D-001","turno":0}'
 ```
 
-Respuesta inicial: `{"siguienteNodo":"N-0117"}`. Esta espera cumple la alternativa permitida por el contrato, pero no calcula rutas ni garantiza seguridad. La clave de ejemplo es solo local; reemplázala y no uses una clave real en el repositorio. El contrato documentado está en [API](doc/contratos/api.md); el plan sigue en [estado actual](doc/estado-actual.md).
+Respuesta demo para `S-DEMO-001`, `D-001`, turno `0`: `{"siguienteNodo":"D-002"}`. El motor devuelve una recomendación del estado actual; no garantiza seguridad futura. Sin `NAVIRA_DEMO=1`, el respaldo responde con el nodo actual. La clave de ejemplo es solo local; reemplázala y no uses una clave real en el repositorio. El contrato documentado está en [API](doc/contratos/api.md); el plan sigue en [estado actual](doc/estado-actual.md).
 
 El modelo del grafo y el fixture de cuatro nodos son sintéticos; todavía no contienen calles reales de Manta. La carga y validación están en `src/navira/domain/mapa.py`; el origen y el área de extracción de OSM siguen pendientes.
 

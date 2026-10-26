@@ -177,6 +177,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: el app predeterminado no carga mapa/partida y mantiene espera determinista. Almacenamiento es memoria, no hay inicio de partida/configuración de escenario ni idempotencia durable. Dijkstra trata riesgos visibles actuales, no futuro y no garantiza supervivencia. P2-02 parcial; SPEC-002 no verificada.
 - Siguiente paso: añadir inicializador de partida de demostración con mapa de desarrollo explícito y preparar la integración persistente, sin presentar ese mapa sintético como Manta.
 
+## CAM-015 — Bootstrap local explícito de partida demo
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario de la construcción por fases; siguiente acción concreta de CAM-014/estado actual.
+- Especificación/tareas: SPEC-001, P1-04 parcial; P2-02 continúa en curso. No se declara ronda completa ni SPEC verificada.
+- Rama: `feat/navira-demo-bootstrap`.
+- Motivo: arrancar el planificador con un mundo explícito y verificable sin presentar datos sintéticos como mapa de Manta.
+- Archivos: `src/navira/demo.py`, `src/navira/main.py`, `data/maps/demo-sintetico.json`, `tests/test_demo.py`, README y documentos propietarios de datos, backend, pruebas, plan, SPEC y estado.
+- Resultado: `NAVIRA_DEMO=1` carga mapa sintético, crea un snapshot inicial en memoria, avanza al primer estado de decisiones con el coordinador y ensambla `DecidirPaso`. La ruta `S-DEMO-001` desde `D-001` propone `D-002`. Sin opt-in, el proceso mantiene espera determinista.
+- Límites: un sobreviviente, sin zombies, un refugio, repositorios volátiles, semilla controlable y sin reloj continuo. No es mapa de evaluación ni una ronda de simulación completa; reiniciar el proceso reinicia el estado.
+- Verificación: suite completa `PYTHONPATH=src python -m unittest discover -s tests -p 'test_*.py' -v` (70 pruebas OK); smoke con proceso Uvicorn: `GET /salud` 200 y `POST /paso` autenticado 200 con `{"siguienteNodo":"D-002"}`. Se ejecutaron `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `git diff --check` al cierre. El smoke es local y no mide carga.
+- Siguiente paso: avanzar escenarios reproducibles con ciclo de turno; mantener pendiente persistencia durable, mapa real y reglas/visibilidad.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

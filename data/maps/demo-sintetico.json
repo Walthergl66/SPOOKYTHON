@@ -1,0 +1,23 @@
+{
+  "version": "navira-demo-sintetico-v1",
+  "nodos": [
+    {"id": "D-001", "lat": -0.9500, "lng": -80.7200},
+    {"id": "D-002", "lat": -0.9505, "lng": -80.7205},
+    {"id": "D-003", "lat": -0.9510, "lng": -80.7210},
+    {"id": "D-004", "lat": -0.9515, "lng": -80.7215},
+    {"id": "D-005", "lat": -0.9520, "lng": -80.7220}
+  ],
+  "calles": [
+    {"id": "D-E-001", "segmentoId": "D-S-001", "origen": "D-001", "destino": "D-002", "distancia_m": 100, "tipo": "calle", "velocidad_kmh": 30},
+    {"id": "D-E-002", "segmentoId": "D-S-001", "origen": "D-002", "destino": "D-001", "distancia_m": 100, "tipo": "calle", "velocidad_kmh": 30},
+    {"id": "D-E-003", "segmentoId": "D-S-002", "origen": "D-002", "destino": "D-003", "distancia_m": 100, "tipo": "calle", "velocidad_kmh": 30},
+    {"id": "D-E-004", "segmentoId": "D-S-002", "origen": "D-003", "destino": "D-002", "distancia_m": 100, "tipo": "calle", "velocidad_kmh": 30},
+    {"id": "D-E-005", "segmentoId": "D-S-003", "origen": "D-003", "destino": "D-004", "distancia_m": 100, "tipo": "calle", "velocidad_kmh": 30},
+    {"id": "D-E-006", "segmentoId": "D-S-003", "origen": "D-004", "destino": "D-003", "distancia_m": 100, "tipo": "calle", "velocidad_kmh": 30},
+    {"id": "D-E-007", "segmentoId": "D-S-004", "origen": "D-004", "destino": "D-005", "distancia_m": 100, "tipo": "calle", "velocidad_kmh": 30},
+    {"id": "D-E-008", "segmentoId": "D-S-004", "origen": "D-005", "destino": "D-004", "distancia_m": 100, "tipo": "calle", "velocidad_kmh": 30}
+  ],
+  "refugios": [
+    {"id": "D-R-001", "nodo": "D-005"}
+  ]
+}
