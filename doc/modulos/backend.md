@@ -1,15 +1,15 @@
 # Módulos backend y dependencias
 
-Estado: implementación por fases. `src/navira/api/` contiene esquemas, autenticación y rutas HTTP; `src/navira/application/` ofrece espera determinista y casos de uso versionados para fases; `src/navira/adapters/snapshots_memoria.py` proporciona CAS local bajo lock; `src/navira/domain/` contiene grafo y entidades/intenciones; `src/navira/simulation/` aplica cierres programados y construye snapshots versionados. El dataset real de Manta, persistencia durable/distribuida, reloj continuo, transporte/publicación, API conectada al planificador y evaluación siguen pendientes.
+Estado: implementación por fases. `src/navira/api/` contiene esquemas, autenticación y rutas HTTP; `src/navira/application/` incluye decisión Dijkstra sobre partida activa y casos de uso versionados; `src/navira/adapters/` incluye snapshots/mapas locales; `src/navira/domain/` contiene grafo y entidades/intenciones; `src/navira/simulation/` aplica cierres y construye snapshots. El app factory permite inyectar la política, pero el punto de entrada no siembra ni carga un mundo. Dataset real, persistencia durable/distribuida, reloj continuo, transporte/publicación, planificación temporal y evaluación siguen pendientes.
 
 Lenguaje, contextos e invariantes: [ODDD](../ODDD.md). Requisitos técnicos: [TRD](../TRD.md); antes de implementar elegir la [SPEC](../especificaciones/README.md) correspondiente. La orientación a objetos no exige crear clases para funciones sin estado.
 
 | Módulo | Responsabilidad | No debe hacer | Verificación |
 |---|---|---|---|
 | `domain/` | Grafo, entidades, transitabilidad, mordidas y llegadas | Importar FastAPI/boto3, usar HTTP o decidir permisos web | `test_mapa.py` y `test_modelo.py` validan mapa, estado y contexto de intención. |
-| `routing/` | Dijkstra dirigido, costos por tipo y selección de refugio | Modificar mundo, leer dormidos o mezclar unidades | `test_dijkstra.py` cubre costo, desempate, cierres y bloqueos; integración con `/paso` pendiente. |
+| `routing/` | Dijkstra dirigido, costos por tipo y selección de refugio | Modificar mundo, leer dormidos o mezclar unidades | `test_dijkstra.py` cubre costo, desempate, cierres y bloqueos. |
 | `simulation/` | Plazo de turno, fases, zombies, eventos y resolución | Mantener la única copia de estado o ejecutar coordinadores duplicados | `test_resolver.py` cubre movimientos/mordidas; `test_coordinador.py` cubre modo por fases, versionado/eventos/plazo local. Persistencia aún pendiente. |
-| `application/` | Preparar/resolver turno, decidir paso, iniciar/finalizar partida; puertos de I/O | Depender de esquemas HTTP o SDK AWS | Casos de uso versionados con puertos; `test_snapshots_persistidos.py`. |
+| `application/` | Preparar/resolver turno, decidir paso, iniciar/finalizar partida; puertos de I/O | Depender de esquemas HTTP o SDK AWS | `test_decidir_paso.py` cubre estado/hazards visibles; `test_snapshots_persistidos.py` cubre CAS local. |
 | `player/` | Aparición, propiedad lógica y orden humana por turno | Autorizar con cookies directamente o mover posiciones | Idempotencia y cierre de acciones. |
 | `api/` | Esquemas, autenticación, HTTP y WebSocket | Implementar reglas o búsqueda dentro de controladores | Pruebas de contrato. |
 | `adapters/` | DynamoDB futuro, snapshot en memoria, reloj, cliente HTTP del motor, métricas y proyecciones de transporte | Cambiar políticas del dominio o anunciar durabilidad del adaptador en memoria | Tres pruebas del CAS local; DynamoDB e integración siguen pendientes. |

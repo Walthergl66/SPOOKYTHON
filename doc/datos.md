@@ -25,7 +25,7 @@ En el código, `Calle.id` identifica un sentido dirigido y `Calle.segmento_id` e
 
 **Real privado:** todos los zombies, activaciones, generador aleatorio, estados de control y datos necesarios para recuperar. **Observable:** zombies visibles, trayectorias permitidas, sobrevivientes, bloqueos y datos públicos de refugios. Credenciales y estado aleatorio no pertenecen a ninguna respuesta de panel o recomendación.
 
-El motor recibe información de todos los sobrevivientes necesaria para estimar persecución, pero nunca la información oculta. La selección inicial evita solapamiento con zombies usando validación privada del simulador; no explica al jugador la ubicación de dormidos excluidos.
+El resolutor privado conserva todos los zombies; el caso de uso `/paso` solo considera activos para bloquear ocupación y cruces del turno. No lee dormidos al calcular su ruta, y no los incluye en errores/respuestas. La proyección de panel y radio todavía no está implementada.
 
 ## Versiones
 

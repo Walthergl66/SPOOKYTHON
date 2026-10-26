@@ -25,6 +25,9 @@ class RepositorioSnapshots(Protocol):
     def obtener(self, run_id: str) -> SnapshotMundo | None:
         """Devuelve el snapshot completo actual o `None` si la partida no existe."""
 
+    def obtener_activa(self) -> SnapshotMundo | None:
+        """Devuelve la única partida activa; falla si la invariancia se rompe."""
+
     def insertar_inicial(self, snapshot: SnapshotMundo) -> bool:
         """Inserta una partida nueva solo si el `run_id` todavía no existe."""
 

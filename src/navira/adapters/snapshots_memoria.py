@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from threading import RLock
 
-from navira.domain.modelo import FaseTurno
+from navira.domain.modelo import EstadoPartida, FaseTurno
 from navira.simulation.coordinador import SnapshotMundo
 
 
@@ -24,6 +24,19 @@ class AlmacenSnapshotsMemoria:
 
         with self._lock:
             return self._por_run.get(run_id)
+
+    def obtener_activa(self) -> SnapshotMundo | None:
+        """Lee la partida activa única definida por el alcance inicial."""
+
+        with self._lock:
+            activas = tuple(
+                snapshot
+                for snapshot in self._por_run.values()
+                if snapshot.partida.estado is EstadoPartida.ACTIVA
+            )
+            if len(activas) > 1:
+                raise RuntimeError("Hay más de una partida activa en el repositorio.")
+            return activas[0] if activas else None
 
     def insertar_inicial(self, snapshot: SnapshotMundo) -> bool:
         """Añade una única partida nueva en versión cero/preparación."""

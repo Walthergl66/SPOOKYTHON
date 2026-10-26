@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-013**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-014**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -20,6 +20,7 @@
 - En `feat/navira-snapshot-cas` la aplicación define `RepositorioSnapshots` y casos de uso para confirmar preparación/resolución con CAS; `AlmacenSnapshotsMemoria` usa lock para que un solo hilo confirme cada versión. El total local es 46 pruebas. El adaptador sigue siendo no durable y limitado a un proceso.
 - En `feat/navira-api-contract-tests` se instalaron dependencias de prueba opcionales; cinco pruebas ASGI validan `/salud`, API key y esquema de `/paso`. Uvicorn local respondió 200 en salud y solicitud válida, 401 sin credencial. `/paso` sigue siendo espera determinista. La suite total actual tiene 51 pruebas.
 - En `feat/navira-dijkstra` existe `src/navira/routing/dijkstra.py`: búsqueda dirigida por costo en metros ponderados por factor configurable de tipo; closures de arista/segmento y nodos de peligro visibles; selección de refugio y desempates estables. Siete pruebas cubren el núcleo genérico; `/paso` todavía no lo consume.
+- En `feat/navira-step-planner` `DecidirPaso` consulta snapshot activo y catálogo de mapas inyectados, valida identidad/turno/fase y usa Dijkstra evitando zombies activos, horda, cierres y cruces opuestos conocidos; no consulta dormidos. La ruta HTTP mapea 404/409/503. Pruebas integradas pasan, pero `main.app` aún usa espera porque no hay inicializador de partida/mapa.
 
 ## Verificación histórica de CAM-003
 
@@ -40,7 +41,7 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 
 | Área | Estado | Evidencia pendiente |
 |---|---|---|
-| Backend y `/paso` | Arranque y contrato HTTP base verificados; ruta Dijkstra aislada | Conectar estado/planificador, idempotencia persistida y medir latencia bajo carga. |
+| Backend y `/paso` | Contrato y política Dijkstra integrada por inyección | Configurar inicio de mundo/mapa, persistencia, idempotencia y medir latencia bajo carga. |
 | Simulador | Resolución, fases y CAS en memoria parciales | DynamoDB, bucle de reloj, publicación, escenarios y ejecución continua pendientes. |
 | Grafo de Manta | Modelo genérico implementado; dataset pendiente | Área y exportación reproducible de OpenStreetMap con unas 300 intersecciones y cuatro refugios. |
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
@@ -49,11 +50,11 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Rendimiento/supervivencia | Sin medir | Reportes de las tres rondas. |
 | Repositorio remoto y commits | No verificado | URL y comprobación del historial. |
 
-El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-012 conservan cambios en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
+El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-014 conservan cambios en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-Continuar con integración: conectar Dijkstra, mapa, peligros visibles y política de `/paso` solo cuando el caso de uso reciba estado vigente; el endpoint aún espera determinísticamente. P1-04 requiere persistencia durable/CAS entre hosts; P1-01 requiere dataset reproducible de Manta; P1-03 sigue parcial por visibilidad/reglas. No presentar el núcleo genérico ni la espera inicial como ruta integrada. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Continuar con un inicio local explícito que cargue mapa/configuración y cree una partida en un repositorio, para que el app factory use `DecidirPaso` en una corrida controlada. El punto de entrada predeterminado aún espera. P1-04 requiere persistencia durable/CAS entre hosts; P1-01 requiere dataset reproducible de Manta; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar ronda. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
 Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. `python -m pip install -e .` completó en el entorno temporal `/tmp/navira-env`; el comando de arranque del README aún no se ha ejecutado. Cuando se verifique, registrar versiones y resultados, sin confundir comandos previstos con ejecutados.
 
@@ -63,4 +64,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución pura en CAM-009; coordinación por fases en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013. La rama actual es `feat/navira-dijkstra`. P0-01 está verificado; P0-02, P1-04 y P2-01 siguen en curso. Mantener P1-01, P1-02 y P1-03 parciales; SPEC-001/002 no están verificadas.
+La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; política HTTP con snapshot inyectado en CAM-014. La rama actual es `feat/navira-step-planner`. P0-01 está verificado; P0-02, P1-04, P2-01 y P2-02 siguen en curso. Mantener P1-01/02/03 parciales; SPEC-001/002 no están verificadas.

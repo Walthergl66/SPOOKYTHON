@@ -2,7 +2,7 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** `/salud` y `POST /paso` arrancan localmente y sus contratos HTTP tienen pruebas automatizadas y smoke test con Uvicorn. `/paso` requiere `x-api-key` y por ahora responde con espera determinista (`nodoActual`). Dijkstra y el núcleo de simulación existen aislados del endpoint; no hay mapa real, persistencia durable ni despliegue AWS.
+**Estado real al 26 de octubre de 2026:** `/salud` y `POST /paso` arrancan localmente y sus contratos HTTP tienen pruebas automatizadas y smoke test con Uvicorn. El caso de uso puede elegir una ruta Dijkstra si se ensambla con snapshot/mapa; la app principal no carga todavía una partida y por eso responde con espera determinista (`nodoActual`). No hay mapa real, persistencia durable ni despliegue AWS.
 
 ## Empezar
 

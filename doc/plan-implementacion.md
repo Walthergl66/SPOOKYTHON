@@ -51,7 +51,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P1-04 | Reloj, eventos y snapshots — simulación | P1-03 | Turnos versionados; ninguna publicación parcial. | En curso |
 | P1-05 | Tres escenarios — simulación | P1-01 y P1-04 | Configuraciones y semillas reproducibles. | Pendiente |
 | P2-01 | Dijkstra y selección de refugio — rutas | P1-01 | Núcleo genérico considera tipo/distancia, cierres y peligros visibles; falta validar mapa real. | En curso |
-| P2-02 | `/paso` y API key — backend | P2-01 y P1-04 | HTTP real, decisiones idempotentes y siempre válidas. | Pendiente |
+| P2-02 | `/paso` y API key — backend | P2-01 y P1-04 | Caso de uso usa estado y rutas con HTTP real; P2-02 sigue en curso hasta arrancar mundo, persistir idempotencia y completar errores. | En curso |
 | P2-03 | Integración y referencia — integración | P2-02 y P1-05 | Una ronda completa; luego tres rondas y reporte base. | Pendiente |
 | P3-01 | Búsqueda temporal acotada — rutas | P2-03 | Espera/avance, horizonte configurable y presupuesto medido. | Pendiente |
 | P3-02 | Predicción de corredores — rutas | P3-01 | No conoce dormidos; compara varias semillas con referencia. | Pendiente |

@@ -72,4 +72,6 @@ El puerto de persistencia y el adaptador local tienen regresiones con `python -m
 
 El contrato HTTP de base tiene pruebas con `python -m unittest discover -s tests -p 'test_api_http.py' -v` (5 pruebas), cubriendo salud pública, autenticación ausente/incorrecta/configurada, forma exacta del éxito y rechazos 422. Además se probó localmente Uvicorn con `curl`: `/salud` 200, `/paso` autenticado 200 y sin clave 401. El smoke test no mide p95 ni valida rutas reales.
 
-El núcleo Dijkstra tiene regresiones con `python -m unittest discover -s tests -p 'test_dijkstra.py' -v` (7 pruebas). Cubren peso/distancia, factor configurable por tipo, cierres, nodos bloqueados, ruta inexistente, desempates, selección de refugio y validaciones. No prueban mapa de Manta, peligros dinámicos ni integración HTTP.
+El núcleo Dijkstra tiene regresiones con `python -m unittest discover -s tests -p 'test_dijkstra.py' -v` (7 pruebas). Cubren peso/distancia, factor configurable por tipo, cierres, nodos bloqueados, ruta inexistente, desempates, selección de refugio y validaciones. No prueban mapa de Manta ni peligros futuros.
+
+El caso de uso de `/paso` tiene pruebas con `python -m unittest discover -s tests -p 'test_decidir_paso.py' -v` para sesión/turno/fase/personaje, selección de ruta, cierres, hordas, zombies activos, dormidos ocultos y cruces conocidos. `test_api_planner_integration.py` valida respuesta con política inyectada y errores HTTP 404/409/503. El proceso base aún no configura mapa/partida activa.
