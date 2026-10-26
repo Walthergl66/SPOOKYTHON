@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-007**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-008**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -15,6 +15,7 @@
 - Existe `scripts/check_sdd.py` con ocho pruebas de regresión en `tests/test_check_sdd.py`; son utilidades/pruebas documentales, no la aplicación.
 - En `feat/navira-backend-base` existe la base FastAPI en `src/navira/`, `/salud`, `/paso` con autenticación y esquemas, y fixtures de contrato/mapa. El endpoint usa temporalmente una política de espera determinista; todavía no hay cálculo de rutas.
 - En `feat/navira-map-graph` existe `src/navira/domain/mapa.py`: modelo de nodo/calle/refugio, carga JSON, adyacencia dirigida y validación de cierres por arista/segmento. Diez pruebas de dominio pasan. El fixture es sintético y no representa Manta.
+- En `feat/navira-world-model` existe `src/navira/domain/modelo.py`: partida con modo/turno/fase fijos, sobrevivientes, zombies e intención ligada a su partida y fase. Siete pruebas pasan; todavía no hay resolutor de movimiento.
 
 ## Verificación histórica de CAM-003
 
@@ -58,4 +59,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base de API quedó en CAM-006 y el modelo de mapa está en curso en la rama `feat/navira-map-graph`, CAM-007. La metodología documental está incorporada y comprobada; el nombre a usar es Navira. Continuar desde esta rama. Si hay cambios posteriores a CAM-007, inspeccionarlos antes de editar.
+La base de API quedó en CAM-006; el modelo del mapa sigue parcial en CAM-007; entidades e intenciones siguen parciales en CAM-008. La rama actual es `feat/navira-world-model`. Continuar desde ella y mantener P1-01/P1-02 en curso hasta completar mapa real y resolver movimientos. Si hay cambios posteriores a CAM-008, inspeccionarlos antes de editar.

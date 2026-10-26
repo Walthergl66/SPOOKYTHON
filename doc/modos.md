@@ -1,6 +1,6 @@
 # Modos de uso
 
-Estado: alcance previsto. Arquitectura compartida: [ADR-002](decisiones/0002-dos-modos.md).
+Estado: los modos `simulador` y `juego` están modelados en dominio; el selector y sus flujos siguen pendientes. Arquitectura compartida: [ADR-002](decisiones/0002-dos-modos.md).
 
 | Aspecto | Simulador | Juego |
 |---|---|---|

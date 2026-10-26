@@ -17,6 +17,8 @@ Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conser
 | Evento de ciudad | ID, segmento, turno objetivo, causa | Aplicación única y trazable. |
 | Resultado | Modo, versiones, decisiones, métricas y final | Separar pruebas automáticas de juego. |
 
+`Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` ya existen como dataclasses inmutables en `src/navira/domain/modelo.py`. La partida fija modo, versión de mapa, estado, turno y fase; `validar_mapa()` comprueba referencias. La transición entre fases, la aplicación de movimientos y el snapshot durable siguen pendientes.
+
 En el código, `Calle.id` identifica un sentido dirigido y `Calle.segmento_id` el tramo físico. Las dos direcciones de una misma calle comparten segmento; las calles paralelas usan IDs físicos distintos. El mapa valida IDs únicos, coordenadas WGS84, distancia/velocidad positivas, categorías reconocidas y referencias a nodos existentes. `Mapa.validar_mapa_evaluacion()` exige cuatro refugios en nodos distintos y, por defecto, al menos 200 nodos; ese umbral aproximado no sustituye el requisito objetivo de unas 300 intersecciones. El fixture de cuatro nodos es sintético.
 
 ## Estado real y observable

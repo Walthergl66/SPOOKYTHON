@@ -31,4 +31,4 @@ P1-01 valida mapa/fixture; P1-02 define entidades e intenciones; P1-03 implement
 
 Probar nodos sin salida, segmentos paralelos, bloqueo de puentes, múltiples mordidas, snapshot incompleto y repetición de eventos. P-01 a P-05 y P-07 a P-09 siguen pendientes: pruebas deben explicitar configuración provisional. Ejecutar T indicadas antes de cerrar; no hay resultados actuales. Validar también tiempo completo con SPEC-005.
 
-P1-01 tiene implementación parcial: `Mapa`/`Grafo`, carga JSON y validaciones tienen diez pruebas de dominio. El fixture es sintético de cuatro nodos; todavía no existe el mapa real de unas 300 intersecciones. P1-02 a P1-05 siguen pendientes, por lo que esta SPEC no está verificada.
+P1-01 tiene implementación parcial: `Mapa`/`Grafo`, carga JSON y validaciones tienen diez pruebas de dominio. El fixture es sintético de cuatro nodos; todavía no existe el mapa real de unas 300 intersecciones. P1-02 añade entidades, modos e intenciones con siete pruebas; aún no existe el resolutor compartido. P1-03 a P1-05 siguen pendientes, por lo que esta SPEC no está verificada.

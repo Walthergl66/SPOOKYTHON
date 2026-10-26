@@ -1,6 +1,6 @@
 # Plan de implementación vigente
 
-Estado: ejecución iniciada en `feat/navira-backend-base`. Última revisión: 2026-10-26. Fuentes: [contexto](contexto.md), [reto](referencias/reto-original.md) y [decisiones](decisiones/README.md). El [plan previo](referencias/plan-previo.md) es histórico; los documentos especializados actuales son la fuente de cada contrato o regla.
+Estado: implementación por fases con ramas separadas; fases P0 y P1 están en curso. Última revisión: 2026-10-26. Fuentes: [contexto](contexto.md), [reto](referencias/reto-original.md) y [decisiones](decisiones/README.md). El [plan previo](referencias/plan-previo.md) es histórico; los documentos especializados actuales son la fuente de cada contrato o regla.
 
 Nombre vigente: **Navira**. Al crear el backend usar la raíz propuesta `src/navira/`; la ruta del plan histórico no es una instrucción actual de nomenclatura. Las tareas funcionales y sus IDs se mantienen.
 
@@ -46,7 +46,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P0-04 | CI y frontend mínimo — integración | P0-01 | Verificación Python y build frontend ejecutados. | Pendiente |
 | P0-05 | Primer despliegue — operación | P0-03 y base mínima | URL pública de salud comprobada. | Pendiente |
 | P1-01 | Grafo Manta y refugios — dominio | P0-02 | Unas 300 intersecciones, barrios conectados, distancias y direcciones válidas. | En curso |
-| P1-02 | Entidades, modos e intenciones — dominio | P0-02 | Un mundo y un resolutor para humano/automático. | Pendiente |
+| P1-02 | Entidades, modos e intenciones — dominio | P0-02 | Un mundo y un resolutor para humano/automático. | En curso |
 | P1-03 | Zombies y mordidas — simulación | P1-02 | Pruebas T-01 a T-06; supuestos identificados. | Pendiente |
 | P1-04 | Reloj, eventos y snapshots — simulación | P1-03 | Turnos versionados; ninguna publicación parcial. | Pendiente |
 | P1-05 | Tres escenarios — simulación | P1-01 y P1-04 | Configuraciones y semillas reproducibles. | Pendiente |

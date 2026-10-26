@@ -30,7 +30,7 @@ Estado: estrategia pendiente; solo la documentación tiene una comprobación eje
 | T-14 | Órdenes tardías/duplicadas | Rechazo o acuse idempotente; no aplicar al turno siguiente. |
 | T-15 | Reconexión | Estado confirmado, sin detener mundo o revivir. |
 | T-16 | Separación de modos | Rondas oficiales sin humanos ni cambio de modo. |
-| T-17 | Paridad | Mismo estado e intenciones dan mismo resultado con control humano o automático. |
+| T-17 | Paridad | Mismo estado e intenciones dan mismo resultado con control humano o automático; el dominio ya comprueba el contrato de intención común, pero falta el resolutor. |
 | T-18 | Snapshot/recuperación | Ningún lector ve estado parcial; ninguna acción se aplica dos veces. |
 | T-19 | Accesibilidad | Juego y selección por teclado, foco visible y estados no basados solo en color. |
 | T-20 | Documentación | Enlaces locales válidos e inventario completo. |
@@ -61,3 +61,5 @@ Comprobación documental disponible: `python3 scripts/check_docs.py`. El resto d
 Validación SDD disponible: `python3 scripts/check_sdd.py` y regresiones del comprobador mediante `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. T-20/T-21 verifican metodología documental; T-01 a T-19 y T-22/T-23 siguen pendientes como pruebas de aplicación/operación. Referencias: [SPEC](especificaciones/README.md), [trazabilidad](trazabilidad.md).
 
 El modelo de mapa tiene regresiones con `python -m unittest discover -s tests -p 'test_mapa.py' -v`. Estas pruebas verifican el grafo y el filtrado de cierres; no prueban eventos temporales, turnos ni un dataset real de Manta.
+
+Las entidades e intenciones tienen regresiones con `python -m unittest discover -s tests -p 'test_modelo.py' -v`. Verifican identidad de partida/turno/fase y compatibilidad del contrato entre modos; no prueban aún la resolución de movimientos.

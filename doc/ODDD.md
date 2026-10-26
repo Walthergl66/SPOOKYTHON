@@ -1,6 +1,6 @@
 # ODDD — Orientación a objetos y diseño guiado por dominio
 
-Versión: 1. Fecha: 2026-10-26. Interpretación confirmada por el usuario: OO + DDD. Es la denominación local de este enfoque; no se afirma que ODDD sea una sigla universal. Estado: modelo de diseño documentado, sin clases de producto implementadas.
+Versión: 1. Fecha: 2026-10-26. Interpretación confirmada por el usuario: OO + DDD. Es la denominación local de este enfoque; no se afirma que ODDD sea una sigla universal. Estado: modelo de diseño implementado parcialmente en `src/navira/domain/`; reglas de simulación aún pendientes.
 
 ## Propósito y lenguaje común
 
@@ -37,6 +37,8 @@ Son límites dentro de un monolito modular, no servicios nuevos. Las identidades
 - Registro de órdenes es otra frontera de concurrencia: cada reemplazo tiene secuencia y versión; solo la sesión propietaria puede solicitarlo.
 - Servicios de dominio puros: transitabilidad, detector de mordidas, resolución y elegibilidad de aparición. Usar una función si no necesita estado o identidad.
 - Políticas intercambiables: controlador automático y humano producen intenciones. Tipos zombie pueden usar composición/estrategias; no se exige una clase hija por tipo.
+
+El código implementa `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` como valores inmutables. `validar_contexto_intencion()` comprueba partida, turno, fase, personaje y estado activo. Humanos y automáticos producen el mismo contrato; la validación topológica y resolución compartida de movimientos pertenecen a fases posteriores.
 
 ## Invariantes
 
