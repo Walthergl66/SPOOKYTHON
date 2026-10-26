@@ -1,6 +1,6 @@
 # Flujo del simulador y del turno
 
-Estado: `resolver_turno()` y `avanzar_turno()` implementan en memoria movimiento zombie, cierres programados, decisiones y resolución conjunta con snapshots versionados. `VentanaTurno` calcula plazos monotónicos absolutos. No existe todavía bucle continuo, espera activa, almacenamiento condicional ni publicación de transporte. Fuente de reglas: [reglas](../reglas-juego.md). Identidades: [datos](../datos.md).
+Estado: `resolver_turno()` y `avanzar_turno()` implementan en memoria movimiento zombie, cierres programados, decisiones y resolución conjunta con snapshots versionados. `EjecutarRondaAutomatica` orquesta una ronda: abre/retoma decisiones, consulta Dijkstra para sobrevivientes automáticos y confirma el resultado con CAS; puede repetirse explícitamente con la versión confirmada. `VentanaTurno` calcula plazos monotónicos absolutos. No existe todavía bucle continuo, espera activa, persistencia durable ni publicación de transporte. Fuente de reglas: [reglas](../reglas-juego.md). Identidades: [datos](../datos.md).
 
 ## Ciclo
 
@@ -21,7 +21,7 @@ flowchart TD
     End -->|Sí| Report[Exportar reporte y cerrar]
 ```
 
-`preparar_turno_versionado()` aplica cierres y mueve zombies una vez, devolviendo el snapshot completo de decisiones con la versión esperada. En simulador, `avanzar_turno()` puede completar ambas fases en memoria; en juego, el futuro caso de uso debe persistir/publicar decisiones, recoger órdenes y después llamar a `resolver_turno_versionado()` sin volver a mover zombies. Ese caso de uso y su transporte aún no están conectados.
+`preparar_turno_versionado()` aplica cierres y mueve zombies una vez, devolviendo el snapshot completo de decisiones con la versión esperada. `EjecutarRondaAutomatica` confirma la preparación antes de calcular intenciones; si se reintenta desde fase de decisiones, no mueve zombies de nuevo. Después confirma la resolución por una segunda versión. En juego, el futuro caso de uso debe persistir/publicar decisiones, recoger órdenes y después llamar a `resolver_turno_versionado()` sin volver a mover zombies. El reloj continuo, la publicación y el transporte aún no están conectados.
 
 En modo simulador no hay ventana humana. Cada solicitud tiene menos de 500 ms desde su envío. Se preparan datos antes de enviar y se solicitan decisiones concurrentemente. Repeticiones de red no deben cambiar decisiones ni aplicar movimientos dos veces.
 

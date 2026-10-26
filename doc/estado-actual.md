@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-015**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-016**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -22,6 +22,7 @@
 - En `feat/navira-dijkstra` existe `src/navira/routing/dijkstra.py`: búsqueda dirigida por costo en metros ponderados por factor configurable de tipo; closures de arista/segmento y nodos de peligro visibles; selección de refugio y desempates estables. Siete pruebas cubren el núcleo genérico; `/paso` todavía no lo consume.
 - En `feat/navira-step-planner` `DecidirPaso` consulta snapshot activo y catálogo de mapas inyectados, valida identidad/turno/fase y usa Dijkstra evitando zombies activos, horda, cierres y cruces opuestos conocidos; no consulta dormidos. La ruta HTTP mapea 404/409/503. Pruebas integradas pasan.
 - En `feat/navira-demo-bootstrap` el opt-in `NAVIRA_DEMO=1` carga `data/maps/demo-sintetico.json`, crea una partida efímera en memoria, abre la fase de decisiones con el coordinador y ensambla `DecidirPaso`. La API recomienda `D-002` desde `D-001`; mapa no oficial, sin zombies ni reloj continuo. Sin opt-in, la app conserva espera.
+- En `feat/navira-automatic-round` `EjecutarRondaAutomatica` encadena preparación zombie, recomendaciones Dijkstra y resolución sobre snapshot activo de modo simulador, confirmando fases por CAS y reanudando desde decisiones persistidas. Pruebas cubren turno completo, siguiente turno, reanudación, versión vieja y orden de zombie. El servicio aún no se ofrece como bucle o transporte.
 
 ## Verificación histórica de CAM-003
 
@@ -43,7 +44,7 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Área | Estado | Evidencia pendiente |
 |---|---|---|
 | Backend y `/paso` | Contrato y política Dijkstra; inicio demo local explícito | Configurar mundo real, persistencia, idempotencia y medir latencia bajo carga. |
-| Simulador | Resolución, fases y CAS en memoria parciales | DynamoDB, bucle de reloj, publicación, escenarios y ejecución continua pendientes. |
+| Simulador | Resolución y ronda automática por caso de uso con CAS en memoria | DynamoDB, bucle de reloj, publicación, escenarios oficiales y ejecución continua pendientes. |
 | Grafo de Manta | Modelo genérico implementado; dataset pendiente | Área y exportación reproducible de OpenStreetMap con unas 300 intersecciones y cuatro refugios. |
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
@@ -51,13 +52,13 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Rendimiento/supervivencia | Sin medir | Reportes de las tres rondas. |
 | Repositorio remoto y commits | No verificado | URL y comprobación del historial. |
 
-El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-014 conservan cambios en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
+El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-016 conservan cambios en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-Avanzar a escenarios reproducibles con configuración explícita y pruebas del turno completo. Uvicorn con `NAVIRA_DEMO=1` ya respondió en smoke local; la demo está en memoria y no tiene reloj continuo. P1-04 requiere persistencia durable/CAS entre hosts; P1-01 requiere dataset reproducible de Manta; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar ronda. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Siguiente: exponer la ronda automática mediante un ejecutor local documentado que use el mismo contexto de demo, y luego definir escenarios/semillas reproducibles con zombies. La ronda por caso de uso ya pasa pruebas; no hay bucle continuo ni reporte de evaluación. P1-04 requiere persistencia durable/CAS entre hosts; P1-01 requiere dataset reproducible de Manta; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar rondas completas. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
-Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. Suite completa en `/tmp/navira-env`: 70 pruebas OK. `python -m pip install -e .` y smoke de Uvicorn local demo completados; sin medición de rendimiento ni persistencia externa.
+Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. Suite completa en `/tmp/navira-env`: 76 pruebas OK. `python -m pip install -e .` y smoke de Uvicorn local demo completados; sin medición de rendimiento ni persistencia externa.
 
 ## Dependencias externas
 
@@ -65,4 +66,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015. Rama de trabajo: `feat/navira-demo-bootstrap`. P0-01 está verificado; P0-02, P1-04, P2-01 y P2-02 siguen en curso. Mantener P1-01/02/03 parciales; SPEC-001/002 no están verificadas.
+La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016. Rama de trabajo: `feat/navira-automatic-round`. P0-01 está verificado; P0-02, P1-04, P2-01 y P2-02 siguen en curso. Mantener P1-01/02/03 parciales; SPEC-001/002 no están verificadas.

@@ -190,6 +190,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Verificación: suite completa `PYTHONPATH=src python -m unittest discover -s tests -p 'test_*.py' -v` (70 pruebas OK); smoke con proceso Uvicorn: `GET /salud` 200 y `POST /paso` autenticado 200 con `{"siguienteNodo":"D-002"}`. Se ejecutaron `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `git diff --check` al cierre. El smoke es local y no mide carga.
 - Siguiente paso: avanzar escenarios reproducibles con ciclo de turno; mantener pendiente persistencia durable, mapa real y reglas/visibilidad.
 
+## CAM-016 — Orquestación de ronda automática versionada
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario de la implementación por fases y siguiente trabajo del plan tras el bootstrap demo CAM-015.
+- Especificación/tareas: SPEC-001, P1-04 parcial; criterios de fase/snapshot T-06 y T-18 parciales. No se declara SPEC verificada.
+- Rama: `feat/navira-automatic-round`.
+- Motivo: conectar coordinador, snapshots CAS y Dijkstra para resolver una ronda del modo simulador sin duplicar reglas.
+- Archivos: `src/navira/application/simulacion_automatica.py`, `tests/test_simulacion_automatica.py`, documentos propietarios de flujo, datos, backend, pruebas, plan, SPEC y estado.
+- Resultado: `EjecutarRondaAutomatica` confirma preparación, genera intenciones automáticas desde Dijkstra y confirma la resolución. Una llamada siguiente abre el turno siguiente; un reintento desde decisiones persistidas no vuelve a mover zombies. Rechaza modo juego y versiones obsoletas.
+- Verificación: seis pruebas dedicadas; suite completa `PYTHONPATH=src python -m unittest discover -s tests -p 'test_*.py' -v` (76 pruebas OK); `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py`, `compileall` y `git diff --check` correctos. Son verificaciones locales; no miden reloj ni durabilidad.
+- Límites: CAS y escenario solo en memoria; no hay reloj continuo, llamada HTTP/CLI, publicación, mapa real ni evaluación oficial. Estado final del juego y métricas de ronda permanecen pendientes.
+- Siguiente paso: proporcionar un ejecutor local documentado sobre el contexto demo y crear escenarios/semillas reproducibles con zombies.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.
