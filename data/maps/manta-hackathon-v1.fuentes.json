@@ -1,0 +1,76 @@
+{
+  "estado": "fixture de simulación; no usar para navegación o evacuación real",
+  "osm": {
+    "atribucion": "© OpenStreetMap contributors",
+    "licencia": "Open Database License (ODbL)",
+    "url": "https://www.openstreetmap.org/copyright",
+    "api": "https://api.openstreetmap.org/api/0.6/map",
+    "obtenido_utc": "2026-10-26T19:18:05+00:00",
+    "caja_wgs84": {
+      "sur": -0.967,
+      "oeste": -80.755,
+      "norte": -0.935,
+      "este": -80.675
+    },
+    "simplificacion": "se conservan intersecciones, extremos de vías y anclas de refugios; costo/distancia por geometría OSM",
+    "velocidades": "maxspeed OSM si está etiquetado; en otro caso valores de juego documentados en el exportador"
+  },
+  "refugios": [
+    {
+      "id": "R-01",
+      "nombre": "Parque y cancha municipal Cristo Rey",
+      "parroquia": "Tarqui",
+      "lat": -0.9588192943885248,
+      "lng": -80.71242442236326,
+      "pagina": "parroquia-tarqui.html",
+      "fuente": "https://darf-manta.github.io/evacuacion-tsunami/parroquia-tarqui.html",
+      "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
+      "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
+      "distancia_snap_m": 37.3,
+      "nodo_osm": "4135495376"
+    },
+    {
+      "id": "R-02",
+      "nombre": "Parque Colinas de Rocafuerte",
+      "parroquia": "Los Esteros",
+      "lat": -0.9574742328837494,
+      "lng": -80.70208371535246,
+      "pagina": "parroquia-los-esteros.html",
+      "fuente": "https://darf-manta.github.io/evacuacion-tsunami/parroquia-los-esteros.html",
+      "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
+      "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
+      "distancia_snap_m": 43.4,
+      "nodo_osm": "363670267"
+    },
+    {
+      "id": "R-03",
+      "nombre": "Parque La Dolorosa",
+      "parroquia": "Manta",
+      "lat": -0.9522745219919659,
+      "lng": -80.72726572846808,
+      "pagina": "parroquia-manta.html",
+      "fuente": "https://darf-manta.github.io/evacuacion-tsunami/parroquia-manta.html",
+      "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
+      "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
+      "distancia_snap_m": 32.9,
+      "nodo_osm": "363657391"
+    },
+    {
+      "id": "R-04",
+      "nombre": "Plaza del Sol",
+      "parroquia": "Manta",
+      "lat": -0.9460949,
+      "lng": -80.7488984,
+      "pagina": "parroquia-manta.html",
+      "fuente": "https://darf-manta.github.io/evacuacion-tsunami/parroquia-manta.html",
+      "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
+      "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
+      "distancia_snap_m": 35.1,
+      "nodo_osm": "4128106908"
+    }
+  ],
+  "amenazas": {
+    "tsunami": "refugios tomados de puntos finales Zona Segura en mapas oficiales del GAD; no reemplazan alertas ni rutas vigentes",
+    "sismo": "pendiente de microzonificación local y evaluación de suelo/estructura; no se afirma que los refugios sean sismorresistentes"
+  }
+}

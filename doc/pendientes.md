@@ -16,7 +16,8 @@ Estado al 2026-10-26. Ninguna aclaración externa confirmada todavía. Las respu
 | P-10 | Tamaño del equipo y repositorio remoto | Supuesto dos/tres integrantes; no hay remoto verificado. | No. |
 | P-11 | TLS origen, certificados y dominio | Resolver camino autenticado de extremo a extremo antes de publicar juego/API. | No; sí afecta publicación. |
 | P-12 | Sesión y expiración de propiedad humana | Una sesión/partida; definir duración/recuperación sin permitir robo o renacimiento. | No; cerrar antes de juego público. |
-| P-13 | Fuente y extensión geográfica del mapa | Preparar extracción reproducible desde OpenStreetMap para el área y barrios requeridos; faltan polígono, exportación y archivo real. | No para el modelo genérico; sí para simular la ciudad. |
+| P-13 | Cobertura geográfica del mapa | Existe exportador OSM y fixture de 300 nodos, con cuatro refugios oficiales de tsunami y rutas dirigidas hasta ellos. Revisar que el recorte represente los barrios del reto y validar cobertura peatonal; no equivale a cartografía oficial exhaustiva. | No para el modelo genérico; sí para cerrar el mapa de evaluación. |
+| P-14 | Seguridad sísmica de refugios en Manta | Las capas consultadas del GAD identifican zonas seguras de evacuación por tsunami, no certifican los sitios ante terremotos. Conseguir microzonificación local y validación de suelo/estructura por sitio antes de etiquetar destinos como seguros ante sismos. | No para el fixture; sí para cualquier afirmación o uso de seguridad sísmica. |
 
 ## Riesgos de ejecución
 

@@ -255,6 +255,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: una pasada local por cohorte, un proceso Uvicorn, mismo host, snapshot fijo, sin intervalo/150 rondas ni entorno evaluador. No es T-11 completado, disponibilidad ni promesa de rendimiento.
 - Siguiente paso: finalizar verificación/commit; después hacer ejecución sostenida en el entorno objetivo con mundo/turno activos y recolectar una muestra completa.
 
+## CAM-021 — Fixture geográfico de Manta con evidencia por amenaza
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación del usuario; solicita considerar zonas seguras de tsunami y terremoto en la ciudad real de Manta, Ecuador.
+- Especificación/tareas: SPEC-001, CA-001-01/P1-01 parcial; P-13 parcialmente atendido, P-14 abierto. No se verifica SPEC-001.
+- Rama: `feat/navira-manta-hazard-map`.
+- Motivo: reemplazar el mapa pendiente por un fixture reproducible con red pública de Manta y destinos cuya evidencia de tsunami sea rastreable, sin atribuir seguridad sísmica no validada.
+- Archivos: `scripts/exportar_mapa_manta.py`, `data/maps/manta-hackathon-v1.json`, `data/maps/manta-hackathon-v1.fuentes.json`, `tests/test_mapa_manta.py`, ADR-007 y documentos propietarios de contexto, producto, datos, reglas, mapa, plan, pendientes, SPEC-001 y estado.
+- Resultado: el exportador descargó OSM en un recorte urbano declarado, simplificó la geometría y produjo 300 nodos, 599 sentidos de calle y cuatro refugios distintos. Los marcadores de Cristo Rey, Colinas de Rocafuerte, La Dolorosa y Plaza del Sol aparecen como “Zona Segura” en los mapas de evacuación por tsunami del GAD Manta; los ajustes a la red son 32,9–43,4 m. El grafo dirigido incluye un camino de cada nodo a algún refugio. Metadatos registran extracción, área, atribución/licencia ODbL y límites.
+- Verificación: exportador ejecutado en vivo el 2026-10-26; suite completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (90 pruebas OK), incluidas dos pruebas enfocadas del mapa. `python3 scripts/check_docs.py` (56 Markdown/58 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructurales), ocho regresiones documentales, `compileall` y `git diff --check` correctos. Los validadores SDD comprueban estructura/trazabilidad, no comportamiento ni verdad externa.
+- Límites: fixture de simulación, no para navegación/evacuación real; cobertura completa de barrios y acceso peatonal no verificados; los límites de velocidad faltantes son valores de juego; zonas de tsunami no validan seguridad de terremoto. P-14 requiere microzonificación y validación de suelo/estructura. La SPEC y P1-01 permanecen parciales.
+- Siguiente paso: cerrar un commit individual en esta rama. Luego revisar visualmente cobertura y, por separado, buscar datos oficiales de microzonificación sísmica para Manta.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

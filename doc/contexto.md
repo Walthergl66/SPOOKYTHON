@@ -16,6 +16,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 4. Modularizar toda la documentación en `doc/`, registrar el contexto de cada cambio y crear un `AGENTS.md` que exija revisar los `.md` antes de trabajar.
 5. Incorporar PRD, TRD, ODDD y SDD. El usuario confirmó ODDD como orientación a objetos y diseño guiado por dominio (OO + DDD); la adopción conserva stack, modos y alcance existentes.
 6. Establecer **Navira** como nombre de la app.
+7. Al incorporar lugares seguros en Manta, Ecuador, considerar amenazas de tsunami y terremoto.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](ODDD.md), [SDD](SDD.md). Criterios por funcionalidad: [especificaciones](especificaciones/README.md).
 
@@ -23,7 +24,7 @@ La versión mínima de juego contempla un personaje humano activo por partida, s
 
 ## Obligaciones del reto
 
-- Grafo de Manta de unas 300 intersecciones, calles con distancia/tipo/velocidad y cuatro refugios.
+- Grafo de Manta de unas 300 intersecciones, calles con distancia/tipo/velocidad y cuatro refugios. La aclaración del usuario pide considerar tsunami y terremoto; la evidencia actual de zonas del GAD cubre tsunami, mientras que la clasificación sísmica sigue pendiente. Ver [dataset](mapa-manta.md) y [ADR-007](decisiones/0007-mapa-manta-y-evidencia-de-amenazas.md).
 - Turnos de dos segundos; zombies antes que sobrevivientes; cuatro tipos de zombie y cierres en vivo.
 - `POST /paso` con el contrato exacto, API key y respuesta en menos de 500 ms.
 - Simulador propio que publica estado y consulta al motor; mapa vivo y despliegue AWS.
@@ -44,4 +45,4 @@ Entrega: miércoles 28 de octubre de 2026 a las 10:00, Ecuador continental (UTC�
 
 ## Límites actuales
 
-No existe aplicación, mapa ni despliegue verificados. Las aclaraciones de reglas y región están en [pendientes](pendientes.md). El trabajo de código debe empezar desde [estado actual](estado-actual.md), sin asumir que los archivos previstos en el plan ya existen.
+Existe implementación parcial y un fixture geográfico de Manta para simulación; el mapa aún no tiene cobertura exhaustiva validada, y no existe despliegue verificado. Las aclaraciones de reglas, cobertura del mapa y seguridad sísmica están en [pendientes](pendientes.md). El trabajo debe empezar desde [estado actual](estado-actual.md), sin asumir que los archivos previstos en el plan ya existen.

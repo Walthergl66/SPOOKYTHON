@@ -31,6 +31,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [contratos/api.md](contratos/api.md) | Contrato HTTP y autenticación | Cambien rutas, cuerpos o errores. |
 | [contratos/eventos.md](contratos/eventos.md) | Contrato WebSocket y orden de mensajes | Cambien eventos o recuperación. |
 | [datos.md](datos.md) | Entidades, estados e identidad de versiones | Cambie persistencia o proyección. |
+| [mapa-manta.md](mapa-manta.md) | Procedencia, alcance y límites del fixture geográfico de Manta | Cambien las fuentes, extensión o metodología del dataset. |
 | [algoritmos.md](algoritmos.md) | Planificación y predicción | Cambie la política de rutas. |
 | [infraestructura.md](infraestructura.md) | Despliegue y operación AWS | Cambie un recurso o procedimiento. |
 | [seguridad.md](seguridad.md) | Autenticación y límites de confianza | Cambien accesos o secretos. |
