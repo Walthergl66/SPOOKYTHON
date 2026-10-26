@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-032**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-033**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -10,6 +10,7 @@
 - P0-04: existe scaffold React + TypeScript + Vite en `frontend/`, selector local de simulador/juego y `.github/workflows/ci.yml`; build/suite Python pasan localmente. El workflow aún no se ha ejecutado en GitHub Actions.
 - P4-01 verificado en CAM-031: `GET /panel/estado` y `GET /panel/mapa` proyectan snapshots/mapa versionados; ocultan dormidos y estado aleatorio privado. El frontend valida respuesta/versiones, dibuja calles, refugios, sobrevivientes, zombies visibles, movimientos confirmados, cierres/hordas, métricas y ruta prevista Dijkstra seleccionable.
 - P4-02 verificado localmente en CAM-032: `WS /ws/panel` envía snapshot completo al conectar/cambiar versión y heartbeat; backend cubierto por prueba de reconexión, secuencia posterior y cambio de partida. El frontend implementa estados de conexión viva/desactualizada/reconexión y backoff; el smoke navegador confirmó el estado vivo. No hay outbox, replay durable ni multi-worker; el modo juego sigue siendo vista previa.
+- P3-01 verificado como núcleo aislado en CAM-033: búsqueda temporal acotada con espera, cierres y exposición futura inyectada; la política HTTP no la consume y aún no existe pronóstico. La medición única local serial no valida T-11, T-22, servicio HTTP ni rondas oficiales.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -61,13 +62,13 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
 | Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
-| Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028..CAM-032 están como commits locales separados | Publicar los commits locales cuando haya una ruta de escritura que acepte cambios de Git. |
+| Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028..CAM-033 están como commits locales separados al cerrar esta fase | Publicar los commits locales cuando haya una ruta de escritura que acepte cambios de Git. |
 
-El checkout local está en `master`; CAM-028..CAM-032 tienen commits separados. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. Los intentos previos de push no pudieron leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; no se ha vuelto a intentar publicar. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
+El checkout local está en `master`; CAM-028..CAM-033 se mantienen como commits separados. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. Los intentos previos de push no pudieron leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; no se ha vuelto a intentar publicar. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-CAM-032 verifica P4-02 localmente con suite de WebSocket (snapshot inicial, versión, cambio de partida, heartbeat, origen y reconexión) y smoke navegador mostrando `EN VIVO`. La siguiente fase local disponible es P3-01, búsqueda temporal acotada; P4B-01 requiere cerrar prerequisitos de integración de P2-03. SPEC-003 sigue lista/incompleta. Continúan juego humano, AWS, persistencia durable, T-11, P2-03/P5-01 y P-07/P-09. No afirmar CI remoto, despliegue o seguridad sísmica.
+CAM-033 cierra P3-01 solo para el núcleo temporal acotado y su medición exploratoria. Siguiente acción: P3-02, pronóstico observable de amenazas futuras sin revelar dormidos ni usar estado privado del RNG; revisar primero `doc/reglas-juego.md`, `doc/pendientes.md`, ADR-010 y SPEC-002. Mantener Dijkstra como referencia hasta que P3-03 demuestre una mejora comparable. P4B-01 requiere resolver dependencias de P2-03. Continúan juego humano, AWS, persistencia durable, T-11, P2-03/P5-01 y P-07/P-09. No afirmar CI remoto, despliegue o seguridad sísmica.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
@@ -79,6 +80,8 @@ Verificación CAM-030: `frontend/npm ci` (24 paquetes, cero vulnerabilidades rep
 
 
 Verificación CAM-032: ver [entrada de cambio](cambios.md#cam-032-websocket-de-snapshots-completos-y-recuperación-del-panel). El almacenamiento y transporte siguen siendo locales/en memoria; `origin/master` no se ha actualizado.
+
+Verificación de CAM-033: suite completa (120 pruebas OK), incluidos ocho casos de `test_ruta_temporal.py`; `python3 scripts/check_docs.py` (63 Markdown/65 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones del validador, `compileall`, `git diff --check` y `frontend/npm run build` correctos. Evidencia de una pasada serial para cohortes sintéticas 20/80/200 en [reporte](resultados/busqueda-temporal-cam033.md). No representa comparación T-22 ni medición HTTP.
 
 ## Dependencias externas
 

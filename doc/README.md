@@ -22,6 +22,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [reglas-juego.md](reglas-juego.md) | Reglas de simulación y supuestos | Se confirme o cambie una regla. |
 | [decisiones/0008-simulacion-estocastica-reproducible.md](decisiones/0008-simulacion-estocastica-reproducible.md) | Aleatoriedad del mundo, reproducción y privacidad del generador | Cambien condiciones de estocasticidad o replay. |
 | [decisiones/0009-panel-ws-snapshots-completos.md](decisiones/0009-panel-ws-snapshots-completos.md) | Snapshots completos del WebSocket de observación | Cambie el transporte, cursor o recuperación del panel. |
+| [decisiones/0010-busqueda-temporal-acotada.md](decisiones/0010-busqueda-temporal-acotada.md) | Prioridad, límite y uso de la ruta temporal experimental | Cambie horizonte, función de costo o integración en política. |
 | [modos.md](modos.md) | Diferencias entre simulador y juego | Cambie control o experiencia. |
 | [flujos/roles.md](flujos/roles.md) | Actores, permisos y responsabilidades | Aparezca un actor o permiso. |
 | [flujos/simulador.md](flujos/simulador.md) | Ciclo del turno automático | Cambie secuencia o reloj. |
@@ -42,6 +43,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [resultados/simulacion-manta-cam025.md](resultados/simulacion-manta-cam025.md) | Ejecución exploratoria de cohortes sintéticas en el grafo Manta | Cambien configuración/resultados del ensayo; no equivale a evaluación oficial ni seguridad real. |
 | [resultados/evaluacion-multi-turno-cam028.md](resultados/evaluacion-multi-turno-cam028.md) | Medición HTTP loopback con avance de turnos y cohortes 20/80/200 | Nueva ejecución multi-turno; evidencia local exploratoria, no sustituye T-11 ni AWS. |
 | [resultados/evaluacion-cadencia-cam029.md](resultados/evaluacion-cadencia-cam029.md) | Cadencia objetivo de 2 s para evaluaciones HTTP multi-turno locales | Nueva medición temporizada; evidencia exploratoria, no sustituye T-11 ni AWS. |
+| [resultados/busqueda-temporal-cam033.md](resultados/busqueda-temporal-cam033.md) | Tiempo de búsqueda temporal por llamada para cohortes sintéticas 20/80/200 | Nueva versión de algoritmo o ejecución comparativa; no es medición HTTP ni T-22. |
 | [costos.md](costos.md) | Estimación y gasto real | Cambie infraestructura o consumo. |
 | [plan-implementacion.md](plan-implementacion.md) | Tareas, dependencias y criterios de salida | Se ajuste o complete una fase. |
 | [pendientes.md](pendientes.md) | Dudas, riesgos y confirmaciones | Se descubra o resuelva una incertidumbre. |

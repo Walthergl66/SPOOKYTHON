@@ -1,6 +1,6 @@
 # Motor de rutas y predicción
 
-Estado: movimiento zombie y ciclo local implementados parcialmente en `src/navira/simulation/`; Dijkstra dirigido está en `src/navira/routing/dijkstra.py` y `application/decidir_paso.py` lo conecta con el snapshot activo cuando se ensambla la app con un repositorio/mapa. El punto de entrada predeterminado no carga estado. Mapa real, escenario, persistencia durable, evaluación completa y tiempos siguen pendientes/sin medir.
+Estado: movimiento zombie y ciclo local implementados parcialmente en `src/navira/simulation/`; Dijkstra dirigido está conectado a la decisión `/paso`; CAM-033 añade `src/navira/routing/temporal.py` como núcleo experimental separado, aún no integrado. El punto de entrada predeterminado no carga estado. Evaluación completa y tiempos del proceso real siguen pendientes.
 
 ## Referencia inicial
 
@@ -10,9 +10,11 @@ El costo ponderado se expresa en metros relativos. Los factores por tipo y su ap
 
 ## Mejora temporal
 
-Estado de búsqueda: `(nodo, turno futuro)`. Horizonte inicial configurable: seis turnos; ejecutar solo el primer paso y recalcular en cada turno. Incluir espera como acción. Descartar colisiones conocidas; el futuro incierto se representa como riesgo, no como conocimiento exacto.
+P3-01 implementa `src/navira/routing/temporal.py` como núcleo experimental no conectado a `/paso`. El estado de búsqueda es `(nodo, acciones/turnos)`, con horizonte inicial configurable de seis turnos (1–12), acción de espera y condiciones por fase inyectadas. El primer paso usa bloqueos/cierres del snapshot observable; los siguientes usan el pronóstico suministrado. Los cierres confirmados persisten porque el modelo actual no ofrece reaperturas. Cada invocación limita expansiones y tiempo; un límite agotado descarta toda ruta parcial para preservar la alternativa Dijkstra.
 
-Prioridades: validez, evitar mordidas conocidas, riesgo futuro, turnos hasta refugio y costo de calle. La función exacta de combinación de riesgo/tiempo se decide mediante experimentos registrados, no queda fijada por este documento. Una búsqueda truncada o con riesgo estimado no garantiza optimalidad global ni supervivencia.
+Prioridades lexicográficas adoptadas para este núcleo (ADR-010): validez topológica/bloqueos conocidos, exposición futura acumulada, turnos hasta refugio, metros ponderados y secuencia estable de acciones. El valor de exposición por nodo y fase acepta [0, 1]; la suma es un puntaje de ordenamiento, no probabilidad calibrada de mordida o supervivencia. Los nodos actuales bloqueados no se entran; la espera avanza el estado temporal.
+
+Los límites iniciales por invocación son 20.000 expansiones y 25 ms. Estos no son un presupuesto global por partida ni prueban que 200 recomendaciones quepan en dos segundos. Una búsqueda truncada, sin horizonte suficiente o con riesgo estimado no garantiza optimalidad global ni supervivencia. P3-02 generará pronósticos; P3-03 comparará baseline y temporal antes de seleccionar política. Esta fase no modifica la recomendación HTTP.
 
 Si se optimizan turnos, la heurística debe ser una cota inferior en saltos; si se usa tiempo ponderado, mantener unidades compatibles. No sumar metros, segundos y probabilidades sin normalización y justificación. Registrar fórmula, parámetros y escenario de ajuste.
 

@@ -77,6 +77,8 @@ El contrato HTTP de base tiene pruebas con `python -m unittest discover -s tests
 
 El núcleo Dijkstra tiene regresiones con `python -m unittest discover -s tests -p 'test_dijkstra.py' -v` (7 pruebas). Cubren peso/distancia, factor configurable por tipo, cierres, nodos bloqueados, ruta inexistente, desempates, selección de refugio y validaciones. No prueban mapa de Manta ni peligros futuros.
 
+La búsqueda temporal experimental tiene regresiones con `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_ruta_temporal.py' -v` (8 pruebas). Cubren espera, horizonte, cierres por fase, exposición inyectada, ruta completa y límites de expansión/tiempo. CAM-033 registra una medición serial local; no verifica pronóstico de amenazas, comparación contra Dijkstra, T-22 ni latencia HTTP.
+
 El caso de uso de `/paso` tiene pruebas con `python -m unittest discover -s tests -p 'test_decidir_paso.py' -v` para sesión/turno/fase/personaje, selección de ruta, cierres, hordas, zombies activos, dormidos ocultos y cruces conocidos. `test_api_planner_integration.py` valida respuesta con política inyectada y errores HTTP 404/409/503. `test_demo.py` comprueba el bootstrap de un snapshot local hacia decisiones, la ruta HTTP demo y que el ensamblaje base conserva espera. El modo demo usa exclusivamente `data/maps/demo-sintetico.json`, no es el mapa de Manta ni ejecuta un reloj continuo.
 
 `test_simulacion_automatica.py` verifica una ronda completa con Dijkstra, el orden de movimiento zombie antes de la recomendación, continuación desde fase de decisiones persistida, apertura del siguiente turno y rechazo de versión antigua/modo incompatible. La suite no mide un reloj continuo, durabilidad ni concurrencia entre procesos.

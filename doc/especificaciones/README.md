@@ -5,7 +5,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../PRD.md)/[TRD](../
 | ID | Funcionalidad | Situación inicial |
 |---|---|---|
 | [SPEC-001](SPEC-001-mundo-simulacion.md) | Grafo, mundo y simulación | En curso; generador local estocástico parcial, no verificada integralmente. |
-| [SPEC-002](SPEC-002-motor-paso.md) | Motor, `/paso` y mejora temporal | Lista con referencia base antes de predicción. |
+| [SPEC-002](SPEC-002-motor-paso.md) | Motor, `/paso` y mejora temporal | Dijkstra HTTP y P3-01 temporal acotado implementados parcialmente; CAM-033 mide el núcleo. Pronóstico P3-02, selección P3-03, T-11/T-22 y verificación integral pendientes. |
 | [SPEC-003](SPEC-003-panel-vivo.md) | Observación en vivo | Lista; CAM-031 verifica mapa/proyección manual y CAM-032 transporte local con snapshots completos, heartbeat y reconexión. CA-003-01/03/04 y validación integral siguen pendientes. |
 | [SPEC-004](SPEC-004-juego-humano.md) | Control humano | Lista con supuestos de sesión explícitos. |
 | [SPEC-005](SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Lista con dependencias externas pendientes. |

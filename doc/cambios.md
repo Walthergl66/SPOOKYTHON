@@ -2,6 +2,21 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-033 — Núcleo de búsqueda temporal acotada
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario de las fases restantes, con un commit por fase en `master`.
+- Especificación/requisitos/tareas: SPEC-002, P3-01, CA-002-05 parcial. P3-02/P3-03, T-11/T-22 y la verificación integral de SPEC-002 siguen pendientes.
+- Motivo: explorar planificación por turnos con espera y riesgos observables, con presupuesto explícito, antes de sustituir Dijkstra.
+- Resultado: módulo puro de búsqueda temporal `(nodo, turnos)`, acciones de espera/movimiento, cierres y exposición futura inyectados. Costo lexicográfico de exposición, turnos, metros ponderados y desempate estable. Límite de horizonte, expansiones y tiempo; ante agotamiento o falta de refugio en horizonte no se retorna una ruta parcial.
+- Decisión: [ADR-010](decisiones/0010-busqueda-temporal-acotada.md). El módulo no se integra en `/paso`, no genera pronósticos, no consume RNG ni conoce dormidos; Dijkstra permanece como política activa.
+- Archivos: `src/navira/routing/temporal.py`, `tests/test_ruta_temporal.py`; algoritmo, módulo backend, plan, SPEC-002, matriz de trazabilidad, pruebas, ADR, reporte e índices/estado.
+- Evidencia: [reporte CAM-033](resultados/busqueda-temporal-cam033.md), una única medición serial sobre fixture parcial de Manta con escenario sintético `mixto`, semilla `20261026`, horizonte 6 y presupuesto 25 ms. Cohortes 20/80/200: p95 de función 1,331/1,514/1,291 ms; no es HTTP, T-11, T-22, medición de ronda ni evidencia de supervivencia.
+- Verificación de cierre: suite completa (`120` pruebas OK; incluye 8 de ruta temporal), `python3 scripts/check_docs.py` (63 Markdown/65 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas), `python3 -m unittest discover -s tests -p 'test_check_sdd.py'` (8 OK), `compileall`, `git diff --check` y `frontend/npm run build` correctos. El mensaje CLI de `argparse` dentro de la suite es una salida esperada de una prueba que verifica argumentos inválidos; la suite termina OK.
+- Límites: condiciones futuras son entradas de prueba/puerto, no una predicción implementada; reglas P-02/P-03/P-07/P-09 siguen abiertas. Un horizonte sin ruta no demuestra que el destino sea inalcanzable. P3-01 no termina T-22 ni SPEC-002.
+- Siguiente acción: P3-02, construir pronóstico observable sin revelar dormidos ni estado privado, revisando reglas y pendientes; preservar Dijkstra hasta comparar.
+- Commit: individual local en `master`, se completa al cerrar verificaciones.
+
 ## CAM-032 — WebSocket de snapshots completos y recuperación del panel
 
 - Fecha: 2026-10-26, Ecuador continental.
