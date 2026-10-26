@@ -1,6 +1,6 @@
 # Flujo del jugador
 
-Estado: diseño previsto. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
+Estado: sesión/aparición inicial local en CAM-036; órdenes, interfaz y ciclo de juego siguen pendientes. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
 
 ## Entrar
 
@@ -9,6 +9,8 @@ Estado: diseño previsto. Contratos: [API](../contratos/api.md). Reglas: [mundo]
 3. Registrar solicitud de aparición; incorporarla al inicio de un turno antes del movimiento zombie. Si ya pasó esa fase, esperar el siguiente turno y mostrarlo.
 4. Seleccionar aleatoriamente nodo transitable, fuera de refugios, sin solapamiento zombie inicial y con camino vigente a un refugio. No garantizar que siga siendo seguro después.
 5. Confirmar personaje/nodo; si no hay candidatos, informar y no inventar un punto inválido.
+
+CAM-036 implementa `POST /juego/unirse` por inyección de aplicación, una cookie HttpOnly/Secure/SameSite estricta y una aparición aleatoria reproducible al usar el RNG privado del servidor únicamente dentro del coordinador de aparición. Solo considera sobrevivientes y zombies activos para evitar dar al jugador acceso a dormidos; requiere ruta vigente a refugio y excluye refugios/ocupación. Si la fase ya no es PREPARACION, la sesión queda pendiente; el coordinador aún debe llamar `incorporar_aparicion_pendiente()` antes de mover zombies en el siguiente turno. No hay expiración/revocación confirmadas ni persistencia durable.
 
 ## Elegir una acción
 

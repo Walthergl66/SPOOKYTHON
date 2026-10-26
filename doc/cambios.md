@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-036 — Sesión propietaria y aparición humana local
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario para construir las fases restantes, con un commit independiente por fase en `master`.
+- Especificación/tarea: SPEC-004, P4B-01; aporta evidencia parcial a T-12/T-13, pero no verifica la SPEC ni completa T-12/T-13.
+- Motivo: habilitar la entrada del jugador humano al modo juego sin aceptar posición del navegador, reservar más de un propietario o revelar información privada de zombies dormidos.
+- Resultado: caso de uso `UnirseAJuego`, repositorio local de sesiones que conserva solo hash SHA-256 del token y `POST /juego/unirse` con cookie opaca `HttpOnly`, `Secure` por defecto, `SameSite=Strict`, `Path=/juego` y validación de Origin same-host. La aparición usa RNG privado versionado para escoger un nodo elegible no-refugio, no ocupado por sobrevivientes/zombies activos, no bloqueado y con ruta a refugio. Una entrada posterior a PREPARACION queda pendiente para un hook que el coordinador debe llamar antes del movimiento zombie.
+- Decisión: [ADR-013](decisiones/0013-sesion-y-aparicion-humana-local.md). Un solo propietario humano; sesión y snapshot permanecen en adaptadores separados, locales y volátiles.
+- Archivos: `src/navira/application/juego.py`, `src/navira/api/routes.py`, `src/navira/api/schemas.py`, `src/navira/main.py`, `tests/test_juego_sesion.py`; API, datos, ODDD, seguridad, flujo de jugador, módulos, pruebas, SPEC-004, plan, trazabilidad e índices.
+- Verificación: `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_juego_sesion.py' -v` (7 pruebas OK); suite completa (`134` pruebas OK); `python3 scripts/check_docs.py` (67 Markdown/69 archivos); `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas); `python3 -m unittest discover -s tests -p 'test_check_sdd.py'` (8 OK); `compileall`, `git diff --check` y `frontend/npm run build` correctos. La salida de uso inválido del CLI dentro de la suite es el caso negativo esperado.
+- Límites: el hook todavía no se invoca desde el coordinador, el modo predeterminado no ensambla el servicio, no existen órdenes/autorización de acciones ni UI jugable, y las sesiones no expiran ni sobreviven reinicios. P-11/P-12 siguen abiertas. La aparición CAS y el repositorio de sesiones no forman una transacción durable.
+- Siguiente acción: P4B-02, registro de órdenes humanas con propiedad, fase/turno, idempotencia por `accionId`, sustitución atómica y acuse sin mover directamente al personaje.
+- Commit: uno local e individual en `master` después de cerrar todas las comprobaciones locales.
+
 ## CAM-035 — Comparación emparejada de políticas de ruta
 
 - Fecha: 2026-10-26, Ecuador continental.

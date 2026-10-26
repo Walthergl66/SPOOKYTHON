@@ -16,5 +16,6 @@ Un ADR documenta una elección duradera y su motivo. «Aceptada para diseño» n
 | [ADR-010](0010-busqueda-temporal-acotada.md) | Búsqueda temporal acotada para rutas | Implementada localmente, experimental | CAM-033: núcleo temporal con espera y límites; no integrado a `/paso`, pronósticos T-22 pendientes. |
 | [ADR-011](0011-pronostico-visible-por-escenarios.md) | Pronóstico observable por escenarios | Implementado localmente, exploratorio | CAM-034: fases privadas excluidas, supuestos explícitos; no integrado a `/paso`. |
 | [ADR-012](0012-seleccion-politica-baseline.md) | Mantener Dijkstra como política activa | Decidido con evaluación exploratoria | CAM-035: temporal mejora evacuaciones locales; T-22/T-11 y reglas oficiales siguen pendientes. |
+| [ADR-013](0013-sesion-y-aparicion-humana-local.md) | Sesión propietaria y aparición humana local | Implementada parcialmente, local | CAM-036: cookie segura y aparición CAS; ciclo, expiración, durable y despliegue pendientes. |
 
 Usar [plantilla](../plantillas/decision.md). Numeración correlativa, fecha, contexto, decisión, alternativas, consecuencias, pendientes y enlaces. No renumerar IDs ya citados. Para cambiar una decisión relevante, añadir ADR nuevo y marcar el anterior sustituido con enlace recíproco. Correcciones menores pueden aclararse sin fingir que la decisión original ya decía otra cosa.

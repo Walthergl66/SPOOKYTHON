@@ -13,11 +13,14 @@ Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conser
 | Zombie | ID, tipo, nodo, fase, activación | Dormido oculto en proyección. |
 | Sobreviviente | ID, nodo, control, estado, refugio objetivo | Control humano/automático; activo/mordido/evacuado. |
 | Orden humana | Partida, turno, personaje, acción, secuencia, destino | Propiedad, idempotencia y cierre. |
+| Sesión de jugador | Partida, ID de personaje, estado de aparición, nodo | Un propietario por partida; token opaco entregado solo en cookie; token almacenado como hash. El adaptador actual es volátil. |
 | Snapshot | Partida, turno, fase, versión, datos | Inmutable una vez confirmado. |
 | Evento de ciudad | ID, segmento, turno objetivo, causa | Aplicación única y trazable. |
 | Resultado | Modo, versiones, decisiones, métricas y final | Separar pruebas automáticas de juego. |
 
 `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` ya existen como dataclasses inmutables en `src/navira/domain/modelo.py`. La partida fija modo, versión de mapa, estado, turno y fase; `validar_mapa()` comprueba referencias. `SnapshotMundo` conserva en memoria el estado completo, cierres, eventos programados/aplicados y estado aleatorio privado. La aplicación de movimientos y transición versionada entre fases están implementadas en memoria. El snapshot durable y la escritura condicional siguen pendientes.
+
+CAM-036 añade `SesionJugador` como valor de aplicación y `RepositorioSesionesMemoria`. La sesión contiene solo propiedad/estado; la identidad del browser se localiza por SHA-256 de un token aleatorio, nunca por un ID enviado desde el cliente. La sesión y el snapshot no comparten una transacción durable; el CAS protege la aparición de mundo en el adaptador local, pero la recuperación multi-proceso y expiración siguen pendientes.
 
 El generador demo admite cohortes de 1 a 200 sobrevivientes; si no se entrega semilla, genera una desde entropía del sistema. Con semilla explícita muestrea reproduciblemente las ubicaciones iniciales de sobrevivientes/zombies y la fase de caminantes. En el mapa actual (cinco nodos, cuatro elegibles) pueden coincidir varios personajes. La capacidad de compartir intersección es un detalle del fixture sintético, no una regla de despliegue ni de seguridad. La composición de perfiles se conserva fija mientras P-09 no defina cantidades/distribución oficiales; la horda no cambia su regla provisional mientras P-07 siga abierta.
 

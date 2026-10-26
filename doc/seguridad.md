@@ -1,6 +1,6 @@
 # Seguridad y límites de confianza
 
-Estado: controles parciales. El panel HTTP y `WS /ws/panel` proyectan mapas versionados, zombies activos, movimientos visibles y métricas permitidas; no publican dormidos, semillas o RNG. El handshake del socket exige `Origin` del mismo host y no permite mensajes entrantes. Esto reduce solicitudes browser cross-origin, pero no sustituye autenticación cuando corresponda, límites de conexiones/frecuencia, TLS, política de red o controles en despliegue.
+Estado: controles parciales. El panel HTTP y `WS /ws/panel` proyectan mapas versionados, zombies activos, movimientos visibles y métricas permitidas; no publican dormidos, semillas o RNG. `POST /juego/unirse` emite token opaco en cookie HttpOnly, Secure por defecto, SameSite=Strict y solo acepta Origin del mismo host. El almacenamiento es local y volátil; no acredita TLS/despliegue ni define expiración (P-12). El handshake del socket exige `Origin` del mismo host y no permite mensajes entrantes. Esto reduce solicitudes browser cross-origin, pero no sustituye límites de conexiones/frecuencia, TLS, política de red o controles de producción.
 
 ## Identidades
 
@@ -23,6 +23,7 @@ Las claves de servicio y de operador nunca se incluyen en JavaScript público. N
 - No revelar estado privado mediante errores, trazas, archivos descargables o herramientas del frontend.
 - Sanitizar alias si se muestran; limitar longitud. No hace falta recoger datos personales para jugar.
 - Verificar TLS y permisos del origen; limitar entrada por red y validar cabecera de origen.
+- CAM-036: cookie de unión protegida por `HttpOnly`, `Secure` por defecto, `SameSite=Strict`, `Path=/juego`; CSRF/origen controlado mediante host coincidente. No configurar `NAVIRA_COOKIE_SECURE=0` fuera de test/desarrollo local. Sesiones no expiran ni sobreviven reinicios con el adaptador actual; P-11/P-12/P5-02 impiden declarar el juego listo para publicación.
 - Rol de ejecución y de aplicación separados según funciones; permisos limitados a tabla, logs y configuración necesarios.
 
 ## Comentarios y documentación

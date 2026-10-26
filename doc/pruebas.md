@@ -25,8 +25,8 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-09 | Refugio | Estado final correcto según orden acordado de mordida/llegada. |
 | T-10 | Repetición/reinicio | Misma decisión en misma instantánea; ninguna caché cruza partidas. |
 | T-11 | Ráfaga | 20, 80 y 200 solicitudes concurrentes cada dos segundos. |
-| T-12 | Aparición humana | Nodo elegible y solicitud tardía incorporada en turno correcto. |
-| T-13 | Propiedad/acciones | Otra sesión no controla; clics múltiples no conceden pasos extra. |
+| T-12 | Aparición humana | Nodo elegible y solicitud tardía incorporada en turno correcto; CAM-036 cubre servicio y hook antes de movimiento, no el ciclo de juego ensamblado. |
+| T-13 | Propiedad/acciones | Otra sesión no controla; clics múltiples no conceden pasos extra. CAM-036 cubre cookie de propiedad, concurrencia de dos uniones y origen, no todavía autorización de acciones. |
 | T-14 | Órdenes tardías/duplicadas | Rechazo o acuse idempotente; no aplicar al turno siguiente. |
 | T-15 | Reconexión | El panel recibe snapshot inicial/por versión; heartbeat detecta canal vivo; al reconectar carga el snapshot vigente, sin deltas incompletos, detener mundo o mezclar partidas. `test_panel.py` cubre secuencia posterior y cambio de partida; UI reconecta por WebSocket. Persistencia duradera/multi-worker no cubierta. |
 | T-16 | Separación de modos | Rondas oficiales sin humanos ni cambio de modo. |
@@ -86,6 +86,8 @@ El pronóstico observable tiene regresiones con `PYTHONPATH=src /tmp/navira-env/
 El caso de uso de `/paso` tiene pruebas con `python -m unittest discover -s tests -p 'test_decidir_paso.py' -v` para sesión/turno/fase/personaje, selección de ruta, cierres, hordas, zombies activos, dormidos ocultos y cruces conocidos. `test_api_planner_integration.py` valida respuesta con política inyectada y errores HTTP 404/409/503. `test_demo.py` comprueba el bootstrap de un snapshot local hacia decisiones, la ruta HTTP demo y que el ensamblaje base conserva espera. El modo demo usa exclusivamente `data/maps/demo-sintetico.json`, no es el mapa de Manta ni ejecuta un reloj continuo.
 
 `test_simulacion_automatica.py` verifica una ronda completa con Dijkstra, el orden de movimiento zombie antes de la recomendación, continuación desde fase de decisiones persistida, apertura del siguiente turno y rechazo de versión antigua/modo incompatible. La suite no mide un reloj continuo, durabilidad ni concurrencia entre procesos.
+
+`test_juego_sesion.py` cubre P4B-01 local: sesión única por partida, dos intentos concurrentes, aparición reproducible en nodo no refugio con ruta, sesión idempotente por cookie, ausencia de candidato sin reservar cupo, partida de juego activa, espera fuera de fase PREPARACION, hook de incorporación previo a movimiento zombie y Origin/cookie HttpOnly-Secure-SameSite. No cubre expiración/revocación P-12, DynamoDB, múltiples procesos, controles de acciones o recorrido de interfaz.
 
 `test_simulacion_mapa_manta.py` ejecuta tres turnos de perfiles sintéticos sobre el fixture de Manta con 20/80/200 sobrevivientes, semilla fija y regla de movimiento del fixture; comprueba versión de mapa, inicios fuera de refugios y pasos vecinos o de espera. No verifica exactitud cartográfica ni seguridad de los refugios. El resultado exploratorio reproducible está en [CAM-025](resultados/simulacion-manta-cam025.md); no es una ronda oficial ni una medición de carga.
 

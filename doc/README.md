@@ -25,6 +25,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [decisiones/0010-busqueda-temporal-acotada.md](decisiones/0010-busqueda-temporal-acotada.md) | Prioridad, límite y uso de la ruta temporal experimental | Cambie horizonte, función de costo o integración en política. |
 | [decisiones/0011-pronostico-visible-por-escenarios.md](decisiones/0011-pronostico-visible-por-escenarios.md) | Frontera de información y supuestos del pronóstico observable | Cambie inputs, probabilidades/ocupación o reglas modeladas por pronóstico. |
 | [decisiones/0012-seleccion-politica-baseline.md](decisiones/0012-seleccion-politica-baseline.md) | Política de rutas activa y evidencia que condiciona su selección | Cambie baseline, evidencia comparativa o criterios para integración temporal. |
+| [decisiones/0013-sesion-y-aparicion-humana-local.md](decisiones/0013-sesion-y-aparicion-humana-local.md) | Propiedad de jugador, cookie y ciclo de aparición humana | Cambie sesiones, aparición o límites de seguridad del modo juego. |
 | [modos.md](modos.md) | Diferencias entre simulador y juego | Cambie control o experiencia. |
 | [flujos/roles.md](flujos/roles.md) | Actores, permisos y responsabilidades | Aparezca un actor o permiso. |
 | [flujos/simulador.md](flujos/simulador.md) | Ciclo del turno automático | Cambie secuencia o reloj. |

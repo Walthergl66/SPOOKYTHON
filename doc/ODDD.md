@@ -32,6 +32,7 @@ Son límites dentro de un monolito modular, no servicios nuevos. Las identidades
 ## Entidades, valores y autoridad
 
 - Entidades con identidad: Partida, Zombie, Sobreviviente, Refugio y Orden humana.
+- Valor de aplicación: `SesionJugador` vincula un token opaco verificado a una partida y un sobreviviente; no se envía la sesión como entidad mutable al frontend.
 - Valores inmutables propuestos: NodeId, RunId, TurnNumber, SnapshotVersion, distancia en metros, velocidad y segmento dirigido. Validar unidades y valores antes de entrar al núcleo.
 - Partida es la frontera lógica de consistencia del turno; el coordinador autoriza transiciones. No obliga a cargar/guardar todo el mundo como un único item de base de datos.
 - Registro de órdenes es otra frontera de concurrencia: cada reemplazo tiene secuencia y versión; solo la sesión propietaria puede solicitarlo.

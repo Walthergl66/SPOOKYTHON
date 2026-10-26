@@ -23,6 +23,17 @@ class RespuestaPasoSchema(BaseModel):
     siguienteNodo: str = Field(min_length=1)
 
 
+class RespuestaUnirseJuegoSchema(BaseModel):
+    """Resultado de la sesión propietaria sin exponer estado del mundo privado."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    runId: str
+    jugadorId: str
+    estado: Literal["esperando_aparicion", "activo"]
+    nodo: str | None = None
+
+
 class NodoPanelSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -1,20 +1,28 @@
 """Rutas HTTP de la primera fase de Navira."""
 
 import asyncio
+import os
 from datetime import datetime, timezone
 from time import monotonic
 from urllib.parse import urlsplit
 
-from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, WebSocket, WebSocketDisconnect, status
 
 from navira.api.auth import validar_api_key
 from navira.api.schemas import (
     RespuestaEstadoPanelSchema,
     RespuestaMapaPanelSchema,
     RespuestaPasoSchema,
+    RespuestaUnirseJuegoSchema,
     SolicitudPasoSchema,
 )
 from navira.application.consultar_panel import ConsultarPanel, PanelNoDisponible
+from navira.application.juego import (
+    AparicionNoDisponible,
+    JuegoNoDisponible,
+    PropietarioOcupado,
+    UnirseAJuego,
+)
 from navira.application.decidir_paso import (
     DecidirPasoEspera,
     EntidadNoEncontrada,
@@ -26,6 +34,7 @@ from navira.application.decidir_paso import (
 router = APIRouter()
 _PANEL_WS_INTERVAL_SECONDS = 0.25
 _PANEL_WS_HEARTBEAT_SECONDS = 2.0
+_COOKIE_SESION_JUGADOR = "navira_player_session"
 
 
 @router.get("/salud", tags=["operación"])
@@ -59,6 +68,47 @@ async def mapa_panel(request: Request) -> dict[str, object]:
         return consulta.consultar_mapa()
     except PanelNoDisponible as error:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
+
+
+@router.post(
+    "/juego/unirse",
+    response_model=RespuestaUnirseJuegoSchema,
+    tags=["juego"],
+)
+async def unirse_juego(request: Request, response: Response) -> dict[str, object]:
+    """Crea/recupera la única sesión humana con cookie opaca HttpOnly."""
+
+    if not _origen_request_mismo_host(request):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Origen no permitido.")
+    servicio: UnirseAJuego | None = getattr(request.app.state, "unirse_juego", None)
+    if servicio is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El modo de juego no está habilitado en esta instancia.",
+        )
+    try:
+        resultado = servicio.ejecutar(request.cookies.get(_COOKIE_SESION_JUGADOR))
+    except PropietarioOcupado as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except AparicionNoDisponible as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except JuegoNoDisponible as error:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
+
+    response.set_cookie(
+        key=_COOKIE_SESION_JUGADOR,
+        value=resultado.token,
+        httponly=True,
+        secure=os.getenv("NAVIRA_COOKIE_SECURE", "1") != "0",
+        samesite="strict",
+        path="/juego",
+    )
+    return {
+        "runId": resultado.sesion.run_id,
+        "jugadorId": resultado.sesion.sobreviviente_id,
+        "estado": resultado.sesion.estado.value,
+        "nodo": resultado.sesion.nodo,
+    }
 
 
 @router.websocket("/ws/panel")
@@ -114,6 +164,20 @@ def _origen_mismo_host(websocket: WebSocket) -> bool:
 
     origen = websocket.headers.get("origin")
     host = websocket.headers.get("host")
+    if not origen or not host:
+        return False
+    try:
+        partes = urlsplit(origen)
+    except ValueError:
+        return False
+    return partes.scheme in {"http", "https"} and partes.netloc.casefold() == host.casefold()
+
+
+def _origen_request_mismo_host(request: Request) -> bool:
+    """Protege la creación de sesión basada en cookie contra solicitudes cross-origin."""
+
+    origen = request.headers.get("origin")
+    host = request.headers.get("host")
     if not origen or not host:
         return False
     try:

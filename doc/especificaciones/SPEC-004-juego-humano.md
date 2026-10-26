@@ -1,12 +1,12 @@
 # SPEC-004 — Personaje humano
 
 ID: SPEC-004
-Estado: lista
+Estado: implementada
 Requisitos: PRD-05, PRD-06, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12
 Tareas: P4B-01, P4B-02, P4B-03, P5-04
 Pruebas: T-12, T-13, T-14, T-15, T-16, T-17, T-19
-Cambio: pendiente
-Evidencia: pendiente
+Cambio: CAM-036
+Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana).
 
 ## Objetivo y alcance
 
@@ -25,4 +25,4 @@ Un jugador entra a una partida habilitada, aparece aleatoriamente y decide cómo
 
 ## Plan, límites y verificación
 
-P4B-01 sesión/aparición; P4B-02 bandeja persistida con idempotencia; P4B-03 controles/radio/resultado; P5-04 comprueba integración. Módulos participación, aplicación, API y frontend. P-12 sigue abierto para expiración y recuperación exactas de sesión; P-11 para transporte público. Cierre humano de 1,7 s es parámetro inicial sujeto a medición. Probar también clic ilegal tras una orden válida: no borra esa orden. No hay resultados de juego actuales.
+P4B-01 implementa localmente sesión/aparición inicial y pendiente. El hook aún no está conectado a un coordinador/ciclo de juego; P4B-02 bandeja persistida con idempotencia; P4B-03 controles/radio/resultado; P5-04 recuperación completa siguen pendientes. P-12 sigue abierto para expiración/revocación; P-11 para transporte público. Cierre humano de 1,7 s es parámetro inicial sujeto a medición. La SPEC no está verificada integralmente.

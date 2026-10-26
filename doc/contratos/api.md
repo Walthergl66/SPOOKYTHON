@@ -1,6 +1,6 @@
 # Contratos HTTP
 
-Estado: `/salud`, `/paso`, `GET /panel/estado` y `GET /panel/mapa` tienen implementación local. Las rutas de panel son de solo lectura; el estado sin partida devuelve `{"estado":"sin_partida"}` y el mapa requiere una partida activa. No hay endpoints desplegados. Solo el formato obligatorio de `/paso` y el estado mínimo provienen del reto; las rutas adicionales son diseño del equipo.
+Estado: `/salud`, `/paso`, `GET /panel/estado`, `GET /panel/mapa` y `POST /juego/unirse` tienen implementación local/injectable. La unión requiere una partida activa modo juego y `Origin` del mismo host; emite una cookie de sesión HttpOnly, Secure por defecto y SameSite=Strict. Si la fase `PREPARACION` ya pasó, la respuesta queda `esperando_aparicion` hasta que el coordinador invoque el hook de incorporación antes del movimiento zombie. El servicio de sesión solo existe en memoria y no se ensambla en la aplicación/demo predeterminada. No hay endpoints desplegados. Solo el formato obligatorio de `/paso` y el estado mínimo provienen del reto; las rutas adicionales son diseño del equipo.
 
 La configuración local optativa `NAVIRA_DEMO=1` acepta `NAVIRA_DEMO_MAP`, `NAVIRA_DEMO_SEED`, `NAVIRA_DEMO_SCENARIO` y `NAVIRA_DEMO_SURVIVORS` para iniciar el fixture sintético. Una semilla configurada hace reproducible el inicio; si se omite, el proceso genera una semilla nueva. La semilla/estado privado no forma parte del contrato HTTP. El cliente `python -m navira.carga_http` puede enviar solicitudes concurrentes a `/paso`; requiere una configuración coincidente en servidor/cliente y `NAVIRA_API_KEY` en el entorno del cliente. No cambia el contrato HTTP ni expone configuración de demo en las rutas. Las ráfagas repiten el mismo snapshot y sirven para medir la ruta de decisión; no simulan avance del reloj ni supervivencia.
 
@@ -41,6 +41,8 @@ Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema invál
 | `POST /admin/eventos` | Operador | Evento validado para un turno. |
 
 Las rutas de panel evitan enviar `x-api-key` maestra al navegador. Tienen proyección y límites propios; no son una puerta de entrada al estado real. La CLI administrativa tampoco conserva secretos en argumentos o ejemplos versionados.
+
+`POST /juego/unirse` está implementado localmente bajo inyección explícita de `UnirseAJuego`. Devuelve `runId`, `jugadorId`, estado y nodo únicamente del propio personaje; el token opaco solo viaja en una cookie `HttpOnly; Secure; SameSite=Strict; Path=/juego`. El endpoint rechaza solicitudes sin `Origin` o con origen distinto. `NAVIRA_COOKIE_SECURE=0` existe solo para pruebas/desarrollo explícito; nunca debe usarse en un despliegue público. No hay duración/expiración ni revocación automática confirmada (P-12); el adaptador local almacena hash de token y pierde sesiones al reiniciar. El hook `incorporar_aparicion_pendiente()` debe llamarse en el coordinador antes de mover zombies; todavía no hay ciclo de juego ensamblado que lo haga.
 
 ### Panel HTTP de solo lectura — implementación parcial
 
