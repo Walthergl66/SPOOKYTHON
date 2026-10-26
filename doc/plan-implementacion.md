@@ -40,7 +40,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 
 | ID | Entregable y responsable | Depende de | Aceptación | Estado |
 |---|---|---|---|---|
-| P0-01 | Base Python/FastAPI y configuración — backend | Lectura de `AGENTS.md` y `doc/` | Arranque local reproducible, secretos ficticios en ejemplos. | En curso |
+| P0-01 | Base Python/FastAPI y configuración — backend | Lectura de `AGENTS.md` y `doc/` | Arranque local reproducible, secretos ficticios en ejemplos. | Verificado |
 | P0-02 | Esquemas y fixtures — backend/dominio | P0-01 | `/paso` conserva contrato; mapa pequeño y errores definidos. | En curso |
 | P0-03 | Budget, permisos y región — operación | Acceso AWS autorizado | Alerta real y evidencia sin datos sensibles. | Pendiente |
 | P0-04 | CI y frontend mínimo — integración | P0-01 | Verificación Python y build frontend ejecutados. | Pendiente |

@@ -13,5 +13,8 @@ dependencies = [
   "uvicorn[standard]>=0.34,<1.0",
 ]
 
+[project.optional-dependencies]
+test = ["httpx2>=2.0,<3.0"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/navira"]

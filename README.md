@@ -2,7 +2,7 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** comenzó la implementación del backend local en la rama `feat/navira-backend-base`. `/salud` y `POST /paso` están escritos; `/paso` requiere `x-api-key` y por ahora responde con espera determinista (`nodoActual`) hasta integrar el mapa y el planificador. No hay simulador, mapa real, pruebas de aplicación ejecutadas ni despliegue AWS.
+**Estado real al 26 de octubre de 2026:** `/salud` y `POST /paso` arrancan localmente y sus contratos HTTP tienen pruebas automatizadas y smoke test con Uvicorn. `/paso` requiere `x-api-key` y por ahora responde con espera determinista (`nodoActual`) hasta integrar el mapa y el planificador. El núcleo de simulación avanza por fases en memoria; no hay mapa real, persistencia durable ni despliegue AWS.
 
 ## Empezar
 
@@ -62,4 +62,11 @@ python3 scripts/check_sdd.py
 python3 -m unittest discover -s tests -p 'test_check_sdd.py'
 ```
 
-La metodología está incorporada; las especificaciones funcionales todavía no representan una aplicación implementada o verificada.
+Para ejecutar todas las pruebas de la aplicación y del SDD, instala la dependencia opcional HTTP de pruebas:
+
+```bash
+python -m pip install -e '.[test]'
+python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+El contrato base de `/paso` se verificó; planificación, idempotencia persistida, rendimiento y rondas completas todavía no están implementados/verificados.

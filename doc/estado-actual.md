@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-009**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-012**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -18,6 +18,7 @@
 - En `feat/navira-world-model` existe `src/navira/domain/modelo.py`: partida con modo/turno/fase fijos, sobrevivientes, zombies e intención ligada a su partida y fase. Siete pruebas pasan; todavía no hay resolutor de movimiento.
 - En `feat/navira-zombie-resolution` existe `src/navira/simulation/resolver.py`: resolución en memoria de una fase completa con movimiento zombie, intenciones humanas/automáticas, mordidas y evacuación. Las once pruebas del resolutor y 36 pruebas totales pasan. Reglas aún provisionales; no integra reloj, persistencia, snapshots ni visibilidad del estado dormido.
 - En `feat/navira-snapshot-cas` la aplicación define `RepositorioSnapshots` y casos de uso para confirmar preparación/resolución con CAS; `AlmacenSnapshotsMemoria` usa lock para que un solo hilo confirme cada versión. El total local es 46 pruebas. El adaptador sigue siendo no durable y limitado a un proceso.
+- En `feat/navira-api-contract-tests` se instalaron dependencias de prueba opcionales; cinco pruebas ASGI validan `/salud`, API key y esquema de `/paso`. Uvicorn local respondió 200 en salud y solicitud válida, 401 sin credencial. `/paso` sigue siendo espera determinista. La suite total actual tiene 51 pruebas.
 
 ## Verificación histórica de CAM-003
 
@@ -38,7 +39,7 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 
 | Área | Estado | Evidencia pendiente |
 |---|---|---|
-| Backend y `/paso` | Base implementada, arranque sin verificar | Instalar dependencias, ejecutar HTTP y completar pruebas de contrato; conectar planificador después. |
+| Backend y `/paso` | Arranque y contrato HTTP base verificados | Conectar estado/planificador, idempotencia persistida y medir latencia bajo carga. |
 | Simulador | Resolución, fases y CAS en memoria parciales | DynamoDB, bucle de reloj, publicación, escenarios y ejecución continua pendientes. |
 | Grafo de Manta | Modelo genérico implementado; dataset pendiente | Área y exportación reproducible de OpenStreetMap con unas 300 intersecciones y cuatro refugios. |
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
@@ -47,11 +48,11 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Rendimiento/supervivencia | Sin medir | Reportes de las tres rondas. |
 | Repositorio remoto y commits | No verificado | URL y comprobación del historial. |
 
-El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-009 conservan fases separadas en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
+El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-012 conservan cambios en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-Completar P1-04 con adaptador durable que aplique condiciones de versión y pruebe recuperación/fallos; conectar al reloj de ciclo y transporte en sus tareas. P1-01 sigue necesitando datos geográficos reproducibles de Manta; P1-03 permanece parcial porque reglas de visibilidad/configuración aún no están completas. P0-01/P0-02 requieren ejecutar y comprobar el endpoint HTTP. No presentar la espera inicial como planificador. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Continuar P1-04 hacia persistencia durable con condición de versión; el CAS local no coordina hosts ni sobrevive reinicios. P1-01 sigue necesitando datos geográficos reproducibles de Manta; P1-03 permanece parcial porque reglas de visibilidad/configuración aún no están completas. P0-02 conserva alcance parcial por el fixture no integrado y los errores de estado; P2-02 requiere conectar rutas y juego. No presentar la espera inicial como planificador. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
 Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. `python -m pip install -e .` completó en el entorno temporal `/tmp/navira-env`; el comando de arranque del README aún no se ha ejecutado. Cuando se verifique, registrar versiones y resultados, sin confundir comandos previstos con ejecutados.
 
@@ -61,4 +62,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución pura en CAM-009; coordinación por fases y reloj en CAM-010; puerto CAS y adaptador local en CAM-011. La rama actual es `feat/navira-snapshot-cas`. P1-04 sigue en curso hasta disponer de almacenamiento durable. Mantener P1-01, P1-02 y P1-03 parciales; SPEC-001 no está verificada.
+La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución pura en CAM-009; coordinación por fases en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012. La rama actual es `feat/navira-api-contract-tests`. P0-01 está verificado; P0-02 y P1-04 siguen en curso. Mantener P1-01, P1-02 y P1-03 parciales; SPEC-001/002 no están verificadas.
