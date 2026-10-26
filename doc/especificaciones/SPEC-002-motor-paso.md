@@ -1,11 +1,11 @@
 # SPEC-002 — Motor y siguiente paso
 
 ID: SPEC-002
-Estado: lista
+Estado: implementada
 Requisitos: PRD-03, PRD-09, TRD-01, TRD-02, TRD-05, TRD-06, TRD-09, TRD-12
 Tareas: P0-01, P0-02, P2-01, P2-02, P2-03, P3-01, P3-02, P3-03
 Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22
-Cambio: pendiente
+Cambio: CAM-006
 Evidencia: pendiente
 
 ## Objetivo y alcance
@@ -29,3 +29,5 @@ P0 fija API/esquemas; P2 entrega una ronda con Dijkstra; P3 añade horizonte lim
 ## Casos límite, dudas y verificación
 
 Sin ruta, origen peligroso, refugio inaccesible, timeout, fase incompatible y calles paralelas. P-01/P-05 condicionan unidades y eficiencia; registrar supuestos en vez de atribuirlos al reto. La referencia base puede verificarse parcialmente por tarea; toda la SPEC solo se verifica al completar los criterios, incluida evaluación de mejora.
+
+La implementación inicial de P0-01/P0-02 cubre únicamente el proceso FastAPI, esquemas, autenticación por API key, `/salud`, `/paso` y fixtures de contrato/mapa mínimo. `/paso` devuelve espera determinista hasta que P1/P2 conecten estado y rutas. Por tanto, los criterios CA-002-02 a CA-002-05 siguen pendientes y esta SPEC no está verificada.

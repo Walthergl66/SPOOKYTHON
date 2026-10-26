@@ -1,6 +1,6 @@
 # Módulos backend y dependencias
 
-Estado: estructura prevista; aún no existen estos módulos. Raíz de código propuesta: `src/navira/`, conforme al nombre oficial del producto.
+Estado: implementación inicial en curso. `src/navira/api/` contiene los esquemas, autenticación y rutas HTTP; `src/navira/application/decidir_paso.py` ofrece temporalmente espera determinista. Dominio, simulación, persistencia y planificador todavía no existen.
 
 Lenguaje, contextos e invariantes: [ODDD](../ODDD.md). Requisitos técnicos: [TRD](../TRD.md); antes de implementar elegir la [SPEC](../especificaciones/README.md) correspondiente. La orientación a objetos no exige crear clases para funciones sin estado.
 
@@ -9,7 +9,7 @@ Lenguaje, contextos e invariantes: [ODDD](../ODDD.md). Requisitos técnicos: [TR
 | `domain/` | Grafo, entidades, transitabilidad, mordidas y llegadas | Importar FastAPI/boto3, usar HTTP o decidir permisos web | Pruebas puras con grafos pequeños. |
 | `routing/` | Dijkstra, A* temporal, riesgos y selección de refugio | Modificar mundo, leer dormidos o mezclar unidades | Casos de ruta y comparación de políticas. |
 | `simulation/` | Reloj, fases, zombies, eventos y resolución | Mantener la única copia de estado o ejecutar coordinadores duplicados | Escenarios y reproducción. |
-| `application/` | Preparar turno, decidir paso, iniciar/finalizar partida; puertos de I/O | Depender de esquemas HTTP o SDK AWS | Casos de uso con adaptadores en memoria. |
+| `application/` | Preparar turno, decidir paso, iniciar/finalizar partida; puertos de I/O | Depender de esquemas HTTP o SDK AWS | Casos de uso con adaptadores en memoria. En esta fase solo existe la decisión inicial de espera. |
 | `player/` | Aparición, propiedad lógica y orden humana por turno | Autorizar con cookies directamente o mover posiciones | Idempotencia y cierre de acciones. |
 | `api/` | Esquemas, autenticación, HTTP y WebSocket | Implementar reglas o búsqueda dentro de controladores | Pruebas de contrato. |
 | `adapters/` | DynamoDB, reloj, cliente HTTP del motor, métricas y proyecciones de transporte | Cambiar políticas del dominio | Integración y fallos de dependencias. |

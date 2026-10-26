@@ -2,7 +2,7 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** documentación preparada. Todavía no hay aplicación, pruebas de aplicación ejecutables, mapa generado ni despliegue AWS. Las tecnologías y contratos descritos son decisiones de diseño pendientes de implementar.
+**Estado real al 26 de octubre de 2026:** comenzó la implementación del backend local en la rama `feat/navira-backend-base`. `/salud` y `POST /paso` están escritos; `/paso` requiere `x-api-key` y por ahora responde con espera determinista (`nodoActual`) hasta integrar el mapa y el planificador. No hay simulador, mapa real, pruebas de aplicación ejecutadas ni despliegue AWS.
 
 ## Empezar
 
@@ -22,7 +22,28 @@ Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con 
 - [PRD](doc/PRD.md), [TRD](doc/TRD.md), [ODDD: OO + DDD](doc/ODDD.md) y [SDD](doc/SDD.md).
 - [Especificaciones por funcionalidad](doc/especificaciones/README.md) y [trazabilidad](doc/trazabilidad.md).
 
-No hay comandos de instalación, endpoints operativos o métricas reales que podamos anunciar todavía. Se añadirán al implementar y verificar cada componente.
+## Backend local
+
+Requiere Python 3.12 o posterior:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+export NAVIRA_API_KEY='local-navira-key-change-me'
+uvicorn navira.main:app --app-dir src --reload
+```
+
+La salud local se consulta en `GET /salud`. El contrato inicial del motor:
+
+```bash
+curl -X POST http://127.0.0.1:8000/paso \
+  -H 'content-type: application/json' \\
+  -H 'x-api-key: local-navira-key-change-me' \\
+  -d '{"sobrevivienteId":"S-0089","nodoActual":"N-0117","turno":142}'
+```
+
+Respuesta inicial: `{"siguienteNodo":"N-0117"}`. Esta espera cumple la alternativa permitida por el contrato, pero no calcula rutas ni garantiza seguridad. La clave de ejemplo es solo local; reemplázala y no uses una clave real en el repositorio. El contrato documentado está en [API](doc/contratos/api.md); el plan sigue en [estado actual](doc/estado-actual.md).
 
 Comprobación documental disponible, sin dependencias externas:
 

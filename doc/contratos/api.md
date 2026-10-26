@@ -1,6 +1,6 @@
 # Contratos HTTP
 
-Estado: contratos previstos. Solo el formato de `/paso` y el estado mínimo provienen del reto; las rutas adicionales son diseño del equipo. No hay endpoints desplegados.
+Estado: `/salud` y `/paso` tienen implementación local inicial; no hay endpoints desplegados. Solo el formato obligatorio de `/paso` y el estado mínimo provienen del reto; las rutas adicionales son diseño del equipo.
 
 ## API obligatoria del motor
 
@@ -18,7 +18,7 @@ Content-Type: application/json
 
 Éxito 200; respuesta menor a 500 ms. Conservar nombre, método, campos y cuerpo de éxito. Puede devolver el mismo nodo. Resolver partida activa en servidor sin exigir un campo adicional al evaluador. Mantener la misma decisión para una solicitud repetida sobre la misma instantánea. La ruta completa y las explicaciones van en otro canal.
 
-Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema inválido; 404 por entidad inexistente; 409 por turno/fase incompatible; 503 si el estado confirmado no está disponible. Estos errores cuentan en la medición si aparecen en el flujo normal. Nunca responder con un turno anterior para ocultarlos.
+Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema inválido; 404 por entidad inexistente; 409 por turno/fase incompatible; 503 si el estado confirmado no está disponible. En la base local, 401 y 422 los genera el adaptador HTTP; 503 indica que falta configurar `NAVIRA_API_KEY`. 404/409 dependen de la integración de estado y turno. Estos errores cuentan en la medición si aparecen en el flujo normal. Nunca responder con un turno anterior para ocultarlos.
 
 ## Rutas y permisos
 
