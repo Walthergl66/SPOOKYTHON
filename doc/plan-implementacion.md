@@ -50,7 +50,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P1-03 | Zombies y mordidas — simulación | P1-02 | T-01 a T-06 cubiertas, visibilidad validada y supuestos identificados. | En curso |
 | P1-04 | Reloj, eventos y snapshots — simulación | P1-03 | Turnos versionados; ninguna publicación parcial. | En curso |
 | P1-05 | Tres escenarios — simulación | P1-01 y P1-04 | Configuraciones y semillas reproducibles. | Pendiente |
-| P2-01 | Dijkstra y selección de refugio — rutas | P1-01 | Considera tipo/distancia, cierres y peligros visibles. | Pendiente |
+| P2-01 | Dijkstra y selección de refugio — rutas | P1-01 | Núcleo genérico considera tipo/distancia, cierres y peligros visibles; falta validar mapa real. | En curso |
 | P2-02 | `/paso` y API key — backend | P2-01 y P1-04 | HTTP real, decisiones idempotentes y siempre válidas. | Pendiente |
 | P2-03 | Integración y referencia — integración | P2-02 y P1-05 | Una ronda completa; luego tres rondas y reporte base. | Pendiente |
 | P3-01 | Búsqueda temporal acotada — rutas | P2-03 | Espera/avance, horizonte configurable y presupuesto medido. | Pendiente |

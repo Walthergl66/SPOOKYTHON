@@ -4,7 +4,7 @@ Estado al 2026-10-26. Ninguna aclaración externa confirmada todavía. Las respu
 
 | ID | Asunto | Supuesto o siguiente paso | ¿Impide empezar local? |
 |---|---|---|---|
-| P-01 | Velocidad/distancia frente a un salto por turno | Un salto; costo adicional de calle. Consultar interpretación. | No. |
+| P-01 | Velocidad/distancia frente a un salto por turno | Resolución de rutas usa metros y factor de tipo configurable neutral 1.0; no incluye velocidad en el costo hasta confirmar la interpretación oficial. | No. |
 | P-02 | Fase de despertar y primer movimiento del dormido | Prototipo: alcance no dirigido de 2 saltos al inicio de fase, no se mueve al despertar; opción configurable. Confirmar regla oficial y fase del primer movimiento. | No. |
 | P-03 | Objetivo y desempates del corredor | Prototipo: menor ruta dirigida dentro de 3 saltos, empate por ID; objetivo fijo durante dos pasos. Confirmar criterio oficial. | No. |
 | P-04 | Refugio seguro y mordida/llegada | Prototipo resuelve mordida antes de evacuar; no otorga inmunidad al refugio. Confirmar regla oficial. | No. |

@@ -71,3 +71,5 @@ El coordinador y reloj local tienen regresiones con `python -m unittest discover
 El puerto de persistencia y el adaptador local tienen regresiones con `python -m unittest discover -s tests -p 'test_snapshots_persistidos.py' -v` (3 pruebas). Cubren ciclo CAS completo, rechazo de versión antigua, inserción duplicada y carrera de dos hilos donde solo un escritor gana. No prueban DynamoDB, múltiples procesos/hosts, apagado abrupto ni recuperación durable.
 
 El contrato HTTP de base tiene pruebas con `python -m unittest discover -s tests -p 'test_api_http.py' -v` (5 pruebas), cubriendo salud pública, autenticación ausente/incorrecta/configurada, forma exacta del éxito y rechazos 422. Además se probó localmente Uvicorn con `curl`: `/salud` 200, `/paso` autenticado 200 y sin clave 401. El smoke test no mide p95 ni valida rutas reales.
+
+El núcleo Dijkstra tiene regresiones con `python -m unittest discover -s tests -p 'test_dijkstra.py' -v` (7 pruebas). Cubren peso/distancia, factor configurable por tipo, cierres, nodos bloqueados, ruta inexistente, desempates, selección de refugio y validaciones. No prueban mapa de Manta, peligros dinámicos ni integración HTTP.

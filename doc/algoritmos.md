@@ -1,10 +1,12 @@
 # Motor de rutas y predicción
 
-Estado: movimiento zombie y resolución de un turno implementados parcialmente en `src/navira/simulation/resolver.py`; búsqueda de rutas, simulador continuo, supervivencia y tiempos siguen sin medir.
+Estado: movimiento zombie y ciclo local implementados parcialmente en `src/navira/simulation/`; Dijkstra dirigido y selección de refugio están implementados como núcleo puro en `src/navira/routing/dijkstra.py`. Integración con `/paso`, mapa real, escenarios, supervivencia y tiempos siguen pendientes/sin medir.
 
 ## Referencia inicial
 
-Dijkstra sobre el grafo vigente con costos que consideren distancia y tipo de calle. Obtener campos reutilizables hacia los cuatro refugios. Para una acción inmediata, evaluar vecinos y espera; excluir aristas cerradas, horda y mordidas conocidas. Conservar una política base ejecutable antes de añadir predicción.
+Dijkstra sobre el grafo vigente con costo base en metros y factor configurable por tipo de calle. El valor neutral de cada factor es 1.0; no introduce preferencia no confirmada. `encontrar_ruta()` respeta dirección, aristas/segmentos cerrados y nodos peligrosos visibles. `seleccionar_refugio()` puede respetar el refugio objetivo o elegir el menor costo, desempata por ID del refugio y usa calles como desempate final. El origen bloqueado puede salir; no se permite entrar a un nodo bloqueado. La información de bloqueos debe ser una proyección permitida, nunca la ubicación privada de dormidos.
+
+El costo ponderado se expresa en metros relativos. Los factores por tipo y su aplicación son parámetros de diseño, no una fórmula oficial de eficiencia; velocidad y duración por turno no se mezclan hasta resolver P-01. El núcleo no está conectado a `/paso` y no prueba una política completa contra mordidas dinámicas.
 
 ## Mejora temporal
 
@@ -21,7 +23,7 @@ Si se optimizan turnos, la heurística debe ser una cota inferior en saltos; si 
 - Horda: nodo y vecindad bloqueados; dinámica exacta pendiente de confirmación.
 - Dormido: el motor no conoce posición antes de activarse. Al aparecer, recalcular como caminante.
 
-El prototipo aplica valores provisionales registrados en [pendientes](pendientes.md): caminante elige al azar una calle saliente en su fase de dos turnos; corredor persigue por ruta dirigida más corta hasta tres saltos, empate por ID de sobreviviente y objetivo fijo durante sus dos tramos; horda permanece fija; dormido usa radio topológico de dos saltos y no se mueve por defecto en el turno de activación. No existe aún el planificador Dijkstra que consulta `/paso`.
+El prototipo aplica valores provisionales registrados en [pendientes](pendientes.md): caminante elige al azar una calle saliente en su fase de dos turnos; corredor persigue por ruta dirigida más corta hasta tres saltos, empate por ID de sobreviviente y objetivo fijo durante sus dos tramos; horda permanece fija; dormido usa radio topológico de dos saltos y no se mueve por defecto en el turno de activación. Dijkstra existe como utilidad pura, pero el planificador que consulta `/paso` sigue pendiente.
 
 No bloquear todos los nodos alcanzables por cualquier corredor en cualquier futuro: puede inmovilizar todo el mapa. Usar riesgo acotado y comparar políticas. No usar la semilla del simulador para adivinar movimientos.
 

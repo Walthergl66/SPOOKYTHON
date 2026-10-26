@@ -7,7 +7,7 @@ Lenguaje, contextos e invariantes: [ODDD](../ODDD.md). Requisitos técnicos: [TR
 | Módulo | Responsabilidad | No debe hacer | Verificación |
 |---|---|---|---|
 | `domain/` | Grafo, entidades, transitabilidad, mordidas y llegadas | Importar FastAPI/boto3, usar HTTP o decidir permisos web | `test_mapa.py` y `test_modelo.py` validan mapa, estado y contexto de intención. |
-| `routing/` | Dijkstra, A* temporal, riesgos y selección de refugio | Modificar mundo, leer dormidos o mezclar unidades | Casos de ruta y comparación de políticas. |
+| `routing/` | Dijkstra dirigido, costos por tipo y selección de refugio | Modificar mundo, leer dormidos o mezclar unidades | `test_dijkstra.py` cubre costo, desempate, cierres y bloqueos; integración con `/paso` pendiente. |
 | `simulation/` | Plazo de turno, fases, zombies, eventos y resolución | Mantener la única copia de estado o ejecutar coordinadores duplicados | `test_resolver.py` cubre movimientos/mordidas; `test_coordinador.py` cubre modo por fases, versionado/eventos/plazo local. Persistencia aún pendiente. |
 | `application/` | Preparar/resolver turno, decidir paso, iniciar/finalizar partida; puertos de I/O | Depender de esquemas HTTP o SDK AWS | Casos de uso versionados con puertos; `test_snapshots_persistidos.py`. |
 | `player/` | Aparición, propiedad lógica y orden humana por turno | Autorizar con cookies directamente o mover posiciones | Idempotencia y cierre de acciones. |
