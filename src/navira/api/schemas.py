@@ -34,6 +34,29 @@ class RespuestaUnirseJuegoSchema(BaseModel):
     nodo: str | None = None
 
 
+class SolicitudOrdenJuegoSchema(BaseModel):
+    """Orden del jugador; la identidad se contrasta con la cookie propietaria."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    runId: str = Field(min_length=1, max_length=128)
+    turno: int = Field(ge=0)
+    personajeId: str = Field(min_length=1, max_length=128)
+    siguienteNodo: str = Field(min_length=1, max_length=128)
+    accionId: str = Field(min_length=1, max_length=128)
+
+
+class RespuestaOrdenJuegoSchema(BaseModel):
+    """Acuse de recepción; no representa un movimiento confirmado."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    accionId: str
+    secuencia: int = Field(ge=1)
+    estado: Literal["recibida"]
+    turno: int = Field(ge=0)
+
+
 class NodoPanelSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -5,8 +5,8 @@ Estado: implementada
 Requisitos: PRD-05, PRD-06, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12
 Tareas: P4B-01, P4B-02, P4B-03, P5-04
 Pruebas: T-12, T-13, T-14, T-15, T-16, T-17, T-19
-Cambio: CAM-036
-Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana).
+Cambio: CAM-037
+Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana) y [CAM-037](../cambios.md#cam-037-órdenes-humanas-idempotentes).
 
 ## Objetivo y alcance
 
@@ -25,4 +25,4 @@ Un jugador entra a una partida habilitada, aparece aleatoriamente y decide cómo
 
 ## Plan, límites y verificación
 
-P4B-01 implementa localmente sesión/aparición inicial y pendiente. El hook aún no está conectado a un coordinador/ciclo de juego; P4B-02 bandeja persistida con idempotencia; P4B-03 controles/radio/resultado; P5-04 recuperación completa siguen pendientes. P-12 sigue abierto para expiración/revocación; P-11 para transporte público. Cierre humano de 1,7 s es parámetro inicial sujeto a medición. La SPEC no está verificada integralmente.
+P4B-01 implementa localmente sesión/aparición inicial y pendiente; su hook aún no está conectado al coordinador. P4B-02 implementa localmente autorización y registro idempotente en memoria; no hay reloj/cierre atómico ni consumo por el resolutor. P4B-03 controles/radio/resultado y P5-04 recuperación completa siguen pendientes. P-11/P-12/P-16 siguen abiertos. El cierre humano de 1,7 s es parámetro inicial sujeto a medición. Esta SPEC no está verificada integralmente.

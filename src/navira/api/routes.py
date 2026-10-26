@@ -12,8 +12,10 @@ from navira.api.auth import validar_api_key
 from navira.api.schemas import (
     RespuestaEstadoPanelSchema,
     RespuestaMapaPanelSchema,
+    RespuestaOrdenJuegoSchema,
     RespuestaPasoSchema,
     RespuestaUnirseJuegoSchema,
+    SolicitudOrdenJuegoSchema,
     SolicitudPasoSchema,
 )
 from navira.application.consultar_panel import ConsultarPanel, PanelNoDisponible
@@ -22,6 +24,12 @@ from navira.application.juego import (
     JuegoNoDisponible,
     PropietarioOcupado,
     UnirseAJuego,
+)
+from navira.application.ordenes import (
+    OrdenIdempotenciaConflict,
+    OrdenIncompatible,
+    RegistrarOrdenHumana,
+    SesionNoAutorizada,
 )
 from navira.application.decidir_paso import (
     DecidirPasoEspera,
@@ -108,6 +116,47 @@ async def unirse_juego(request: Request, response: Response) -> dict[str, object
         "jugadorId": resultado.sesion.sobreviviente_id,
         "estado": resultado.sesion.estado.value,
         "nodo": resultado.sesion.nodo,
+    }
+
+
+@router.post(
+    "/juego/accion",
+    response_model=RespuestaOrdenJuegoSchema,
+    tags=["juego"],
+)
+async def registrar_accion_juego(
+    solicitud: SolicitudOrdenJuegoSchema,
+    request: Request,
+) -> dict[str, object]:
+    """Acepta/repite una orden del propietario sin mover el mundo."""
+
+    if not _origen_request_mismo_host(request):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Origen no permitido.")
+    servicio: RegistrarOrdenHumana | None = getattr(request.app.state, "registrar_orden_juego", None)
+    if servicio is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El registro de órdenes del modo juego no está habilitado.",
+        )
+    try:
+        orden = servicio.ejecutar(
+            request.cookies.get(_COOKIE_SESION_JUGADOR),
+            run_id=solicitud.runId,
+            turno=solicitud.turno,
+            personaje_id=solicitud.personajeId,
+            siguiente_nodo=solicitud.siguienteNodo,
+            accion_id=solicitud.accionId,
+        )
+    except SesionNoAutorizada as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+    except (OrdenIdempotenciaConflict, OrdenIncompatible) as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+
+    return {
+        "accionId": orden.accion_id,
+        "secuencia": orden.secuencia,
+        "estado": "recibida",
+        "turno": orden.turno,
     }
 
 

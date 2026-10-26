@@ -8,6 +8,7 @@ from navira.api.routes import router
 from navira.application.decidir_paso import DecidirPasoEspera
 from navira.application.consultar_panel import ConsultarPanel
 from navira.application.juego import UnirseAJuego
+from navira.application.ordenes import RegistrarOrdenHumana
 from navira.demo import MAPA_DEMO_POR_DEFECTO, crear_contexto_demo
 
 
@@ -15,6 +16,7 @@ def crear_app(
     servicio_decision=None,
     consultar_panel: ConsultarPanel | None = None,
     unirse_juego: UnirseAJuego | None = None,
+    registrar_orden_juego: RegistrarOrdenHumana | None = None,
 ) -> FastAPI:
     """Ensamblaje inyectable; sin servicio recibe espera determinista."""
 
@@ -26,6 +28,7 @@ def crear_app(
     aplicacion.state.decidir_paso = servicio_decision or DecidirPasoEspera()
     aplicacion.state.consultar_panel = consultar_panel
     aplicacion.state.unirse_juego = unirse_juego
+    aplicacion.state.registrar_orden_juego = registrar_orden_juego
     aplicacion.include_router(router)
     return aplicacion
 

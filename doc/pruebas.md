@@ -26,8 +26,8 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-10 | Repetición/reinicio | Misma decisión en misma instantánea; ninguna caché cruza partidas. |
 | T-11 | Ráfaga | 20, 80 y 200 solicitudes concurrentes cada dos segundos. |
 | T-12 | Aparición humana | Nodo elegible y solicitud tardía incorporada en turno correcto; CAM-036 cubre servicio y hook antes de movimiento, no el ciclo de juego ensamblado. |
-| T-13 | Propiedad/acciones | Otra sesión no controla; clics múltiples no conceden pasos extra. CAM-036 cubre cookie de propiedad, concurrencia de dos uniones y origen, no todavía autorización de acciones. |
-| T-14 | Órdenes tardías/duplicadas | Rechazo o acuse idempotente; no aplicar al turno siguiente. |
+| T-13 | Propiedad/acciones | Otra sesión no controla; clics múltiples no conceden pasos extra. CAM-036 cubre cookie de propiedad/concurrencia de unión; CAM-037 cubre cookie propietaria/origen en autorización de acción, no integración completa del resolutor. |
+| T-14 | Órdenes tardías/duplicadas | Rechazo o acuse idempotente; no aplicar al turno siguiente. CAM-037 prueba el acuse repetido y rechazo al observar fase cerrada; no prueba deadline ni carrera de cierre atómico. |
 | T-15 | Reconexión | El panel recibe snapshot inicial/por versión; heartbeat detecta canal vivo; al reconectar carga el snapshot vigente, sin deltas incompletos, detener mundo o mezclar partidas. `test_panel.py` cubre secuencia posterior y cambio de partida; UI reconecta por WebSocket. Persistencia duradera/multi-worker no cubierta. |
 | T-16 | Separación de modos | Rondas oficiales sin humanos ni cambio de modo. |
 | T-17 | Paridad | Mismo estado e intenciones dan mismo resultado con control humano o automático; hay una regresión del resolutor, aún parcial. |
@@ -88,6 +88,8 @@ El caso de uso de `/paso` tiene pruebas con `python -m unittest discover -s test
 `test_simulacion_automatica.py` verifica una ronda completa con Dijkstra, el orden de movimiento zombie antes de la recomendación, continuación desde fase de decisiones persistida, apertura del siguiente turno y rechazo de versión antigua/modo incompatible. La suite no mide un reloj continuo, durabilidad ni concurrencia entre procesos.
 
 `test_juego_sesion.py` cubre P4B-01 local: sesión única por partida, dos intentos concurrentes, aparición reproducible en nodo no refugio con ruta, sesión idempotente por cookie, ausencia de candidato sin reservar cupo, partida de juego activa, espera fuera de fase PREPARACION, hook de incorporación previo a movimiento zombie y Origin/cookie HttpOnly-Secure-SameSite. No cubre expiración/revocación P-12, DynamoDB, múltiples procesos, controles de acciones o recorrido de interfaz.
+
+`test_ordenes_juego.py` cubre P4B-02/T-13/T-14 parcialmente (10 pruebas): cookie y propiedad, `Origin`, snapshot como autoridad de posición, fase/turno, vecino dirigido/cierre, bloqueo de horda, aceptación de riesgo por zombie activo, espera, idempotencia concurrente, conflicto al reutilizar `accionId` con otro cuerpo, reemplazo por secuencia del servidor y ausencia de movimiento al registrar. El adaptador es memoria; aún no se prueba el consumo por el resolutor, cierre concurrente del turno, reloj límite, durable/multi-worker ni UI. Esto no completa T-14.
 
 `test_simulacion_mapa_manta.py` ejecuta tres turnos de perfiles sintéticos sobre el fixture de Manta con 20/80/200 sobrevivientes, semilla fija y regla de movimiento del fixture; comprueba versión de mapa, inicios fuera de refugios y pasos vecinos o de espera. No verifica exactitud cartográfica ni seguridad de los refugios. El resultado exploratorio reproducible está en [CAM-025](resultados/simulacion-manta-cam025.md); no es una ronda oficial ni una medición de carga.
 

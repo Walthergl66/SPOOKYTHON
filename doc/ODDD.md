@@ -54,7 +54,9 @@ El código implementa `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimient
 
 ## Casos de uso, repositorios y eventos
 
-`IniciarPartida`, `PrepararTurno`, `DecidirPaso`, `RegistrarOrden`, `ResolverTurno` y `ConsultarPanel` pertenecen a aplicación. La aplicación define puertos para estados, órdenes, reloj y publicación; DynamoDB/HTTP los implementan fuera del núcleo. Nombres orientativos, no archivos que ya existan.
+`IniciarPartida`, `PrepararTurno`, `DecidirPaso`, `RegistrarOrdenHumana`, `ResolverTurno` y `ConsultarPanel` son responsabilidades de aplicación. Algunos casos existen como servicios/clases y otros como funciones coordinadas; la lista no exige un archivo por cada nombre. La aplicación define puertos para estados, órdenes, reloj y publicación; adaptadores de memoria/DynamoDB/HTTP se ubican fuera del dominio.
+
+`RegistrarOrdenHumana` ya valida propiedad/contexto topológico y utiliza el puerto `RepositorioOrdenes`; `RepositorioOrdenesMemoria` serializa clave idempotente y reemplazo en el adaptador local. El caso de uso devuelve un acuse, no mueve el mundo. El coordinador aún no consume ese puerto: antes de integrar debe cerrar atómicamente el turno respecto de nuevas órdenes y resolverlas como `IntencionMovimiento` mediante el mismo resolutor.
 
 Los hechos internos «turno resuelto» y «sobreviviente evacuado» pueden proyectarse a [eventos de transporte](contratos/eventos.md). Un evento de dominio no es automáticamente un mensaje público. No se introduce event sourcing ni obligación de reconstruir toda la base desde un bus.
 

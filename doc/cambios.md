@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-037 — Órdenes humanas idempotentes
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario de las fases restantes, con un commit individual por fase en `master`.
+- Especificación/tarea: SPEC-004, P4B-02; aporta evidencia parcial a T-13/T-14, pero no completa sus criterios ni verifica la SPEC.
+- Motivo: recibir intención humana sin confiar en posición/identidad del cliente, permitir reintentos de red y reemplazar una orden válida antes de resolver el turno.
+- Resultado: `POST /juego/accion` autentica sesión/origen, comprueba run, personaje humano activo, modo/turno/fase y destino dirigido habilitado. Rechaza cierres topológicos y bloqueos de horda; no rechaza un nodo por riesgo de zombie activo. `OrdenHumana` conserva versión de snapshot; `RepositorioOrdenesMemoria` serializa `accionId`, secuencia creciente por partida y última orden por personaje/turno. Repetir la misma acción y cuerpo devuelve su acuse original; variar cuerpo con la misma clave devuelve 409.
+- Decisión: se implementa el contrato existente de [orden humana](contratos/api.md), sin cambiar el movimiento confirmado ni el orden común de resolución. El repositorio volátil se ubica en `adapters/`; `application/ordenes.py` solo define el puerto y el caso de uso.
+- Archivos: `src/navira/application/ordenes.py`, `src/navira/adapters/ordenes_memoria.py`, schemas/ruta/ensamblaje API y `tests/test_ordenes_juego.py`; módulos, contrato, datos, ODDD, flujo, seguridad, pruebas, pendientes, SPEC-004, plan, trazabilidad, estado e historial.
+- Verificación: `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_ordenes_juego.py' -v` (10 OK) y suite completa (`144` pruebas OK); `python3 scripts/check_docs.py` (67 Markdown/69 archivos); `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas); `python3 -m unittest discover -s tests -p 'test_check_sdd.py'` (8 OK); `compileall`, `git diff --check` y `frontend/npm run build` correctos. La salida de uso inválido del CLI es el caso negativo esperado en la suite.
+- Límites: el adaptador es memoria de un proceso; el coordinador todavía no consume el resultado ni comparte transacción con las órdenes. El cierre solo se contrasta con la fase actual; no hay deadline monotónico ni cierre atómico contra una solicitud concurrente. No se afirma persistencia durable ni T-14 completo (P-16).
+- Siguiente acción: P4B-03, controles y estado de personaje en UI usando la cookie same-origin; luego conectar aparición, bandeja de órdenes y cierre de turno al ciclo de juego antes de afirmar recorrido jugable.
+- Commit: individual local en `master` después de validaciones locales.
+
 ## CAM-036 — Sesión propietaria y aparición humana local
 
 - Fecha: 2026-10-26, Ecuador continental.

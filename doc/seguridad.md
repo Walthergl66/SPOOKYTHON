@@ -24,6 +24,7 @@ Las claves de servicio y de operador nunca se incluyen en JavaScript público. N
 - Sanitizar alias si se muestran; limitar longitud. No hace falta recoger datos personales para jugar.
 - Verificar TLS y permisos del origen; limitar entrada por red y validar cabecera de origen.
 - CAM-036: cookie de unión protegida por `HttpOnly`, `Secure` por defecto, `SameSite=Strict`, `Path=/juego`; CSRF/origen controlado mediante host coincidente. No configurar `NAVIRA_COOKIE_SECURE=0` fuera de test/desarrollo local. Sesiones no expiran ni sobreviven reinicios con el adaptador actual; P-11/P-12/P5-02 impiden declarar el juego listo para publicación.
+- CAM-037: `POST /juego/accion` repite la comprobación de `Origin` y autoriza por token de cookie comparado con la sesión propietaria. El cuerpo no otorga identidad, control ni posición; el servidor valida fase/turno/mapa y el mismo destino solo expresa espera. La clave idempotente y su secuencia residen en memoria: no cubren varios workers ni una carrera atómica contra el cierre de turno (P-16).
 - Rol de ejecución y de aplicación separados según funciones; permisos limitados a tabla, logs y configuración necesarios.
 
 ## Comentarios y documentación
