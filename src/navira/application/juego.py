@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import math
 import random
 import secrets
+import time
 import uuid
 from dataclasses import dataclass, replace
 from enum import StrEnum
 from threading import RLock
-from typing import Protocol
+from typing import Callable, Protocol
 
 from navira.application.decidir_paso import ProveedorMapas, peligros_visibles
 from navira.application.snapshots import RepositorioSnapshots
@@ -45,6 +47,7 @@ class SesionJugador:
 class RepositorioSesiones(Protocol):
     def reservar(self, token: str, run_id: str, sobreviviente_id: str) -> bool: ...
     def obtener(self, token: str) -> SesionJugador | None: ...
+    def expirada(self, token: str) -> bool: ...
     def pendiente(self, run_id: str) -> SesionJugador | None: ...
     def activar(self, token: str, nodo: str) -> bool: ...
     def activar_pendiente(self, run_id: str, sobreviviente_id: str, nodo: str) -> bool: ...
@@ -52,16 +55,29 @@ class RepositorioSesiones(Protocol):
 
 
 class RepositorioSesionesMemoria:
-    """Almacena solo hash del token; es local a un proceso y no durable."""
+    """Almacena hash de token con expiración inactiva; solo proceso local."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        inactividad_segundos: float = 1800.0,
+        reloj_monotonico: Callable[[], float] = time.monotonic,
+    ) -> None:
+        if not math.isfinite(inactividad_segundos) or inactividad_segundos <= 0:
+            raise ValueError("La expiración por inactividad debe ser finita y positiva.")
+        self._inactividad_segundos = inactividad_segundos
+        self._reloj_monotonico = reloj_monotonico
         self._sesiones: dict[str, SesionJugador] = {}
         self._propietario_por_run: dict[str, str] = {}
+        self._run_por_token: dict[str, str] = {}
+        self._ultima_actividad: dict[str, float] = {}
+        self._expiradas: set[str] = set()
         self._lock = RLock()
 
     def reservar(self, token: str, run_id: str, sobreviviente_id: str) -> bool:
         huella = _huella(token)
         with self._lock:
+            if huella in self._expiradas:
+                return False
             existente = self._sesiones.get(huella)
             if existente is not None:
                 return existente.run_id == run_id
@@ -72,33 +88,48 @@ class RepositorioSesionesMemoria:
                 run_id, sobreviviente_id, EstadoSesion.ESPERANDO_APARICION
             )
             self._propietario_por_run[run_id] = huella
+            self._run_por_token[huella] = run_id
+            self._ultima_actividad[huella] = self._reloj_monotonico()
             return True
 
     def obtener(self, token: str) -> SesionJugador | None:
         with self._lock:
-            return self._sesiones.get(_huella(token))
+            huella = _huella(token)
+            ahora = self._reloj_monotonico()
+            sesion = self._vigente(huella, ahora)
+            if sesion is not None:
+                self._ultima_actividad[huella] = ahora
+            return sesion
+
+    def expirada(self, token: str) -> bool:
+        with self._lock:
+            huella = _huella(token)
+            self._vigente(huella, self._reloj_monotonico())
+            return huella in self._expiradas
 
     def pendiente(self, run_id: str) -> SesionJugador | None:
         with self._lock:
             huella = self._propietario_por_run.get(run_id)
-            sesion = self._sesiones.get(huella) if huella is not None else None
+            sesion = self._vigente(huella, self._reloj_monotonico()) if huella is not None else None
             return sesion if sesion and sesion.estado is EstadoSesion.ESPERANDO_APARICION else None
 
     def activar(self, token: str, nodo: str) -> bool:
         huella = _huella(token)
         with self._lock:
-            actual = self._sesiones.get(huella)
+            ahora = self._reloj_monotonico()
+            actual = self._vigente(huella, ahora)
             if actual is None:
                 return False
             if actual.estado is EstadoSesion.ACTIVO:
                 return actual.nodo == nodo
             self._sesiones[huella] = replace(actual, estado=EstadoSesion.ACTIVO, nodo=nodo)
+            self._ultima_actividad[huella] = ahora
             return True
 
     def activar_pendiente(self, run_id: str, sobreviviente_id: str, nodo: str) -> bool:
         with self._lock:
             huella = self._propietario_por_run.get(run_id)
-            actual = self._sesiones.get(huella) if huella is not None else None
+            actual = self._vigente(huella, self._reloj_monotonico()) if huella is not None else None
             if actual is None or actual.sobreviviente_id != sobreviviente_id:
                 return False
             if actual.estado is EstadoSesion.ACTIVO:
@@ -110,8 +141,24 @@ class RepositorioSesionesMemoria:
         huella = _huella(token)
         with self._lock:
             sesion = self._sesiones.pop(huella, None)
-            if sesion is not None and self._propietario_por_run.get(sesion.run_id) == huella:
-                del self._propietario_por_run[sesion.run_id]
+            run_id = sesion.run_id if sesion is not None else self._run_por_token.get(huella)
+            self._ultima_actividad.pop(huella, None)
+            self._expiradas.discard(huella)
+            self._run_por_token.pop(huella, None)
+            if run_id is not None and self._propietario_por_run.get(run_id) == huella:
+                del self._propietario_por_run[run_id]
+
+    def _vigente(self, huella: str, ahora: float) -> SesionJugador | None:
+        """Expira por reloj monotónico y conserva la reserva del run como tombstone."""
+
+        sesion = self._sesiones.get(huella)
+        ultima = self._ultima_actividad.get(huella)
+        if sesion is not None and ultima is not None and ahora - ultima >= self._inactividad_segundos:
+            self._sesiones.pop(huella, None)
+            self._ultima_actividad.pop(huella, None)
+            self._expiradas.add(huella)
+            return None
+        return sesion
 
 
 class JuegoNoDisponible(RuntimeError):
@@ -157,6 +204,10 @@ class SesionNoEncontrada(PermissionError):
     """La cookie no identifica una sesión de jugador recuperable."""
 
 
+class SesionExpirada(PermissionError):
+    """La sesión venció y su reserva de personaje no se puede transferir."""
+
+
 @dataclass(frozen=True, slots=True)
 class EstadoSesionActual:
     """Estado privado mínimo para restaurar la vista de la persona propietaria."""
@@ -180,6 +231,8 @@ class ConsultarSesionJuego:
             raise SesionNoEncontrada("Se requiere la sesión propietaria.")
         sesion = self.sesiones.obtener(token)
         if sesion is None:
+            if self.sesiones.expirada(token):
+                raise SesionExpirada("La sesión venció por inactividad y no puede tomar otro personaje.")
             raise SesionNoEncontrada("La sesión de juego no existe o ya no está disponible.")
         snapshot = self.snapshots.obtener(sesion.run_id)
         if snapshot is None or snapshot.partida.modo is not ModoPartida.JUEGO:
@@ -242,6 +295,8 @@ class UnirseAJuego:
                         self.sesiones.activar(token_actual, personaje.nodo)
                         sesion = self.sesiones.obtener(token_actual) or sesion
                 return ResultadoUnirse(token_actual, sesion)
+            if self.sesiones.expirada(token_actual):
+                raise SesionExpirada("La sesión venció; no se puede crear otro personaje en esta partida.")
 
         token = secrets.token_urlsafe(32)
         sobreviviente_id = f"J-{uuid.uuid4().hex[:12]}"

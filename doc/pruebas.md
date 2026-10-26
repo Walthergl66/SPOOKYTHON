@@ -38,6 +38,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-22 | Predicción | Comparación reproducible entre base y mejora con semillas/escenarios y límites de información declarados. |
 | T-23 | AWS y entrega | Salud/API/WebSocket, permisos/TLS, Budget, costos y entregables con evidencia real y enlaces comprobados. |
 | T-24 | Variación y reproducción estocástica | Configuración/semilla/versiones/entradas idénticas reproducen; otra semilla y una perturbación controlada pueden divergir; la misma instantánea HTTP conserva la decisión. |
+| T-25 | Caducidad de sesión humana local | TTL deslizante usa reloj monotónico; lectura válida renueva; una cookie vencida recibe 410 y ningún visitante distinto puede tomar el cupo/personaje reservado. No acredita expiración durable ni coordinación multiproceso. |
 
 ## Medición de la prueba de fuego
 
@@ -87,7 +88,7 @@ El caso de uso de `/paso` tiene pruebas con `python -m unittest discover -s test
 
 `test_simulacion_automatica.py` verifica una ronda completa con Dijkstra, el orden de movimiento zombie antes de la recomendación, continuación desde fase de decisiones persistida, apertura del siguiente turno y rechazo de versión antigua/modo incompatible. La suite no mide un reloj continuo, durabilidad ni concurrencia entre procesos.
 
-`test_juego_sesion.py` cubre P4B-01 local: sesión única por partida, dos intentos concurrentes, aparición reproducible en nodo no refugio con ruta, sesión idempotente por cookie, ausencia de candidato sin reservar cupo, partida de juego activa, espera fuera de fase PREPARACION, hook de incorporación previo a movimiento zombie y Origin/cookie HttpOnly-Secure-SameSite. No cubre expiración/revocación P-12, DynamoDB, múltiples procesos, controles de acciones o recorrido de interfaz.
+`test_juego_sesion.py` cubre P4B-01 local: sesión única por partida, dos intentos concurrentes, aparición reproducible en nodo no refugio con ruta, sesión idempotente por cookie, ausencia de candidato sin reservar cupo, partida de juego activa, espera fuera de fase PREPARACION, hook de incorporación previo a movimiento zombie, Origin/cookie HttpOnly-Secure-SameSite y T-25/CAM-046: renovación del TTL con reloj controlado, respuesta HTTP 410 al vencer y rechazo 409 de otra cookie sin transferir personaje. No cubre expiración durable/revocación productiva, DynamoDB, múltiples procesos, controles completos de acciones o recorrido de interfaz.
 
 `test_ordenes_juego.py` cubre P4B-02/T-13/T-14 parcialmente (12 pruebas): cookie y propiedad, `Origin`, snapshot como autoridad de posición, fase/turno, vecino dirigido/cierre, bloqueo de horda, aceptación de riesgo por zombie activo, espera, idempotencia concurrente, conflicto al reutilizar `accionId` con otro cuerpo, reemplazo por secuencia del servidor y ausencia de movimiento al registrar. CAM-043 agrega dos pruebas HTTP de recuperación: se exigen la cookie existente, se lee la ubicación actual del snapshot y la última orden, y sin cookie no se crea otro personaje. El adaptador es memoria; aún no se prueba el consumo por el resolutor, cierre concurrente del turno, reloj límite, durable/multi-worker ni recorrido de navegador.
 

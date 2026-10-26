@@ -20,4 +20,4 @@ Duplicar un juego independiente haría divergir reglas y duplicaría pruebas. Mo
 
 Se necesitan órdenes idempotentes, cierre humano y recuperación de sesión. El p95 del motor se mide separado del plazo de entrada humana. El modo juego no sustituye la demostración automática del reto.
 
-Documentos propietarios: [modos](../modos.md), [jugador](../flujos/jugador.md) y [API](../contratos/api.md). Pendiente P-12.
+Documentos propietarios: [modos](../modos.md), [jugador](../flujos/jugador.md) y [API](../contratos/api.md). Expiración local por inactividad: [ADR-014](0014-expiracion-local-de-sesion-humana.md); política productiva durable pendiente P-12.

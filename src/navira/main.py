@@ -88,7 +88,9 @@ def crear_app_juego_demo(
         escenario=escenario,
         cantidad_sobrevivientes=cantidad_sobrevivientes,
     )
-    sesiones = RepositorioSesionesMemoria()
+    sesiones = RepositorioSesionesMemoria(
+        inactividad_segundos=float(os.environ.get("NAVIRA_GAME_SESSION_IDLE_SECONDS", "1800"))
+    )
     ordenes = RepositorioOrdenesMemoria()
     puerta = PuertaDecisiones()
     unirse = UnirseAJuego(contexto.snapshots, contexto.mapas, sesiones)

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from navira.application.decidir_paso import ProveedorMapas, nodos_horda_visibles
-from navira.application.juego import EstadoSesion, RepositorioSesiones
+from navira.application.juego import EstadoSesion, RepositorioSesiones, SesionExpirada
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.application.snapshots import RepositorioSnapshots
 from navira.domain.modelo import (
@@ -98,6 +98,8 @@ class RegistrarOrdenHumana:
         if not token:
             raise SesionNoAutorizada("Se requiere la sesión propietaria.")
         sesion = self.sesiones.obtener(token)
+        if sesion is None and self.sesiones.expirada(token):
+            raise SesionExpirada("La sesión venció; esta partida no admite otro personaje humano.")
         if (
             sesion is None
             or sesion.estado is not EstadoSesion.ACTIVO

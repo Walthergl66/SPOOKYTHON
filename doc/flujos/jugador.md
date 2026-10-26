@@ -1,6 +1,6 @@
 # Flujo del jugador
 
-Estado: sesión/aparición y órdenes locales en CAM-036/037; coordinador/reloj demo en CAM-039/040; contador, radio y recuperación UI en CAM-041..043. El modo de juego solo se ensambla con opt-in local y no ofrece persistencia durable ni despliegue. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
+Estado: sesión/aparición y órdenes locales en CAM-036/037; coordinador/reloj demo en CAM-039/040; contador, radio y recuperación UI en CAM-041..043; vencimiento local en CAM-046. El modo de juego solo se ensambla con opt-in local y no ofrece persistencia durable ni despliegue. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
 
 ## Entrar
 
@@ -23,6 +23,8 @@ CAM-041 agrega `decisionRestanteMs` a la proyección observable durante decision
 CAM-042 muestra en Radio Navira el siguiente tramo de `rutasPrevistas` asociado al personaje activo. El texto lo presenta como sugerencia del servidor basada en el snapshot observable, nunca como seguridad garantizada. «Usar sugerencia» manda una orden explícita por el mismo endpoint y acuse; si el tramo no coincide con una calle actualmente elegible, no se ofrece el botón. No hay endpoint separado de radio ni acción automática.
 
 CAM-043 agrega `GET /juego/mi-personaje`: al seleccionar el modo humano, el cliente recupera sesión solo si ya existe la cookie HttpOnly. La API obtiene posición/estado desde el snapshot actual y la última orden desde el repositorio local. Sin cookie se mantiene el botón de entrada; no se crea un personaje de manera automática. La recuperación funciona tras recarga en el mismo proceso y no tras reiniciar el servicio.
+
+CAM-046 establece para la demo un plazo deslizante de inactividad de 30 minutos (`NAVIRA_GAME_SESSION_IDLE_SECONDS`). Una lectura/acción autorizada renueva el plazo. Al vencer, unión, recuperación y acción con esa cookie responden 410 y borran la cookie del navegador; el frontend explica que la partida conserva el personaje/cupo. El backend mantiene un tombstone hasta que la instancia termina, por lo que ni una cookie nueva puede apropiarse del personaje de la partida actual. Al cambiar a una partida futura, el cliente puede volver a entrar. El tombstone no es durable ni permite recuperación después del reinicio.
 
 ## Elegir una acción
 

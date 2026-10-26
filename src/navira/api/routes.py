@@ -25,6 +25,7 @@ from navira.application.juego import (
     ConsultarSesionJuego,
     JuegoNoDisponible,
     PropietarioOcupado,
+    SesionExpirada,
     SesionNoEncontrada,
     UnirseAJuego,
 )
@@ -99,6 +100,13 @@ async def unirse_juego(request: Request, response: Response) -> dict[str, object
         )
     try:
         resultado = servicio.ejecutar(request.cookies.get(_COOKIE_SESION_JUGADOR))
+    except SesionExpirada as error:
+        _borrar_cookie_sesion(response)
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail=str(error),
+            headers=dict(response.headers),
+        ) from error
     except PropietarioOcupado as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
     except AparicionNoDisponible as error:
@@ -141,6 +149,13 @@ async def recuperar_sesion_juego(request: Request, response: Response) -> dict[s
         )
     try:
         actual = servicio.ejecutar(request.cookies.get(_COOKIE_SESION_JUGADOR))
+    except SesionExpirada as error:
+        _borrar_cookie_sesion(response)
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail=str(error),
+            headers=dict(response.headers),
+        ) from error
     except SesionNoEncontrada as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
     except JuegoNoDisponible as error:
@@ -170,6 +185,7 @@ async def recuperar_sesion_juego(request: Request, response: Response) -> dict[s
 async def registrar_accion_juego(
     solicitud: SolicitudOrdenJuegoSchema,
     request: Request,
+    response: Response,
 ) -> dict[str, object]:
     """Acepta/repite una orden del propietario sin mover el mundo."""
 
@@ -190,6 +206,13 @@ async def registrar_accion_juego(
             siguiente_nodo=solicitud.siguienteNodo,
             accion_id=solicitud.accionId,
         )
+    except SesionExpirada as error:
+        _borrar_cookie_sesion(response)
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail=str(error),
+            headers=dict(response.headers),
+        ) from error
     except SesionNoAutorizada as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
     except (OrdenIdempotenciaConflict, OrdenIncompatible) as error:
@@ -263,6 +286,18 @@ def _origen_mismo_host(websocket: WebSocket) -> bool:
     except ValueError:
         return False
     return partes.scheme in {"http", "https"} and partes.netloc.casefold() == host.casefold()
+
+
+def _borrar_cookie_sesion(response: Response) -> None:
+    """Retira del navegador una cookie vencida para permitir futuras partidas."""
+
+    response.delete_cookie(
+        key=_COOKIE_SESION_JUGADOR,
+        path="/juego",
+        httponly=True,
+        secure=os.getenv("NAVIRA_COOKIE_SECURE", "1") != "0",
+        samesite="strict",
+    )
 
 
 def _origen_request_mismo_host(request: Request) -> bool:

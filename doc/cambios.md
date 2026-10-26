@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-046 — Expiración local de sesión humana
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada del usuario para avanzar P4B-01/P5-04 y cerrar el vencimiento de sesión pendiente P-12.
+- Especificación/tarea: SPEC-004, P4B-01/P5-04; CA-004-07 y T-25.
+- Motivo: limitar sesiones abandonadas sin permitir que otra cookie controle o duplique el personaje ya asignado.
+- Decisión: [ADR-014](decisiones/0014-expiracion-local-de-sesion-humana.md), TTL deslizante local de 30 min por defecto, configurable, con HTTP 410 y reserva tombstone no transferible.
+- Archivos: `src/navira/application/juego.py`, `src/navira/application/ordenes.py`, `src/navira/api/routes.py`, `src/navira/main.py`, `frontend/src/features/game/GameControls.tsx`, `tests/test_juego_sesion.py`; documentos propietarios de sesión, seguridad, API, frontend, SPEC, plan, trazabilidad, estado e índice.
+- Resultado: reloj monotónico inyectable; lecturas/acciones válidas renuevan plazo. Unión/recuperación/acción rechazan la cookie expirada con HTTP 410 y la borran del navegador para permitir entrar en partidas futuras. El tombstone retiene la reserva del `runId` hasta limpieza local explícita; la UI muestra el estado vencido y no ofrece reentrada en la partida actual.
+- Verificación: suite backend completa (`unittest discover -s tests -p 'test_*.py'`: 152 pruebas OK); `python3 scripts/check_docs.py` (69 Markdown en `doc/`, 71 archivos), `python3 scripts/check_sdd.py` (6 SPEC), regresiones del checker (8 OK), `compileall`, `git diff --check` y `cd frontend && npm run build` correctos. La primera corrida integral detectó que `HTTPException` descartaba el borrado de cookie del `Response`; se corrigió propagando el header `Set-Cookie` y se repitió el caso enfocado (10 pruebas OK) antes de repetir la suite.
+- Límites: adaptador y tombstones son volátiles, sin revocación administrativa, reinicio durable o coordinación multiproceso. No habilita despliegue público ni completa SPEC-004/T-14/T-15/T-19.
+- Siguiente paso: recorrido manual T-19 con teclado/tecnologías de asistencia; después diseño e implementación de persistencia durable y recuperación ante reinicio.
+- Commit: commit individual local en `master` después de las verificaciones.
+
 ## CAM-045 — Accesibilidad de navegación y tiempo de juego
 
 - Fecha: 2026-10-26, Ecuador continental.

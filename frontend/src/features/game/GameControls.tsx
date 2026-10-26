@@ -16,6 +16,7 @@ type Activity =
   | { kind: 'recovering' }
   | { kind: 'recovered'; session: PlayerSession }
   | { kind: 'recovery-error'; message: string }
+  | { kind: 'session-expired' }
   | { kind: 'joining' }
   | { kind: 'sending' }
   | { kind: 'accepted'; receipt: GameOrderReceipt }
@@ -84,6 +85,11 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
           setActivity({ kind: 'idle' })
           return
         }
+        if (error instanceof GameApiError && error.status === 410) {
+          setSession(null)
+          setActivity({ kind: 'session-expired' })
+          return
+        }
         setActivity({
           kind: 'recovery-error',
           message: error instanceof Error ? error.message : 'No se pudo consultar la sesión guardada.',
@@ -108,6 +114,11 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
       onJoined(joined.playerId)
       setActivity({ kind: 'idle' })
     } catch (error) {
+      if (error instanceof GameApiError && error.status === 410) {
+        setSession(null)
+        setActivity({ kind: 'session-expired' })
+        return
+      }
       setActivity({
         kind: 'error',
         message: error instanceof Error ? error.message : 'No se pudo entrar a la partida.',
@@ -133,6 +144,12 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
       setActivity({ kind: 'accepted', receipt })
     } catch (error) {
       const status = error instanceof GameApiError ? error.status : 0
+      if (status === 410) {
+        pendingOrder.current = null
+        setSession(null)
+        setActivity({ kind: 'session-expired' })
+        return
+      }
       const canRetry = status === 0 || status >= 500
       if (!canRetry) pendingOrder.current = null
       setActivity({
@@ -160,9 +177,9 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
         </div>
       ) : !session ? (
         <div className="game-entry">
-          <p>Entra con una sesión temporal. El servidor elige tu punto inicial y guarda la cookie fuera de JavaScript.</p>
-          <button className="game-primary" type="button" onClick={enterGame} disabled={busy || !panelFresh}>
-            {activity.kind === 'recovering' ? 'Comprobando sesión…' : activity.kind === 'joining' ? 'Entrando…' : 'Entrar a la partida'}
+          <p aria-live="polite">{activity.kind === 'session-expired' ? 'La sesión venció por inactividad. Esta partida conserva el cupo y personaje anteriores; espera la próxima partida para volver a entrar.' : 'Entra con una sesión temporal. El servidor elige tu punto inicial y guarda la cookie fuera de JavaScript.'}</p>
+          <button className="game-primary" type="button" onClick={enterGame} disabled={busy || !panelFresh || activity.kind === 'session-expired'}>
+            {activity.kind === 'recovering' ? 'Comprobando sesión…' : activity.kind === 'joining' ? 'Entrando…' : activity.kind === 'session-expired' ? 'Sesión vencida' : 'Entrar a la partida'}
           </button>
           {activity.kind === 'recovery-error' ? <button type="button" className="game-retry" onClick={() => setRecoveryAttempt((attempt) => attempt + 1)}>Reintentar recuperación</button> : null}
           {!panelFresh ? <span className="game-hint">Esperando una conexión reciente con el servidor.</span> : null}
