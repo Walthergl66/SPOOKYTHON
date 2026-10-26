@@ -26,11 +26,15 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const latestDataRef = useRef<FeatureCollection>(emptyCollection())
+  const latestActorsRef = useRef<FeatureCollection>(emptyCollection())
+  const previousStateRef = useRef<PanelState | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
   const [ready, setReady] = useState(false)
   const [is3d, setIs3d] = useState(true)
   const [mapError, setMapError] = useState<string | null>(null)
 
   latestDataRef.current = createSimulationFeatures(map, state, selectedSurvivorId)
+  latestActorsRef.current = createActorFeatures(map, state)
 
   useEffect(() => {
     const container = containerRef.current
@@ -59,7 +63,8 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
     instance.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-right')
     instance.once('load', () => {
       initialized = true
-      addMapLayers(instance, latestDataRef.current)
+      fitMapToNodes(instance, map)
+      addMapLayers(instance, latestDataRef.current, latestActorsRef.current)
       setReady(true)
       setMapError(null)
     })
@@ -70,6 +75,7 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
       }
     })
     return () => {
+      if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current)
       mapRef.current = null
       instance.remove()
     }
@@ -77,9 +83,40 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
 
   useEffect(() => {
     const instance = mapRef.current
+    const previous = previousStateRef.current
+    previousStateRef.current = state
     if (!ready || !instance) return
-    const source = instance.getSource('navira-simulation') as GeoJSONSource | undefined
-    source?.setData(latestDataRef.current as never)
+
+    const staticSource = instance.getSource('navira-simulation') as GeoJSONSource | undefined
+    const actorSource = instance.getSource('navira-actors') as GeoJSONSource | undefined
+    staticSource?.setData(latestDataRef.current as never)
+    if (!actorSource) return
+    // Selection changes redraw the suggested route but must not cancel an in-flight actor transition.
+    if (previous?.runId === state.runId && previous?.snapshotVersion === state.snapshotVersion) return
+
+    if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current)
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const animations = previous && !reducedMotion ? createMovementAnimations(map, previous, state, performance.now()) : []
+    if (animations.length === 0) {
+      actorSource.setData(latestActorsRef.current as never)
+      return
+    }
+
+    const durationMs = 1600
+    const animate = (now: number) => {
+      const positions = new Map<string, Position>()
+      let stillMoving = false
+      for (const movement of animations) {
+        const elapsed = Math.max(0, now - movement.startedAt)
+        const progress = Math.min(1, elapsed / durationMs)
+        positions.set(movement.id, positionAlongPath(movement.path, progress))
+        if (progress < 1) stillMoving = true
+      }
+      actorSource.setData(createActorFeatures(map, state, positions) as never)
+      if (stillMoving) animationFrameRef.current = window.requestAnimationFrame(animate)
+      else animationFrameRef.current = null
+    }
+    animationFrameRef.current = window.requestAnimationFrame(animate)
   }, [ready, map, state, selectedSurvivorId])
 
   const togglePitch = () => {
@@ -102,7 +139,18 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   )
 }
 
-function addMapLayers(map: MapLibreMap, data: FeatureCollection) {
+/** Frames the complete fixture on first load so public actor positions are inside the visible map. */
+function fitMapToNodes(mapInstance: MapLibreMap, map: PanelMap) {
+  if (map.nodos.length === 0) return
+  const longitudes = map.nodos.map((node) => node.lng)
+  const latitudes = map.nodos.map((node) => node.lat)
+  mapInstance.fitBounds(
+    [[Math.min(...longitudes), Math.min(...latitudes)], [Math.max(...longitudes), Math.max(...latitudes)]],
+    { padding: 56, maxZoom: 14.3, duration: 0 },
+  )
+}
+
+function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: FeatureCollection) {
   map.addSource('openfreemap-buildings', { type: 'vector', url: BUILDING_TILES })
   const firstSymbolLayer = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id
   // render_height/render_min_height are provider tile attributes in metres; omit unknown heights instead of inventing them.
@@ -121,6 +169,7 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection) {
     },
   }, firstSymbolLayer)
   map.addSource('navira-simulation', { type: 'geojson', data: data as never })
+  map.addSource('navira-actors', { type: 'geojson', data: actors as never })
   map.addLayer({
     id: 'navira-streets', source: 'navira-simulation', type: 'line',
     filter: ['==', ['get', 'kind'], 'street'],
@@ -141,18 +190,33 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection) {
     paint: { 'line-color': '#ef9b54', 'line-width': 3, 'line-dasharray': [1.3, 1.2], 'line-opacity': 0.95 },
   })
   map.addLayer({
-    id: 'navira-horde-area', source: 'navira-simulation', type: 'circle',
+    id: 'navira-horde-area', source: 'navira-actors', type: 'circle',
     filter: ['==', ['get', 'kind'], 'horde'],
     paint: { 'circle-radius': 24, 'circle-color': '#f05058', 'circle-opacity': 0.24, 'circle-stroke-color': '#f05058', 'circle-stroke-width': 2 },
   })
   map.addLayer({
     id: 'navira-markers', source: 'navira-simulation', type: 'circle',
-    filter: ['in', ['get', 'kind'], ['literal', ['refuge', 'survivor', 'zombie', 'horde']]],
+    filter: ['==', ['get', 'kind'], 'refuge'],
     paint: {
-      'circle-radius': ['match', ['get', 'kind'], 'refuge', 8, 'survivor', 6, 7],
-      'circle-color': ['match', ['get', 'kind'], 'refuge', '#47cf91', 'survivor', '#38d8ec', 'zombie', '#f04f53', '#f04f53'],
+      'circle-radius': 9,
+      'circle-color': '#47cf91',
       'circle-stroke-color': '#f4f7fc', 'circle-stroke-width': 1.5,
     },
+  })
+  map.addLayer({
+    id: 'navira-actor-markers', source: 'navira-actors', type: 'circle',
+    filter: ['in', ['get', 'kind'], ['literal', ['survivor', 'zombie', 'horde']]],
+    paint: {
+      'circle-radius': ['match', ['get', 'kind'], 'survivor', 11, 'horde', 13, 12],
+      'circle-color': ['match', ['get', 'kind'], 'survivor', '#18c6e4', 'horde', '#ff8b43', '#ed4c58'],
+      'circle-stroke-color': '#f4f7fc', 'circle-stroke-width': 2,
+    },
+  })
+  map.addLayer({
+    id: 'navira-actor-glyphs', source: 'navira-actors', type: 'symbol',
+    filter: ['in', ['get', 'kind'], ['literal', ['survivor', 'zombie', 'horde']]],
+    layout: { 'text-field': ['get', 'glyph'], 'text-size': 10, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true, 'text-ignore-placement': true },
+    paint: { 'text-color': '#ffffff', 'text-halo-color': '#152238', 'text-halo-width': 0.7 },
   })
   map.addLayer({
     id: 'navira-refuge-labels', source: 'navira-simulation', type: 'symbol',
@@ -202,16 +266,68 @@ function createSimulationFeatures(map: PanelMap, state: PanelState, selectedSurv
     const coordinates = pointById.get(refuge.nodo)
     if (coordinates) features.push({ type: 'Feature', id: refuge.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'refuge', label: refuge.id } })
   }
+  return { type: 'FeatureCollection', features }
+}
+
+interface AnimatedMovement {
+  id: string
+  path: Position[]
+  startedAt: number
+}
+
+/** Builds only public actor positions so animation frames never rebuild the street graph. */
+function createActorFeatures(map: PanelMap, state: PanelState, overrides = new Map<string, Position>()): FeatureCollection {
+  const pointById = new Map(map.nodos.map((node) => [node.id, [node.lng, node.lat] as Position]))
+  const features: Feature[] = []
   for (const survivor of state.sobrevivientes ?? []) {
     if (survivor.estado !== 'activo') continue
-    const coordinates = pointById.get(survivor.nodo)
-    if (coordinates) features.push({ type: 'Feature', id: survivor.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'survivor' } })
+    const coordinates = overrides.get(survivor.id) ?? pointById.get(survivor.nodo)
+    if (coordinates) features.push({ type: 'Feature', id: survivor.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'survivor', glyph: 'S' } })
   }
   for (const zombie of state.zombies ?? []) {
-    const coordinates = pointById.get(zombie.nodo)
-    if (coordinates) features.push({ type: 'Feature', id: zombie.id, geometry: { type: 'Point', coordinates }, properties: { kind: zombie.tipo === 'horda' ? 'horde' : 'zombie' } })
+    const coordinates = overrides.get(zombie.id) ?? pointById.get(zombie.nodo)
+    if (coordinates) features.push({ type: 'Feature', id: zombie.id, geometry: { type: 'Point', coordinates }, properties: { kind: zombie.tipo === 'horda' ? 'horde' : 'zombie', glyph: zombie.tipo === 'horda' ? 'H' : 'Z' } })
   }
   return { type: 'FeatureCollection', features }
+}
+
+/** Creates transitions only from consecutive public snapshots; it cannot commit or predict a move. */
+function createMovementAnimations(map: PanelMap, previous: PanelState, current: PanelState, startedAt: number): AnimatedMovement[] {
+  if (!previous.runId || previous.runId !== current.runId || previous.snapshotVersion === current.snapshotVersion) return []
+  const pointById = new Map(map.nodos.map((node) => [node.id, [node.lng, node.lat] as Position]))
+  const movements: AnimatedMovement[] = []
+  const previousSurvivors = new Map((previous.sobrevivientes ?? []).map((actor) => [actor.id, actor]))
+  for (const actor of current.sobrevivientes ?? []) {
+    const origin = previousSurvivors.get(actor.id)
+    if (actor.estado !== 'activo' || !origin || origin.nodo === actor.nodo) continue
+    const path = [pointById.get(origin.nodo), pointById.get(actor.nodo)].filter((point): point is Position => point !== undefined)
+    if (path.length > 1) movements.push({ id: actor.id, path, startedAt })
+  }
+
+  const previousZombies = new Map((previous.zombies ?? []).map((actor) => [actor.id, actor]))
+  const movementsByZombie = new Map((current.movimientosZombies ?? []).map((movement) => [movement.id, movement]))
+  for (const actor of current.zombies ?? []) {
+    const origin = previousZombies.get(actor.id)
+    if (!origin || origin.nodo === actor.nodo) continue
+    const confirmedPath = movementsByZombie.get(actor.id)?.trayecto ?? [origin.nodo, actor.nodo]
+    const path = confirmedPath.map((nodeId) => pointById.get(nodeId)).filter((point): point is Position => point !== undefined)
+    if (path.length > 1 && samePosition(path[path.length - 1], pointById.get(actor.nodo))) movements.push({ id: actor.id, path, startedAt })
+  }
+  return movements
+}
+
+/** Advances evenly across each server-confirmed graph segment for a brief visual transition. */
+function positionAlongPath(path: Position[], progress: number): Position {
+  const scaled = Math.min(1, Math.max(0, progress)) * (path.length - 1)
+  const segment = Math.min(path.length - 2, Math.floor(scaled))
+  const fraction = progress >= 1 ? 1 : scaled - segment
+  const from = path[segment]
+  const to = path[segment + 1]
+  return [from[0] + (to[0] - from[0]) * fraction, from[1] + (to[1] - from[1]) * fraction]
+}
+
+function samePosition(left: Position | undefined, right: Position | undefined): boolean {
+  return Boolean(left && right && left[0] === right[0] && left[1] === right[1])
 }
 
 function emptyCollection(): FeatureCollection {

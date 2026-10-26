@@ -30,7 +30,7 @@ Estado: `WS /ws/panel` implementado localmente en CAM-032 para snapshots observa
 
 ### Canal implementado del panel
 
-El endpoint `WS /ws/panel` es de solo lectura y valida `Origin` contra el host de la solicitud. El servidor entrega un `panel.snapshot` inmediatamente tras aceptar la conexión, luego consulta la clave confirmada `(runId, snapshotVersion)` cada 250 ms y publica un nuevo snapshot completo al cambiar. `secuencia` usa el `snapshotVersion` de esa partida. Si todavía no hay partida, el snapshot lleva `runId: null`, `secuencia: 0`, `fase: "sin_partida"` y `datos: {"estado":"sin_partida"}`. `emitidoEn` es fecha UTC del servidor.
+El endpoint `WS /ws/panel` es de solo lectura y valida `Origin` contra el host de la solicitud. El servidor entrega un `panel.snapshot` inmediatamente tras aceptar la conexión, luego resuelve el proveedor de panel vigente y consulta la clave confirmada `(runId, snapshotVersion)` cada 250 ms; publica un nuevo snapshot completo al cambiar. Volver a resolver el proveedor permite que una conexión abierta siga la partida que el control local crea o reinicia. `secuencia` usa el `snapshotVersion` de esa partida. Si todavía no hay partida, el snapshot lleva `runId: null`, `secuencia: 0`, `fase: "sin_partida"` y `datos: {"estado":"sin_partida"}`. `emitidoEn` es fecha UTC del servidor.
 
 ```json
 {

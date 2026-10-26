@@ -5,8 +5,8 @@ Estado: implementada
 Requisitos: PRD-01, PRD-04, TRD-07, TRD-09
 Tareas: P4-04
 Pruebas: T-27
-Cambio: CAM-051
-Evidencia: [reporte CAM-051](../resultados/mapa-cartografico-3d-cam051.md)
+Cambio: CAM-052
+Evidencia: [reporte CAM-051](../resultados/mapa-cartografico-3d-cam051.md), [reporte CAM-052](../resultados/movimiento-mapa-cam052.md)
 
 ## Objetivo y alcance
 
@@ -19,12 +19,14 @@ La primera implementación ofrece estilo oscuro, edificios extruidos cuando los 
 | Criterio | Comportamiento verificable | Pruebas |
 |---|---|---|
 | CA-008-01 | El mapa central carga cartografía vectorial con coordenadas de Manta, controles de zoom/rotación y atribución legible a OpenFreeMap/OpenMapTiles/OSM. | T-27 |
-| CA-008-02 | Sobre el mapa base, las capas servidoras representan calles/bloqueos, rutas previstas y movimientos confirmados, refugios, sobrevivientes y zombies visibles en sus coordenadas. | T-27 |
+| CA-008-02 | Sobre el mapa base, las capas servidoras representan calles/bloqueos, rutas previstas y movimientos confirmados, refugios, sobrevivientes y zombies visibles en sus coordenadas. Los actores se distinguen como fichas identificables. | T-27 |
 | CA-008-03 | La vista inclinada presenta extrusión 3D de huellas con altura disponible y permite alternar a 2D; datos de altura ausentes no se presentan como mediciones reales. | T-27 |
 | CA-008-04 | Falla del proveedor/WebGL muestra un estado comprensible y la interfaz mantiene disponibles las estadísticas/control; el build de frontend compila. | T-27 |
+| CA-008-05 | Cuando llega un snapshot de una partida en curso, cada actor cuya posición confirmada cambió se interpola por el trayecto entre nodos; respeta movimiento reducido y nunca modifica el estado del servidor. | T-27 |
+| CA-008-06 | Al iniciar o reiniciar una partida, la cámara encuadra el fixture y el WebSocket sigue el nuevo `runId` sin exigir recarga o actualización manual. | T-27 |
 
 ## Plan y límites
 
-P4-04 sustituye la capa SVG por un componente MapLibre. No cambia el dominio, el contrato de `/paso`, el grafo versionado ni el estado autoritativo. Para calzar rutas curvas con la red real, una evolución debe conservar geometría completa OSM en el grafo público; esta primera versión conecta los nodos seleccionados con las coordenadas actuales.
+P4-04 sustituye la capa SVG por un componente MapLibre. Las transiciones visuales usan snapshots públicos consecutivos; no cambian el dominio, el contrato de `/paso`, el grafo versionado ni el estado autoritativo. El WebSocket vuelve a resolver el proveedor del panel durante la observación para seguir una partida local recién creada. Para calzar rutas curvas con la red real, una evolución debe conservar geometría completa OSM en el grafo público; esta versión conecta los nodos seleccionados con las coordenadas actuales.
 
-Validación manual en navegador con el proveedor de tiles accesible, compilación Vite/TypeScript y suite de regresión del frontend disponible. No hay herramienta de test de componentes configurada. El mapa depende de conexión a internet para tiles; el uso público de OpenFreeMap no tiene SLA. El fixture de rutas sigue siendo parcial, y los refugios no están certificados para amenaza sísmica.
+Validación manual en navegador con el proveedor de tiles accesible, compilación Vite/TypeScript y regresiones backend del canal de snapshots. No hay herramienta de test de componentes configurada. El mapa depende de conexión a internet para tiles; el uso público de OpenFreeMap no tiene SLA. El fixture de rutas sigue siendo parcial, y los refugios no están certificados para amenaza sísmica.

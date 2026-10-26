@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-052 — Movimiento visible de actores y sincronización de nuevos runs
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario reportó que el simulador iniciaba, pero las piezas no se movían visiblemente en el mapa; pidió que el movimiento se entendiera como fichas de un tablero.
+- Especificación/tarea: SPEC-008 CA-008-05/06, SPEC-003 CA-003-02; P4-04/T-27.
+- Causa encontrada: el WebSocket retenía el proveedor del panel que existía al abrir la conexión. El control local cambia de contexto al iniciar/reiniciar; el socket seguía enviando heartbeats de la partida anterior y el mapa se quedaba obsoleto hasta una lectura HTTP.
+- Archivos: `src/navira/api/routes.py`, `tests/test_panel.py`, `frontend/src/features/map/CityMap.tsx`; SPEC-003/008, contrato de eventos, módulos backend/frontend, pruebas, plan, trazabilidad, índice documental, estado, resultado y este registro.
+- Resultado: el WebSocket vuelve a resolver el proveedor vigente en cada sondeo. El mapa encuadra el fixture, separa actores en una fuente dinámica y anima entre posiciones de snapshots confirmados durante 1,6 s; fichas azules `S` identifican sobrevivientes y rojas `Z` zombies. Hordas usan ficha propia. La preferencia de movimiento reducido desactiva interpolación y conserva el destino confirmado. El servidor sigue siendo autoridad; no cambian reglas ni contratos de movimiento.
+- Verificación: 12 pruebas de `tests.test_panel`; build TypeScript/Vite; recorrido manual en navegador con 80 sobrevivientes que avanzó hasta el turno 11 y mostró fichas sin recargar ni pulsar actualización. `git diff --check` correcto. Evidencia: [reporte CAM-052](resultados/movimiento-mapa-cam052.md).
+- Límites: entorno local con tiles disponibles; prueba de falla de proveedor/WebGL y cobertura amplia de Manta siguen pendientes. El bundle diferido de MapLibre conserva advertencia >500 kB; la simulación sigue siendo demo sintética y no guía de evacuación.
+- Siguiente paso: completar la prueba controlada de error de cartografía de P4-04; después retomar el recorrido humano accesible pendiente T-19.
+- Commit: commit individual de fase en `master` tras las validaciones; no implica publicación remota.
+
 ## CAM-051 — Cartografía real de Manta con vista inclinada 3D
 
 - Fecha: 2026-10-26, Ecuador continental.

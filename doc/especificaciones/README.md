@@ -11,7 +11,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../PRD.md)/[TRD](../
 | [SPEC-005](SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Lista con dependencias externas pendientes. |
 | [SPEC-006](SPEC-006-metodologia.md) | Incorporación PRD/TRD/ODDD/SDD | Ver estado y evidencia en su archivo. |
 | [SPEC-007](SPEC-007-panel-operador-local.md) | Panel de simulación con control local de demo | Verificado localmente con CAM-050 y T-26; no habilita operaciones públicas ni despliegue. |
-| [SPEC-008](SPEC-008-mapa-cartografico-3d.md) | Mapa cartográfico real con vista 3D | Implementada, no verificada de extremo a extremo — CAM-051/T-27; falta prueba de falla controlada y medir cobertura del proveedor. |
+| [SPEC-008](SPEC-008-mapa-cartografico-3d.md) | Mapa cartográfico real con vista 3D y actores animados | CAM-051/052 verifican cartografía, cámara encuadrada, fichas y seguimiento de nuevo run; falta prueba de falla controlada y medir cobertura del proveedor. |
 
 ## Uso
 

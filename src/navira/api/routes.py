@@ -305,11 +305,13 @@ async def observar_panel(websocket: WebSocket) -> None:
         return
 
     await websocket.accept()
-    consulta = _consulta_panel(websocket)
     ultima_clave: tuple[str, int] | None | object = object()
     ultimo_latido = monotonic()
     try:
         while True:
+            # The local demo swaps its in-memory game context when a new run starts.
+            # Resolve the panel each poll so an open socket follows that new run.
+            consulta = _consulta_panel(websocket)
             clave = _clave_panel(consulta)
             if clave != ultima_clave:
                 estado = consulta.consultar_estado() if consulta is not None else {"estado": "sin_partida"}

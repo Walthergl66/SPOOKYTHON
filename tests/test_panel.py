@@ -152,26 +152,24 @@ class PanelTiempoRealTests(unittest.TestCase):
         self.assertEqual(recuperado["secuencia"], primero["secuencia"] + 2)
         self.assertEqual(recuperado["datos"]["snapshotVersion"], recuperado["secuencia"])
 
-    def test_cambio_de_partida_emite_su_snapshot_con_cursor_independiente(self) -> None:
+    def test_socket_del_panel_sigue_el_contexto_local_cuando_inicia_otra_partida(self) -> None:
         primera = crear_contexto_demo(semilla=5)
         segunda = crear_contexto_demo(semilla=6)
 
-        class ConsultaMutable:
+        class ControlDemoMutable:
             actual = ConsultarPanel(primera.snapshots, primera.mapas, primera.servicio_decision)
 
-            def version_estado(self):
-                return self.actual.version_estado()
+            @property
+            def consultar_panel(self):
+                return self.actual
 
-            def consultar_estado(self):
-                return self.actual.consultar_estado()
-
-        consulta = ConsultaMutable()
-        app = crear_app(consultar_panel=consulta)
+        control = ControlDemoMutable()
+        app = crear_app(control_simulador_demo=control)
         with TestClient(app).websocket_connect(
             "/ws/panel", headers={"origin": "http://testserver"}
         ) as websocket:
             inicial = websocket.receive_json()
-            consulta.actual = ConsultarPanel(segunda.snapshots, segunda.mapas, segunda.servicio_decision)
+            control.actual = ConsultarPanel(segunda.snapshots, segunda.mapas, segunda.servicio_decision)
             cambiado = websocket.receive_json()
 
         self.assertNotEqual(inicial["runId"], cambiado["runId"])
