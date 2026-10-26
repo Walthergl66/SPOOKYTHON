@@ -2,6 +2,15 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-027 — Continuar en `master` y preservar commits por cambio
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: ante la falta de autenticación para publicar `main`, el usuario elige `master` y pide mantener un commit separado por cada cosa implementada.
+- Resultado: `master` local avanzó en fast-forward hasta el historial completo. Se eliminaron las ramas locales `feat/navira-*` y `main` después de confirmar que sus commits son ancestros de `master`. El remoto no se ha modificado.
+- Granularidad: se conservaron los commits ya existentes, uno por fase/cambio; no se hizo squash ni se reescribió el historial. `git log --reverse origin/master..HEAD` mostró los 21 commits locales previos a esta entrada; CAM-027 agrega un commit documental aparte.
+- Verificación: estado limpio antes de documentar, avance fast-forward y revisión del historial con `git log --oneline --reverse origin/master..HEAD`. El push de prueba sigue limitado por la falta de credenciales registrada en CAM-026.
+- Pendiente: publicar `master` cuando GitHub esté autenticado con permiso de escritura. El remoto aún está en `6e3e9c02e21e64c25b185b14ac5544bdf69dab99`.
+
 ## CAM-026 — Consolidación local en `main` y publicación pendiente
 
 - Fecha: 2026-10-26, Ecuador continental.
