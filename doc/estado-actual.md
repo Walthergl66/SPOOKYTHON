@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-017**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-018**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -24,6 +24,7 @@
 - En `feat/navira-demo-bootstrap` el opt-in `NAVIRA_DEMO=1` carga `data/maps/demo-sintetico.json`, crea una partida efímera en memoria, abre la fase de decisiones con el coordinador y ensambla `DecidirPaso`. La API recomienda `D-002` desde `D-001`; mapa no oficial, sin zombies ni reloj continuo. Sin opt-in, la app conserva espera.
 - En `feat/navira-automatic-round` `EjecutarRondaAutomatica` encadena preparación zombie, recomendaciones Dijkstra y resolución sobre snapshot activo de modo simulador, confirmando fases por CAS y reanudando desde decisiones persistidas. Pruebas cubren turno completo, siguiente turno, reanudación, versión vieja y orden de zombie. El servicio aún no se ofrece como bucle o transporte.
 - En `feat/navira-auto-demo-cli` `python -m navira.simulador_demo --turnos N --semilla S` ejecuta rondas automáticas sobre el mapa sintético en memoria y emite una línea JSON por turno; se detiene cuando ya no hay personajes activos. `crear_contexto_demo()` comparte el ensamblaje con el bootstrap de API. El fixture no tiene zombies y la semilla no cambia su recorrido actual. CAM-017 registra cuatro pruebas específicas y la suite completa de 80.
+- En `feat/navira-zombie-scenarios` el ejecutor acepta los perfiles sintéticos `libre`, `caminantes`, `mixto` y `horda`. `--escenario` junto con `--semilla` seleccionan el inicio y el estado RNG; mismo par reproduce reportes. JSONL omite ubicaciones de zombies que siguen dormidos. Esto inicia P1-05, pero no equivale a poblaciones oficiales ni escenarios de 20/80/200 sobrevivientes. CAM-018 tiene seis pruebas específicas; suite completa de 82.
 
 ## Verificación histórica de CAM-003
 
@@ -57,9 +58,9 @@ El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-016 conserva
 
 ## Próxima acción concreta
 
-Siguiente: definir escenarios y semillas reproducibles con zombies para P1-05. No hay bucle continuo ni reporte oficial de evaluación. P1-04 requiere persistencia durable/CAS entre hosts; P1-01 requiere dataset reproducible de Manta; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar las rondas oficiales. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Siguiente: completar P1-05 con poblaciones/condiciones oficiales cuando se fije distribución zombie y exista mapa de evaluación. No hay bucle continuo ni reporte oficial de evaluación. P1-04 requiere persistencia durable/CAS entre hosts; P1-01 requiere dataset reproducible de Manta; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar las rondas oficiales. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
-Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. Suite completa en `/tmp/navira-env`: 80 pruebas OK tras CAM-017. `python -m pip install -e .` y smoke de Uvicorn local demo completados; sin medición de rendimiento ni persistencia externa.
+Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. Suite completa en `/tmp/navira-env`: 82 pruebas OK tras CAM-018. `python -m pip install -e .` y smoke de Uvicorn local demo completados; sin medición de rendimiento ni persistencia externa.
 
 ## Dependencias externas
 

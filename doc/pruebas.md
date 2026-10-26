@@ -78,4 +78,4 @@ El caso de uso de `/paso` tiene pruebas con `python -m unittest discover -s test
 
 `test_simulacion_automatica.py` verifica una ronda completa con Dijkstra, el orden de movimiento zombie antes de la recomendación, continuación desde fase de decisiones persistida, apertura del siguiente turno y rechazo de versión antigua/modo incompatible. La suite no mide un reloj continuo, durabilidad ni concurrencia entre procesos.
 
-`test_simulador_demo.py` verifica el CLI local: limita rondas, imprime JSON por línea, conserva la semilla en el reporte, sigue la ruta sintética hasta evacuar y rechaza un límite no positivo. No verifica aleatoriedad de zombies (el fixture no tiene zombies), ritmo de reloj, persistencia ni evaluación del reto.
+`test_simulador_demo.py` verifica el CLI local: limita rondas, imprime JSON por línea, reproduce escenario/semilla, prueba que otra semilla puede cambiar el movimiento, omite dormidos en el reporte, sigue el perfil libre hasta evacuar y rechaza un límite no positivo. No verifica poblaciones oficiales, ritmo de reloj, persistencia ni evaluación del reto.

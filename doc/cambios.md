@@ -216,6 +216,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: fixture sintético sin zombies; la semilla se incluye en el reporte y alimenta el generador inicial, pero no cambia el recorrido actual. No duerme entre turnos, mide tiempo, persiste al reiniciar, publica eventos ni evalúa el escenario oficial.
 - Siguiente paso: diseñar escenarios reproducibles con zombies para P1-05, después medir las tres rondas según SPEC-005.
 
+## CAM-018 — Perfiles sintéticos de escenarios con zombies
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada del usuario; siguiente paso P1-05 documentado por CAM-017.
+- Especificación/tareas: SPEC-001, CA-001-07 y P1-05 parcial; T-10. No se considera completo P1-05 ni verificada SPEC-001.
+- Rama: `feat/navira-zombie-scenarios`.
+- Motivo: ejercitar el mismo ejecutor con zombies y reproducir decisiones usando escenario y semilla como entradas explícitas.
+- Archivos: `src/navira/demo.py`, `src/navira/simulador_demo.py`, `tests/test_simulador_demo.py`, README y documentos propietarios de SPEC-001, flujo, módulo, pruebas, plan, pendientes y estado.
+- Resultado: perfiles sintéticos `libre`, `caminantes`, `mixto` y `horda`; la partida conserva su perfil, el CLI lo acepta con `--escenario`, y el JSONL reporta movimientos visibles. Zombies que siguen dormidos se omiten. Igual perfil y semilla reproducen reportes; la semilla puede variar el movimiento de caminantes.
+- Verificación: seis pruebas de `test_simulador_demo.py`; suite completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (82 pruebas OK); `python3 scripts/check_docs.py` (53 Markdown en `doc/`, 55 archivos comprobados), `python3 scripts/check_sdd.py`, ocho regresiones de `test_check_sdd.py`, `compileall`, `git diff --check` y smoke del perfil `horda` correctos. Las pruebas muestran reproducción exacta del mismo escenario/semilla, variación posible entre semillas y ausencia de dormidos en JSONL. No se midió duración del turno ni carga oficial.
+- Límites: mapa lineal sintético, un sobreviviente, ubicaciones fijas de inicio y cuatro perfiles reducidos; no son las rondas oficiales (20/80/200 sobrevivientes) ni fijan la distribución de zombies del reto. P-09 continúa abierto para tamaño/balance oficial. Sin reloj de 2 segundos, persistencia durable ni medición oficial.
+- Siguiente paso: completar poblaciones/condiciones de P1-05 cuando se confirme densidad zombie y contar con mapa de evaluación; después integrar tres rondas según SPEC-005.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

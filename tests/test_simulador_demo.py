@@ -31,6 +31,25 @@ class EjecutorDemoTests(unittest.TestCase):
         self.assertEqual(len(lineas), 2)
         self.assertEqual([json.loads(linea)["turno"] for linea in lineas], [0, 1])
 
+    def test_misma_escena_y_semilla_reproducen_resultado_y_cambiar_semilla_puede_variarlo(self) -> None:
+        primero = ejecutar_demo(turnos=1, semilla=0, escenario="caminantes")
+        repetido = ejecutar_demo(turnos=1, semilla=0, escenario="caminantes")
+        otra_semilla = ejecutar_demo(turnos=1, semilla=1, escenario="caminantes")
+
+        self.assertEqual(primero, repetido)
+        self.assertNotEqual(
+            primero[0]["movimientosZombies"],
+            otra_semilla[0]["movimientosZombies"],
+        )
+
+    def test_no_publica_posicion_de_zombie_dormido(self) -> None:
+        reportes = ejecutar_demo(turnos=1, semilla=31, escenario="horda")
+
+        self.assertEqual(
+            [zombie["id"] for zombie in reportes[0]["movimientosZombies"]],
+            ["Z-HOR-001"],
+        )
+
     def test_rechaza_cantidad_de_turnos_no_positiva(self) -> None:
         with self.assertRaises(SystemExit) as error:
             main(["--turnos", "0"])

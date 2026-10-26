@@ -9,14 +9,15 @@ from typing import TextIO
 import sys
 
 from navira.application.simulacion_automatica import EjecutarRondaAutomatica
-from navira.demo import MAPA_DEMO_POR_DEFECTO, crear_contexto_demo
-from navira.domain.modelo import EstadoSobreviviente
+from navira.demo import ESCENARIOS_DEMO, MAPA_DEMO_POR_DEFECTO, crear_contexto_demo
+from navira.domain.modelo import EstadoSobreviviente, EstadoZombie
 
 
 def ejecutar_demo(
     *,
     turnos: int = 10,
     semilla: int = 31,
+    escenario: str = "libre",
     ruta_mapa: str | Path = MAPA_DEMO_POR_DEFECTO,
 ) -> tuple[dict[str, object], ...]:
     """Ejecuta hasta N rondas, deteniéndose cuando no queden activos."""
@@ -26,7 +27,7 @@ def ejecutar_demo(
     if isinstance(semilla, bool) or not isinstance(semilla, int):
         raise ValueError("La semilla debe ser un entero.")
 
-    contexto = crear_contexto_demo(ruta_mapa, semilla=semilla)
+    contexto = crear_contexto_demo(ruta_mapa, semilla=semilla, escenario=escenario)
     rondas = EjecutarRondaAutomatica(contexto.snapshots, contexto.mapas)
     reportes: list[dict[str, object]] = []
 
@@ -43,10 +44,14 @@ def ejecutar_demo(
             sobreviviente.estado is EstadoSobreviviente.ACTIVO
             for sobreviviente in partida.sobrevivientes
         )
+        zombies_visibles = {
+            zombie.id for zombie in partida.zombies if zombie.estado is EstadoZombie.ACTIVO
+        }
         reportes.append(
             {
                 "turno": partida.turno,
                 "versionMapa": partida.map_version,
+                "escenario": partida.escenario,
                 "movimientosSobrevivientes": [
                     {
                         "id": movimiento.sobreviviente_id,
@@ -62,6 +67,7 @@ def ejecutar_demo(
                         "hasta": movimiento.destino,
                     }
                     for movimiento in resultado.movimientos_zombies
+                    if movimiento.zombie_id in zombies_visibles
                 ],
                 "mordidos": list(resultado.mordidos),
                 "evacuados": list(resultado.evacuados),
@@ -101,6 +107,7 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
     )
     parser.add_argument("--turnos", type=_entero_positivo, default=10)
     parser.add_argument("--semilla", type=_entero, default=31)
+    parser.add_argument("--escenario", choices=sorted(ESCENARIOS_DEMO), default="libre")
     parser.add_argument("--mapa", type=Path, default=MAPA_DEMO_POR_DEFECTO)
     args = parser.parse_args(argv)
     destino = salida if salida is not None else sys.stdout
@@ -108,6 +115,7 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
         reportes = ejecutar_demo(
             turnos=args.turnos,
             semilla=args.semilla,
+            escenario=args.escenario,
             ruta_mapa=args.mapa,
         )
     except (OSError, ValueError, RuntimeError, KeyError) as exc:
