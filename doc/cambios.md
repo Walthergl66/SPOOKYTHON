@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-055 — Ampliar el encuadre cartográfico 50 km por lado
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: solicitud del usuario para ampliar el mapa unos 50 km por lado.
+- Especificación/tarea: SPEC-008 CA-008-07, P4-04/T-27; misma decisión de renderer y recorte visual de ADR-016.
+- Motivo: la ventana anterior todavía ofrecía cobertura visual reducida alrededor del fixture vial.
+- Archivos: `frontend/src/features/map/CityMap.tsx`; mapa Manta, frontend, SPEC-008, ADR-016, plan, pruebas, trazabilidad, índices, estado, resultado e historial.
+- Resultado: el viewport y su máscara abarcan aproximadamente 50 km adicionales en cada dirección cardinal respecto a la ventana previa. Límites WGS84: oeste `-81.219`, sur `-1.434`, este `-80.211`, norte `-0.468`. Se conservan el límite de navegación, el zoom mínimo y la cámara ajustada al área.
+- Límites: esto amplía el mapa base, no el grafo Navira; los 300 nodos/599 aristas del fixture quedan en el área central. El rectángulo no es un límite administrativo y la simulación fuera del fixture no está representada.
+- Verificación: `npm run build` correcto con aviso conocido de chunk MapLibre >500 kB; `python3 scripts/check_docs.py` (79 Markdown/81 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), ocho regresiones del checker y `git diff --check` correctos. En `http://localhost:5173/` cargaron tiles y atribución, la escala reportó 20 km y el zoom-out quedó deshabilitado en el encuadre general. Evidencia: [reporte CAM-055](resultados/ampliacion-50km-mapa-cam055.md).
+- Siguiente paso: continuar con la falla controlada del proveedor/WebGL (P4-04/T-27).
+- Commit: individual en `master`; la revisión final se identifica en el historial Git local. La publicación remota se comprobará por separado.
+
 ## CAM-054 — Ampliar la ventana visual de Manta
 
 - Fecha: 2026-10-26, Ecuador continental.
