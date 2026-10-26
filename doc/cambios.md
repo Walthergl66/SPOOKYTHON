@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-054 — Ampliar la ventana visual de Manta
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario reportó que la zona del mapa no cargaba correctamente y pidió ampliarla un poco más.
+- Especificación/tarea: SPEC-008 CA-008-07, P4-04/T-27; relacionado con ADR-016.
+- Motivo: la ventana visual del CAM-053 dejaba poco contexto cartográfico visible en la pantalla estrecha; la máscara ocultaba las áreas exteriores al rectángulo ajustado al fixture.
+- Archivos: `frontend/src/features/map/CityMap.tsx`; mapa Manta, frontend, SPEC-008, ADR-016, plan, pruebas, trazabilidad, índices, estado, resultado e historial.
+- Resultado: se amplió el rectángulo visual en 0,015° por lado (aprox. 1,7 km), a latitud `[-0.982, -0.920]` y longitud `[-80.770, -80.660]`. Sigue restringido el pan/zoom y la máscara cubre el exterior. No se añadieron calles al fixture ni se afirma el límite administrativo.
+- Verificación: navegador local cargó cartografía y mostró los cuatro refugios en la ventana ampliada; `cd frontend && npm run build`, `python3 scripts/check_docs.py` (78 Markdown/80 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), regresiones de `test_check_sdd.py` (8) y `git diff --check` correctos. Evidencia: [reporte CAM-054](resultados/ampliacion-mapa-cam054.md).
+- Límites: la cobertura del grafo continúa parcial; no prueba cobertura municipal completa, exactitud de calles, seguridad de refugios ni uso de emergencia.
+- Siguiente paso: terminar pruebas y commit individual en `master`; luego continuar con la falla controlada del proveedor/WebGL (P4-04/T-27).
+- Commit: commit individual de CAM-054 en `master` tras las validaciones; no implica publicación remota.
+
 ## CAM-053 — Limitar el mapa al recorte de Manta
 
 - Fecha: 2026-10-26, Ecuador continental.

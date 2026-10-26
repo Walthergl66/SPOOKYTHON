@@ -19,9 +19,9 @@ type FeatureCollection = { type: 'FeatureCollection'; features: Feature[] }
 const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfreemap.org/styles/dark'
 const BUILDING_TILES = 'https://tiles.openfreemap.org/planet'
 const MAP_CENTER: Position = [-80.720, -0.954]
-// Matches the documented OSM extraction window used for Navira's Manta fixture.
-// It is a display/data extent, not Manta's official administrative boundary.
-const MANTA_BOUNDS: [Position, Position] = [[-80.755, -0.967], [-80.675, -0.935]]
+// Adds a 0.015° cartographic margin around the documented OSM extraction window.
+// The expanded view is not Manta's official administrative boundary.
+const MANTA_BOUNDS: [Position, Position] = [[-80.77, -0.982], [-80.66, -0.92]]
 
 setWorkerUrl(mapWorkerUrl)
 

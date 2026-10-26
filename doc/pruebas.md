@@ -40,7 +40,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-24 | Variación y reproducción estocástica | Configuración/semilla/versiones/entradas idénticas reproducen; otra semilla y una perturbación controlada pueden divergir; la misma instantánea HTTP conserva la decisión. |
 | T-25 | Caducidad de sesión humana local | TTL deslizante usa reloj monotónico; lectura válida renueva; una cookie vencida recibe 410 y ningún visitante distinto puede tomar el cupo/personaje reservado. No acredita expiración durable ni coordinación multiproceso. |
 | T-26 | Operación del simulador de demo local | Control oculto sin opt-in; loopback y same-origin requeridos; inicio/pausa/continuación/reinicio se reflejan en un run publicado por el panel y validan entrada. |
-| T-27 | Mapa cartográfico 3D y movimiento de actores | Compilación frontend, carga visual del estilo de Manta, atribución, controles 2D/3D, cámara que encuadra el fixture, fichas visibles, animación entre snapshots, actualización WebSocket tras iniciar otro run, edificios con altura y verificación visual de que pan/zoom no muestra cartografía exterior al recorte; los límites del proveedor y rutas rectas quedan declarados. |
+| T-27 | Mapa cartográfico 3D y movimiento de actores | Compilación frontend, carga visual del estilo de Manta, atribución, controles 2D/3D, cámara que encuadra la ventana ampliada alrededor del fixture, fichas visibles, animación entre snapshots, actualización WebSocket tras iniciar otro run, edificios con altura y verificación visual de que pan/zoom no muestra cartografía exterior a la ventana; los límites del proveedor y rutas rectas quedan declarados. |
 
 ## Medición de la prueba de fuego
 
