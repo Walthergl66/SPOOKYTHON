@@ -1,6 +1,6 @@
 # Flujo del jugador
 
-Estado: sesión/aparición y órdenes locales en CAM-036/037; UI inicial de controles en CAM-038. El ciclo de juego todavía no conecta todas estas piezas y el juego no es end-to-end. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
+Estado: sesión/aparición y órdenes locales en CAM-036/037; UI inicial en CAM-038; coordinador local parcial en CAM-039. El ciclo consume órdenes, pero todavía no hay runner con deadline/reloj ensamblado y el juego no es end-to-end. Contratos: [API](../contratos/api.md). Reglas: [mundo](../reglas-juego.md).
 
 ## Entrar
 
@@ -15,6 +15,8 @@ CAM-036 implementa `POST /juego/unirse` por inyección de aplicación, una cooki
 CAM-037 implementa `POST /juego/accion`: la sesión se valida desde la cookie y se contrasta con run/personaje. En `DECISIONES` se acepta espera o calle vecina abierta; bloqueo de horda se rechaza, pero el riesgo de zombie activo no invalida una intención. La última orden válida de ese personaje/turno sustituye la previa; el mismo `accionId` y cuerpo devuelve el acuse original, uno distinto produce conflicto. Secuencia y estado se calculan en el servidor. El acuse no afirma movimiento confirmado. El adaptador es local y el coordinador todavía no consume órdenes ni comparte cierre atómico con el registro; el corte temporal del turno sigue pendiente en P-16.
 
 CAM-038 ofrece entrada explícita y botones para esperar o elegir una calle dirigida abierta. Usa estado del snapshot para la posición; no permite elegir durante una fase distinta, conexión desactualizada o al ver solo modo simulador. Tras un reintento de red reutiliza el mismo `accionId`. El modo demo predeterminado no tiene sesión de juego ensamblada, así que mostrará que no hay partida jugable; la interfaz no crea ni altera una partida por sí misma.
+
+CAM-039 incorpora `CoordinadorJuego`: confirma aparición pendiente antes de mover zombies, abre/retoma `DECISIONES`, toma la última orden humana del turno (o espera si no existe), pide decisión a los NPC y confirma todas las intenciones con el mismo resolutor y CAS. El mismo `RLock` debe inyectarse en coordinador y servicio de órdenes para serializar resolución/registro; su alcance es un proceso. El coordinador expone pasos explícitos y todavía no programa el cierre de 1,7 s ni un bucle de dos segundos. No se debe invocar `resolver()` antes del cierre temporal al añadir el runner.
 
 ## Elegir una acción
 

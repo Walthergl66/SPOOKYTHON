@@ -5,8 +5,8 @@ Estado: implementada
 Requisitos: PRD-05, PRD-06, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12
 Tareas: P4B-01, P4B-02, P4B-03, P5-04
 Pruebas: T-12, T-13, T-14, T-15, T-16, T-17, T-19
-Cambio: CAM-038
-Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana), [CAM-037](../cambios.md#cam-037-órdenes-humanas-idempotentes) y [CAM-038](../cambios.md#cam-038-controles-humanos-en-frontend).
+Cambio: CAM-039
+Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana), [CAM-037](../cambios.md#cam-037-órdenes-humanas-idempotentes), [CAM-038](../cambios.md#cam-038-controles-humanos-en-frontend) y [CAM-039](../cambios.md#cam-039-integración-local-del-ciclo-de-juego).
 
 ## Objetivo y alcance
 
@@ -25,4 +25,4 @@ Un jugador entra a una partida habilitada, aparece aleatoriamente y decide cómo
 
 ## Plan, límites y verificación
 
-P4B-01 implementa localmente sesión/aparición inicial y pendiente; su hook aún no está conectado al coordinador. P4B-02 implementa localmente autorización y registro idempotente en memoria; no hay reloj/cierre atómico ni consumo por el resolutor. CAM-038 inicia P4B-03 con entrada y controles accesibles en UI; radio, resultado end-to-end y T-19 integral quedan pendientes. P5-04 recuperación completa sigue pendiente. P-11/P-12/P-16 siguen abiertos. El cierre humano de 1,7 s es parámetro inicial sujeto a medición. Esta SPEC no está verificada integralmente.
+P4B-01/02/03 cuentan con implementación local parcial. CAM-039 conecta aparición pendiente, órdenes humanas y decisiones automáticas al mismo ciclo/resolutor; el lock compartido serializa registro y resolución solo si ambas dependencias reciben la misma instancia. No existe todavía reloj de producción ni runner ensamblado. P-11/P-12/P-16 siguen abiertos; P-16 está mitigado en el coordinador local pero falta aplicar deadline monotónico. Radio, recuperación tras reinicio y T-14/T-15/T-19 integral siguen pendientes. El cierre humano de 1,7 s es parámetro de diseño sujeto a medición. Esta SPEC no está verificada integralmente.

@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio en preparación: **CAM-038**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio en preparación: **CAM-039**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -13,9 +13,10 @@
 - P3-01 verificado como núcleo aislado en CAM-033: búsqueda temporal acotada con espera, cierres y exposición futura inyectada; la política HTTP no la consume. La medición serial no valida T-11 ni servicio HTTP.
 - P3-02 parcial en CAM-034: pronóstico por escenarios de amenazas activas, con entradas observables mínimas, mezcla de fase privada desconocida y supuestos declarados para corredor/horda. No se conecta a `/paso`; las reglas oficiales siguen pendientes.
 - P3-03 evaluado parcialmente en CAM-035: temporal sumó 15 evacuados en 27 pares sintéticos de tres turnos, sin cambiar las mordidas observadas. La prueba se repitió con resultados deterministas. Dijkstra sigue activa porque no hay comparación HTTP concurrente, ronda larga ni reglas confirmadas.
-- P4B-01 implementa parcialmente en CAM-036 un caso de uso de sesión humana propietaria, cookie de sesión opaca y aparición aleatoria local con CAS. Siete pruebas enfocadas pasan; el hook de aparición pendiente todavía no está integrado al coordinador y no hay órdenes humanas ni UI jugable. Las sesiones son volátiles y no expiran. Verificación de cierre: suite 134 pruebas OK, validadores documental/SDD y ocho regresiones SDD OK, `compileall`, `git diff --check` y build frontend correctos.
-- P4B-02 implementa parcialmente en CAM-037 el endpoint `POST /juego/accion`, autorización de sesión y almacenamiento local idempotente con secuencia/reemplazo. Diez pruebas enfocadas pasan. El repositorio no es durable ni está integrado al resolutor; el deadline y el cierre concurrente atómico del turno siguen pendientes (P-16).
-- P4B-03 inicia en CAM-038 controles web de sesión, espera y selección de calles. El build y smoke del panel con simulador activo pasan. El servidor demo no tiene partida modo juego, por lo que no se verificó una partida humana end-to-end; radio, deadline y resultado completo pendientes.
+- P4B-01 implementa parcialmente en CAM-036 un caso de uso de sesión humana propietaria, cookie opaca y aparición aleatoria con CAS. CAM-039 integra el hook de aparición pendiente en el coordinador local. Las sesiones siguen en memoria y no expiran.
+- P4B-02 implementa parcialmente en CAM-037 el endpoint `POST /juego/accion`, autorización e idempotencia local. CAM-039 consume la última orden al resolver el turno y permite compartir un lock con el coordinador; falta deadline monotónico y cierre atómico de producción.
+- P4B-03 inicia en CAM-038 controles web de sesión, espera y selección de calles. El servidor demo todavía no ensambla una partida modo juego; no se verificó una partida humana end-to-end. Radio, deadline y resultado visible completo pendientes.
+- P5-04 parcial en CAM-039: `CoordinadorJuego` integra aparición pendiente antes de zombies, órdenes humanas y decisiones NPC con un resolutor compartido y CAS; dos pruebas de integración cubren consumo, fase y rechazo de resolución repetida. Registro/resolución solo se serializan cuando se inyecta la misma instancia de `RLock`. No hay deadline monotónico, runner, integración en el punto de entrada ni recuperación durable.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -63,17 +64,17 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Backend y `/paso` | Contrato y política Dijkstra; inicio demo local explícito | Configurar mundo real, persistencia, idempotencia y medir latencia bajo carga. |
 | Simulador | Demo con semilla nueva opcional, estado inicial aleatorio y replay local explícito; resolución/ronda con RNG privado y CAS en memoria | Distribución oficial parametrizada, composición/eventos, movimiento de horda, replay durable/versionado entre despliegues, DynamoDB, reloj/publicación y escenarios oficiales pendientes. |
 | Grafo de Manta | Fixture de 300 nodos y cuatro zonas seguras de tsunami generado | Validar cobertura representativa de barrios/rutas peatonales y evaluar amenazas sísmicas con fuentes competentes; el fixture no es para navegación real. |
-| Frontend y juego | P4-01/P4-02 verificados localmente; P4B-01..03 parciales en CAM-036..038; no hay ciclo humano end-to-end | P5-04 integrar aparición, órdenes, resolución y resultado; P-16 cierre; luego accesibilidad/recovery completa y publicar cuando haya acceso remoto. |
+| Frontend y juego | P4-01/P4-02 verificados localmente; P4B-01..03 y P5-04 parciales en CAM-036..039; el coordinador no está ensamblado en la app | Deadline monotónico, runner, configuración demo opt-in, T-14/T-15/T-19 integral y recuperación tras reinicio. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
 | Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
-| Repositorio remoto y commits | `origin/master` sigue en `fa7ebd8`; CAM-028..CAM-035 están como commits locales separados al cerrar esta fase | Publicar los commits locales cuando haya una ruta de escritura que acepte cambios de Git. |
+| Repositorio remoto y commits | Al inicio de CAM-039 `origin/master` coincidía con HEAD `7bd4cb2`; los commits previos ya están publicados | Publicar este y siguientes commits cuando se completen. |
 
-El checkout local está en `master`; CAM-028..CAM-035 se mantienen como commits separados. Antes de CAM-028 se verificó que ambas referencias coincidían en `fa7ebd8`. Los intentos previos de push no pudieron leer credenciales HTTPS y la conexión GitHub rechazó crear un árbol con HTTP 403 `Resource not accessible by integration`; no se ha vuelto a intentar publicar. Los commits por fase siguen separados, sin squash, y las ramas locales `feat/navira-*` y `main` se eliminaron. AWS sigue pendiente.
+El checkout está en `master`; al inicio de CAM-039 `origin/master` coincidía con HEAD `7bd4cb2`, por lo que los commits previos ya estaban publicados. Intentos anteriores de push fallaron por credenciales/HTTP 403, pero no describen el estado remoto actual. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. CAM-036..038 dejan sesión, registro y controles UI locales parcialmente implementados, pero no constituyen una partida jugable. Siguiente paso: P5-04, integrar aparición antes de movimiento zombie, bandeja idempotente, resolución con intenciones automáticas/humanas y proyección del resultado; resolver P-16 con deadline/cierre coordinado. P2-03/T-11, AWS y reglas oficiales siguen pendientes por evidencia/recursos externos. No afirmar CI remoto, despliegue o seguridad sísmica.
+CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. CAM-039 agrega la integración de aplicación del ciclo humano, pero no runner ni modo demo ensamblado. Siguiente paso: completar P5-04 con deadline monotónico, cierre de puerta, runner de dos segundos, configuración explícita de demo juego y pruebas de reconexión sin duplicar personaje. P2-03/T-11, AWS y reglas oficiales siguen pendientes por evidencia/recursos externos. No afirmar CI remoto, despliegue o seguridad sísmica.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 

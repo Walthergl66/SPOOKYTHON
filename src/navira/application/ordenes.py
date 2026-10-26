@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import dataclass
+from threading import RLock
 from typing import Protocol
 
 from navira.application.decidir_paso import ProveedorMapas, nodos_horda_visibles
@@ -56,8 +58,31 @@ class RegistrarOrdenHumana:
     mapas: ProveedorMapas
     sesiones: RepositorioSesiones
     ordenes: RepositorioOrdenes
+    candado_turno: RLock | None = None
 
     def ejecutar(
+        self,
+        token: str | None,
+        *,
+        run_id: str,
+        turno: int,
+        personaje_id: str,
+        siguiente_nodo: str,
+        accion_id: str,
+    ) -> OrdenHumana:
+        # La misma puerta debe proteger la resolución para que una orden que
+        # compita con el cierre quede inequívocamente antes o después de ella.
+        with self.candado_turno if self.candado_turno is not None else nullcontext():
+            return self._ejecutar(
+                token,
+                run_id=run_id,
+                turno=turno,
+                personaje_id=personaje_id,
+                siguiente_nodo=siguiente_nodo,
+                accion_id=accion_id,
+            )
+
+    def _ejecutar(
         self,
         token: str | None,
         *,

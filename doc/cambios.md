@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-039 — Integración local del ciclo de juego
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario para avanzar las fases restantes y mantener cambios separados en `master`.
+- Especificación/tarea: SPEC-004, P5-04 parcial; PRD-05/06, TRD-03/04/05/06/09/12; T-12/T-14/T-16 parciales. No verifica SPEC-004.
+- Motivo: conectar sesión/aparición y órdenes humanas con el ciclo versionado y el mismo resolutor utilizado por los personajes automáticos.
+- Resultado: `CoordinadorJuego.preparar()` incorpora una aparición pendiente antes de mover zombies, prepara/retoma decisiones con CAS y no repite movimiento al reintentar. `resolver()` consume la última orden humana aceptada o espera si falta; calcula intenciones de NPC por `DecidirPaso` y confirma una resolución conjunta. `RegistrarOrdenHumana` acepta una puerta `RLock` opcional para que el integrador la comparta y serialice el registro frente al cierre/resolución en un proceso.
+- Archivos principales: `src/navira/application/coordinador_juego.py`, `src/navira/application/ordenes.py`, `tests/test_coordinador_juego.py`; SPEC-004, flujo jugador, módulos backend, pruebas, plan, trazabilidad, pendientes y estado actual.
+- Decisión: integrar mediante aplicación sobre puertos existentes y CAS, sin duplicar reglas ni modificar el resolutor. No se crea reloj/worker hasta definir e implementar el deadline monotónico. El lock compartido no es multiproceso.
+- Verificación: pruebas enfocadas de coordinador y órdenes: 12 OK; suite completa (`PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v`): 146 OK; `python3 scripts/check_docs.py` (67 Markdown/69 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho pruebas `test_check_sdd.py`, `compileall` y `git diff --check` correctos.
+- Límites: integración aún no ensamblada en `main.py`/demo; no hay ciclo continuo, plazo 1,7 s, recuperación durable/tras reinicio, T-14/T-15/T-19 integral, radio, TLS ni sesión con expiración. Un método `resolver()` no debe llamarse antes del cierre temporal cuando se añada el runner.
+- Siguiente paso: P5-04, implementar ventana monotónica compartida, cierre atómico y runner local opt-in; luego validar reconexión/resultado end-to-end.
+- Commit: commit local individual en `master` tras ejecutar las validaciones declaradas.
+
 ## CAM-038 — Controles humanos en frontend
 
 - Fecha: 2026-10-26, Ecuador continental.

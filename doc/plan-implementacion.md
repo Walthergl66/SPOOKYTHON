@@ -1,6 +1,6 @@
 # Plan de implementación vigente
 
-Estado: implementación secuencial en `master`, con commits individuales por fase según instrucción del usuario; P0 y P1 están en curso. Última revisión: 2026-10-26. Fuentes: [contexto](contexto.md), [reto](referencias/reto-original.md) y [decisiones](decisiones/README.md). El [plan previo](referencias/plan-previo.md) es histórico; los documentos especializados actuales son la fuente de cada contrato o regla.
+Estado: implementación secuencial en `master`, con commits individuales por fase según instrucción del usuario. P5-04 tiene integración local parcial (CAM-039); quedan el reloj, ensamblaje ejecutable y recuperación. Última revisión: 2026-10-26. Fuentes: [contexto](contexto.md), [reto](referencias/reto-original.md) y [decisiones](decisiones/README.md). El [plan previo](referencias/plan-previo.md) es histórico; los documentos especializados actuales son la fuente de cada contrato o regla.
 
 Nombre vigente: **Navira**. Al crear el backend usar la raíz propuesta `src/navira/`; la ruta del plan histórico no es una instrucción actual de nomenclatura. Las tareas funcionales y sus IDs se mantienen.
 
@@ -64,7 +64,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P5-01 | Ráfagas y reloj — integración | P2-03 y política elegida | p95 objetivo ≤150 ms, errores <0,5 %, ciclo dentro de dos segundos. CAM-029 muestra una ejecución local corta dentro de período; faltan repeticiones, duración oficial y medición del entorno objetivo. | En curso |
 | P5-02 | Seguridad/red/TLS — operación | P0-05 y contratos finales | Permisos, origen y sesión probados; sin claves maestras en navegador. | Pendiente |
 | P5-03 | Tres rondas en AWS — integración | P5-01, P5-02 y panel | Reportes con versión, origen de medición y resultados reales. | Pendiente |
-| P5-04 | Juego y recuperación — integración | P4B-03 y P5-02 | T-12 a T-19; una recarga no revive ni duplica control. | Pendiente |
+| P5-04 | Juego y recuperación — integración | P4B-03 y P5-02 | T-12 a T-19; una recarga no revive ni duplica control. Coordinador local consume órdenes y serializa orden/resolución con lock compartido (CAM-039). Falta deadline monotónico, ensamblaje/ronda continua, recuperación tras reinicio, radio y T-14/T-15/T-19 integral. | Implementada parcialmente — CAM-039 |
 | P6-01 | README y evidencias — integración | Ejecución real | Instalación, API, despliegue y métricas reproducibles. | Pendiente |
 | P6-02 | Diagrama/costos/Budget — operación | Recursos reales | SVG/PNG y fuente, cálculo completo y gasto real. | Pendiente |
 | P6-03 | Pitch y entrega — equipo | P5-03, P5-04, P6-01, P6-02 | PDF/PPT ≤20 MB, enlaces públicos y entrega anticipada. | Pendiente |
