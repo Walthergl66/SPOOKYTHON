@@ -242,6 +242,19 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: poblaciones sobre cinco nodos sintéticos no simulan 20/80/200 ubicaciones realistas, no producen concurrencia HTTP ni verifican T-11, dos segundos, p95, disponibilidad o supervivencia de evaluación. La distribución zombie oficial P-09 sigue pendiente.
 - Siguiente paso: añadir mapa representativo de Manta y ejecutar la población a través del cliente HTTP bajo las ráfagas definidas en T-11; evitar afirmar resultados oficiales antes de esas mediciones.
 
+## CAM-020 — Cliente concurrente para medir `/paso`
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación del usuario; siguiente paso concreto CAM-019: conectar cohortes sintéticas al cliente HTTP para T-11.
+- Especificación/tareas: SPEC-002, CA-002-04 parcial; T-11 parcial. No se verifica la SPEC ni la prueba de fuego.
+- Rama: `feat/navira-http-load-runner`.
+- Motivo: medir desde un cliente la ruta HTTP real con las cohortes sintéticas, conservar el contrato y capturar latencias/errores sin incrustar credenciales.
+- Archivos: `src/navira/main.py`, `src/navira/carga_http.py`, pruebas de carga/demo, README y documentos propietarios de API, backend, pruebas, SPEC-002 y evidencia local.
+- Resultado: variables optativas del bootstrap demo fijan escenario/semilla/población del servidor; `python -m navira.carga_http` prepara solicitudes reproducibles y dispara hasta 200 llamadas concurrentes por ronda, verificando status, forma y destino esperado. El cliente requiere `NAVIRA_API_KEY` del entorno. Repite solicitudes sobre snapshot fijo; no avanza turnos.
+- Verificación: dos pruebas del cliente y cinco del ensamblaje demo pasan; suite completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py' -v` (88 pruebas OK); `python3 scripts/check_docs.py` (54 Markdown en `doc/`, 56 archivos comprobados), `python3 scripts/check_sdd.py`, ocho regresiones de `test_check_sdd.py`, `compileall` y `git diff --check` correctos. Smoke mediante CLI contra Uvicorn local: 20/80/200 solicitudes concurrentes recibieron 200, sin fallos; p95 7.872/11.972/26.066 ms. Detalle y límites en [reporte](resultados/carga-local-cam020.md). No es T-11 completo ni prueba externa.
+- Límites: una pasada local por cohorte, un proceso Uvicorn, mismo host, snapshot fijo, sin intervalo/150 rondas ni entorno evaluador. No es T-11 completado, disponibilidad ni promesa de rendimiento.
+- Siguiente paso: finalizar verificación/commit; después hacer ejecución sostenida en el entorno objetivo con mundo/turno activos y recolectar una muestra completa.
+
 ## Próximas entradas
 
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

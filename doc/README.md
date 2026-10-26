@@ -35,6 +35,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [infraestructura.md](infraestructura.md) | Despliegue y operación AWS | Cambie un recurso o procedimiento. |
 | [seguridad.md](seguridad.md) | Autenticación y límites de confianza | Cambien accesos o secretos. |
 | [pruebas.md](pruebas.md) | Verificación y métricas | Cambie comportamiento o aceptación. |
+| [resultados/carga-local-cam020.md](resultados/carga-local-cam020.md) | Evidencia de ráfagas HTTP locales | Se ejecute una medición local reproducible; no sustituye resultados oficiales. |
 | [costos.md](costos.md) | Estimación y gasto real | Cambie infraestructura o consumo. |
 | [plan-implementacion.md](plan-implementacion.md) | Tareas, dependencias y criterios de salida | Se ajuste o complete una fase. |
 | [pendientes.md](pendientes.md) | Dudas, riesgos y confirmaciones | Se descubra o resuelva una incertidumbre. |

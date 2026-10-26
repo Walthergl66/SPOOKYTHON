@@ -2,6 +2,8 @@
 
 Estado: `/salud` y `/paso` tienen implementación local; la app puede ensamblar el caso de uso con snapshot/mapa en memoria para usar Dijkstra. El punto de entrada predeterminado aún usa espera porque no carga un mundo. No hay endpoints desplegados. Solo el formato obligatorio de `/paso` y el estado mínimo provienen del reto; las rutas adicionales son diseño del equipo.
 
+La configuración local optativa `NAVIRA_DEMO=1` acepta `NAVIRA_DEMO_MAP`, `NAVIRA_DEMO_SEED`, `NAVIRA_DEMO_SCENARIO` y `NAVIRA_DEMO_SURVIVORS` para iniciar el fixture sintético con población reproducible. El cliente `python -m navira.carga_http` puede enviar solicitudes concurrentes a `/paso`; requiere una configuración coincidente en servidor/cliente y `NAVIRA_API_KEY` en el entorno del cliente. No cambia el contrato HTTP ni expone configuración de demo en las rutas. Las ráfagas repiten el mismo snapshot y sirven para medir la ruta de decisión; no simulan avance del reloj ni supervivencia.
+
 ## API obligatoria del motor
 
 ```http

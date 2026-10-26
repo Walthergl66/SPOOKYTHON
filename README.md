@@ -45,6 +45,23 @@ PYTHONPATH=src python -m navira.simulador_demo --escenario mixto --sobreviviente
 
 Perfiles disponibles: `libre`, `caminantes`, `mixto` y `horda`; `--sobrevivientes` admite de 1 a 200 personajes con posiciones iniciales reproducibles. `--mapa ruta/al/mapa.json` permite elegir otro mapa que contenga los nodos del perfil. En el mapa incluido las posiciones se reparten al azar entre cuatro nodos y pueden coincidir. El ejecutor termina al evacuar o perder a todos los sobrevivientes activos, o al llegar al límite de turnos. Cada línea reporta el resultado observable de un turno y excluye zombies que siguen dormidos. Esto es una simulación sintética del dominio; no es la prueba concurrente del endpoint ni sustituye las rondas oficiales. El comando no espera dos segundos entre turnos y usa snapshots volátiles.
 
+Para medir localmente la respuesta HTTP de `/paso`, ejecuta el servidor con la misma configuración y luego corre el cliente desde otra terminal:
+
+```bash
+export NAVIRA_DEMO=1
+export NAVIRA_DEMO_SURVIVORS=20
+export NAVIRA_DEMO_SEED=31
+export NAVIRA_DEMO_SCENARIO=libre
+export NAVIRA_API_KEY='local-navira-key-change-me'
+uvicorn navira.main:app --app-dir src
+```
+
+```bash
+PYTHONPATH=src python -m navira.carga_http --sobrevivientes 20 --semilla 31 --escenario libre --rondas 1 --concurrencia 20
+```
+
+El cliente imprime solicitudes, estados HTTP, errores y p50/p95/p99/max desde el cliente. `--sobrevivientes` acepta 20, 80 o 200 y `--rondas 150` agenda ráfagas cada dos segundos. La configuración del proceso debe coincidir con la del cliente. Cada ráfaga repite el mismo snapshot, por lo que esto mide decisiones HTTP locales, no un turno completo ni la evaluación oficial. La clave debe permanecer en una variable de entorno.
+
 La salud local se consulta en `GET /salud`. El contrato inicial del motor:
 
 ```bash

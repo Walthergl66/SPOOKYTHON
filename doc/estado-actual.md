@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-019**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-020**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -26,6 +26,7 @@
 - En `feat/navira-auto-demo-cli` `python -m navira.simulador_demo --turnos N --semilla S` ejecuta rondas automáticas sobre el mapa sintético en memoria y emite una línea JSON por turno; se detiene cuando ya no hay personajes activos. `crear_contexto_demo()` comparte el ensamblaje con el bootstrap de API. El fixture no tiene zombies y la semilla no cambia su recorrido actual. CAM-017 registra cuatro pruebas específicas y la suite completa de 80.
 - En `feat/navira-zombie-scenarios` el ejecutor acepta los perfiles sintéticos `libre`, `caminantes`, `mixto` y `horda`. `--escenario` junto con `--semilla` seleccionan el inicio y el estado RNG; mismo par reproduce reportes. JSONL omite ubicaciones de zombies que siguen dormidos. Esto inicia P1-05, pero no equivale a poblaciones oficiales ni escenarios de 20/80/200 sobrevivientes. CAM-018 tiene seis pruebas específicas; suite completa de 82.
 - En `feat/navira-evaluation-populations` `--sobrevivientes` admite de 1 a 200 y posiciones iniciales reproducibles por semilla fuera de los refugios. Pruebas verifican cohortes sintéticas de 20, 80 y 200. Por el fixture de cinco nodos, las posiciones pueden coincidir; no es prueba HTTP/carga T-11 ni evaluación real. CAM-019 cuenta con ocho pruebas específicas y suite completa de 84.
+- En `feat/navira-http-load-runner` el bootstrap demo admite variables para escenario, semilla y población; `python -m navira.carga_http` envía ráfagas concurrentes a `/paso` y resume respuestas/percentiles. Uvicorn local respondió correctamente en una ráfaga de 20, 80 y 200; evidencia en `doc/resultados/carga-local-cam020.md`. No equivale a T-11: una sola pasada, mismo host y snapshot sin avanzar. Suite completa 88; comprobador documental ve 54 Markdown/56 archivos.
 
 ## Verificación histórica de CAM-003
 
@@ -55,13 +56,13 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Rendimiento/supervivencia | Sin medir | Reportes de las tres rondas. |
 | Repositorio remoto y commits | No verificado | URL y comprobación del historial. |
 
-El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-019 conservan cambios en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
+El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-020 conservan cambios en ramas y commits locales. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-Siguiente: obtener/generar mapa representativo de Manta y conectar cohortes al cliente HTTP para T-11. Distribución zombie oficial P-09 sigue pendiente. No hay bucle continuo ni reporte oficial de evaluación. P1-04 requiere persistencia durable/CAS entre hosts; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar las rondas oficiales. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Siguiente: terminar verificación/commit de CAM-020; luego ejecutar carga sostenida en el entorno objetivo con el mundo avanzando, mapa representativo y la configuración de T-11. Distribución zombie oficial P-09 sigue pendiente. No hay bucle continuo ni reporte oficial de evaluación. P1-04 requiere persistencia durable/CAS entre hosts; P1-03 sigue parcial por visibilidad/reglas. No declarar integración operacional ni rendimiento hasta ejecutar las rondas oficiales. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
-Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. Suite completa en `/tmp/navira-env`: 84 pruebas OK tras CAM-019. `python -m pip install -e .` y smoke de Uvicorn local demo completados; sin medición de rendimiento ni persistencia externa.
+Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. Suite completa en `/tmp/navira-env`: 88 pruebas OK tras CAM-020. `python -m pip install -e .` y smoke de Uvicorn local demo completados; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 
 ## Dependencias externas
 
@@ -69,4 +70,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016; ejecutor CLI en CAM-017; escenarios zombie sintéticos en CAM-018; cohortes sintéticas en CAM-019. Rama de trabajo: `feat/navira-evaluation-populations`. P0-01 está verificado; P0-02, P1-01/02/03/04/05 y P2-01/02 siguen parciales o en curso. SPEC-001/002 no están verificadas.
+La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución en CAM-009; coordinación en CAM-010; puerto CAS en CAM-011; smoke HTTP en CAM-012; Dijkstra genérico en CAM-013; integración HTTP de planificación en CAM-014; bootstrap local explícito en CAM-015; ronda automática por caso de uso en CAM-016; ejecutor CLI en CAM-017; escenarios zombie sintéticos en CAM-018; cohortes sintéticas en CAM-019; cliente de carga en CAM-020. Rama de trabajo: `feat/navira-http-load-runner`. P0-01 está verificado; P0-02, P1-01/02/03/04/05 y P2-01/02 siguen parciales o en curso. SPEC-001/002 no están verificadas.
