@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio en preparación: **CAM-043**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio en preparación: **CAM-044**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -17,6 +17,7 @@
 - P4B-02 implementa parcialmente en CAM-037 el endpoint `POST /juego/accion`, autorización e idempotencia local. CAM-040 consume la última orden, rechaza fuera del deadline de 1,7 s y serializa registro/resolución con puerta monotónica de un proceso.
 - P4B-03 inicia en CAM-038 controles web; CAM-040 añade proxy Vite para `/juego`; CAM-041 muestra restante informativo, CAM-042 permite usar ruta sugerida por radio y CAM-043 recupera la sesión al seleccionar el modo humano. T-19 accesibilidad integral y resultado completo siguen pendientes.
 - P5-04 parcial en CAM-039..043: `NAVIRA_GAME_DEMO=1` ensambla modo sintético y runner local de dos segundos. Pruebas del coordinador y smoke ASGI confirman orden común con NPC, aparición en fase correcta, cierre temporal, cuenta atrás informativa y sesión única. CAM-042 presenta en frontend una sugerencia tomada de la ruta observable; CAM-043 verifica recuperación HTTP de la sesión, posición actual y última orden. No es cadencia sostenida ni juego productivo; no hay persistencia/recuperación tras reinicio, expiración de sesión, TLS o coordinación multi-proceso.
+- P5-01 parcial en CAM-044: matriz HTTP loopback solicitó 150 turnos para cohortes 20/80/200, pero partidas sintéticas terminaron a los 12/15/13 turnos. Registró 2.072 respuestas 200, p95 18,860/58,097/92,060 ms y ciclos máximos 62,461/218,492/480,701 ms; reporte en [CAM-044](resultados/evaluacion-p501-cam044.md). No acredita cinco minutos, repeticiones ni AWS.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -67,14 +68,14 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Frontend y juego | P4-01/P4-02 verificados localmente; P4B-01..03 y P5-04 parciales en CAM-036..043; modo juego sintético muestra timer, radio y recuperación de cookie en el mismo proceso | Recuperación durable tras reinicio, expiración de sesión, TLS, T-14/T-15/T-19 integral y verificación de cadencia sostenida. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
-| Rendimiento/supervivencia | Evaluación HTTP local de tres turnos a cadencia de 2 s CAM-029; no oficial | 150 turnos/5 minutos por ronda, parámetros oficiales y medición desde el entorno real. |
-| Repositorio remoto y commits | Último puntero `origin/master` observado localmente: `7bd4cb2`; CAM-039..043 constan como cinco commits locales posteriores | Push autorizado previamente falló con HTTP 403; estos cinco commits no están publicados según el puntero local observado. |
+| Rendimiento/supervivencia | CAM-044: una pasada HTTP loopback y cadencia objetivo para 12/15/13 turnos, cero errores y ciclos <481 ms; no oficial | 150 turnos/5 minutos por cohorte, rondas repetidas, parámetros oficiales y medición desde el entorno real. |
+| Repositorio remoto y commits | Último puntero `origin/master` observado localmente: `7bd4cb2`; CAM-039..044 constan como seis commits locales posteriores | Push autorizado falló porque este proceso no puede leer credenciales interactivas; los seis commits no están publicados según el puntero local. |
 
-El checkout está en `master`. El puntero de seguimiento local `origin/master` observado en CAM-043 sigue en `7bd4cb2`; CAM-039..043 quedan cinco commits locales por delante. Un push previo fue rechazado por HTTP 403; no se declara nada publicado. AWS sigue pendiente.
+El checkout está en `master`. El puntero de seguimiento local `origin/master` observado al iniciar CAM-044 sigue en `7bd4cb2`; CAM-039..044 quedan seis commits locales por delante. `git push origin master` no pudo leer credenciales en este entorno; no se declara nada publicado. AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. CAM-043 restaura la sesión humana en el mismo proceso con pruebas HTTP de cookie y snapshot vigente. Siguiente paso: medir P5-01 local durante una ventana extendida y revisar accesibilidad del recorrido. Persistencia durable, TLS y AWS necesitan infraestructura y evidencia externas; P2-03/T-11 y reglas oficiales siguen pendientes. No afirmar CI remoto, despliegue o seguridad sísmica.
+CAM-035 completa la primera comparación emparejada local para P3-03, pero no el gate HTTP/T-22 integral; Dijkstra continúa activa. CAM-044 midió el camino loopback, pero la ronda terminó antes de alcanzar el plazo objetivo. Siguiente paso: revisar accesibilidad del recorrido y las brechas de sesión/P5-02. Para completar evaluación de 150 turnos por cohorte se necesitan reglas/distribuciones que mantengan la ronda activa; AWS, TLS productivo y Budget requieren acceso/configuración externos. No afirmar CI remoto, despliegue o seguridad sísmica.
 
 Verificación de CAM-023/024/025: `python3 scripts/check_docs.py` (58 Markdown/60 archivos), `python3 scripts/check_sdd.py` (seis SPEC), ocho regresiones de `test_check_sdd.py`, suite completa en `/tmp/navira-env` (95 pruebas OK), `compileall` y `git diff --check` correctos. `python -m pip install -e .` y smoke de Uvicorn local demo se completaron en cambios previos; el smoke de carga CAM-020 no es una medición del entorno externo ni prueba persistencia.
 

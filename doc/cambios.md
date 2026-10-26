@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-044 — Medición P5-01 extendida de loopback
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada de las fases y criterio de medición P5-01/P2-03.
+- Especificación/tarea: SPEC-002, P2-03/P5-01 parcial; CA-002-04/T-11.
+- Motivo: comprobar ráfagas HTTP de las cohortes 20/80/200 con el reloj objetivo de 2 s y registrar si la aplicación alcanza 150 turnos.
+- Resultado: una matriz pidió 150 turnos por cohorte en mapa Manta sintético, semilla 20261026 y concurrencia configurada 200. Las partidas finalizaron a los 12, 15 y 13 turnos; acumuló 2.072 solicitudes sin error HTTP, p95 18,860/58,097/92,060 ms, ciclos máximos 62,461/218,492/480,701 ms. No se extendió artificialmente el mundo finalizado.
+- Archivos: reporte [P5-01 CAM-044](resultados/evaluacion-p501-cam044.md), índice, SPEC-002, pruebas, trazabilidad, plan, estado y este registro.
+- Verificación: comando `navira.evaluacion_local` ejecutado una vez sobre servidor Uvicorn/cliente loopback; `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py`, ocho pruebas del checker SDD y `git diff --check` correctos.
+- Límites: solo 12/15/13 de los 150 turnos solicitados, aproximadamente 80,474 s total, un host/semilla, escenario sintético. No equivale a cinco minutos por cohorte, repetición estadística, T-11 ni AWS; P2-03/P5-01 siguen en curso.
+- Siguiente paso: conservar el evaluador fiel al fin de partida; medir rondas oficiales de 150 turnos en el entorno objetivo cuando estén disponibles parámetros y despliegue. Continuar con verificaciones locales accesibles y seguridad de sesión.
+- Commit: commit local individual en `master` después de validación.
+
 ## CAM-043 — Recuperar la sesión humana al reconectar
 
 - Fecha: 2026-10-26, Ecuador continental.
