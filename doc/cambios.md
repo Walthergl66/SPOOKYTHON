@@ -14,7 +14,7 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Verificación: `cd frontend && npm run build` correcto; navegador local mostró basemap, atribución, edificios elevados y alternancia 2D/3D. El bundle `CityMap` queda en 1.070,25 kB / 290,78 kB gzip y Vite muestra advertencia de chunk >500 kB. Evidencia: [reporte CAM-051](resultados/mapa-cartografico-3d-cam051.md).
 - Límites: OpenFreeMap público no ofrece SLA y requiere internet; cobertura/alturas de Manta no se auditaron exhaustivamente; las rutas del grafo conectan nodos con segmentos rectos; la falla de tiles/WebGL está implementada pero no fue inyectada en navegador. No es guía de emergencia ni modelo de edificios de alta precisión.
 - Siguiente paso: probar un error del proveedor/WebGL y, si se necesita correspondencia exacta ruta-calle, añadir geometría completa OSM al grafo en una fase independiente.
-- Commit: `aff0d43 feat: render real Manta map in 3D`, commit individual de fase en `master`; no implica publicación remota.
+- Commit: `01797e2 feat: render real Manta map in 3D`, commit individual de fase en `master`; no implica publicación remota.
 
 ## CAM-050 — Tablero visual y control local del simulador
 
