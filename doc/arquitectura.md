@@ -44,6 +44,7 @@ El diagrama describe flujo de ejecución. Las dependencias de código se definen
 | Simulador → motor | `/paso` y estado técnico | API key de servicio. |
 | Jugador → aplicación | Sesión temporal y órdenes por turno | Cookie de sesión, propiedad del personaje y validación de origen. |
 | Panel → aplicación | Proyección observable | Lectura limitada; no usa credencial maestra. |
+| Panel → observación | `WS /ws/panel`, snapshots completos por versión | Origen del mismo host; memoria local; no ofrece replay durable. |
 | Operador → simulador | Inicio/cierre/eventos | Credencial administrativa distinta. |
 | Núcleo → almacenamiento | Puertos de aplicación | Rol IAM y adaptador de infraestructura. |
 

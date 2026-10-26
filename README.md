@@ -2,7 +2,7 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** `/salud` y `POST /paso` arrancan localmente. Con `NAVIRA_DEMO=1`, el proceso inicializa un mundo sintético y `/paso` usa Dijkstra. Existe una pantalla React con selector de vista previa y un panel inicial que consulta manualmente proyecciones de solo lectura de una partida activa. El mapa sintético no representa Manta; la fixture OSM de Manta es parcial. WebSocket, reloj de producción, persistencia durable y despliegue AWS siguen pendientes.
+**Estado real al 26 de octubre de 2026:** `/salud`, `POST /paso`, el panel HTTP de solo lectura y `WS /ws/panel` están implementados localmente. Con `NAVIRA_DEMO=1`, el proceso inicia un mundo sintético en memoria y `/paso` recomienda con Dijkstra. El panel de React consume mapas versionados, rutas/capas observables y snapshots completos con heartbeat y reconexión. El selector simulador/juego sigue siendo vista previa y no inicia partidas. El fixture OSM de Manta es parcial; reloj de producción, persistencia durable, juego humano y despliegue AWS siguen pendientes.
 
 ## Empezar
 
@@ -120,4 +120,4 @@ npm run dev
 
 Para verificar el bundle: `npm run build`. El modo de la tarjeta solo cambia una vista previa. El panel muestra el modo real del servidor, métricas del snapshot y una ruta Dijkstra seleccionable; requiere partida activa para cargar el mapa/estado. La ruta no es una garantía de seguridad. El detalle está en [frontend](doc/modulos/frontend.md).
 
-Para mostrar la fixture de Manta, inicia el backend como se describe en [guía frontend](frontend/README.md); Vite reenvía las consultas `/panel` al servicio local. La actualización del estado es manual, sin WebSocket.
+Para mostrar la fixture de Manta, inicia el backend como se describe en [guía frontend](frontend/README.md); Vite reenvía `/panel` y `/ws` al servicio local. El estado se actualiza en vivo al cambiar la versión confirmada, además de la consulta manual. La conexión usa snapshots completos en memoria; no ofrece replay durable o coordinación multi-proceso.

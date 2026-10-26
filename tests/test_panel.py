@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from navira.application.decidir_paso import SolicitudPaso
+from navira.application.consultar_panel import ConsultarPanel
 from navira.demo import crear_contexto_demo
 from navira.main import crear_app, crear_app_demo
+from navira.simulation.coordinador import abrir_siguiente_turno, resolver_turno_versionado
 
 
 class PanelPublicoTests(unittest.TestCase):
@@ -83,6 +87,115 @@ class PanelPublicoTests(unittest.TestCase):
         }
         self.assertTrue(vecinos <= set(estado["nodosHorda"]))
         self.assertNotIn("Z-DOR-002", {zombie["id"] for zombie in estado["zombies"]})
+
+
+class PanelTiempoRealTests(unittest.TestCase):
+    def test_websocket_entrega_snapshot_inicial_completo_y_solo_lectura(self) -> None:
+        app = crear_app_demo(semilla=0, escenario="mixto")
+        with TestClient(app).websocket_connect(
+            "/ws/panel", headers={"origin": "http://testserver"}
+        ) as websocket:
+            evento = websocket.receive_json()
+
+        self.assertEqual(evento["schemaVersion"], 1)
+        self.assertEqual(evento["tipo"], "panel.snapshot")
+        self.assertEqual(evento["runId"], app.state.consultar_panel.version_estado()[0])
+        self.assertEqual(evento["secuencia"], evento["datos"]["snapshotVersion"])
+        self.assertEqual(evento["fase"], evento["datos"]["fase"])
+        self.assertNotIn("Z-DOR-001", str(evento))
+        self.assertNotIn("semilla", str(evento).lower())
+
+    def test_cambio_version_emite_otra_instantanea_completa(self) -> None:
+        app = crear_app_demo(semilla=2, escenario="libre")
+        contexto = app.state.consultar_panel
+        with TestClient(app).websocket_connect(
+            "/ws/panel", headers={"origin": "http://testserver"}
+        ) as websocket:
+            inicial = websocket.receive_json()
+            actual = contexto.snapshots.obtener_activa()
+            assert actual is not None
+            siguiente, _ = resolver_turno_versionado(
+                actual, contexto.mapas.obtener(actual.partida.map_version),
+                version_esperada=actual.version,
+            )
+            self.assertTrue(contexto.snapshots.guardar_si_version(
+                actual.partida.run_id, actual.version, siguiente
+            ))
+            actualizado = websocket.receive_json()
+
+        self.assertEqual(actualizado["runId"], inicial["runId"])
+        self.assertEqual(actualizado["secuencia"], inicial["secuencia"] + 1)
+        self.assertEqual(actualizado["datos"]["snapshotVersion"], actualizado["secuencia"])
+        self.assertEqual(actualizado["datos"]["fase"], "resuelta")
+
+    def test_reconexion_recibe_estado_vigente_sin_reproducir_deltas_viejos(self) -> None:
+        app = crear_app_demo(semilla=3, escenario="libre")
+        consulta = app.state.consultar_panel
+        cliente = TestClient(app)
+        with cliente.websocket_connect("/ws/panel", headers={"origin": "http://testserver"}) as socket:
+            primero = socket.receive_json()
+        actual = consulta.snapshots.obtener_activa()
+        assert actual is not None
+        siguiente, _ = resolver_turno_versionado(
+            actual, consulta.mapas.obtener(actual.partida.map_version),
+            version_esperada=actual.version,
+        )
+        self.assertTrue(consulta.snapshots.guardar_si_version(actual.partida.run_id, actual.version, siguiente))
+        resuelto_version = siguiente.version
+        siguiente = abrir_siguiente_turno(siguiente, version_esperada=resuelto_version)
+        self.assertTrue(consulta.snapshots.guardar_si_version(actual.partida.run_id, resuelto_version, siguiente))
+
+        with cliente.websocket_connect("/ws/panel", headers={"origin": "http://testserver"}) as socket:
+            recuperado = socket.receive_json()
+
+        self.assertEqual(recuperado["runId"], primero["runId"])
+        self.assertEqual(recuperado["secuencia"], primero["secuencia"] + 2)
+        self.assertEqual(recuperado["datos"]["snapshotVersion"], recuperado["secuencia"])
+
+    def test_cambio_de_partida_emite_su_snapshot_con_cursor_independiente(self) -> None:
+        primera = crear_contexto_demo(semilla=5)
+        segunda = crear_contexto_demo(semilla=6)
+
+        class ConsultaMutable:
+            actual = ConsultarPanel(primera.snapshots, primera.mapas, primera.servicio_decision)
+
+            def version_estado(self):
+                return self.actual.version_estado()
+
+            def consultar_estado(self):
+                return self.actual.consultar_estado()
+
+        consulta = ConsultaMutable()
+        app = crear_app(consultar_panel=consulta)
+        with TestClient(app).websocket_connect(
+            "/ws/panel", headers={"origin": "http://testserver"}
+        ) as websocket:
+            inicial = websocket.receive_json()
+            consulta.actual = ConsultarPanel(segunda.snapshots, segunda.mapas, segunda.servicio_decision)
+            cambiado = websocket.receive_json()
+
+        self.assertNotEqual(inicial["runId"], cambiado["runId"])
+        self.assertEqual(cambiado["secuencia"], 1)
+        self.assertEqual(cambiado["datos"]["runId"], segunda.run_id)
+
+    def test_rechaza_websocket_con_origen_distinto(self) -> None:
+        with self.assertRaises(WebSocketDisconnect):
+            with TestClient(crear_app()).websocket_connect(
+                "/ws/panel", headers={"origin": "https://sitio-ajeno.example"}
+            ):
+                self.fail("El handshake de otro origen no debe aceptarse.")
+
+    def test_envia_heartbeat_sin_cambios_para_detectar_conexion_viva(self) -> None:
+        with patch("navira.api.routes._PANEL_WS_HEARTBEAT_SECONDS", 0.01):
+            with TestClient(crear_app()).websocket_connect(
+                "/ws/panel", headers={"origin": "http://testserver"}
+            ) as websocket:
+                inicial = websocket.receive_json()
+                latido = websocket.receive_json()
+
+        self.assertEqual(inicial["tipo"], "panel.snapshot")
+        self.assertEqual(latido["tipo"], "panel.latido")
+        self.assertEqual(latido["runId"], None)
 
 
 if __name__ == "__main__":

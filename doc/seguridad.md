@@ -1,6 +1,6 @@
 # Seguridad y límites de confianza
 
-Estado: controles parciales. El panel HTTP local proyecta únicamente mapas versionados, zombies activos, movimientos visibles y métricas permitidas; no publica dormidos, semillas o RNG. Sesión, límites de frecuencia, TLS, orígenes y permisos en despliegue siguen pendientes.
+Estado: controles parciales. El panel HTTP y `WS /ws/panel` proyectan mapas versionados, zombies activos, movimientos visibles y métricas permitidas; no publican dormidos, semillas o RNG. El handshake del socket exige `Origin` del mismo host y no permite mensajes entrantes. Esto reduce solicitudes browser cross-origin, pero no sustituye autenticación cuando corresponda, límites de conexiones/frecuencia, TLS, política de red o controles en despliegue.
 
 ## Identidades
 

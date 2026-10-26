@@ -48,6 +48,14 @@ export async function loadPanelSnapshot(signal?: AbortSignal): Promise<PanelSnap
   return { map, state }
 }
 
+export async function loadPanelMap(expectedVersion: string, signal?: AbortSignal): Promise<PanelMap> {
+  const response = await fetch('/panel/mapa', { signal, headers: { Accept: 'application/json' } })
+  if (!response.ok) throw new Error('No se pudo obtener una proyección activa del panel.')
+  const map = parsePanelMap(await response.json())
+  if (map.version !== expectedVersion) throw new Error('La versión del mapa no coincide con el snapshot recibido.')
+  return map
+}
+
 function parsePanelMap(value: unknown): PanelMap {
   if (!isRecord(value) || typeof value.version !== 'string' || !Array.isArray(value.nodos) || !Array.isArray(value.calles) || !Array.isArray(value.refugios)) {
     throw new Error('El servicio devolvió un mapa con un formato no válido.')
@@ -74,7 +82,7 @@ function parsePanelMap(value: unknown): PanelMap {
   return { version: value.version, nodos, calles, refugios }
 }
 
-function parsePanelState(value: unknown): PanelState {
+export function parsePanelState(value: unknown): PanelState {
   if (!isRecord(value) || (value.estado !== 'sin_partida' && value.estado !== 'activa')) {
     throw new Error('El servicio devolvió un estado del panel no válido.')
   }

@@ -31,7 +31,7 @@ Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema invál
 | `GET /estado` | API key de servicio | Estado observable del turno requerido/activo. |
 | `GET /panel/mapa` | Lectura de panel limitada | Grafo público para visualización. |
 | `GET /panel/estado` | Lectura de panel limitada | Proyección observable y métricas permitidas. |
-| `WS /ws` | Sesión/canal de observación validado | Eventos observables, sin credencial maestra. |
+| `WS /ws/panel` | Origen del mismo host; lectura pública | Snapshots observables completos y heartbeat; sin credencial maestra. |
 | `POST /juego/unirse` | Creación/recuperación de sesión temporal | Personaje o estado pendiente de aparición. |
 | `GET /juego/mi-personaje` | Sesión propietaria | Personaje y última orden. |
 | `POST /juego/accion` | Sesión propietaria | Acuse de orden; no mueve posición. |
@@ -46,7 +46,7 @@ Las rutas de panel evitan enviar `x-api-key` maestra al navegador. Tienen proyec
 
 `GET /panel/estado` devuelve `sin_partida` cuando no se inyecta una partida activa; para una ronda activa devuelve run, modo, turno, fase, versión de snapshot/mapa, sobrevivientes, zombies activos, movimientos de zombies visibles, cierres, áreas de horda, rutas previstas dirigidas para personajes activos y métricas por modo. Zombies que siguen dormidos, escenario privado y estado/semilla del generador se omiten completamente. Una ruta es una vista previa calculada desde el mismo snapshot/política de `/paso`, no un movimiento confirmado ni garantía de seguridad. `GET /panel/mapa` devuelve únicamente el grafo versionado asociado a la partida activa (nodos, sentidos de calle y refugios); sin partida o versión disponible responde 503. Ambos son GET de solo lectura y no exigen la clave maestra del motor.
 
-Los campos concretos se fijan en los esquemas OpenAPI de la aplicación y sus pruebas ASGI. El panel consulta estado/mapa al abrir y bajo solicitud manual; hasta implementar `WS /ws` en P4-02, no hay actualización automática ni garantía de datos frescos. La proyección de ruta se limita a los personajes activos del snapshot; no es evaluación temporal futura.
+Los campos concretos se fijan en los esquemas OpenAPI de la aplicación y sus pruebas ASGI. El panel obtiene estado/mapa al abrir, puede refrescar manualmente y CAM-032 agrega `WS /ws/panel` para snapshots completos al cambiar la versión y heartbeat de conexión. El socket requiere `Origin` del mismo host. La proyección de ruta se limita a los personajes activos y solo se calcula en fase de decisiones; no es evaluación temporal futura. El socket lee el repositorio de snapshots en memoria, por lo que no ofrece replay durable o coordinación multi-proceso.
 
 ## Orden humana
 

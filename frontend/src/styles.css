@@ -33,6 +33,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--sea-bright); ou
 .topbar-context, .topbar-version, .section-kicker, .mode-heading, .preview-eyebrow, .panel-overline, .map-chip, .map-status, .map-coordinate, .north-mark, .app-footer { font: 500 10px/1.4 var(--mono); letter-spacing: .1em; }
 .topbar-context { color: #c3cfca; display: flex; align-items: center; gap: 11px; }
 .context-pulse, .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #87c7a7; box-shadow: 0 0 12px rgba(135, 199, 167, .6); }
+.status-dot.is-connecting, .status-dot.is-reconnecting { background: #eab871; box-shadow: 0 0 12px rgba(234, 184, 113, .5); }
+.status-dot.is-stale, .status-dot.is-idle { background: #df9672; box-shadow: 0 0 12px rgba(223, 150, 114, .45); }
 .context-divider { height: 13px; width: 1px; background: var(--line); margin: 0 3px; }
 .context-label, .topbar-version { color: var(--dim); }
 .topbar-version span { color: var(--sea); padding: 0 4px; }

@@ -28,7 +28,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-12 | Aparición humana | Nodo elegible y solicitud tardía incorporada en turno correcto. |
 | T-13 | Propiedad/acciones | Otra sesión no controla; clics múltiples no conceden pasos extra. |
 | T-14 | Órdenes tardías/duplicadas | Rechazo o acuse idempotente; no aplicar al turno siguiente. |
-| T-15 | Reconexión | Estado confirmado, sin detener mundo o revivir. |
+| T-15 | Reconexión | El panel recibe snapshot inicial/por versión; heartbeat detecta canal vivo; al reconectar carga el snapshot vigente, sin deltas incompletos, detener mundo o mezclar partidas. `test_panel.py` cubre secuencia posterior y cambio de partida; UI reconecta por WebSocket. Persistencia duradera/multi-worker no cubierta. |
 | T-16 | Separación de modos | Rondas oficiales sin humanos ni cambio de modo. |
 | T-17 | Paridad | Mismo estado e intenciones dan mismo resultado con control humano o automático; hay una regresión del resolutor, aún parcial. |
 | T-18 | Snapshot/recuperación | El coordinador genera estados completos; un adaptador local CAS bajo lock admite un solo escritor por versión. Persistencia durable y recuperación entre procesos siguen pendientes. |

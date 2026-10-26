@@ -7,7 +7,7 @@ from typing import Protocol
 
 from navira.application.decidir_paso import DecidirPaso, SolicitudPaso, nodos_horda_visibles
 from navira.domain.mapa import Grafo
-from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, TipoZombie
+from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, FaseTurno, TipoZombie
 from navira.simulation.coordinador import SnapshotMundo
 
 
@@ -36,6 +36,17 @@ class ConsultarPanel:
     snapshots: ProveedorSnapshotsPanel
     mapas: ProveedorMapasPanel
     planificador: DecidirPaso | None = None
+
+    def version_estado(self) -> tuple[str, int] | None:
+        """Lee solo la clave de cambio para que el transporte no reproyecte sin cambios."""
+
+        try:
+            snapshot = self.snapshots.obtener_activa()
+        except RuntimeError as error:
+            raise PanelNoDisponible("Hay más de una partida activa.") from error
+        if snapshot is None:
+            return None
+        return snapshot.partida.run_id, snapshot.version
 
     def consultar_estado(self) -> dict[str, object]:
         """Devuelve `sin_partida` o una observación de la partida versionada."""
@@ -91,7 +102,11 @@ class ConsultarPanel:
                 ),
             }
             for personaje in partida.sobrevivientes
-            if personaje.estado is EstadoSobreviviente.ACTIVO and self.planificador is not None
+            if (
+                personaje.estado is EstadoSobreviviente.ACTIVO
+                and self.planificador is not None
+                and partida.fase is FaseTurno.DECISIONES
+            )
         )
 
         return {

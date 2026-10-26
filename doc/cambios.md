@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-032 — WebSocket de snapshots completos y recuperación del panel
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario de las fases restantes; un commit separado por fase en `master`.
+- Especificación/requisitos/tareas: SPEC-003, P4-02, CA-003-02 y T-15 local. No cierra la SPEC integral ni cubre sesión de juego.
+- Motivo: que el panel reciba turnos confirmados y se recupere de desconexiones sin aplicar deltas faltantes o mezclar partidas.
+- Resultado: `WS /ws/panel` entrega snapshot observable inmediato y snapshot completo ante cambio de `(runId, snapshotVersion)`, heartbeat cada 2 s y rechazo de handshake con otro/missing origin. Poll de clave cada 250 ms; cada conexión reconectada comienza desde la versión vigente. La UI valida los sobres, aplica secuencia, cambia de run sin conservar el snapshot anterior, presenta conexión/desactualización y usa backoff exponencial. Predicción Dijkstra no se calcula fuera de la fase de decisiones.
+- Decisión: [ADR-009](decisiones/0009-panel-ws-snapshots-completos.md), snapshot completo en vez de delta/buffer porque el almacenamiento actual es en memoria, no outbox durable.
+- Archivos principales: `src/navira/api/routes.py`, `application/consultar_panel.py`, `tests/test_panel.py`, cliente React `frontend/src/shared/realtime/panel.ts`, API de mapa, `App.tsx` y proxy; contrato de eventos/API, seguridad, arquitectura, módulos, flujo de espectador, SPEC-003, plan, pruebas, trazabilidad, índice, ADR, README y estado.
+- Verificación: `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py'` (112 pruebas OK); `python3 scripts/check_docs.py` (61 Markdown en `doc/`, 63 archivos); `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas); `python3 -m unittest discover -s tests -p 'test_check_sdd.py'` (8 OK); `compileall`, `git diff --check` y `frontend/npm run build` correctos. Las 12 pruebas enfocadas de `test_panel.py` comprueban snapshot inicial, cambio de versión/fase/run, heartbeat, origen cross-origin y reconexión a secuencia posterior. Smoke visual local a través de Vite/Uvicorn confirmó `EN VIVO`.
+- Límites: almacenamiento volátil y único proceso; la conexión requiere mismo host y un Origin browser; no hay outbox, historial de deltas, límites por conexión, multi-worker, sesión/órdenes de juego ni despliegue. No se verificó desconexión real del navegador; el smoke solo comprobó conexión viva. El mapa Manta sigue parcial y no es una guía de emergencia.
+- Siguiente acción: P3-01, búsqueda temporal acotada sobre el snapshot/política Dijkstra, manteniendo P2-03 como referencia/evaluación parcial y sin afirmar que la evaluación oficial ya está completa.
+- Commit: se crea commit local individual de P4-02 en `master`, después de cerrar suite/validadores.
+
 ## CAM-031 — Proyección inicial de mapa y estado para el panel
 
 - Fecha: 2026-10-26, Ecuador continental.

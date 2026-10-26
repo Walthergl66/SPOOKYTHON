@@ -1,6 +1,6 @@
 # Eventos de tiempo real
 
-Estado: transporte WebSocket y proyecciones siguen previstos; los cierres de ciudad programados y su aplicación al snapshot en memoria ya están en `simulation/coordinador.py`. Los eventos públicos usan exclusivamente proyección observable.
+Estado: `WS /ws/panel` implementado localmente en CAM-032 para snapshots observables completos y heartbeat. El contrato de eventos de turno/jugador de esta sección sigue previsto; cierres programados y snapshots se confirman actualmente en memoria, no en almacenamiento durable.
 
 ## Sobre común
 
@@ -27,6 +27,27 @@ Estado: transporte WebSocket y proyecciones siguen previstos; los cierres de ciu
 | `turno.resuelto` | Observadores | Posiciones finales, mordidas, llegadas, cierres y métricas. |
 | `partida.finalizada` | Observadores | Motivo, clasificación y resumen de resultados. |
 | `partida.interrumpida` | Observadores | Interrupción explícita, sin afirmar continuación. |
+
+### Canal implementado del panel
+
+El endpoint `WS /ws/panel` es de solo lectura y valida `Origin` contra el host de la solicitud. El servidor entrega un `panel.snapshot` inmediatamente tras aceptar la conexión, luego consulta la clave confirmada `(runId, snapshotVersion)` cada 250 ms y publica un nuevo snapshot completo al cambiar. `secuencia` usa el `snapshotVersion` de esa partida. Si todavía no hay partida, el snapshot lleva `runId: null`, `secuencia: 0`, `fase: "sin_partida"` y `datos: {"estado":"sin_partida"}`. `emitidoEn` es fecha UTC del servidor.
+
+```json
+{
+  "schemaVersion": 1,
+  "tipo": "panel.snapshot",
+  "runId": "juego-001",
+  "secuencia": 32,
+  "turno": 12,
+  "fase": "resuelta",
+  "emitidoEn": "2026-10-26T16:00:00Z",
+  "datos": {"estado": "activa", "runId": "juego-001", "snapshotVersion": 32}
+}
+```
+
+Cada dos segundos sin cambios el servidor publica `panel.latido` con `schemaVersion`, `runId`, `secuencia` y `emitidoEn`; no incluye estado adicional. El cliente descarta secuencias repetidas o antiguas de la misma partida. Las secuencias mayores se aceptan porque cada `panel.snapshot` reemplaza el estado completo, no es un delta. Un cambio de `runId` reemplaza toda la partida anterior. Después de reconectar siempre llega primero el snapshot vigente, por lo que no existe hueco de suscripción que requiera replay de deltas. El cliente muestra reconexión/desactualización y reintenta con backoff exponencial.
+
+Esta proyección no implementa el catálogo de eventos de partida/jugador de arriba, ni historial, replay durable, límites de conexión o coordinación multi-proceso. La estrategia es válida para el repositorio de una tarea local; una futura publicación durable requiere ordenar la confirmación del evento con la persistencia del snapshot.
 
 ## Reanudación
 

@@ -21,6 +21,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [arquitectura.md](arquitectura.md) | Componentes, límites y dependencias | Cambien estructura o comunicaciones. |
 | [reglas-juego.md](reglas-juego.md) | Reglas de simulación y supuestos | Se confirme o cambie una regla. |
 | [decisiones/0008-simulacion-estocastica-reproducible.md](decisiones/0008-simulacion-estocastica-reproducible.md) | Aleatoriedad del mundo, reproducción y privacidad del generador | Cambien condiciones de estocasticidad o replay. |
+| [decisiones/0009-panel-ws-snapshots-completos.md](decisiones/0009-panel-ws-snapshots-completos.md) | Snapshots completos del WebSocket de observación | Cambie el transporte, cursor o recuperación del panel. |
 | [modos.md](modos.md) | Diferencias entre simulador y juego | Cambie control o experiencia. |
 | [flujos/roles.md](flujos/roles.md) | Actores, permisos y responsabilidades | Aparezca un actor o permiso. |
 | [flujos/simulador.md](flujos/simulador.md) | Ciclo del turno automático | Cambie secuencia o reloj. |
@@ -30,7 +31,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [modulos/backend.md](modulos/backend.md) | Ubicación de responsabilidades backend | Se cree o mueva un caso de uso. |
 | [modulos/frontend.md](modulos/frontend.md) | Módulos y estados de interfaz | Se cree o mueva una pantalla. Estado del scaffold en `frontend/`; no sustituye los contratos del panel. |
 | [contratos/api.md](contratos/api.md) | Contrato HTTP y autenticación | Cambien rutas, cuerpos o errores. Estado y ejemplos de las proyecciones del panel incluyen CAM-031. |
-| [contratos/eventos.md](contratos/eventos.md) | Contrato WebSocket y orden de mensajes | Cambien eventos o recuperación. |
+| [contratos/eventos.md](contratos/eventos.md) | Contrato WebSocket y orden de mensajes | Cambien eventos o recuperación. El canal de snapshots del panel se implementa localmente en CAM-032. |
 | [datos.md](datos.md) | Entidades, estados e identidad de versiones | Cambie persistencia o proyección. |
 | [mapa-manta.md](mapa-manta.md) | Procedencia, alcance y límites del fixture geográfico de Manta | Cambien las fuentes, extensión o metodología del dataset. |
 | [algoritmos.md](algoritmos.md) | Planificación y predicción | Cambie la política de rutas. |

@@ -57,7 +57,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P3-02 | Predicción de corredores — rutas | P3-01 | No conoce dormidos; compara varias semillas con referencia. | Pendiente |
 | P3-03 | Selección de política — integración | P3-02 | Mejora demostrable sin romper latencia; conservar base si no mejora. | Pendiente |
 | P4-01 | Panel y mapa — frontend/backend | P0-04 y contratos | Mapa/snapshot observables, filtro de dormidos, capas, refugios, cierres/hordas, movimientos, métricas por modo, ruta prevista seleccionable y consulta manual. Pruebas API y recorrido visual local; actualización en vivo corresponde a P4-02. | Verificado — CAM-031 |
-| P4-02 | WebSocket y recuperación — frontend/backend | P1-04 y P4-01 | Reconecta sin huecos ni mensajes de partida anterior. | Pendiente |
+| P4-02 | WebSocket y recuperación — frontend/backend | P1-04 y P4-01 | Snapshot completo al conectar/cambiar versión, heartbeat y reconexión desde versión vigente; filtra origen ajeno y no cruza runId. Almacenamiento del socket en memoria, sin replay durable/multi-worker. | Verificado — CAM-032 |
 | P4B-01 | Sesión y aparición humana — backend | P2-03 | Un propietario, nodo aleatorio elegible y entrada al inicio de turno. | Pendiente |
 | P4B-02 | Órdenes persistidas — backend | P4B-01 | Idempotencia, reemplazo, cierre y rechazo de sesión ajena. | Pendiente |
 | P4B-03 | Controles, radio y resultado — frontend | P4-02 y P4B-02 | Jugable con teclado/mouse; un paso por turno y reconexión real. | Pendiente |
