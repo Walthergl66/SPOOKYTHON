@@ -1,6 +1,6 @@
 # Reglas del mundo
 
-Estado: implementación parcial del grafo, movimiento zombie y resolución de intenciones en `src/navira/`; el reloj, los eventos coordinados y los escenarios siguen pendientes. Fuente: [reto](referencias/reto-original.md). Dudas: [pendientes](pendientes.md).
+Estado: implementación parcial del grafo, movimiento zombie, cierres programados y resolución de intenciones en `src/navira/`; el bucle de reloj, transporte de eventos y escenarios siguen pendientes. Fuente: [reto](referencias/reto-original.md). Dudas: [pendientes](pendientes.md).
 
 ## Reglas obligatorias
 

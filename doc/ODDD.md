@@ -38,7 +38,7 @@ Son límites dentro de un monolito modular, no servicios nuevos. Las identidades
 - Servicios de dominio puros: transitabilidad, detector de mordidas, resolución y elegibilidad de aparición. Usar una función si no necesita estado o identidad.
 - Políticas intercambiables: controlador automático y humano producen intenciones. Tipos zombie pueden usar composición/estrategias; no se exige una clase hija por tipo.
 
-El código implementa `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` como valores inmutables. `validar_contexto_intencion()` comprueba partida, turno, fase, personaje y estado activo. Humanos y automáticos producen el mismo contrato; la validación topológica y resolución compartida de movimientos pertenecen a fases posteriores.
+El código implementa `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` como valores inmutables. `validar_contexto_intencion()` comprueba partida, turno, fase, personaje y estado activo. `SnapshotMundo` y el coordinador de aplicación producen transiciones completas versionadas en memoria; la escritura atómica y el control de concurrencia entre procesos requieren un adaptador persistente futuro.
 
 ## Invariantes
 

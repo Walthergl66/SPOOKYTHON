@@ -17,6 +17,7 @@
 - En `feat/navira-map-graph` existe `src/navira/domain/mapa.py`: modelo de nodo/calle/refugio, carga JSON, adyacencia dirigida y validación de cierres por arista/segmento. Diez pruebas de dominio pasan. El fixture es sintético y no representa Manta.
 - En `feat/navira-world-model` existe `src/navira/domain/modelo.py`: partida con modo/turno/fase fijos, sobrevivientes, zombies e intención ligada a su partida y fase. Siete pruebas pasan; todavía no hay resolutor de movimiento.
 - En `feat/navira-zombie-resolution` existe `src/navira/simulation/resolver.py`: resolución en memoria de una fase completa con movimiento zombie, intenciones humanas/automáticas, mordidas y evacuación. Las once pruebas del resolutor y 36 pruebas totales pasan. Reglas aún provisionales; no integra reloj, persistencia, snapshots ni visibilidad del estado dormido.
+- En `feat/navira-turn-snapshots` el coordinador puede preparar zombies y abrir decisiones por separado para el modo humano; también resuelve una transición versionada, aplica cierres programados una vez, conserva el estado aleatorio privado y permite abrir el turno siguiente. `VentanaTurno` calcula un deadline monotónico de dos segundos. Son snapshots de memoria: no hay persistencia condicional, bucle de reloj ni publicación WebSocket.
 
 ## Verificación histórica de CAM-003
 
@@ -38,7 +39,7 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 | Área | Estado | Evidencia pendiente |
 |---|---|---|
 | Backend y `/paso` | Base implementada, arranque sin verificar | Instalar dependencias, ejecutar HTTP y completar pruebas de contrato; conectar planificador después. |
-| Simulador | Resolución de una fase implementada parcialmente | Reloj, transiciones entre turnos, eventos, snapshots, escenarios y ejecución continua pendientes. |
+| Simulador | Resolución y ciclo local parcial implementados | Persistencia/CAS, bucle de reloj, publicación, escenarios y ejecución continua pendientes. |
 | Grafo de Manta | Modelo genérico implementado; dataset pendiente | Área y exportación reproducible de OpenStreetMap con unas 300 intersecciones y cuatro refugios. |
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
@@ -50,7 +51,7 @@ El repositorio local tiene un remoto Git configurado. CAM-006 a CAM-009 conserva
 
 ## Próxima acción concreta
 
-Continuar con P1-04 en una rama nueva: ciclo de turno, eventos y snapshots completos/versionados sobre el resolutor de CAM-009. P1-01 sigue necesitando datos geográficos reproducibles de Manta; P1-03 permanece parcial porque reglas de visibilidad/configuración aún no están completas. P0-01/P0-02 también requieren ejecutar y comprobar el endpoint HTTP antes de marcarlos verificados. No presentar la espera inicial como planificador. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Completar P1-04 con un puerto/adaptador de almacenamiento versionado y CAS antes de afirmar atomicidad durable; conectar al reloj de ciclo y transporte en sus tareas. P1-01 sigue necesitando datos geográficos reproducibles de Manta; P1-03 permanece parcial porque reglas de visibilidad/configuración aún no están completas. P0-01/P0-02 requieren ejecutar y comprobar el endpoint HTTP. No presentar la espera inicial como planificador. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
 Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. `python -m pip install -e .` completó en el entorno temporal `/tmp/navira-env`; el comando de arranque del README aún no se ha ejecutado. Cuando se verifique, registrar versiones y resultados, sin confundir comandos previstos con ejecutados.
 
@@ -60,4 +61,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución pura de un turno en CAM-009. La rama actual de esta fase es `feat/navira-zombie-resolution`. Tras cerrar su commit, iniciar P1-04 en una nueva rama desde esta rama. Mantener P1-01, P1-02 y P1-03 parciales; la SPEC-001 no está verificada.
+La base API quedó en CAM-006; grafo parcial en CAM-007; entidades/intenciones en CAM-008; resolución pura de un turno en CAM-009; coordinación/snapshots de memoria en CAM-010. La rama actual es `feat/navira-turn-snapshots`. P1-04 sigue en curso hasta disponer de almacenamiento condicional durable. Mantener P1-01, P1-02 y P1-03 parciales; SPEC-001 no está verificada.

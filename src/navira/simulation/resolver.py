@@ -65,6 +65,14 @@ class ResultadoTurno:
     intenciones_rechazadas: tuple[str, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class PreparacionTurno:
+    """Instantánea de decisión tras mover zombies y sus tramos completos."""
+
+    partida: Partida
+    movimientos_zombies: tuple[MovimientoZombie, ...]
+
+
 def resolver_turno(
     partida: Partida,
     grafo: Grafo,
@@ -75,22 +83,40 @@ def resolver_turno(
     segmentos_cerrados: frozenset[str] = frozenset(),
     configuracion: ConfiguracionReglas = ConfiguracionReglas(),
 ) -> ResultadoTurno:
-    """Avanza zombies primero y luego resuelve a la vez a los sobrevivientes.
+    """Ejecuta en una llamada local preparación zombie y resolución conjunta."""
 
-    Esta función procesa un solo turno sin manejar el reloj ni la persistencia.
-    Requiere una partida activa en fase PREPARACION; P1-04 añadirá el ciclo de
-    reloj/snapshots y la transición al siguiente turno.
-    """
+    preparacion = preparar_turno(
+        partida,
+        grafo,
+        rng=rng,
+        aristas_cerradas=aristas_cerradas,
+        segmentos_cerrados=segmentos_cerrados,
+        configuracion=configuracion,
+    )
+    return resolver_decisiones(
+        preparacion.partida,
+        grafo,
+        intenciones,
+        movimientos_zombies=preparacion.movimientos_zombies,
+        aristas_cerradas=aristas_cerradas,
+        segmentos_cerrados=segmentos_cerrados,
+    )
+
+
+def preparar_turno(
+    partida: Partida,
+    grafo: Grafo,
+    *,
+    rng: random.Random,
+    aristas_cerradas: frozenset[str] = frozenset(),
+    segmentos_cerrados: frozenset[str] = frozenset(),
+    configuracion: ConfiguracionReglas = ConfiguracionReglas(),
+) -> PreparacionTurno:
+    """Mueve zombies una sola vez y abre la fase común de decisiones."""
 
     if partida.estado is not EstadoPartida.ACTIVA or partida.fase is not FaseTurno.PREPARACION:
         raise ValueError("El turno debe iniciar con una partida activa en preparación.")
     partida.validar_mapa(grafo.mapa)
-
-    intenciones_por_id: dict[str, IntencionMovimiento] = {}
-    for intencion in intenciones:
-        if intencion.sobreviviente_id in intenciones_por_id:
-            raise ValueError(f"Intención duplicada para {intencion.sobreviviente_id}.")
-        intenciones_por_id[intencion.sobreviviente_id] = intencion
 
     zombies_actualizados: list[Zombie] = []
     movimientos_zombies: list[MovimientoZombie] = []
@@ -113,6 +139,30 @@ def resolver_turno(
         zombies=tuple(zombies_actualizados),
         fase=FaseTurno.DECISIONES,
     )
+    return PreparacionTurno(partida_decisiones, tuple(movimientos_zombies))
+
+
+def resolver_decisiones(
+    partida_decisiones: Partida,
+    grafo: Grafo,
+    intenciones: tuple[IntencionMovimiento, ...] = (),
+    *,
+    movimientos_zombies: tuple[MovimientoZombie, ...],
+    aristas_cerradas: frozenset[str] = frozenset(),
+    segmentos_cerrados: frozenset[str] = frozenset(),
+) -> ResultadoTurno:
+    """Resuelve sobrevivientes desde un snapshot zombie ya abierto a decisiones."""
+
+    if partida_decisiones.estado is not EstadoPartida.ACTIVA or partida_decisiones.fase is not FaseTurno.DECISIONES:
+        raise ValueError("Las decisiones requieren una partida activa en fase de decisiones.")
+    partida_decisiones.validar_mapa(grafo.mapa)
+    intenciones_por_id: dict[str, IntencionMovimiento] = {}
+    for intencion in intenciones:
+        if intencion.sobreviviente_id in intenciones_por_id:
+            raise ValueError(f"Intención duplicada para {intencion.sobreviviente_id}.")
+        intenciones_por_id[intencion.sobreviviente_id] = intencion
+
+    zombies_actualizados = list(partida_decisiones.zombies)
     bloqueados_horda = _nodos_bloqueados_por_horda(
         zombies_actualizados, grafo, aristas_cerradas, segmentos_cerrados
     )
@@ -120,9 +170,7 @@ def resolver_turno(
     movimientos_sobrevivientes: list[MovimientoSobreviviente] = []
     sobrevivientes_actualizados: list[Sobreviviente] = []
     intenciones_rechazadas: list[str] = []
-    por_id = {sobreviviente.id: sobreviviente for sobreviviente in partida.sobrevivientes}
-
-    for sobreviviente in partida.sobrevivientes:
+    for sobreviviente in partida_decisiones.sobrevivientes:
         intencion = intenciones_por_id.get(sobreviviente.id)
         calle_elegida: Calle | None = None
         destino = sobreviviente.nodo
@@ -155,7 +203,7 @@ def resolver_turno(
 
     mordidos = _resolver_mordidas(
         movimientos_sobrevivientes,
-        movimientos_zombies,
+        list(movimientos_zombies),
         zombies_actualizados,
     )
     refugios_por_nodo = {refugio.nodo: refugio.id for refugio in grafo.mapa.refugios}

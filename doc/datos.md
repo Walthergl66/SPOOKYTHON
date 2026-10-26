@@ -1,6 +1,6 @@
 # Modelo de datos y consistencia
 
-Estado: nodos, calles dirigidas, refugios y grafo validados están implementados en `src/navira/domain/mapa.py`; el mapa real de Manta y la persistencia siguen pendientes. Decisión de consistencia: [ADR-003](decisiones/0003-estado-y-turnos.md).
+Estado: nodos, calles dirigidas, refugios y grafo validados están implementados en `src/navira/domain/mapa.py`; el coordinador en memoria crea snapshots completos por fase y conserva cierres/eventos en `src/navira/simulation/coordinador.py`. Mapa real de Manta y almacenamiento/confirmación condicional siguen pendientes. Decisión de consistencia: [ADR-003](decisiones/0003-estado-y-turnos.md).
 
 Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conserva la fuente de campos/versiones; ODDD enlaza el modelo sin imponer otra base de datos o un item único para toda la partida.
 
@@ -17,7 +17,7 @@ Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conser
 | Evento de ciudad | ID, segmento, turno objetivo, causa | Aplicación única y trazable. |
 | Resultado | Modo, versiones, decisiones, métricas y final | Separar pruebas automáticas de juego. |
 
-`Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` ya existen como dataclasses inmutables en `src/navira/domain/modelo.py`. La partida fija modo, versión de mapa, estado, turno y fase; `validar_mapa()` comprueba referencias. La transición entre fases, la aplicación de movimientos y el snapshot durable siguen pendientes.
+`Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` ya existen como dataclasses inmutables en `src/navira/domain/modelo.py`. La partida fija modo, versión de mapa, estado, turno y fase; `validar_mapa()` comprueba referencias. `SnapshotMundo` conserva en memoria el estado completo, cierres, eventos programados/aplicados y estado aleatorio privado. La aplicación de movimientos y transición versionada entre fases están implementadas en memoria. El snapshot durable y la escritura condicional siguen pendientes.
 
 En el código, `Calle.id` identifica un sentido dirigido y `Calle.segmento_id` el tramo físico. Las dos direcciones de una misma calle comparten segmento; las calles paralelas usan IDs físicos distintos. El mapa valida IDs únicos, coordenadas WGS84, distancia/velocidad positivas, categorías reconocidas y referencias a nodos existentes. `Mapa.validar_mapa_evaluacion()` exige cuatro refugios en nodos distintos y, por defecto, al menos 200 nodos; ese umbral aproximado no sustituye el requisito objetivo de unas 300 intersecciones. El fixture de cuatro nodos es sintético.
 
@@ -29,7 +29,7 @@ El motor recibe información de todos los sobrevivientes necesaria para estimar 
 
 ## Versiones
 
-Identidad mínima de una instantánea: `(runId, turno, fase, mapVersion)`. Mantener separados `zombies_movidos` y `resuelto`, no sobrescribir una fase bajo una misma clave. Decisiones incorporan esa identidad y sobreviviente/nodo actual. Un reinicio de partida genera nuevo `runId` aunque el turno vuelva a cero.
+Identidad mínima de una instantánea: `(runId, turno, fase, mapVersion)`; el prototipo agrega una versión monotónica para distinguir cada transición. El coordinador genera snapshots de decisión y resolución completos y permite abrir el siguiente turno solo desde una resolución confirmada por el llamador. Decisiones incorporan esa identidad y sobreviviente/nodo actual. Un reinicio de partida genera nuevo `runId` aunque el turno vuelva a cero.
 
 DynamoDB será la fuente de verdad prevista. Preparar una versión completa y confirmar un manifiesto/puntero de publicación; los consumidores no leen fragmentos a medio escribir. La lectura inmediata que depende de una escritura confirmada debe ser consistente en la tabla, no depender de un índice eventualmente actualizado.
 

@@ -48,7 +48,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P1-01 | Grafo Manta y refugios — dominio | P0-02 | Unas 300 intersecciones, barrios conectados, distancias y direcciones válidas. | En curso |
 | P1-02 | Entidades, modos e intenciones — dominio | P0-02 | Un mundo y un resolutor para humano/automático. | En curso |
 | P1-03 | Zombies y mordidas — simulación | P1-02 | T-01 a T-06 cubiertas, visibilidad validada y supuestos identificados. | En curso |
-| P1-04 | Reloj, eventos y snapshots — simulación | P1-03 | Turnos versionados; ninguna publicación parcial. | Pendiente |
+| P1-04 | Reloj, eventos y snapshots — simulación | P1-03 | Turnos versionados; ninguna publicación parcial. | En curso |
 | P1-05 | Tres escenarios — simulación | P1-01 y P1-04 | Configuraciones y semillas reproducibles. | Pendiente |
 | P2-01 | Dijkstra y selección de refugio — rutas | P1-01 | Considera tipo/distancia, cierres y peligros visibles. | Pendiente |
 | P2-02 | `/paso` y API key — backend | P2-01 y P1-04 | HTTP real, decisiones idempotentes y siempre válidas. | Pendiente |

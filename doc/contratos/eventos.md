@@ -1,6 +1,6 @@
 # Eventos de tiempo real
 
-Estado: diseño previsto. Transporte: WebSocket mediante `/ws`. Los eventos públicos usan exclusivamente proyección observable.
+Estado: transporte WebSocket y proyecciones siguen previstos; los cierres de ciudad programados y su aplicación al snapshot en memoria ya están en `simulation/coordinador.py`. Los eventos públicos usan exclusivamente proyección observable.
 
 ## Sobre común
 
