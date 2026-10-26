@@ -1,15 +1,23 @@
 {
-  "version": "fixture-v1",
+  "version": "fixture-sintetico-v1",
   "nodos": [
     {"id": "N-0001", "lat": -0.9500, "lng": -80.7200},
     {"id": "N-0002", "lat": -0.9510, "lng": -80.7210},
-    {"id": "N-0003", "lat": -0.9520, "lng": -80.7220}
+    {"id": "N-0003", "lat": -0.9520, "lng": -80.7220},
+    {"id": "N-0004", "lat": -0.9530, "lng": -80.7230}
   ],
   "calles": [
     {"id": "E-0001", "segmentoId": "S-0001", "origen": "N-0001", "destino": "N-0002", "distancia_m": 120, "tipo": "calle", "velocidad_kmh": 30},
-    {"id": "E-0002", "segmentoId": "S-0002", "origen": "N-0002", "destino": "N-0003", "distancia_m": 180, "tipo": "avenida", "velocidad_kmh": 50}
+    {"id": "E-0002", "segmentoId": "S-0001", "origen": "N-0002", "destino": "N-0001", "distancia_m": 120, "tipo": "calle", "velocidad_kmh": 30},
+    {"id": "E-0003", "segmentoId": "S-0002", "origen": "N-0002", "destino": "N-0003", "distancia_m": 180, "tipo": "avenida", "velocidad_kmh": 50},
+    {"id": "E-0004", "segmentoId": "S-0002", "origen": "N-0003", "destino": "N-0002", "distancia_m": 180, "tipo": "avenida", "velocidad_kmh": 50},
+    {"id": "E-0005", "segmentoId": "S-0003", "origen": "N-0003", "destino": "N-0004", "distancia_m": 90, "tipo": "callejon", "velocidad_kmh": 15},
+    {"id": "E-0006", "segmentoId": "S-0003", "origen": "N-0004", "destino": "N-0003", "distancia_m": 90, "tipo": "callejon", "velocidad_kmh": 15}
   ],
   "refugios": [
-    {"id": "R-0001", "nodo": "N-0003"}
+    {"id": "R-0001", "nodo": "N-0001"},
+    {"id": "R-0002", "nodo": "N-0002"},
+    {"id": "R-0003", "nodo": "N-0003"},
+    {"id": "R-0004", "nodo": "N-0004"}
   ]
 }

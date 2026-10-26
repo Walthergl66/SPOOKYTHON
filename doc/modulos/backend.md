@@ -1,12 +1,12 @@
 # Módulos backend y dependencias
 
-Estado: implementación inicial en curso. `src/navira/api/` contiene los esquemas, autenticación y rutas HTTP; `src/navira/application/decidir_paso.py` ofrece temporalmente espera determinista. Dominio, simulación, persistencia y planificador todavía no existen.
+Estado: implementación por fases. `src/navira/api/` contiene esquemas, autenticación y rutas HTTP; `src/navira/application/decidir_paso.py` ofrece temporalmente espera determinista; `src/navira/domain/mapa.py` valida nodos, calles, refugios y cierres. El dataset real de Manta, simulación, persistencia y planificador todavía no existen.
 
 Lenguaje, contextos e invariantes: [ODDD](../ODDD.md). Requisitos técnicos: [TRD](../TRD.md); antes de implementar elegir la [SPEC](../especificaciones/README.md) correspondiente. La orientación a objetos no exige crear clases para funciones sin estado.
 
 | Módulo | Responsabilidad | No debe hacer | Verificación |
 |---|---|---|---|
-| `domain/` | Grafo, entidades, transitabilidad, mordidas y llegadas | Importar FastAPI/boto3, usar HTTP o decidir permisos web | Pruebas puras con grafos pequeños. |
+| `domain/` | Grafo, entidades, transitabilidad, mordidas y llegadas | Importar FastAPI/boto3, usar HTTP o decidir permisos web | `test_mapa.py` valida grafo, unidades, referencias, refugios y cierres. |
 | `routing/` | Dijkstra, A* temporal, riesgos y selección de refugio | Modificar mundo, leer dormidos o mezclar unidades | Casos de ruta y comparación de políticas. |
 | `simulation/` | Reloj, fases, zombies, eventos y resolución | Mantener la única copia de estado o ejecutar coordinadores duplicados | Escenarios y reproducción. |
 | `application/` | Preparar turno, decidir paso, iniciar/finalizar partida; puertos de I/O | Depender de esquemas HTTP o SDK AWS | Casos de uso con adaptadores en memoria. En esta fase solo existe la decisión inicial de espera. |

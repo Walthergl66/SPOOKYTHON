@@ -1,11 +1,11 @@
 # SPEC-001 — Mundo y simulación
 
 ID: SPEC-001
-Estado: lista
+Estado: implementada
 Requisitos: PRD-01, PRD-02, TRD-03, TRD-04, TRD-05, TRD-09, TRD-11, TRD-12
 Tareas: P1-01, P1-02, P1-03, P1-04, P1-05
 Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18
-Cambio: pendiente
+Cambio: CAM-007
 Evidencia: pendiente
 
 ## Objetivo y alcance
@@ -30,3 +30,5 @@ P1-01 valida mapa/fixture; P1-02 define entidades e intenciones; P1-03 implement
 ## Casos límite, dudas y verificación
 
 Probar nodos sin salida, segmentos paralelos, bloqueo de puentes, múltiples mordidas, snapshot incompleto y repetición de eventos. P-01 a P-05 y P-07 a P-09 siguen pendientes: pruebas deben explicitar configuración provisional. Ejecutar T indicadas antes de cerrar; no hay resultados actuales. Validar también tiempo completo con SPEC-005.
+
+P1-01 tiene implementación parcial: `Mapa`/`Grafo`, carga JSON y validaciones tienen diez pruebas de dominio. El fixture es sintético de cuatro nodos; todavía no existe el mapa real de unas 300 intersecciones. P1-02 a P1-05 siguen pendientes, por lo que esta SPEC no está verificada.

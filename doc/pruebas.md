@@ -20,7 +20,7 @@ Estado: estrategia pendiente; solo la documentación tiene una comprobación eje
 | T-04 | Dormido | No visible ni utilizable por motor antes de activación. |
 | T-05 | Coincidencia/cruce | Mordida final o sentido opuesto, incluidos ambos tramos de corredor. |
 | T-06 | Orden de turno | Misma fase del mundo para todos; zombies antes de decisiones. |
-| T-07 | Cierre en vivo | Arista deja de usarse desde su turno de bloqueo. |
+| T-07 | Cierre en vivo | El grafo filtra arista dirigida o segmento físico cerrado; activación por turno queda pendiente del simulador. |
 | T-08 | Sin ruta/timeout | Acción válida o espera; sin falsa garantía de seguridad. |
 | T-09 | Refugio | Estado final correcto según orden acordado de mordida/llegada. |
 | T-10 | Repetición/reinicio | Misma decisión en misma instantánea; ninguna caché cruza partidas. |
@@ -59,3 +59,5 @@ Cada reporte debe incluir revisión de código, mapa, escenario, semilla, modo, 
 Comprobación documental disponible: `python3 scripts/check_docs.py`. El resto de comandos se documentará tras crear la aplicación; no suponer que `pytest`, un benchmark o un build ya están configurados.
 
 Validación SDD disponible: `python3 scripts/check_sdd.py` y regresiones del comprobador mediante `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. T-20/T-21 verifican metodología documental; T-01 a T-19 y T-22/T-23 siguen pendientes como pruebas de aplicación/operación. Referencias: [SPEC](especificaciones/README.md), [trazabilidad](trazabilidad.md).
+
+El modelo de mapa tiene regresiones con `python -m unittest discover -s tests -p 'test_mapa.py' -v`. Estas pruebas verifican el grafo y el filtrado de cierres; no prueban eventos temporales, turnos ni un dataset real de Manta.

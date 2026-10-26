@@ -45,6 +45,8 @@ curl -X POST http://127.0.0.1:8000/paso \
 
 Respuesta inicial: `{"siguienteNodo":"N-0117"}`. Esta espera cumple la alternativa permitida por el contrato, pero no calcula rutas ni garantiza seguridad. La clave de ejemplo es solo local; reemplázala y no uses una clave real en el repositorio. El contrato documentado está en [API](doc/contratos/api.md); el plan sigue en [estado actual](doc/estado-actual.md).
 
+El modelo del grafo y el fixture de cuatro nodos son sintéticos; todavía no contienen calles reales de Manta. La carga y validación están en `src/navira/domain/mapa.py`; el origen y el área de extracción de OSM siguen pendientes.
+
 Comprobación documental disponible, sin dependencias externas:
 
 ```bash

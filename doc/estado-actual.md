@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio: **CAM-006**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio: **CAM-007**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -11,9 +11,10 @@
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
 - Existe `scripts/check_docs.py`, una utilidad de documentación con biblioteca estándar de Python; no es código de la aplicación.
-- Existen PRD, TRD, ODDD (OO + DDD confirmado por el usuario), SDD, seis SPEC y matriz de trazabilidad. SPEC-006 verifica incorporación metodológica; SPEC-001 a SPEC-005 siguen sin implementación funcional.
+- Existen PRD, TRD, ODDD (OO + DDD confirmado por el usuario), SDD, seis SPEC y matriz de trazabilidad. SPEC-006 verifica incorporación metodológica; SPEC-001 y SPEC-002 tienen implementación parcial sin verificación completa.
 - Existe `scripts/check_sdd.py` con ocho pruebas de regresión en `tests/test_check_sdd.py`; son utilidades/pruebas documentales, no la aplicación.
 - En `feat/navira-backend-base` existe la base FastAPI en `src/navira/`, `/salud`, `/paso` con autenticación y esquemas, y fixtures de contrato/mapa. El endpoint usa temporalmente una política de espera determinista; todavía no hay cálculo de rutas.
+- En `feat/navira-map-graph` existe `src/navira/domain/mapa.py`: modelo de nodo/calle/refugio, carga JSON, adyacencia dirigida y validación de cierres por arista/segmento. Diez pruebas de dominio pasan. El fixture es sintético y no representa Manta.
 
 ## Verificación histórica de CAM-003
 
@@ -36,18 +37,18 @@ Comprobación documental y SDD correctas: 52 Markdown en `doc/`, 54 archivos com
 |---|---|---|
 | Backend y `/paso` | Base implementada, arranque sin verificar | Instalar dependencias, ejecutar HTTP y completar pruebas de contrato; conectar planificador después. |
 | Simulador | Pendiente | Turnos y escenarios ejecutados. |
-| Grafo de Manta | Pendiente | Exportación y validación. |
+| Grafo de Manta | Modelo genérico implementado; dataset pendiente | Área y exportación reproducible de OpenStreetMap con unas 300 intersecciones y cuatro refugios. |
 | Frontend y juego | Pendiente | Compilación y recorrido de usuario. |
 | Infraestructura AWS | Pendiente | Recursos, URL y comprobación de salud. |
 | Budget con alerta | No verificado | Captura y configuración real. |
 | Rendimiento/supervivencia | Sin medir | Reportes de las tres rondas. |
 | Repositorio remoto y commits | No verificado | URL y comprobación del historial. |
 
-El repositorio local tiene un remoto Git configurado. La fase actual crea su primer commit de implementación en la rama indicada por CAM-006; publicación remota y despliegue AWS siguen pendientes.
+El repositorio local tiene un remoto Git configurado. CAM-006 conserva la base del backend en su commit y rama; CAM-007 está en curso en una rama distinta. No se han publicado las ramas al remoto; el despliegue AWS sigue pendiente.
 
 ## Próxima acción concreta
 
-Continuar **P0-01/P0-02** desde `feat/navira-backend-base`: habilitar dependencias Python, verificar arranque y completar pruebas HTTP para `/salud`, autenticación, validación y cuerpo de éxito. Luego iniciar P1 con grafo y mundo según [SPEC-001](especificaciones/SPEC-001-mundo-simulacion.md). No presentar la espera inicial como planificador. Configurar Budget cuando se disponga de acceso AWS autorizado.
+Completar P1-01 desde `feat/navira-map-graph` con datos geográficos reproducibles y barrios/refugios reales; luego añadir entidades/intenciones y simulación según [SPEC-001](especificaciones/SPEC-001-mundo-simulacion.md). P0-01/P0-02 también requieren ejecutar y comprobar el endpoint HTTP antes de marcarlos verificados. No presentar la espera inicial como planificador. Configurar Budget cuando se disponga de acceso AWS autorizado.
 
 Comandos documentales confirmados: `python3 scripts/check_docs.py`, `python3 scripts/check_sdd.py` y `python3 -m unittest discover -s tests -p 'test_check_sdd.py'`. `python -m pip install -e .` completó en el entorno temporal `/tmp/navira-env`; el comando de arranque del README aún no se ha ejecutado. Cuando se verifique, registrar versiones y resultados, sin confundir comandos previstos con ejecutados.
 
@@ -57,4 +58,4 @@ Confirmación de región y reglas pendientes; acceso AWS y repositorio remoto no
 
 ## Trabajo en curso y transferencia
 
-La implementación inicial de backend está en curso en `feat/navira-backend-base`; ver CAM-006. La metodología documental está incorporada y comprobada; el nombre a usar es Navira. Continuar desde esta rama y completar verificación local antes de avanzar al grafo. Si hay cambios posteriores a CAM-006, inspeccionarlos antes de editar.
+La base de API quedó en CAM-006 y el modelo de mapa está en curso en la rama `feat/navira-map-graph`, CAM-007. La metodología documental está incorporada y comprobada; el nombre a usar es Navira. Continuar desde esta rama. Si hay cambios posteriores a CAM-007, inspeccionarlos antes de editar.

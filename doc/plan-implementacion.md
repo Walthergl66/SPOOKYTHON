@@ -45,7 +45,7 @@ Estados permitidos: pendiente, en curso, verificado, bloqueado o descartado con 
 | P0-03 | Budget, permisos y región — operación | Acceso AWS autorizado | Alerta real y evidencia sin datos sensibles. | Pendiente |
 | P0-04 | CI y frontend mínimo — integración | P0-01 | Verificación Python y build frontend ejecutados. | Pendiente |
 | P0-05 | Primer despliegue — operación | P0-03 y base mínima | URL pública de salud comprobada. | Pendiente |
-| P1-01 | Grafo Manta y refugios — dominio | P0-02 | Unas 300 intersecciones, barrios conectados, distancias y direcciones válidas. | Pendiente |
+| P1-01 | Grafo Manta y refugios — dominio | P0-02 | Unas 300 intersecciones, barrios conectados, distancias y direcciones válidas. | En curso |
 | P1-02 | Entidades, modos e intenciones — dominio | P0-02 | Un mundo y un resolutor para humano/automático. | Pendiente |
 | P1-03 | Zombies y mordidas — simulación | P1-02 | Pruebas T-01 a T-06; supuestos identificados. | Pendiente |
 | P1-04 | Reloj, eventos y snapshots — simulación | P1-03 | Turnos versionados; ninguna publicación parcial. | Pendiente |

@@ -1,6 +1,6 @@
 # Modelo de datos y consistencia
 
-Estado: modelo lógico previsto; esquema físico pendiente de implementación y medición. Decisión: [ADR-003](decisiones/0003-estado-y-turnos.md).
+Estado: nodos, calles dirigidas, refugios y grafo validados están implementados en `src/navira/domain/mapa.py`; el mapa real de Manta y la persistencia siguen pendientes. Decisión de consistencia: [ADR-003](decisiones/0003-estado-y-turnos.md).
 
 Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conserva la fuente de campos/versiones; ODDD enlaza el modelo sin imponer otra base de datos o un item único para toda la partida.
 
@@ -16,6 +16,8 @@ Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conser
 | Snapshot | Partida, turno, fase, versión, datos | Inmutable una vez confirmado. |
 | Evento de ciudad | ID, segmento, turno objetivo, causa | Aplicación única y trazable. |
 | Resultado | Modo, versiones, decisiones, métricas y final | Separar pruebas automáticas de juego. |
+
+En el código, `Calle.id` identifica un sentido dirigido y `Calle.segmento_id` el tramo físico. Las dos direcciones de una misma calle comparten segmento; las calles paralelas usan IDs físicos distintos. El mapa valida IDs únicos, coordenadas WGS84, distancia/velocidad positivas, categorías reconocidas y referencias a nodos existentes. `Mapa.validar_mapa_evaluacion()` exige cuatro refugios en nodos distintos y, por defecto, al menos 200 nodos; ese umbral aproximado no sustituye el requisito objetivo de unas 300 intersecciones. El fixture de cuatro nodos es sintético.
 
 ## Estado real y observable
 
