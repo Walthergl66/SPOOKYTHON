@@ -20,6 +20,8 @@ CAM-039/040 incorporan `CoordinadorJuego` y el runner opt-in `NAVIRA_GAME_DEMO=1
 
 CAM-041 agrega `decisionRestanteMs` a la proyección observable durante decisiones y lo dibuja en frontend como contador aproximado. El valor se calcula en servidor al proyectar snapshot; JavaScript solo reduce esa estimación y deshabilita botones al llegar a cero. Un retraso/red puede volverlo obsoleto y el backend valida otra vez al recibir la orden.
 
+CAM-042 muestra en Radio Navira el siguiente tramo de `rutasPrevistas` asociado al personaje activo. El texto lo presenta como sugerencia del servidor basada en el snapshot observable, nunca como seguridad garantizada. «Usar sugerencia» manda una orden explícita por el mismo endpoint y acuse; si el tramo no coincide con una calle actualmente elegible, no se ofrece el botón. No hay endpoint separado de radio ni acción automática.
+
 ## Elegir una acción
 
 1. Recibir estado observable de la fase de decisión y hora límite del servidor.

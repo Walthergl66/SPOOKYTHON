@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-042 — Sugerencia de radio en controles humanos
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada de las fases de Navira y alcance P4B-03/P5-04.
+- Especificación/tarea: SPEC-004, P4B-03 parcial; CA-004-05/T-17 y CA-004-06/T-19 parcial.
+- Motivo: hacer visible y utilizable en el juego humano la recomendación basada en el mismo snapshot observable del panel.
+- Resultado: `GameControls` presenta el siguiente nodo de `rutasPrevistas` para el personaje como sugerencia de Radio Navira. Un botón explícito envía esa orden mediante el flujo existente; no mueve al personaje automáticamente. La UI verifica que la sugerencia empiece en la posición confirmada y corresponda a una calle habilitada, y aclara que no garantiza seguridad.
+- Archivos: `frontend/src/features/game/GameControls.tsx`, `frontend/src/styles.css`; flujo del jugador, contrato, módulo frontend, pruebas, SPEC-004, trazabilidad, plan, estado.
+- Decisión: reutilizar la ruta prevista ya calculada por el servidor con peligros visibles. No se crea un endpoint adicional ni se calculan rutas privadas en el navegador.
+- Verificación: build TypeScript/Vite y validadores documentales/SDD más suite backend completa; no existe runner de componentes ni se declara auditoría WCAG.
+- Límites: la UI solo muestra sugerencia mientras hay una ruta válida en el snapshot de decisiones; pueden cambiar los peligros antes de resolver. Sin prueba completa de teclado, lector de pantalla, T-14/T-15 ni resultado integral.
+- Siguiente paso: verificar recorrido de reconexión/idempotencia en UI y ejecutar evaluación prolongada local de P5-01; el entorno remoto y la persistencia siguen pendientes.
+- Commit: commit local individual en `master` después de las validaciones declaradas.
+
 ## CAM-041 — Contador visual del deadline
 
 - Fecha: 2026-10-26, Ecuador continental.

@@ -5,8 +5,8 @@ Estado: implementada
 Requisitos: PRD-05, PRD-06, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12
 Tareas: P4B-01, P4B-02, P4B-03, P5-04
 Pruebas: T-12, T-13, T-14, T-15, T-16, T-17, T-19
-Cambio: CAM-041
-Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana), [CAM-037](../cambios.md#cam-037-órdenes-humanas-idempotentes), [CAM-038](../cambios.md#cam-038-controles-humanos-en-frontend), [CAM-039](../cambios.md#cam-039-integración-local-del-ciclo-de-juego), [CAM-040](../cambios.md#cam-040-reloj-y-juego-demo-local) y [CAM-041](../cambios.md#cam-041-contador-visual-del-deadline).
+Cambio: CAM-042
+Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana), [CAM-037](../cambios.md#cam-037-órdenes-humanas-idempotentes), [CAM-038](../cambios.md#cam-038-controles-humanos-en-frontend), [CAM-039](../cambios.md#cam-039-integración-local-del-ciclo-de-juego), [CAM-040](../cambios.md#cam-040-reloj-y-juego-demo-local), [CAM-041](../cambios.md#cam-041-contador-visual-del-deadline) y [CAM-042](../cambios.md#cam-042-sugerencia-de-radio-en-controles-humanos).
 
 ## Objetivo y alcance
 
@@ -25,4 +25,4 @@ Un jugador entra a una partida habilitada, aparece aleatoriamente y decide cómo
 
 ## Plan, límites y verificación
 
-CAM-040 conecta un runner local de dos segundos, deadline monotónico de 1,7 s, rechazo de órdenes tardías y juego sintético opt-in; una prueba HTTP espera la siguiente ronda y confirma que re-unirse conserva el personaje. CAM-041 expone el restante para un contador visual informativo. P-16 queda resuelto para el proceso local; multi-proceso requiere otro adaptador. P-11/P-12 siguen abiertos. Sesión volátil, reinicio durable, radio y T-14/T-15/T-19 integral siguen pendientes. La cadencia solo se verificó con un smoke de ronda, no como métrica p95/sostenida. Esta SPEC no está verificada integralmente.
+CAM-040 conecta un runner local de dos segundos, deadline monotónico de 1,7 s, rechazo de órdenes tardías y juego sintético opt-in; una prueba HTTP espera la siguiente ronda y confirma que re-unirse conserva el personaje. CAM-041 expone el restante para un contador visual informativo. CAM-042 muestra la siguiente calle recomendada desde `rutasPrevistas` y requiere una acción humana explícita para enviarla. P-16 queda resuelto para el proceso local; multi-proceso requiere otro adaptador. P-11/P-12 siguen abiertos. Sesión volátil, reinicio durable y T-14/T-15/T-19 integral siguen pendientes. La cadencia solo se verificó con un smoke de ronda, no como métrica p95/sostenida. Esta SPEC no está verificada integralmente.

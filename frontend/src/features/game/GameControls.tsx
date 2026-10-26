@@ -42,6 +42,14 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
     }
     return [...byNode.entries()].map(([node, street]) => ({ node, street, risk: zombieNodes.has(node) }))
   }, [gameState, map, player])
+  const radioSuggestion = useMemo(() => {
+    if (!gameState || !player || gameState.fase !== 'decisiones') return null
+    const route = gameState.rutasPrevistas?.find(({ sobrevivienteId }) => sobrevivienteId === player.id)?.trayecto
+    if (!route || route[0] !== player.nodo || route.length < 2) return null
+    const nextNode = route[1]
+    const move = choices.find(({ node }) => node === nextNode)
+    return move ? { nextNode, move } : null
+  }, [gameState, player, choices])
 
   useEffect(() => {
     const serverRemaining = gameState?.decisionRestanteMs
@@ -149,6 +157,23 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
         <>
           <div className="game-position"><span>Tu posición</span><strong>{player.nodo}</strong><span>{turnOpen ? 'Elige un vecino o espera.' : 'Los zombies se movieron; espera la siguiente fase de decisiones.'}</span></div>
           {turnOpen && remainingMs !== null ? <p className="game-clock" aria-live="off">{deadlineClosed ? 'Tiempo agotado; esperando la resolución del servidor.' : `Cierre del servidor en ${(remainingMs / 1000).toFixed(1)} s`}</p> : null}
+          {turnOpen ? (
+            <aside className="game-radio" aria-labelledby="game-radio-title">
+              <div>
+                <span className="game-kicker">Canal de apoyo</span>
+                <h3 id="game-radio-title">Radio Navira</h3>
+              </div>
+              {radioSuggestion ? (
+                <>
+                  <p>Sugerencia del servidor para este snapshot: avanzar a <strong>{radioSuggestion.nextNode}</strong> por {radioSuggestion.move.street.tipo}, {Math.round(radioSuggestion.move.street.distanciaM)} m.</p>
+                  <button type="button" className="game-radio-action" onClick={() => void submit(radioSuggestion.nextNode)} disabled={deadlineClosed || busy || !panelFresh}>
+                    Usar sugerencia
+                  </button>
+                </>
+              ) : <p>El servidor no tiene un siguiente paso disponible en la ruta prevista de este snapshot. Puedes esperar o elegir una calle abierta.</p>}
+              <small>Es una sugerencia basada en información visible, no una garantía de seguridad. Tú decides si la envías.</small>
+            </aside>
+          ) : null}
           <fieldset className="game-moves" disabled={!turnOpen || deadlineClosed || busy || !panelFresh}>
             <legend>Calles disponibles</legend>
             <div className="game-move-list">

@@ -144,6 +144,12 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .game-position strong { color: var(--sea-bright); font: 600 13px var(--mono); }
 .game-position span:last-child { width: 100%; color: var(--dim); font-size: 10px; }
 .game-clock { margin: 0 0 10px; color: var(--amber); font: 600 11px var(--mono); }
+.game-radio { display: grid; gap: 8px; margin: 0 0 13px; padding: 12px; border: 1px solid rgba(84, 205, 183, .26); border-radius: 11px; background: rgba(24, 61, 58, .23); }
+.game-radio h3 { margin: 3px 0 0; color: var(--sea-bright); font-size: 13px; }
+.game-radio p { margin: 0; color: var(--text); font-size: 11px; line-height: 1.55; }
+.game-radio small { color: var(--dim); font-size: 9px; line-height: 1.5; }
+.game-radio-action { justify-self: start; padding: 7px 10px; border: 1px solid rgba(84, 205, 183, .38); border-radius: 7px; background: rgba(84, 205, 183, .09); color: var(--sea-bright); font-size: 10px; font-weight: 700; cursor: pointer; }
+.game-radio-action:disabled { cursor: not-allowed; opacity: .5; }
 .game-moves { min-width: 0; margin: 0; padding: 0; border: 0; }
 .game-moves legend { margin-bottom: 8px; color: var(--muted); font-size: 10px; }
 .game-move-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
