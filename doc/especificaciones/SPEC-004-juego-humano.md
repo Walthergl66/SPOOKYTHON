@@ -5,8 +5,8 @@ Estado: implementada
 Requisitos: PRD-05, PRD-06, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12
 Tareas: P4B-01, P4B-02, P4B-03, P5-04
 Pruebas: T-12, T-13, T-14, T-15, T-16, T-17, T-19, T-25
-Cambio: CAM-046
-Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana), [CAM-037](../cambios.md#cam-037-órdenes-humanas-idempotentes), [CAM-038](../cambios.md#cam-038-controles-humanos-en-frontend), [CAM-039](../cambios.md#cam-039-integración-local-del-ciclo-de-juego), [CAM-040](../cambios.md#cam-040-reloj-y-juego-demo-local), [CAM-041](../cambios.md#cam-041-contador-visual-del-deadline), [CAM-042](../cambios.md#cam-042-sugerencia-de-radio-en-controles-humanos), [CAM-043](../cambios.md#cam-043-recuperar-la-sesión-humana-al-reconectar), [CAM-045](../cambios.md#cam-045-accesibilidad-de-navegación-y-tiempo-de-juego) y [CAM-046](../cambios.md#cam-046-expiración-local-de-sesión-humana).
+Cambio: CAM-047
+Evidencia: parcial en [CAM-036](../cambios.md#cam-036-sesión-propietaria-y-aparición-humana), [CAM-037](../cambios.md#cam-037-órdenes-humanas-idempotentes), [CAM-038](../cambios.md#cam-038-controles-humanos-en-frontend), [CAM-039](../cambios.md#cam-039-integración-local-del-ciclo-de-juego), [CAM-040](../cambios.md#cam-040-reloj-y-juego-demo-local), [CAM-041](../cambios.md#cam-041-contador-visual-del-deadline), [CAM-042](../cambios.md#cam-042-sugerencia-de-radio-en-controles-humanos), [CAM-043](../cambios.md#cam-043-recuperar-la-sesión-humana-al-reconectar), [CAM-045](../cambios.md#cam-045-accesibilidad-de-navegación-y-tiempo-de-juego), [CAM-046](../cambios.md#cam-046-expiración-local-de-sesión-humana) y [CAM-047](../cambios.md#cam-047-recorrido-manual-de-teclado-parcial).
 
 ## Objetivo y alcance
 

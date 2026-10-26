@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-047 — Recorrido manual de teclado parcial
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada del usuario y siguiente acción de P4B-03/T-19 indicada en CAM-046.
+- Especificación/tarea: SPEC-004, P4B-03 parcial; CA-004-06/T-19 parcial.
+- Motivo: verificar con entrada de teclado que la navegación inicial y la selección de modo no dependen del mouse.
+- Archivos: solo documentación de estado, pruebas, módulos frontend, SPEC y este historial.
+- Resultado observado en navegador local: `Tab` enfoca «Saltar al contenido», `Enter` lleva el foco a `main-content`; la navegación secuencial alcanza Simulador/Jugar y `Space` selecciona Jugar, anunciando la experiencia humana. Se comprobó además el enlace de salto en una segunda ejecución local.
+- Verificación: recorrido manual mediante navegador local con árbol de accesibilidad; `python3 scripts/check_docs.py` y `python3 scripts/check_sdd.py` se ejecutan para cerrar este registro.
+- Límite: el backend en el puerto estándar servía una partida simulador; un backend de juego local llegó al estado terminal antes de completar el flujo. No se probó movimiento humano con teclado, lector de pantalla, WCAG integral, responsive ni estado de expiración. T-19 permanece parcial.
+- Siguiente paso: ejecutar recorrido end-to-end con una partida de juego que permanezca activa y validar teclado/lector de pantalla, incluido orden, acuse, llegada y fin.
+- Commit: commit documental individual local en `master` tras las comprobaciones.
+
 ## CAM-046 — Expiración local de sesión humana
 
 - Fecha: 2026-10-26, Ecuador continental.
