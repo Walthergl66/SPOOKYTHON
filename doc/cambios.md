@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-034 — Pronóstico observable de amenazas por escenarios
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación autorizada por el usuario de las fases restantes, con un commit por fase en `master`.
+- Especificación/tarea: SPEC-002, P3-02 parcial; enlaza con P3-01/CAM-033 y CA-002-05. La comparación de políticas T-22 queda para P3-03.
+- Motivo: proveer condiciones futuras para el buscador temporal sin entregarle fase privada, estado completo de partida o RNG.
+- Resultado: pronóstico por fases de ocupación de caminantes, corredores y hordas observables, compatible con `CondicionTurno`. El resultado enumera supuestos y produce un puntaje de exposición, nunca probabilidad calibrada.
+- Decisión: [ADR-011](decisiones/0011-pronostico-visible-por-escenarios.md). Caminantes mezclan fases desconocidas y bifurcan uniformemente por salidas; los corredores persiguen con posiciones actuales de sobrevivientes congeladas; las hordas mantienen bloqueo estático provisional. Dormidos son rechazados.
+- Archivos: `src/navira/routing/prediccion.py`, `tests/test_prediccion_rutas.py`, algoritmo, módulos, SPEC-002, plan, trazabilidad, pruebas, ADR e índices.
+- Verificación: suite completa (`125` pruebas OK; incluye 5 de pronóstico), `python3 scripts/check_docs.py` (64 Markdown/66 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas), `python3 -m unittest discover -s tests -p 'test_check_sdd.py'` (8 OK), `compileall`, `git diff --check` y `frontend/npm run build` correctos. El mensaje CLI de argumentos inválidos es la salida esperada de una prueba negativa.
+- Límites: no usa el estado/RNG privados y no se integra en `/paso`; la salida del corredor presupone sobrevivientes quietos, la horda no se mueve y la mezcla uniforme no valida distribuciones oficiales. No demuestra T-22, supervivencia ni latencia. P3-02 queda parcial hasta cerrar sus dependencias de reglas/evaluación.
+- Siguiente acción: P3-03 compara Dijkstra con búsqueda temporal/pronóstico en escenarios y semillas declarados; mantener Dijkstra salvo mejora replicable y dentro del presupuesto.
+- Commit: individual local en `master`, al completar verificaciones.
+
 ## CAM-033 — Núcleo de búsqueda temporal acotada
 
 - Fecha: 2026-10-26, Ecuador continental.

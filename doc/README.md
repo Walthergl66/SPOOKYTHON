@@ -23,6 +23,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [decisiones/0008-simulacion-estocastica-reproducible.md](decisiones/0008-simulacion-estocastica-reproducible.md) | Aleatoriedad del mundo, reproducción y privacidad del generador | Cambien condiciones de estocasticidad o replay. |
 | [decisiones/0009-panel-ws-snapshots-completos.md](decisiones/0009-panel-ws-snapshots-completos.md) | Snapshots completos del WebSocket de observación | Cambie el transporte, cursor o recuperación del panel. |
 | [decisiones/0010-busqueda-temporal-acotada.md](decisiones/0010-busqueda-temporal-acotada.md) | Prioridad, límite y uso de la ruta temporal experimental | Cambie horizonte, función de costo o integración en política. |
+| [decisiones/0011-pronostico-visible-por-escenarios.md](decisiones/0011-pronostico-visible-por-escenarios.md) | Frontera de información y supuestos del pronóstico observable | Cambie inputs, probabilidades/ocupación o reglas modeladas por pronóstico. |
 | [modos.md](modos.md) | Diferencias entre simulador y juego | Cambie control o experiencia. |
 | [flujos/roles.md](flujos/roles.md) | Actores, permisos y responsabilidades | Aparezca un actor o permiso. |
 | [flujos/simulador.md](flujos/simulador.md) | Ciclo del turno automático | Cambie secuencia o reloj. |
