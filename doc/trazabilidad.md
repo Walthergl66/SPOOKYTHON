@@ -11,6 +11,7 @@ Estado: referencias documentales; no representa funcionalidad implementada. Los 
 | [SPEC-005](especificaciones/SPEC-005-aws-evaluacion.md) | PRD-06, PRD-07, PRD-08, TRD-02, TRD-06, TRD-08, TRD-10, TRD-11 | Metadatos de SPEC; AWS pendiente. |
 | [SPEC-006](especificaciones/SPEC-006-metodologia.md) | TRD-13 | Método documental; ver evidencia de la propia SPEC. |
 | [SPEC-007](especificaciones/SPEC-007-panel-operador-local.md) | PRD-06, TRD-06, TRD-07 | CAM-050/T-26 prueban arranque, control y lectura local del mismo run; despliegue y control de operador productivo fuera de alcance. |
+| [SPEC-008](especificaciones/SPEC-008-mapa-cartografico-3d.md) | PRD-01, PRD-04, TRD-07, TRD-09 | CAM-051/P4-04/T-27 integra cartografía vectorial y capas del snapshot; precisión/altura de edificios en Manta se limita a los datos disponibles. |
 
 ## Cadena de ejemplo
 

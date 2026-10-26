@@ -7,7 +7,9 @@ npm ci
 npm run dev
 ```
 
-La pantalla presenta un tablero para observar el simulador o entrar al modo juego. El servidor define el modo activo. Si el backend entrega una partida activa, el panel dibuja el grafo, refugios, entidades visibles, cierres, áreas de horda, movimientos confirmados, rutas Dijkstra por personaje y métricas desde `/panel/mapa` y `/panel/estado`. En CAM-032 recibe snapshots completos por `/ws/panel`; los controles humanos llaman `/juego/unirse` y `/juego/accion` cuando el backend tiene juego activo.
+La pantalla presenta un tablero para observar el simulador o entrar al modo juego. El servidor define el modo activo. Si el backend entrega una partida activa, el panel combina cartografía vectorial externa centrada en Manta con refugios, entidades visibles, cierres, áreas de horda, movimientos confirmados y rutas Dijkstra por personaje de `/panel/mapa` y `/panel/estado`. El mapa admite cámara 2D/3D, zoom y rotación; las huellas se extruyen solo cuando la fuente aporta altura. En CAM-032 recibe snapshots completos por `/ws/panel`; los controles humanos llaman `/juego/unirse` y `/juego/accion` cuando el backend tiene juego activo.
+
+El mapa base usa MapLibre GL JS y OpenFreeMap (`https://tiles.openfreemap.org/styles/dark` por defecto), con datos cartográficos de OpenStreetMap. No requiere clave; el navegador solicita externamente tiles de la zona visible y muestra la atribución del proveedor. La instancia pública se ofrece sin SLA y requiere conexión. Se puede configurar otro estilo vectorial compatible con `VITE_NAVIRA_MAP_STYLE` al compilar. La capa base es visual: no altera el grafo, reglas, rutas ni snapshots de Navira. Los datos de actores/rutas se renderizan localmente y no se envían al proveedor. Las rutas conectan nodos del fixture mediante segmentos rectos hasta que el dominio conserve geometría completa de calles. Consulte [SPEC-008](../doc/especificaciones/SPEC-008-mapa-cartografico-3d.md) y [ADR-016](../doc/decisiones/0016-mapa-maplibre-openfreemap.md).
 
 Para iniciar/pausar una demo sintética desde el tablero, inicia el backend en modo de control local:
 

@@ -14,6 +14,8 @@ Estado: controles parciales. El panel HTTP y `WS /ws/panel` proyectan mapas vers
 
 Las claves de servicio y de operador nunca se incluyen en JavaScript público. No guardar valores reales en `.env.example`, Markdown, capturas, enlaces, historial de shell o logs. Registrar nombres de configuración, no secretos. Acceso AWS y valores deben obtenerse por mecanismos autorizados de la sesión.
 
+El mapa base de CAM-051 carga tiles externos de OpenFreeMap para la vista visible. Esa solicitud revela al proveedor la IP y el área cartográfica consultada conforme a la operación normal del navegador; no incorpora IDs, posiciones, snapshots ni credenciales del juego. Las capas de Navira se agregan en el cliente y se consultan solo al backend Navira. La atribución permanece visible. Si se sustituye el proveedor o se añade una clave, revisar [ADR-016](decisiones/0016-mapa-maplibre-openfreemap.md) y no incluir secretos privados en el bundle.
+
 ## Validaciones
 
 - Validar cuerpos, IDs existentes, partida/turno/fase, adyacencia y propiedad en servidor.

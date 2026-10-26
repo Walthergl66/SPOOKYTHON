@@ -45,6 +45,7 @@ El diagrama describe flujo de ejecución. Las dependencias de código se definen
 | Jugador → aplicación | Sesión temporal y órdenes por turno | Cookie de sesión, propiedad del personaje y validación de origen. |
 | Panel → aplicación | Proyección observable | Lectura limitada; no usa credencial maestra. |
 | Panel → observación | `WS /ws/panel`, snapshots completos por versión | Origen del mismo host; memoria local; no ofrece replay durable. |
+| Navegador → proveedor cartográfico | Tiles vectoriales del área visible para la capa base del mapa | Solicitud externa de lectura; no envía estado de juego ni credenciales Navira; servicio público sin SLA. Véase [ADR-016](decisiones/0016-mapa-maplibre-openfreemap.md). |
 | Operador → simulador | Inicio/cierre/eventos | Credencial administrativa distinta. |
 | Tablero local → demo sintética | `GET /demo/simulador` y operaciones de demo | Opt-in de proceso, loopback y origen same-host; no disponible en despliegue. |
 | Núcleo → almacenamiento | Puertos de aplicación | Rol IAM y adaptador de infraestructura. |
@@ -56,3 +57,5 @@ Los contratos públicos previstos están en [API](contratos/api.md) y [eventos](
 Una tarea no ofrece alta disponibilidad; los recursos iniciales y su capacidad deben medirse. Añadir Redis, réplicas o colas solo ante necesidad demostrada y registrar ADR. Una evolución multijugador deberá resolver propiedad de personajes, múltiples partidas, aislamiento y cuotas sin cambiar las reglas del mundo.
 
 Evaluación de arquitectura: los siete criterios de separación de dependencias están cubiertos por el diseño (núcleo independiente, dependencias hacia dentro, persistencia sustituible, casos de uso sin HTTP, frameworks externos, grafo acíclico y ensamblaje en `main`). Su cumplimiento en código sigue pendiente; no hay puntuación de implementación verificable.
+
+El renderer de mapas es un adaptador exclusivamente visual del frontend. MapLibre consulta cartografía externa OpenFreeMap basada en OpenStreetMap; las capas GeoJSON del estado observable se originan en el API Navira y se componen localmente en el navegador. El proveedor no determina rutas ni recibe posiciones de actores. La capa cartográfica no reemplaza el grafo de dominio, cuyo fixture Manta conserva fuente, versión y límites propios.

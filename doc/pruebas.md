@@ -40,6 +40,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-24 | Variación y reproducción estocástica | Configuración/semilla/versiones/entradas idénticas reproducen; otra semilla y una perturbación controlada pueden divergir; la misma instantánea HTTP conserva la decisión. |
 | T-25 | Caducidad de sesión humana local | TTL deslizante usa reloj monotónico; lectura válida renueva; una cookie vencida recibe 410 y ningún visitante distinto puede tomar el cupo/personaje reservado. No acredita expiración durable ni coordinación multiproceso. |
 | T-26 | Operación del simulador de demo local | Control oculto sin opt-in; loopback y same-origin requeridos; inicio/pausa/continuación/reinicio se reflejan en un run publicado por el panel y validan entrada. |
+| T-27 | Mapa cartográfico 3D | Compilación frontend, carga visual del estilo de Manta, atribución, controles 2D/3D, edificios con altura y superposición del snapshot; los límites del proveedor y rutas rectas quedan declarados. |
 
 ## Medición de la prueba de fuego
 
@@ -60,6 +61,10 @@ Ejecutar Dijkstra y política mejorada sobre los mismos escenarios, versiones y 
 ### T-26 — Control local y tablero del simulador
 
 `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_control_simulador_demo -v` comprueba que las rutas están ocultas sin opt-in, que conexiones remotas/orígenes ajenos se rechazan, que una configuración fuera de rango recibe 422 y que iniciar/pausar publica el mismo `runId`, modo y mapa por HTTP. `cd frontend && npm run build` verifica compilación del tablero/control. Esto no certifica una superficie administrativa pública, persistencia, cadencia sostenida o despliegue.
+
+### T-27 — Cartografía 3D del panel
+
+`cd frontend && npm run build` verifica compilación MapLibre/TypeScript. En navegador con red, revisar que el estilo vectorial de Manta cargue, se vea la atribución, el control alterne inclinación 2D/3D, las capas del snapshot coincidan con actores/refugios/rutas y la UI informe una caída del renderer/tiles. La comprobación visual no certifica disponibilidad del proveedor, altura real de edificios, precisión cartográfica ni seguridad de evacuación. CAM-051 comprobó carga, atribución, zoom, rotación, cámara 2D/3D y volumen de huellas visibles; el estado de fallo de proveedor/WebGL está implementado, pero no se inyectó una falla controlada en navegador.
 
 P0-04: desde `frontend/`, `npm ci && npm run build` verifica lockfile, TypeScript estricto y bundle de producción. La pantalla inicial soporta selección de modos con teclado mediante botones semánticos, estados `aria-pressed`, foco visible y movimiento reducido; revisar visualmente en anchos móvil y escritorio al cambiar el layout. `.github/workflows/ci.yml` ejecuta además la suite unittest y validadores documentales en GitHub Actions. La compilación local no demuestra que el workflow haya corrido en remoto.
 

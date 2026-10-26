@@ -83,7 +83,7 @@ curl -X POST http://127.0.0.1:8000/paso \
 
 Respuesta demo para `S-DEMO-001`, `D-001`, turno `0`: `{"siguienteNodo":"D-002"}`. El motor devuelve una recomendación del estado actual; no garantiza seguridad futura. Sin `NAVIRA_DEMO=1`, el respaldo responde con el nodo actual. La clave de ejemplo es solo local; reemplázala y no uses una clave real en el repositorio. El contrato documentado está en [API](doc/contratos/api.md); el plan sigue en [estado actual](doc/estado-actual.md).
 
-El modelo del grafo y el fixture de cuatro nodos son sintéticos; todavía no contienen calles reales de Manta. La carga y validación están en `src/navira/domain/mapa.py`; el origen y el área de extracción de OSM siguen pendientes.
+El fixture de simulación Manta contiene un grafo versionado derivado de OSM y puntos seguros de tsunami citados; es parcial y no es una guía de emergencia. El frontend superpone ese estado sobre cartografía vectorial real consultada en línea mediante MapLibre/OpenFreeMap. La capa base puede mostrar edificios extruidos donde los tiles aportan altura, pero no certifica cobertura, geometría de rutas ni seguridad de refugios. Véanse [mapa Manta](doc/mapa-manta.md) y [ADR-016](doc/decisiones/0016-mapa-maplibre-openfreemap.md).
 
 Comprobación documental disponible, sin dependencias externas:
 

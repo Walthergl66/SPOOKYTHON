@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { CityMap } from '../features/map/CityMap'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { GameControls } from '../features/game/GameControls'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { loadPanelMap, loadPanelSnapshot, type PanelSnapshot, type PanelState } from '../shared/api/panel'
 import { controlSimulator, getSimulatorStatus, SimulatorApiError, type SimulatorSetup, type SimulatorStatus } from '../shared/api/simulator'
 import { subscribePanel, type PanelConnection, type PanelCursor } from '../shared/realtime/panel'
 import { BrandMark } from '../shared/ui/BrandMark'
+
+const CityMap = lazy(() => import('../features/map/CityMap').then(({ CityMap: Component }) => ({ default: Component })))
 
 type PanelLog = { id: string; label: string; detail: string }
 
@@ -15,7 +16,8 @@ export function App() {
   const [snapshot, setSnapshot] = useState<PanelSnapshot | null>(null)
   const [panelError, setPanelError] = useState<string | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
-  const [refreshCount, setRefreshCount] = useState(0)
+  // Cargar el snapshot HTTP al abrir recupera mapa + estado; WebSocket mantiene los siguientes cambios.
+  const [refreshCount, setRefreshCount] = useState(1)
   const [loading, setLoading] = useState(true)
   const [connection, setConnection] = useState<PanelConnection>('connecting')
   const [simulator, setSimulator] = useState<SimulatorStatus | null>(null)
@@ -210,7 +212,7 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            {map && state?.estado === 'activa' ? <CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} /> : <MapPlaceholder />}
+            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} /></Suspense> : <MapPlaceholder />}
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{map?.version ?? (simulatorUnavailable ? 'BACKEND SIN CONTROL LOCAL' : 'AÚN SIN SNAPSHOT')}</div>
           </div>

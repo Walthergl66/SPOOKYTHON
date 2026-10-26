@@ -1,13 +1,13 @@
 # Módulos frontend y estados de interfaz
 
-Estado: base React + TypeScript + Vite, panel en vivo y tablero de control local implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; el mapa es SVG sobre el grafo recibido, no Leaflet. CAM-038 agrega controles humanos para `POST /juego/unirse` y `POST /juego/accion`; CAM-040 ensambla el backend en modo demo local y el proxy Vite reenvía `/juego`; CAM-041 muestra el restante informado por servidor. CAM-050 agrega un tablero y operaciones locales para demos; no son controles públicos de operador. El mundo conserva autoridad de modo y auditoría T-19 sigue parcial.
+Estado: base React + TypeScript + Vite, panel en vivo y tablero de control local implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; CAM-051 reemplaza el SVG por MapLibre GL JS con cartografía vectorial OpenFreeMap/OSM, edificios extruidos cuando hay altura, cámara 2D/3D y capas de snapshot. CAM-038 agrega controles humanos para `POST /juego/unirse` y `POST /juego/accion`; CAM-040 ensambla el backend en modo demo local y el proxy Vite reenvía `/juego`; CAM-041 muestra el restante informado por servidor. CAM-050 agrega un tablero y operaciones locales para demos; no son controles públicos de operador. El mundo conserva autoridad de modo y auditoría T-19 sigue parcial.
 
 | Área | Responsabilidad | Estado que le corresponde |
 |---|---|---|
 | `app/` | Entrada, rutas, proveedores y selector de modo | Vista actual y navegación. |
 | `features/simulation/` | Panel global, rondas y métricas | Proyección automática y filtros. |
 | `features/game/` | Personaje, vecinos, acciones, radio y resultado | Intención local y órdenes confirmadas. |
-| `features/map/` | Capas Leaflet, selección y animación | Instancia visual, zoom y selección. |
+| `features/map/` | Cartografía externa MapLibre y capas GeoJSON de snapshots | Instancia visual, cámara 2D/3D y selección de ruta. |
 | `features/session/` | Sesión temporal y recuperación | Identidad permitida, sin secretos de servicio. |
 | `shared/api/` | Única frontera HTTP, parseo de respuestas y errores tipados | Datos recibidos y solicitudes. |
 | `shared/realtime/` | WebSocket, secuencia, reconexión y sincronización | Conectado/desconectado/recuperando. |
@@ -20,7 +20,7 @@ Estado: base React + TypeScript + Vite, panel en vivo y tablero de control local
 - `frontend/src/shared/ui/`: marca vectorial reutilizable.
 - `frontend/src/shared/api/panel.ts`: cliente HTTP GET y validación runtime de esquema/mapVersion.
 - `frontend/src/shared/realtime/panel.ts`: WebSocket de solo lectura, validación de sobres, cursor por partida, estado live/stale y reconexión exponencial.
-- `frontend/src/features/map/`: SVG del grafo, refugios, entidades observables, cierres y trayectos zombie confirmados.
+- `frontend/src/features/map/`: MapLibre con estilo vectorial externo, extrusión de huellas con altura disponible y capas de calles, cierres, rutas, refugios, sobrevivientes y zombies visibles del snapshot. Los datos de Navira no se envían al proveedor de tiles.
 - `frontend/src/features/game/GameControls.tsx`: unión, estado propio y controles de orden accesibles por teclado/mouse, deshabilitados en fase incorrecta o al perder frescura del panel.
 - `frontend/src/shared/api/game.ts`: cliente same-origin con validación runtime para sesión y acuse; la cookie HttpOnly no se expone a JavaScript.
 - `frontend/src/shared/api/simulator.ts`: cliente de estado e inicio/pausa/continuación/reinicio de demo local; no transmite API keys.
@@ -48,4 +48,4 @@ Desde `frontend/`, `npm ci` instala el lockfile y `npm run build` valida TypeScr
 - No bloquear el hilo principal reconstruyendo capas completas por turno. Respetar preferencia de movimiento reducido.
 - Rutas previstas y peligros estimados deben distinguirse de posiciones confirmadas.
 
-Los paneles consumen solo la proyección observable. No incluir API keys de servicio, credenciales administrativas o dormidos ocultos en bundles o mensajes. La apariencia detallada se definirá al implementar; no hay todavía un sistema visual aprobado.
+Los paneles consumen solo la proyección observable. No incluir API keys de servicio, credenciales administrativas o dormidos ocultos en bundles o mensajes. La capa base requiere internet y solicita tiles del área visible a OpenFreeMap; la instancia pública no ofrece SLA. La geometría de rutas Navira une coordenadas de intersecciones y puede diferir de la curva real de la calle. Véanse [SPEC-008](../especificaciones/SPEC-008-mapa-cartografico-3d.md) y [ADR-016](../decisiones/0016-mapa-maplibre-openfreemap.md).

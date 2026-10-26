@@ -15,6 +15,8 @@ Supuestos: `us-east-1`, Linux/x86, 730 horas, una tarea de 1 vCPU/2 GB, ALB púb
 
 Este subtotal no es el costo total. Faltan consumo del ALB, DynamoDB, almacenamiento/registro de imágenes, S3, CloudFront, logs, transferencia, certificados/dominio si aplican y otros recursos que se añadan. La cantidad de IP reales puede cambiar.
 
+El renderer local usa la instancia pública de OpenFreeMap sin API key conforme a su configuración consultada el 2026-10-26. No se incorpora un precio de tiles al subtotal porque el servicio público se anuncia sin cargo y sin SLA, pero sus términos/continuidad pueden cambiar; validar proveedor, licencia y volumen de uso antes de producción. Esto no es un costo contratado ni una garantía de disponibilidad.
+
 Fuentes: [Fargate](https://aws.amazon.com/fargate/pricing/), [ALB](https://aws.amazon.com/elasticloadbalancing/pricing/) y [VPC/IPv4](https://aws.amazon.com/vpc/pricing/). No asumir gratuidad por créditos, Free Tier o cuenta sandbox sin comprobarla.
 
 ## Cómo completar el cálculo

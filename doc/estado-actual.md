@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-26. Último cambio registrado: **CAM-050**, en [cambios.md](cambios.md).
+Última actualización: 2026-10-26. Último cambio registrado: **CAM-051**, en [cambios.md](cambios.md).
 
 ## Hechos verificados
 
@@ -11,6 +11,7 @@
 - P4-01 verificado en CAM-031: `GET /panel/estado` y `GET /panel/mapa` proyectan snapshots/mapa versionados; ocultan dormidos y estado aleatorio privado. El frontend valida respuesta/versiones, dibuja calles, refugios, sobrevivientes, zombies visibles, movimientos confirmados, cierres/hordas, métricas y ruta prevista Dijkstra seleccionable.
 - P4-02 verificado localmente en CAM-032: `WS /ws/panel` envía snapshot completo al conectar/cambiar versión y heartbeat; backend cubierto por prueba de reconexión, secuencia posterior y cambio de partida. El frontend implementa estados de conexión viva/desactualizada/reconexión y backoff; no hay outbox, replay durable ni multi-worker.
 - P4-03 verificado localmente en CAM-050: el tablero ofrece controles iniciar/pausar/continuar/reiniciar, escenario/población, mapa central parcial de Manta, estado técnico y métricas reales del snapshot. Se inició desde `http://localhost:5173/`; prueba manual confirmó pausa estable por 2,5 s. Si se lanza manualmente el backend en desarrollo, requiere `NAVIRA_LOCAL_DEMO_CONTROL=1`; el proceso local activo atiende en `127.0.0.1:8000` y el frontend en `localhost:5173`. El fixture es parcial y no es guía de emergencia ni acredita seguridad sísmica. Evidencia: [CAM-050](resultados/panel-operador-local-cam050.md).
+- P4-04 implementada parcialmente en CAM-051: MapLibre muestra cartografía vectorial real de Manta desde OpenFreeMap/OSM, escala, rotación, 2D/3D y extrusión de edificios con altura disponible; el snapshot Navira se superpone localmente. `npm run build` y revisión manual de tiles/atribución/alternancia 2D-3D pasaron. Falta probar caída WebGL/proveedor y auditar cobertura. El proveedor público requiere internet y no ofrece SLA; rutas del fixture unen nodos en líneas rectas. Evidencia: [CAM-051](resultados/mapa-cartografico-3d-cam051.md).
 - P3-01 verificado como núcleo aislado en CAM-033: búsqueda temporal acotada con espera, cierres y exposición futura inyectada; la política HTTP no la consume. La medición serial no valida T-11 ni servicio HTTP.
 - P3-02 parcial en CAM-034: pronóstico por escenarios de amenazas activas, con entradas observables mínimas, mezcla de fase privada desconocida y supuestos declarados para corredor/horda. No se conecta a `/paso`; las reglas oficiales siguen pendientes.
 - P3-03 evaluado parcialmente en CAM-035: temporal sumó 15 evacuados en 27 pares sintéticos de tres turnos, sin cambiar las mordidas observadas. La prueba se repitió con resultados deterministas. Dijkstra sigue activa porque no hay comparación HTTP concurrente, ronda larga ni reglas confirmadas.
@@ -19,7 +20,7 @@
 - P4B-03 inicia en CAM-038 controles web; CAM-040 añade proxy Vite para `/juego`; CAM-041 muestra restante informativo, CAM-042 permite usar ruta sugerida por radio, CAM-043 recupera sesión al seleccionar el modo humano, CAM-045 añade skip link/foco/anuncio de deadline, CAM-046 comunica expiración HTTP 410 y CAM-047 verifica por teclado salto al contenido y selección de modo. El recorrido de órdenes y resultado, lector de pantalla y T-19 integral siguen pendientes.
 - P5-04 parcial en CAM-039..046: `NAVIRA_GAME_DEMO=1` ensambla modo sintético y runner local de dos segundos. Pruebas del coordinador y smoke ASGI confirman orden común con NPC, aparición en fase correcta, cierre temporal, cuenta atrás informativa y sesión única. CAM-042 presenta una sugerencia desde la ruta observable; CAM-043 recupera por HTTP sesión/posición/última orden; CAM-045 mejora navegación; CAM-046 expira por inactividad sin transferir el personaje. No es cadencia sostenida ni juego productivo; no hay persistencia/recuperación tras reinicio, revocación productiva, TLS o coordinación multi-proceso.
 - P5-01 parcial en CAM-044: matriz HTTP loopback solicitó 150 turnos para cohortes 20/80/200, pero partidas sintéticas terminaron a los 12/15/13 turnos. Registró 2.072 respuestas 200, p95 18,860/58,097/92,060 ms y ciclos máximos 62,461/218,492/480,701 ms; reporte en [CAM-044](resultados/evaluacion-p501-cam044.md). No acredita cinco minutos, repeticiones ni AWS.
-- Siguiente paso exacto: completar el recorrido integral de orden humana y resultado (T-19/P4B-03); luego retomar medición sostenida de P5-01. P4-03 queda cerrada localmente, sin despliegue público.
+- Siguiente paso exacto: completar el recorrido integral de orden humana y resultado (T-19/P4B-03); luego retomar medición sostenida de P5-01. Para cerrar P4-04/SPEC-008, probar el estado de falla controlada del mapa y ampliar la inspección de cobertura. No hay despliegue público.
 - El plan anterior se conserva como referencia histórica. La ubicación antigua `docs/PLAN_IMPLEMENTACION.md` ya no existe en el árbol comprobado; la fuente vigente es `doc/plan-implementacion.md`.
 - Están documentados dos modos y los límites de la primera versión.
 - Se conserva una copia local del reto proporcionado por el usuario.
@@ -103,6 +104,8 @@ Verificación de CAM-036: suite completa (134 pruebas OK), incluidas siete prueb
 Verificación de CAM-037: suite completa (144 pruebas OK), incluidas 10 pruebas de `test_ordenes_juego.py`; `python3 scripts/check_docs.py` (67 Markdown/69 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas), ocho pruebas del validador SDD, `compileall`, `git diff --check` y `frontend/npm run build` correctos. `POST /juego/accion` requiere inyección explícita; repositorio volátil, sin integración con el ciclo ni deadline monotónico.
 
 Verificación de CAM-038: suite backend completa (144 pruebas OK); `python3 scripts/check_docs.py` (67 Markdown/69 archivos), `python3 scripts/check_sdd.py` (seis SPEC estructuralmente válidas), ocho pruebas del validador SDD, `compileall`, `git diff --check` y `frontend/npm run build` correctos. Smoke de navegador vio panel en vivo del simulador; no se probó juego humano por falta de backend de juego ensamblado.
+
+Verificación de CAM-051: ver [reporte](resultados/mapa-cartografico-3d-cam051.md). Build de frontend y carga/atribución/zoom/2D-3D fueron comprobados. El error controlado del proveedor/WebGL queda pendiente; la advertencia de bundle de MapLibre está documentada. Validadores documentales y regresiones SDD se ejecutan al cierre.
 
 ## Dependencias externas
 

@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-051 — Cartografía real de Manta con vista inclinada 3D
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario indicó que el mapa actual no le convence y pidió usar cartografía real, de ser posible en 3D; la imagen adjunta se usó como referencia visual, no como especificación técnica.
+- Especificación/tarea: SPEC-008, P4-04 parcial; CA-008-01..03 verificados en navegador/build; CA-008-04 implementado, pero la falla controlada aún no se probó. T-27.
+- Decisión: [ADR-016](decisiones/0016-mapa-maplibre-openfreemap.md): MapLibre GL JS + tiles vectoriales públicos OpenFreeMap/OSM; extruir edificios solo si la fuente incluye altura.
+- Motivo: el SVG anterior solo unía intersecciones y no mostraba calles circundantes, nombres ni edificios, por lo que la representación parecía abstracta.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, `frontend/src/app/App.tsx` (incluida carga HTTP del snapshot al iniciar), manifiesto/lock npm; documentación de mapa, arquitectura, seguridad, costos, frontend, plan, pruebas, SPEC, trazabilidad, README e índice; reporte CAM-051.
+- Resultado: el frontend carga mapa vectorial oscuro de Manta, escala/rotación, vista 2D/3D y volumen de edificios con altura disponible. Las capas de Navira usan snapshots existentes y se renderizan en el cliente; el motor, grafo y contratos no cambian. La carga de MapLibre es diferida.
+- Verificación: `cd frontend && npm run build` correcto; navegador local mostró basemap, atribución, edificios elevados y alternancia 2D/3D. El bundle `CityMap` queda en 1.070,25 kB / 290,78 kB gzip y Vite muestra advertencia de chunk >500 kB. Evidencia: [reporte CAM-051](resultados/mapa-cartografico-3d-cam051.md).
+- Límites: OpenFreeMap público no ofrece SLA y requiere internet; cobertura/alturas de Manta no se auditaron exhaustivamente; las rutas del grafo conectan nodos con segmentos rectos; la falla de tiles/WebGL está implementada pero no fue inyectada en navegador. No es guía de emergencia ni modelo de edificios de alta precisión.
+- Siguiente paso: probar un error del proveedor/WebGL y, si se necesita correspondencia exacta ruta-calle, añadir geometría completa OSM al grafo en una fase independiente.
+- Commit: `aff0d43 feat: render real Manta map in 3D`, commit individual de fase en `master`; no implica publicación remota.
+
 ## CAM-050 — Tablero visual y control local del simulador
 
 - Fecha: 2026-10-26, Ecuador continental.

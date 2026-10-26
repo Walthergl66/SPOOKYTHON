@@ -6,6 +6,8 @@ Estado: fixture de simulación exportado y probado; cobertura representativa de 
 
 Las calles parten de la API de datos de OpenStreetMap, recortada al rectángulo WGS84 sur `-0.967`, oeste `-80.755`, norte `-0.935`, este `-80.675`. El artefacto generado contiene 300 nodos y 599 sentidos dirigidos de calle; la geometría conserva intersecciones, extremos y anclas. La licencia y atribución ODbL se guardan junto al archivo. Los límites de velocidad ausentes en OSM se sustituyen con valores internos de juego del exportador; no son mediciones ni límites oficiales de tránsito.
 
+El frontend consulta tiles vectoriales de OpenFreeMap basados en OpenStreetMap para dibujar calles, etiquetas y huellas de edificios del área visible. MapLibre presenta extrusión 3D cuando los tiles incluyen alturas; no inventa altura para edificios sin dato. Esta capa visual no amplía ni modifica el fixture de simulación y el proveedor público no ofrece SLA. Las rutas del fixture unen nodos conservados, por lo que no siempre siguen la curvatura de calles del mapa base. Véanse [ADR-016](decisiones/0016-mapa-maplibre-openfreemap.md) y [SPEC-008](especificaciones/SPEC-008-mapa-cartografico-3d.md).
+
 Cuatro destinos se transcribieron de las capas “Zonas Seguras” de los mapas de evacuación por tsunami publicados por la Dirección de Ambiente y Riesgos del GAD Manta:
 
 | ID | Lugar | Parroquia | Ajuste a red vial |

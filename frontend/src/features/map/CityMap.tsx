@@ -1,3 +1,8 @@
+import { useEffect, useRef, useState } from 'react'
+import { Map as MapLibreMap, NavigationControl, ScaleControl, setWorkerUrl } from 'maplibre-gl'
+import type { GeoJSONSource } from 'maplibre-gl'
+import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import type { PanelMap, PanelState } from '../../shared/api/panel'
 
 interface CityMapProps {
@@ -6,87 +11,209 @@ interface CityMapProps {
   selectedSurvivorId: string | undefined
 }
 
+type Position = [number, number]
+type Geometry = { type: 'Point'; coordinates: Position } | { type: 'LineString'; coordinates: Position[] }
+type Feature = { type: 'Feature'; id?: string; geometry: Geometry; properties: Record<string, string | number | boolean> }
+type FeatureCollection = { type: 'FeatureCollection'; features: Feature[] }
+
+const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfreemap.org/styles/dark'
+const BUILDING_TILES = 'https://tiles.openfreemap.org/planet'
+const MAP_CENTER: Position = [-80.720, -0.954]
+
+setWorkerUrl(mapWorkerUrl)
+
 export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
-  const longitudes = map.nodos.map((node) => node.lng)
-  const latitudes = map.nodos.map((node) => node.lat)
-  const minLng = Math.min(...longitudes)
-  const maxLng = Math.max(...longitudes)
-  const minLat = Math.min(...latitudes)
-  const maxLat = Math.max(...latitudes)
-  const sizeLng = maxLng - minLng || 1
-  const sizeLat = maxLat - minLat || 1
-  const pointById = new Map(map.nodos.map((node) => [node.id, {
-    x: 42 + ((node.lng - minLng) / sizeLng) * 916,
-    y: 42 + ((maxLat - node.lat) / sizeLat) * 616,
-  }]))
+  const containerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<MapLibreMap | null>(null)
+  const latestDataRef = useRef<FeatureCollection>(emptyCollection())
+  const [ready, setReady] = useState(false)
+  const [is3d, setIs3d] = useState(true)
+  const [mapError, setMapError] = useState<string | null>(null)
+
+  latestDataRef.current = createSimulationFeatures(map, state, selectedSurvivorId)
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    let initialized = false
+    let failed = false
+    let instance: MapLibreMap
+    try {
+      instance = new MapLibreMap({
+        container,
+        style: STYLE_URL,
+        center: MAP_CENTER,
+        zoom: 15.2,
+        pitch: 52,
+        bearing: -18,
+        canvasContextAttributes: { antialias: true },
+      })
+    } catch {
+      setMapError('Este dispositivo no pudo inicializar el mapa WebGL.')
+      return
+    }
+
+    mapRef.current = instance
+    instance.addControl(new NavigationControl({ visualizePitch: true }), 'top-right')
+    instance.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-right')
+    instance.once('load', () => {
+      initialized = true
+      addMapLayers(instance, latestDataRef.current)
+      setReady(true)
+      setMapError(null)
+    })
+    instance.on('error', () => {
+      if (!initialized && !failed) {
+        failed = true
+        setMapError('No se pudo cargar la cartografía. Revisa tu conexión; los controles de Navira siguen disponibles.')
+      }
+    })
+    return () => {
+      mapRef.current = null
+      instance.remove()
+    }
+  }, [])
+
+  useEffect(() => {
+    const instance = mapRef.current
+    if (!ready || !instance) return
+    const source = instance.getSource('navira-simulation') as GeoJSONSource | undefined
+    source?.setData(latestDataRef.current as never)
+  }, [ready, map, state, selectedSurvivorId])
+
+  const togglePitch = () => {
+    const instance = mapRef.current
+    const next = !is3d
+    setIs3d(next)
+    if (instance) instance.easeTo({ pitch: next ? 52 : 0, bearing: next ? -18 : 0, duration: 700 })
+  }
+
+  return (
+    <div className="maplibre-stage" aria-label="Mapa cartográfico 3D de Manta">
+      <div ref={containerRef} className="maplibre-canvas" />
+      <button className="map-view-toggle" type="button" onClick={togglePitch} aria-pressed={is3d} disabled={!ready}>
+        {is3d ? 'Vista 3D' : 'Vista 2D'}
+      </button>
+      {mapError ? <div className="map-provider-error" role="status">{mapError}</div> : null}
+      {!ready && !mapError ? <div className="map-provider-loading" role="status">Cargando mapa de Manta…</div> : null}
+      <span className="map-provider-label">Cartografía OSM · representación de simulación</span>
+    </div>
+  )
+}
+
+function addMapLayers(map: MapLibreMap, data: FeatureCollection) {
+  map.addSource('openfreemap-buildings', { type: 'vector', url: BUILDING_TILES })
+  const firstSymbolLayer = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id
+  // render_height/render_min_height are provider tile attributes in metres; omit unknown heights instead of inventing them.
+  map.addLayer({
+    id: 'navira-3d-buildings',
+    source: 'openfreemap-buildings',
+    'source-layer': 'building',
+    type: 'fill-extrusion',
+    minzoom: 14,
+    filter: ['all', ['has', 'render_height'], ['!=', ['get', 'hide_3d'], true]],
+    paint: {
+      'fill-extrusion-color': '#849ab8',
+      'fill-extrusion-height': ['get', 'render_height'],
+      'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+      'fill-extrusion-opacity': 0.68,
+    },
+  }, firstSymbolLayer)
+  map.addSource('navira-simulation', { type: 'geojson', data: data as never })
+  map.addLayer({
+    id: 'navira-streets', source: 'navira-simulation', type: 'line',
+    filter: ['==', ['get', 'kind'], 'street'],
+    paint: {
+      'line-color': ['case', ['get', 'blocked'], '#f05e62', '#85b9d2'],
+      'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.2, 16, 3.2],
+      'line-opacity': ['case', ['get', 'blocked'], 0.95, 0.28],
+    },
+  })
+  map.addLayer({
+    id: 'navira-route', source: 'navira-simulation', type: 'line',
+    filter: ['==', ['get', 'kind'], 'route'],
+    paint: { 'line-color': '#36d7bc', 'line-width': 5, 'line-opacity': 0.96 },
+  })
+  map.addLayer({
+    id: 'navira-zombie-trail', source: 'navira-simulation', type: 'line',
+    filter: ['==', ['get', 'kind'], 'zombie-trail'],
+    paint: { 'line-color': '#ef9b54', 'line-width': 3, 'line-dasharray': [1.3, 1.2], 'line-opacity': 0.95 },
+  })
+  map.addLayer({
+    id: 'navira-horde-area', source: 'navira-simulation', type: 'circle',
+    filter: ['==', ['get', 'kind'], 'horde'],
+    paint: { 'circle-radius': 24, 'circle-color': '#f05058', 'circle-opacity': 0.24, 'circle-stroke-color': '#f05058', 'circle-stroke-width': 2 },
+  })
+  map.addLayer({
+    id: 'navira-markers', source: 'navira-simulation', type: 'circle',
+    filter: ['in', ['get', 'kind'], ['literal', ['refuge', 'survivor', 'zombie', 'horde']]],
+    paint: {
+      'circle-radius': ['match', ['get', 'kind'], 'refuge', 8, 'survivor', 6, 7],
+      'circle-color': ['match', ['get', 'kind'], 'refuge', '#47cf91', 'survivor', '#38d8ec', 'zombie', '#f04f53', '#f04f53'],
+      'circle-stroke-color': '#f4f7fc', 'circle-stroke-width': 1.5,
+    },
+  })
+  map.addLayer({
+    id: 'navira-refuge-labels', source: 'navira-simulation', type: 'symbol',
+    filter: ['==', ['get', 'kind'], 'refuge'],
+    layout: { 'text-field': ['get', 'label'], 'text-offset': [0, 1.25], 'text-size': 11, 'text-allow-overlap': false },
+    paint: { 'text-color': '#e8fff2', 'text-halo-color': '#142034', 'text-halo-width': 1.4 },
+  })
+}
+
+/** Projects only public panel data into local GeoJSON; no gameplay state is sent to the tile provider. */
+function createSimulationFeatures(map: PanelMap, state: PanelState, selectedSurvivorId: string | undefined): FeatureCollection {
+  const pointById = new Map(map.nodos.map((node) => [node.id, [node.lng, node.lat] as Position]))
+  const features: Feature[] = []
   const blockedEdges = new Set(state.aristasBloqueadas ?? [])
   const blockedSegments = new Set(state.segmentosBloqueados ?? [])
-  const blockedNodes = new Set(state.nodosHorda ?? [])
-  const refugeByNode = new Map(map.refugios.map((refuge) => [refuge.nodo, refuge]))
+  // Streets are undirected for display, so a closure on either directed edge marks the shared segment.
   const streetsBySegment = new Map<string, typeof map.calles>()
   for (const street of map.calles) {
     const segment = streetsBySegment.get(street.segmentoId) ?? []
     segment.push(street)
     streetsBySegment.set(street.segmentoId, segment)
   }
+  const seenSegments = new Set<string>()
+  for (const street of map.calles) {
+    if (seenSegments.has(street.segmentoId)) continue
+    const from = pointById.get(street.origen)
+    const to = pointById.get(street.destino)
+    if (!from || !to) continue
+    seenSegments.add(street.segmentoId)
+    const blocked = blockedSegments.has(street.segmentoId) || (streetsBySegment.get(street.segmentoId) ?? []).some(({ id }) => blockedEdges.has(id))
+    features.push({
+      type: 'Feature', id: street.segmentoId,
+      geometry: { type: 'LineString', coordinates: [from, to] },
+      properties: { kind: 'street', blocked },
+    })
+  }
+  for (const route of state.rutasPrevistas ?? []) {
+    if (route.sobrevivienteId !== selectedSurvivorId) continue
+    const coordinates = route.trayecto.map((id) => pointById.get(id)).filter((point): point is Position => point !== undefined)
+    if (coordinates.length > 1) features.push({ type: 'Feature', id: `route-${route.sobrevivienteId}`, geometry: { type: 'LineString', coordinates }, properties: { kind: 'route' } })
+  }
+  for (const movement of state.movimientosZombies ?? []) {
+    const coordinates = movement.trayecto.map((id) => pointById.get(id)).filter((point): point is Position => point !== undefined)
+    if (coordinates.length > 1) features.push({ type: 'Feature', id: `trail-${movement.id}`, geometry: { type: 'LineString', coordinates }, properties: { kind: 'zombie-trail' } })
+  }
+  for (const refuge of map.refugios) {
+    const coordinates = pointById.get(refuge.nodo)
+    if (coordinates) features.push({ type: 'Feature', id: refuge.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'refuge', label: refuge.id } })
+  }
+  for (const survivor of state.sobrevivientes ?? []) {
+    if (survivor.estado !== 'activo') continue
+    const coordinates = pointById.get(survivor.nodo)
+    if (coordinates) features.push({ type: 'Feature', id: survivor.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'survivor' } })
+  }
+  for (const zombie of state.zombies ?? []) {
+    const coordinates = pointById.get(zombie.nodo)
+    if (coordinates) features.push({ type: 'Feature', id: zombie.id, geometry: { type: 'Point', coordinates }, properties: { kind: zombie.tipo === 'horda' ? 'horde' : 'zombie' } })
+  }
+  return { type: 'FeatureCollection', features }
+}
 
-  return (
-    <svg className="live-map" viewBox="0 0 1000 700" role="img" aria-labelledby="live-map-title live-map-description">
-      <title id="live-map-title">Grafo observable de la partida, mapa {map.version}</title>
-      <desc id="live-map-description">Las calles muestran conexiones, los refugios se marcan en verde, los zombies visibles en ámbar y los sobrevivientes en celeste. Las hordas se representan con un halo.</desc>
-      <g className="live-streets">
-        {[...streetsBySegment.entries()].map(([segmentId, streets]) => {
-          const street = streets[0]
-          if (!street) return null
-          const origin = pointById.get(street.origen)
-          const destination = pointById.get(street.destino)
-          if (!origin || !destination) return null
-          const segmentClosed = blockedSegments.has(segmentId)
-          const directionClosures = streets.filter(({ id }) => blockedEdges.has(id)).length
-          const allDirectionsClosed = segmentClosed || directionClosures === streets.length
-          const someDirectionClosed = !allDirectionsClosed && directionClosures > 0
-          return <line key={segmentId} x1={origin.x} y1={origin.y} x2={destination.x} y2={destination.y} className={`street${allDirectionsClosed ? ' is-closed' : ''}${someDirectionClosed ? ' is-direction-closed' : ''}`} />
-        })}
-      </g>
-      <g className="live-intersections" aria-hidden="true">
-        {map.nodos.map((node) => {
-          const point = pointById.get(node.id)
-          return point ? <circle key={node.id} cx={point.x} cy={point.y} r="2" /> : null
-        })}
-      </g>
-      {(state.rutasPrevistas ?? []).filter((route) => route.sobrevivienteId === selectedSurvivorId).map((route) => {
-        const points = route.trayecto.map((nodeId) => pointById.get(nodeId)).filter((point) => point !== undefined)
-        if (points.length < 2) return null
-        return <polyline key={`route-${route.sobrevivienteId}`} className="survivor-route" points={points.map(({ x, y }) => `${x},${y}`).join(' ')}><title>Ruta prevista según el snapshot actual; no garantiza seguridad</title></polyline>
-      })}
-      {(state.movimientosZombies ?? []).map((movement) => {
-        const points = movement.trayecto.map((nodeId) => pointById.get(nodeId)).filter((point) => point !== undefined)
-        if (points.length < 2) return null
-        return <polyline key={`movement-${movement.id}`} className="zombie-trail" points={points.map(({ x, y }) => `${x},${y}`).join(' ')}><title>Trayecto confirmado de un zombie visible</title></polyline>
-      })}
-      {[...refugeByNode.entries()].map(([nodeId, refuge]) => {
-        const point = pointById.get(nodeId)
-        return point ? <g key={refuge.id} className="live-refuge" transform={`translate(${point.x} ${point.y})`}><circle r="11"/><path d="M-5 0h10M0-5v10"/><title>Refugio {refuge.id}</title></g> : null
-      })}
-      {map.nodos.filter(({ id }) => blockedNodes.has(id)).map((node) => {
-        const point = pointById.get(node.id)
-        const hordeNode = state.zombies?.some((zombie) => zombie.tipo === 'horda' && zombie.nodo === node.id)
-        return point && !hordeNode ? <circle key={`horde-area-${node.id}`} className="horde-neighbor" cx={point.x} cy={point.y} r="5"><title>Nodo bloqueado por vecindad de horda</title></circle> : null
-      })}
-      {(state.zombies ?? []).filter(({ tipo }) => tipo === 'horda').map((zombie) => {
-        const point = pointById.get(zombie.nodo)
-        return point ? <circle key={`horde-${zombie.id}`} className="live-horde" cx={point.x} cy={point.y} r="20"><title>Centro y área de horda visible</title></circle> : null
-      })}
-      {[...(state.zombies ?? [])].map((zombie) => {
-        const point = pointById.get(zombie.nodo)
-        return point ? <circle key={zombie.id} className="live-zombie" cx={point.x} cy={point.y} r="6"><title>{`Zombie visible: ${zombie.tipo}`}</title></circle> : null
-      })}
-      {[...(state.sobrevivientes ?? [])].filter(({ estado }) => estado === 'activo').map((survivor) => {
-        const point = pointById.get(survivor.nodo)
-        return point ? <g key={survivor.id} className="live-survivor" transform={`translate(${point.x} ${point.y})`}><circle r="7"/><circle className="survivor-core" r="2.5"/><title>Sobreviviente activo</title></g> : null
-      })}
-      <text className="map-north" x="952" y="39">N ↑</text>
-      <text className="map-scale" x="38" y="680">{map.nodos.length} NODOS · {map.refugios.length} REFUGIOS</text>
-    </svg>
-  )
+function emptyCollection(): FeatureCollection {
+  return { type: 'FeatureCollection', features: [] }
 }

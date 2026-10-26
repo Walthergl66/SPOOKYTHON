@@ -36,6 +36,8 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [modulos/backend.md](modulos/backend.md) | Ubicación de responsabilidades backend | Se cree o mueva un caso de uso. |
 | [modulos/frontend.md](modulos/frontend.md) | Módulos y estados de interfaz | Se cree o mueva una pantalla. Estado del scaffold en `frontend/`; no sustituye los contratos del panel. |
 | [especificaciones/SPEC-007-panel-operador-local.md](especificaciones/SPEC-007-panel-operador-local.md) | Criterios del tablero y control local de demo | Cambie el flujo local de operación; no autoriza control administrativo público. |
+| [especificaciones/SPEC-008-mapa-cartografico-3d.md](especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial y vista 3D | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
+| [decisiones/0016-mapa-maplibre-openfreemap.md](decisiones/0016-mapa-maplibre-openfreemap.md) | Renderer MapLibre, proveedor vectorial OpenFreeMap y límites 3D | Cambie el proveedor, estilo, credenciales o forma de renderizar geometría. |
 | [contratos/api.md](contratos/api.md) | Contrato HTTP y autenticación | Cambien rutas, cuerpos o errores. Estado y ejemplos de las proyecciones del panel incluyen CAM-031. |
 | [contratos/eventos.md](contratos/eventos.md) | Contrato WebSocket y orden de mensajes | Cambien eventos o recuperación. El canal de snapshots del panel se implementa localmente en CAM-032. |
 | [datos.md](datos.md) | Entidades, estados e identidad de versiones | Cambie persistencia o proyección. |
@@ -50,6 +52,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [resultados/evaluacion-cadencia-cam029.md](resultados/evaluacion-cadencia-cam029.md) | Cadencia objetivo de 2 s para evaluaciones HTTP multi-turno locales | Nueva medición temporizada; evidencia exploratoria, no sustituye T-11 ni AWS. |
 | [resultados/evaluacion-p501-cam044.md](resultados/evaluacion-p501-cam044.md) | Medición extendida local por HTTP loopback para cohortes 20/80/200 | Nueva ejecución P5-01; las partidas terminaron antes de 150 turnos, no acredita T-11 ni AWS. |
 | [resultados/panel-operador-local-cam050.md](resultados/panel-operador-local-cam050.md) | Evidencia de inicio/pausa manual del panel local y verificaciones de CAM-050 | Cambien el control local o se repita la inspección del tablero; no acredita despliegue productivo ni uso de emergencia. |
+| [resultados/mapa-cartografico-3d-cam051.md](resultados/mapa-cartografico-3d-cam051.md) | Evidencia de carga de cartografía, atribución, edificios y alternancia 2D/3D de CAM-051 | Cambien el renderer/proveedor o se repita la inspección; no acredita cobertura completa, SLA ni uso de emergencia. |
 | [resultados/busqueda-temporal-cam033.md](resultados/busqueda-temporal-cam033.md) | Tiempo de búsqueda temporal por llamada para cohortes sintéticas 20/80/200 | Nueva versión de algoritmo o ejecución comparativa; no es medición HTTP ni T-22. |
 | [resultados/comparacion-rutas-cam035.md](resultados/comparacion-rutas-cam035.md) | Comparación emparejada Dijkstra/temporal en tres turnos locales | Cambien política, semilla, mapa, perfiles o método comparativo. No reemplaza T-22/T-11. |
 | [costos.md](costos.md) | Estimación y gasto real | Cambie infraestructura o consumo. |
