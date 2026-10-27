@@ -28,6 +28,7 @@ from navira.api.seguridad import ConfiguracionSeguridad
 from navira.carga_http import SolicitudCarga, enviar_solicitud_http
 from navira.demo import ESCENARIOS_DEMO, crear_contexto_demo
 from navira.domain.modelo import (
+    EstadoPartida,
     EstadoSobreviviente,
     FaseTurno,
     IntencionMovimiento,
@@ -166,6 +167,7 @@ def ejecutar_evaluacion_local(
     estados_http: Counter[str] = Counter()
     fallidas = 0
     turnos_reporte: list[dict[str, object]] = []
+    slots_sin_actividad: list[dict[str, object]] = []
     inicio_evaluacion = 0.0
     inicios_turno: list[float] = []
     retrasos_inicio_ms: list[float] = []
@@ -185,6 +187,19 @@ def ejecutar_evaluacion_local(
             snapshot = contexto.snapshots.obtener(contexto.run_id)
             if snapshot is None:
                 raise RuntimeError("El snapshot desapareció durante la evaluación.")
+            # La ventana oficial mide cinco minutos aunque la partida pueda
+            # terminar antes. Conservamos esa duración sin seguir inventando
+            # movimientos ni enviando solicitudes para personajes terminales.
+            if snapshot.partida.estado is EstadoPartida.FINALIZADA:
+                slots_sin_actividad.append(
+                    {
+                        "slotCadencia": indice_turno,
+                        "turnoFinal": snapshot.partida.turno,
+                        "motivo": "partida_finalizada",
+                        "solicitudes": 0,
+                    }
+                )
+                continue
             if snapshot.partida.fase is FaseTurno.RESUELTA:
                 snapshot = abrir_siguiente_turno_persistido(
                     contexto.snapshots,
@@ -208,7 +223,15 @@ def ejecutar_evaluacion_local(
                 if persona.estado is EstadoSobreviviente.ACTIVO
             )
             if not activos:
-                break
+                slots_sin_actividad.append(
+                    {
+                        "slotCadencia": indice_turno,
+                        "turnoFinal": partida.turno,
+                        "motivo": "sin_sobrevivientes_activos",
+                        "solicitudes": 0,
+                    }
+                )
+                continue
 
             solicitudes: list[SolicitudCarga] = []
             rutas_propuestas = {}
@@ -286,6 +309,7 @@ def ejecutar_evaluacion_local(
             periodo_cumplido = duracion_turno_ms <= periodo_segundos * 1000
             turnos_reporte.append(
                 {
+                    "slotCadencia": indice_turno,
                     "turno": partida.turno,
                     "inicioDesdeInicioMs": round((inicio_turno - inicio_evaluacion) * 1000, 3),
                     "intervaloInicioAnteriorMs": round(
@@ -316,14 +340,20 @@ def ejecutar_evaluacion_local(
             )
             if not periodo_cumplido:
                 turnos_fuera_de_periodo += 1
-            if final.estado.value == "finalizada":
-                break
+
+        # El slot final empieza en (N-1)*periodo; completar también el último
+        # intervalo hace que N turnos cubran N períodos completos de reloj.
+        objetivo_fin = inicio_evaluacion + turnos * periodo_segundos
+        espera_final = objetivo_fin - time.perf_counter()
+        if espera_final > 0:
+            time.sleep(espera_final)
 
     snapshot_final = contexto.snapshots.obtener(contexto.run_id)
     if snapshot_final is None:
         raise RuntimeError("No se pudo leer el estado final de la evaluación.")
     personas_finales = snapshot_final.partida.sobrevivientes
     total_solicitudes = len(latencias)
+    duracion_total = time.perf_counter() - inicio_evaluacion
     activos_finales = sum(
         persona.estado is EstadoSobreviviente.ACTIVO for persona in personas_finales
     )
@@ -342,6 +372,9 @@ def ejecutar_evaluacion_local(
         "sobrevivientesIniciales": sobrevivientes,
         "turnosSolicitados": turnos,
         "turnosEjecutados": len(turnos_reporte),
+        "slotsCadenciaSolicitados": turnos,
+        "slotsCadenciaSinActividad": len(slots_sin_actividad),
+        "slotsSinActividad": slots_sin_actividad,
         "concurrenciaMaxima": concurrencia,
         "timeoutSegundos": timeout_segundos,
         "solicitudes": total_solicitudes,
@@ -356,7 +389,9 @@ def ejecutar_evaluacion_local(
         "evacuadosTotales": evacuados,
         "mordidosTotales": mordidos,
         "periodoObjetivoSegundos": periodo_segundos,
-        "duracionTotalSegundos": round(time.perf_counter() - inicio_evaluacion, 3),
+        "duracionObjetivoSegundos": round(turnos * periodo_segundos, 3),
+        "duracionTotalSegundos": round(duracion_total, 3),
+        "duracionObjetivoCumplida": duracion_total >= turnos * periodo_segundos,
         "turnosFueraDePeriodo": turnos_fuera_de_periodo,
         "retrasoInicioMsMaximo": round(max(retrasos_inicio_ms, default=0.0), 3),
         "temporizacion": "inicio de turnos alineado a una cadencia monotónica configurable",
@@ -367,6 +402,7 @@ def ejecutar_evaluacion_local(
             "la temporización local no equivale al reloj continuo ni al entorno de evaluación desplegado",
             "no acredita cobertura cartográfica ni seguridad ante tsunami o terremoto",
             "las fallas HTTP producen espera local para permitir continuar la evaluación",
+            "si la partida termina antes, se completa la ventana con slots ociosos; no se simulan turnos ni solicitudes después del fin",
         ],
     }
 
@@ -456,7 +492,12 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Mide /paso por HTTP loopback mientras avanza el simulador local."
     )
-    parser.add_argument("--turnos", type=_positivo, default=5)
+    parser.add_argument(
+        "--turnos",
+        type=_positivo,
+        default=5,
+        help="slots de la ronda; la ventana completa se conserva aunque la partida termine antes",
+    )
     parser.add_argument("--semilla", type=int, default=20261026)
     parser.add_argument("--escenario", choices=sorted(ESCENARIOS_DEMO), default="mixto")
     parser.add_argument(

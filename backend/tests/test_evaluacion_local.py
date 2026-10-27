@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import unittest
+from contextlib import nullcontext
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from navira.demo import MAPA_MANTA_POR_DEFECTO
 from navira.domain.mapa import MANTA_PLAYABLE_BOUNDS, cargar_mapa, recortar_mapa
 from navira.evaluacion_local import ejecutar_evaluacion_local
+from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, FaseTurno, Sobreviviente
 
 
 class EvaluacionLocalTests(unittest.TestCase):
@@ -83,6 +87,48 @@ class EvaluacionLocalTests(unittest.TestCase):
     def test_rechaza_periodo_no_positivo(self) -> None:
         with self.assertRaisesRegex(ValueError, "período"):
             ejecutar_evaluacion_local(sobrevivientes=20, periodo_segundos=0)
+
+    def test_completa_duracion_con_slots_ociosos_sin_fabricar_turnos_ni_solicitudes(self) -> None:
+        partida = SimpleNamespace(
+            estado=EstadoPartida.FINALIZADA,
+            fase=FaseTurno.RESUELTA,
+            turno=11,
+            sobrevivientes=(Sobreviviente("S-1", "N-1", estado=EstadoSobreviviente.EVACUADO),),
+        )
+        snapshot = SimpleNamespace(partida=partida, version=42)
+        almacen = SimpleNamespace(obtener=lambda _run_id: snapshot)
+        contexto = SimpleNamespace(
+            grafo=SimpleNamespace(mapa=SimpleNamespace(version="mapa-test")),
+            snapshots=almacen,
+            servicio_decision=None,
+            run_id="run-terminal",
+            semilla=7,
+        )
+
+        with (
+            patch("navira.evaluacion_local.crear_contexto_demo", return_value=contexto),
+            patch("navira.evaluacion_local.crear_app"),
+            patch(
+                "navira.evaluacion_local._servidor_loopback",
+                return_value=nullcontext("http://127.0.0.1/paso"),
+            ),
+        ):
+            reporte = ejecutar_evaluacion_local(
+                sobrevivientes=20,
+                turnos=3,
+                semilla=7,
+                escenario="libre",
+                periodo_segundos=0.01,
+            )
+
+        self.assertEqual(reporte["turnosEjecutados"], 0)
+        self.assertEqual(reporte["solicitudes"], 0)
+        self.assertEqual(reporte["slotsCadenciaSinActividad"], 3)
+        self.assertEqual(len(reporte["slotsSinActividad"]), 3)
+        self.assertTrue(reporte["duracionObjetivoCumplida"])
+        self.assertGreaterEqual(
+            reporte["duracionTotalSegundos"], reporte["duracionObjetivoSegundos"] - 0.001
+        )
 
 
 if __name__ == "__main__":
