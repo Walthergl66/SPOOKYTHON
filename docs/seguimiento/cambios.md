@@ -14,6 +14,7 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Límites: es un cierre vial sintético, no un choque real ni una amenaza natural. El marcador usa el punto medio del segmento OSM, no localización oficial de accidente. Mapas con menos de diez segmentos tienen un máximo menor. No se mide impacto causal agregado en mordidas/evacuados ni rendimiento prolongado.
 - Siguiente paso: registrar el commit individual en `master` y dejar el servidor local con la partida de smoke activa para revisión.
 - Commit individual en `master`: `beddc56 feat: alert on randomized road incidents`.
+- Publicación: `git push origin master` no pudo autenticar; este entorno no dispone de credenciales interactivas. Ambos commits CAM-082 siguen locales.
 
 ## CAM-081 — Incidentes viales siempre activos en la demo
 
