@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boundsOfNodes, gameBounds, mapAreaBounds, MANTA_AREA, paddedBounds } from './mapArea'
+import { boundsOfNodes, gameBounds, mapAreaBounds, MANTA_AREA, outsideBoundsMask, paddedBounds } from './mapArea'
 import type { PanelMap } from '../../domain/panel'
 
 describe('cobertura cartográfica de Manta', () => {
@@ -27,6 +27,15 @@ describe('cobertura cartográfica de Manta', () => {
     expect((area[0][0] - padded[0][0]) * kmPerLongitudeDegree).toBeCloseTo(5, 5)
     expect((padded[1][0] - area[1][0]) * kmPerLongitudeDegree).toBeCloseTo(5, 5)
     expect(area).toEqual(MANTA_AREA)
+  })
+  it('enmascara solo el exterior de la caja que se le entrega', () => {
+    const visibleBounds = paddedBounds(MANTA_AREA)
+    const mask = outsideBoundsMask(visibleBounds)
+    expect(mask.features).toHaveLength(4)
+    expect(mask.features[0].geometry.coordinates[0][1]).toEqual([visibleBounds[0][0], -3])
+    expect(mask.features[1].geometry.coordinates[0][0]).toEqual([visibleBounds[1][0], -3])
+    expect(mask.features[2].geometry.coordinates[0][0]).toEqual([visibleBounds[0][0], 2])
+    expect(mask.features[3].geometry.coordinates[0][3]).toEqual([visibleBounds[0][0], visibleBounds[0][1]])
   })
   it('recorre grafos grandes sin expandir arrays como argumentos', () => {
     const nodes = Array.from({ length: 150_000 }, (_, i) => ({ lng: -80.92 + i / 1_000_000, lat: -1.14 }))

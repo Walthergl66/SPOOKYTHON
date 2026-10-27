@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import type { PanelMap, PanelState } from '../../domain/panel'
 import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, emptyCollection, indexMapPositions, positionAlongPath } from './mapFeatures'
 import type { FeatureCollection, Position } from './mapFeatures'
-import { gameBounds, mapAreaBounds, paddedBounds, type MapBounds } from './mapArea'
+import { gameBounds, mapAreaBounds, outsideBoundsMask, paddedBounds, type MapBounds } from './mapArea'
 
 interface CityMapProps {
   map: PanelMap
@@ -71,6 +71,7 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
     instance.once('load', () => {
       initialized = true
       fitMapToMantaArea(instance, areaRef.current)
+      highlightWater(instance)
       addMapLayers(instance, latestDataRef.current, latestActorsRef.current, latestStreetsRef.current, areaRef.current)
       setReady(true)
       setMapError(null)
@@ -102,7 +103,7 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
     if (!ready || !instance) return
     instance.setMaxBounds(paddedBounds(area))
     const mask = instance.getSource('navira-outside-manta-mask') as GeoJSONSource | undefined
-    mask?.setData(outsideMantaMask(area) as never)
+    mask?.setData(outsideBoundsMask(paddedBounds(area)) as never)
     fitMapToMantaArea(instance, area)
     overviewRef.current = true
     setIs3d(false)
@@ -277,9 +278,9 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
     paint: { 'text-color': '#e8fff2', 'text-halo-color': '#142034', 'text-halo-width': 1.4 },
   })
 
-  // The inner ring leaves the documented Manta extraction window visible and
-  // paints a dark mask over provider tiles everywhere outside it.
-  map.addSource('navira-outside-manta-mask', { type: 'geojson', data: outsideMantaMask(area) as never })
+  // Keep provider tiles visible through the full 5 km navigation margin. The
+  // mask only hides cartography farther out; it never changes the playable graph.
+  map.addSource('navira-outside-manta-mask', { type: 'geojson', data: outsideBoundsMask(paddedBounds(area)) as never })
   map.addLayer({
     id: 'navira-outside-manta-mask',
     source: 'navira-outside-manta-mask',
@@ -288,22 +289,20 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
   })
 }
 
-function outsideMantaMask(area: MapBounds) {
-  const [[west, south], [east, north]] = area
-  const [outerWest, outerSouth, outerEast, outerNorth] = [-83, -3, -78, 2]
-  const polygon = (ring: number[][]) => ({
-    type: 'Feature',
-    properties: {},
-    geometry: { type: 'Polygon', coordinates: [ring] },
-  })
-  return {
-    type: 'FeatureCollection',
-    features: [
-      polygon([[outerWest, outerSouth], [west, outerSouth], [west, outerNorth], [outerWest, outerNorth], [outerWest, outerSouth]]),
-      polygon([[east, outerSouth], [outerEast, outerSouth], [outerEast, outerNorth], [east, outerNorth], [east, outerSouth]]),
-      polygon([[west, outerNorth], [east, outerNorth], [east, north], [west, north], [west, outerNorth]]),
-      polygon([[west, outerSouth], [east, outerSouth], [east, south], [west, south], [west, outerSouth]]),
-    ],
+/** Make the coastline readable against the dark basemap without changing its geography. */
+function highlightWater(map: MapLibreMap) {
+  for (const layer of map.getStyle().layers) {
+    const sourceLayer = 'source-layer' in layer ? layer['source-layer'] : undefined
+    const waterLayer = layer.id.toLowerCase().includes('water') || sourceLayer?.toLowerCase() === 'water'
+    const paint = layer.paint
+    if (!waterLayer || !paint) continue
+    if (layer.type === 'fill' && 'fill-color' in paint) {
+      map.setPaintProperty(layer.id, 'fill-color', '#17496b')
+    } else if (layer.type === 'line' && 'line-color' in paint) {
+      map.setPaintProperty(layer.id, 'line-color', '#327b9e')
+    } else if (layer.type === 'symbol' && 'text-color' in paint) {
+      map.setPaintProperty(layer.id, 'text-color', '#b9d8e8')
+      map.setPaintProperty(layer.id, 'text-halo-color', '#173247')
+    }
   }
 }
-

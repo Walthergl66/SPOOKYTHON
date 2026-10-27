@@ -41,6 +41,26 @@ export function paddedBounds(bounds: MapBounds): MapBounds {
   return [[west - longitudeMargin, south - latitudeMargin], [east + longitudeMargin, north + latitudeMargin]]
 }
 
+/** GeoJSON mask covering cartography outside a visible map window. */
+export function outsideBoundsMask(bounds: MapBounds) {
+  const [[west, south], [east, north]] = bounds
+  const [outerWest, outerSouth, outerEast, outerNorth] = [-83, -3, -78, 2]
+  const polygon = (ring: number[][]) => ({
+    type: 'Feature' as const,
+    properties: {},
+    geometry: { type: 'Polygon' as const, coordinates: [ring] },
+  })
+  return {
+    type: 'FeatureCollection' as const,
+    features: [
+      polygon([[outerWest, outerSouth], [west, outerSouth], [west, outerNorth], [outerWest, outerNorth], [outerWest, outerSouth]]),
+      polygon([[east, outerSouth], [outerEast, outerSouth], [outerEast, outerNorth], [east, outerNorth], [east, outerSouth]]),
+      polygon([[west, outerNorth], [east, outerNorth], [east, north], [west, north], [west, outerNorth]]),
+      polygon([[west, outerSouth], [east, outerSouth], [east, south], [west, south], [west, outerSouth]]),
+    ],
+  }
+}
+
 /** Focus uses public characters and refuges, including terminal characters. */
 export function gameBounds(map: PanelMap, state: PanelState): MapBounds {
   const ids = new Set([

@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-075 — Mostrar el mar dentro del margen cartográfico
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: el usuario reportó que el mapa aparecía igual y que el mar no se reflejaba en el lado derecho.
+- Especificación/trazabilidad: PRD-04, SPEC-008 CA-008-07/09, P4-04 y T-27/T-38. Mejora de presentación cartográfica; el mapa y zona jugable completas de CAM-073 no cambian.
+- Diagnóstico: el estilo oscuro de OpenFreeMap pintaba agua en `rgb(27,27,29)`, casi indistinguible del fondo; la máscara exterior se calculaba con la caja jugable aunque el límite de navegación ya permitía 5 km por lado, cubriendo los tiles del margen.
+- Resultado: las capas `water`/`waterway` y nombres de agua reciben un tono visible. La máscara ahora se construye con el mismo `paddedBounds` del límite de navegación. La función pura `outsideBoundsMask` se prueba junto a `mapArea.ts`; no modifica calles, actores, refugios, rutas ni apariciones.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `mapArea.ts`, `mapArea.test.ts`; SPEC-008, mapa Manta, módulos frontend, T-27/T-38, plan, estado, README de docs y [resultado CAM-075](../calidad/resultados/mar-visible-cam075.md).
+- Verificación: `npm test` (77/77), `npm run build`, `check_docs.py` (103 Markdown/105 archivos), `check_sdd.py` (ocho SPEC), regresiones SDD (8/8) y `git diff --check` correctos; se inspeccionó la definición remota del estilo OpenFreeMap. Se levantó la demo Manta usando `/tmp/navira-env`, se comprobó visualmente la costa y el mar azul en el encuadre «Todo Manta» y se dejó la simulación pausada en turno 22.
+- Límites: el mar se ve al oeste, donde está la costa de Manta; el este es terreno continental, por lo que no se fabrica una masa de agua en ese lado. El proveedor requiere internet y su geometría/color siguen siendo externos. No se altera el fixture o el espacio jugable.
+- Siguiente paso: revisar la app con la corrección; cualquier nuevo ajuste de encuadre puede continuar sobre esta base.
+- Commit individual local en `master`. `git push origin master` no se pudo autenticar porque GitHub solicitó credenciales HTTPS interactivas que no están disponibles en este entorno.
+
 ## CAM-074 — Limitar la navegación del mapa a 5 km por lado
 
 - Fecha: 2026-10-27, Ecuador continental.
