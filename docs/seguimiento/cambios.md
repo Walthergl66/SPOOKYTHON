@@ -2,6 +2,15 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-089 — Priorizar Reto al abrir Navira
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: ordenar los modos de la pantalla inicial como Reto, Simulador y Jugar.
+- Resultado: Reto ocupa la primera posición visual y de navegación por teclado y queda seleccionado al cargar la aplicación. Los indicadores pasan a A/B/C en ese orden. No cambia el motor ni las configuraciones de los modos.
+- Archivos: `frontend/src/app/App.tsx`, `frontend/src/features/mode/ModeCard.tsx`; contexto, módulo frontend, estado e historial.
+- Validación: frontend `npm test -- --run` (90/90), `npm run build` correcto con advertencia de chunk >500 kB; validadores `check_docs.py`, `check_sdd.py` y `git diff --check` correctos. No se modificó backend.
+- Commits: código `8d2f806`; documentación en commit separado posterior.
+
 ## CAM-088 — Separar el flujo de reto de la demo libre
 
 - Fecha: 2026-10-27, Ecuador continental.

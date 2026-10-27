@@ -26,6 +26,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 14. Solicitud del usuario (2026-10-27): reemplazar el selector «Ruta observada» por selección directa de habitantes en el mapa y desplegar información del habitante y su ruta vigente.
 15. Solicitud del usuario (2026-10-27): corregir habitantes que oscilan o dan vueltas; mantener su ruta estable y cambiarla cuando un zombie esté cerca.
 16. Solicitud del usuario (2026-10-27): agregar una experiencia específica para la prueba de fuego del reto y conservar «Simulador» como demo libre.
+17. Solicitud del usuario (2026-10-27): mostrar los modos al abrir la app en el orden Reto, Simulador y Jugar, con Reto seleccionado inicialmente.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 
