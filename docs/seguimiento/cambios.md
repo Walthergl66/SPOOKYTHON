@@ -11,8 +11,8 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Archivos: `App.tsx`, `CityMap.tsx`, `mapFeatures.ts`, `SurvivorRoutePanel.tsx`, `survivorRoute.ts`, pruebas frontend, estilos; PRD/TRD/contexto, SPEC-003, módulos frontend, T-45, plan, trazabilidad, estado y este historial.
 - Verificación: `cd frontend && npm test -- --run` — 89/89 pruebas; `npm run build` — correcto, con la advertencia conocida de bundle cartográfico >500 kB; validadores docs (113 Markdown/115 archivos), SDD (8 SPEC + regresiones 8/8) y `git diff --check` correctos. Smoke browser: clic en marcador seleccionó `S-DEMO-020`; la ficha mostró nodo actual, siguiente paso, refugio R-02 y ruta de 39 pasos; panel en vivo turno 266.
 - Límites: la ruta es una recomendación del snapshot y puede cambiar en la siguiente actualización; el mapa puede tener marcadores superpuestos, por lo que permanece una lista alternativa. No modifica la partida ni representa movimiento confirmado.
-- Siguiente paso: registrar commit individual en `master`.
-- Commit: pendiente.
+- Siguiente paso: continuar con el punto de reanudación CAM-066 descrito en `estado-actual.md`.
+- Commit de implementación: `81de954` (`feat: select survivors from map`).
 
 ## CAM-082 — Cierres aleatorios con alerta cartográfica y rutas actualizadas
 

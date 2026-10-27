@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-27. CAM-083 reemplaza «Ruta observada» por selección de habitantes desde el mapa y una ficha superpuesta que deriva estado, nodo, siguiente paso, destino y trayecto del snapshot vigente; lista expandible sirve de alternativa por teclado o si hay marcadores superpuestos. Suite frontend 89/89, build y validadores docs/SDD correctos. Smoke browser en turno 266: clic en `S-DEMO-020` mostró nodo actual, siguiente paso, refugio R-02 y ruta de 39 pasos. Falta commit. CAM-082 sigue activo: sorteo reproducible de 1–10 cierres, alerta accesible, marcador amarillo y rutas que evitan cierres confirmados; no filtra eventos futuros. El origen del cierre es sintético y no representa amenazas reales.
+Última actualización: 2026-10-27. CAM-083 reemplaza «Ruta observada» por selección de habitantes desde el mapa y una ficha superpuesta que deriva estado, nodo, siguiente paso, destino y trayecto del snapshot vigente; lista expandible sirve de alternativa por teclado o si hay marcadores superpuestos. Suite frontend 89/89, build y validadores docs/SDD correctos. Smoke browser en turno 266: clic en `S-DEMO-020` mostró nodo actual, siguiente paso, refugio R-02 y ruta de 39 pasos. Commit de implementación `81de954` en `master`. CAM-082 sigue activo: sorteo reproducible de 1–10 cierres, alerta accesible, marcador amarillo y rutas que evitan cierres confirmados; no filtra eventos futuros. El origen del cierre es sintético y no representa amenazas reales.
 
 ## Hechos verificados
 
@@ -82,7 +82,7 @@ El checkout está en `master`. El puntero de seguimiento local `origin/master` o
 
 ## Próxima acción concreta
 
-CAM-083: siguiente paso exacto: crear el commit individual en `master`. Verificación visual realizada en `http://localhost:5173/`; la API `127.0.0.1:8000` continúa activa con la partida anterior.
+CAM-066: siguiente paso exacto: abrir una sesión nueva, comprobar que aparecen `arquitecto-backend`, `arquitecto-frontend`, `revisor-arquitectura` y `documentador-sdd`, y que `revisor-arquitectura` reproduce la línea base de la guía. Después decidir el primer paso de migración (B1 o F1). El commit de la reorganización sigue pendiente de decisión, y la CI en GitHub no se ha ejecutado. Verificación visual CAM-083 realizada en `http://localhost:5173/`; la API `127.0.0.1:8000` continúa activa con la partida anterior.
 
 CAM-066: siguiente paso exacto: abrir una sesión nueva, comprobar que aparecen `arquitecto-backend`, `arquitecto-frontend`, `revisor-arquitectura` y `documentador-sdd`, y que `revisor-arquitectura` reproduce la línea base de la guía. Después decidir el primer paso de migración (B1 o F1). El commit de la reorganización sigue pendiente de decisión, y la CI en GitHub no se ha ejecutado.
 
