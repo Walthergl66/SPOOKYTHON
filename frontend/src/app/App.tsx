@@ -135,7 +135,7 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} /></Suspense> : <MapPlaceholder />}
+            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} animationSpeed={simulator?.velocidad ?? 4} /></Suspense> : <MapPlaceholder />}
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{map?.version ?? (simulatorUnavailable ? 'BACKEND SIN CONTROL LOCAL' : 'AÚN SIN SNAPSHOT')}</div>
           </div>

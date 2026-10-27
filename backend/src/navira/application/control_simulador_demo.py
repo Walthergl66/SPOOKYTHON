@@ -57,7 +57,7 @@ class ControlSimuladorDemoLocal:
         self._configuracion: dict[str, object] = {}
         self._estado: Literal["sin_partida", "activa", "pausada", "finalizada", "error"] = "sin_partida"
         # La velocidad es del operador, no de una partida: sobrevive a iniciar y reiniciar.
-        self._velocidad: float = 1.0
+        self._velocidad: float = 4.0
 
     @property
     def consultar_panel(self) -> ConsultarPanel | None:

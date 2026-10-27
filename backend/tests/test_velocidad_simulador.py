@@ -33,14 +33,14 @@ class RelojVelocidadTests(unittest.TestCase):
 class ControlVelocidadTests(unittest.TestCase):
     def test_estado_informa_velocidad_sin_partida(self) -> None:
         control = ControlSimuladorDemoLocal(lambda **_: None)  # type: ignore[arg-type]
-        self.assertEqual(control.estado()["velocidad"], 1.0)
+        self.assertEqual(control.estado()["velocidad"], 4.0)
         self.assertEqual(control.fijar_velocidad(4)["velocidad"], 4.0)
 
     def test_velocidad_invalida_no_cambia_el_estado(self) -> None:
         control = ControlSimuladorDemoLocal(lambda **_: None)  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             control.fijar_velocidad(0)
-        self.assertEqual(control.estado()["velocidad"], 1.0)
+        self.assertEqual(control.estado()["velocidad"], 4.0)
 
 
 if __name__ == "__main__":

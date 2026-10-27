@@ -4,7 +4,7 @@ ID: SPEC-003
 Estado: lista
 Requisitos: PRD-04, PRD-06, TRD-05, TRD-06, TRD-07, TRD-09
 Tareas: P0-04, P4-01, P4-02
-Pruebas: T-04, T-15, T-16, T-19
+Pruebas: T-04, T-15, T-16, T-19, T-41
 Cambio: CAM-052
 Evidencia: pruebas locales descritas abajo; criterios de panel integral aún no verificados.
 
@@ -21,7 +21,7 @@ El panel de esta SPEC sigue siendo de solo lectura. Los controles de inicio/paus
 | Criterio | Comportamiento verificable | Pruebas |
 |---|---|---|
 | CA-003-01 | Mapa representa entidades visibles, rutas previstas, refugios, cierres y área de hordas; no filtra dormidos o secretos. | T-04, T-16 |
-| CA-003-02 | Cada turno confirmado actualiza posiciones y fase; desconexión queda visible y reconexión recupera snapshot sin huecos o datos de otra partida. Un socket abierto también sigue el contexto cuando el control local inicia otro run. | T-15 — CAM-032 y regresión de CAM-052; despliegue/recovery multi-proceso no cubiertos. |
+| CA-003-02 | Cada turno confirmado actualiza posiciones y fase; una transición animada continúa durante snapshots intermedios sin movimientos nuevos y termina en la posición confirmada. Desconexión queda visible y reconexión recupera snapshot sin huecos o datos de otra partida. Un socket abierto también sigue el contexto cuando el control local inicia otro run. | T-15 y T-41 — CAM-032/052/079; despliegue/recovery multi-proceso no cubiertos. |
 | CA-003-03 | Panel distingue modo y métricas automáticas/humanas; espectador no inicia, mueve o termina partidas. | T-16 |
 | CA-003-04 | Selección y controles permitidos funcionan con teclado, foco visible y señales distintas del color; sin animación obligatoria para entender estado. | T-19 |
 

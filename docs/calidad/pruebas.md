@@ -54,6 +54,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-38 | Mapa jugable ampliado de Manta | Conteos concuerdan con sidecar, sectores urbanos/rurales seleccionados tienen red cercana, cada nodo incluido puede alcanzar refugio en dirección de calles, el campo de rutas compartido coincide con Dijkstra bajo cierres/bloqueos y el margen de navegación equivale a 5 km por lado sin alterar el grafo. Cobertura muestreada no es auditoría calle por calle ni límite municipal. |
 | T-39 | Recorte jugable y selección de refugios | El mapa de partida Manta conserva solo nodos dentro de `[-80.807, -1.082]`–`[-80.621, -0.897]` y calles cuyos extremos están dentro; apariciones/zombies no salen del subgrafo, el selector usa la misma caja y una colocación exterior recibe HTTP 422. El fixture fuente OSM permanece intacto. La caja no es frontera municipal certificada. |
 | T-40 | Perímetro de refugios ante zombies | Para mapa Manta, generación y movimiento no colocan ni mueven zombies hacia refugios o nodos conectados a una cuadra, aun con vías unidireccionales o cierres; un actor ya dentro solo permanece o sale. Fixtures sintéticos no se modifican. |
+| T-41 | Continuidad y velocidad visual del turno local | Demo local inicia en 4× (objetivo 500 ms); 1×/2×/4× escalan el reloj y la interpolación, que también se prolonga a la cadencia observada del turno (sin usar pausas mayores a 5 s). Snapshots sin movimiento nuevo preservan la animación confirmada; actores que dejan de estar visibles se eliminan; `prefers-reduced-motion` evita interpolar. El runner completa rondas en serie y jamás omite pasos por superar su periodo objetivo. No acredita que el hardware sostenga 4×. |
 
 ## Medición de la prueba de fuego
 
@@ -78,6 +79,10 @@ Ejecutar Dijkstra y política mejorada sobre los mismos escenarios, versiones y 
 ### T-27 — Cartografía 3D del panel
 
 `cd frontend && npm run build` verifica compilación MapLibre/TypeScript. En navegador con red, revisar estilo/atribución, agua, controles 2D/3D, cámara/pan/zoom, «Vista urbana»/«Ver partida», fichas y animaciones. T-39 verifica por código que partidas Manta usan el subgrafo recortado y el selector solo acepta nodos interiores, incluido rechazo backend exterior. T-38 mantiene evidencia del fixture fuente ampliado. CAM-052 cubre cambio WebSocket; CAM-053 el recorte visual; CAM-074/075 la vista histórica y contraste del mar; CAM-076 la ventana visual; CAM-077 el límite jugable. La comprobación no certifica cobertura OSM, frontera municipal ni seguridad de evacuación. El error controlado del proveedor/WebGL sigue pendiente.
+
+### T-41 — Velocidad y continuidad de movimiento local
+
+Desde `frontend/`, `npm test -- --run` cubre `movementDurationMs` (2.000/1.000/500 ms nominales en 1×/2×/4×, ampliable a la cadencia observada) y `mergeActiveMovements` (mantener transiciones al recibir una instantánea sin movimientos, reemplazar una transición nueva del mismo actor y retirar actores ausentes). `npm run build` comprueba tipos y bundle. En backend, `cd backend && PYTHONPATH=src python3 -m unittest tests.test_velocidad_simulador -v` comprueba el valor inicial 4× y el cambio en caliente. La serialización del ciclo se mantiene en `RelojSimuladorLocal._ejecutar`; esta verificación no prueba sostenimiento de cadencia bajo carga ni cambia las rondas oficiales.
 
 ### T-28/T-29 — Intensidad e incidentes sintéticos
 

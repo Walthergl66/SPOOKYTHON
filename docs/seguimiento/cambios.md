@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-079 — Fluidez de turnos y movimientos confirmados
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de hacer más fluida la partida por turnos y los movimientos, conservando las acciones que corresponden a cada pieza.
+- Especificación/trazabilidad: PRD-04/06, TRD-06/07, SPEC-003 CA-003-02, SPEC-007 CA-007-03/06, P4-03/P4-04 y T-41.
+- Motivo: la demo local iniciaba en 1× y el frontend cancelaba animaciones activas al recibir snapshots de fase sin movimientos. Además, la ronda medida en el grafo completo tardó más que el intervalo objetivo 4×.
+- Resultado: el control local inicia en 4× y conserva 1×/2×/4×; el reloj sigue procesando turnos completos secuenciales sin omisiones. El mapa conserva una trayectoria confirmada entre snapshots y adapta la duración al mayor valor entre periodo nominal y cadencia local observada (ignora huecos mayores a 5 s). Selección de otro run, desaparición/terminalidad de actores y movimiento reducido limpian o evitan interpolación. No cambia reloj oficial ni reglas.
+- Archivos: `backend/src/navira/application/control_simulador_demo.py`, `backend/src/navira/application/reloj_simulador.py`, `backend/tests/test_velocidad_simulador.py`, `frontend/src/app/App.tsx`, `frontend/src/features/map/CityMap.tsx`, `mapFeatures.ts` y pruebas; SPEC-003/007, T-41, flujo del simulador/operador, módulo frontend, plan, trazabilidad, índice, reporte y estado.
+- Verificación: `cd frontend && npm test -- --run` (83 pruebas); `npm run build` correcto con advertencia de chunk cartográfico >500 kB; suite backend completa 212/212 con `/tmp/navira-env`; test de velocidad 5/5; `check_docs.py` (109 Markdown/111 archivos), `check_sdd.py` (ocho SPEC), regresiones SDD 8/8 y `git diff --check` correctos. El smoke same-origin cambió la partida local activa a 4× y navegador mostró 4×, run activo y mapa cargado. Tres lecturas del control estimaron intervalos de 1,361 y 1,172 s entre turnos, por lo que 4× nominal no fue sostenido bajo esa carga local; la animación se adapta a la cadencia real.
+- Límites: muestra breve y hardware local; no mide fotogramas ni valida rendimiento sostenido. Cálculo lento todavía retrasa turnos, nunca los salta. No es una evaluación oficial ni una garantía de cadencia.
+- Siguiente paso: inspeccionar visualmente transiciones de varios tipos de actor en el navegador activo y, por separado, optimizar/medir el coste de la ronda si se necesita sostener 4× real.
+- Commit: `3cf3a66 perf: smooth local simulation turn playback` en `master`; commit individual de CAM-079.
+
 ## CAM-078 — Perímetro de una cuadra alrededor de refugios Manta
 
 - Fecha: 2026-10-27, Ecuador continental.

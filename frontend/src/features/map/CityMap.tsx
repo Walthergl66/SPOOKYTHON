@@ -4,14 +4,16 @@ import type { GeoJSONSource } from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { PanelMap, PanelState } from '../../domain/panel'
-import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, emptyCollection, indexMapPositions, positionAlongPath } from './mapFeatures'
-import type { FeatureCollection, Position } from './mapFeatures'
+import type { SimulatorSpeed } from '../../domain/simulator'
+import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, emptyCollection, indexMapPositions, mergeActiveMovements, movementDurationMs, positionAlongPath } from './mapFeatures'
+import type { AnimatedMovement, FeatureCollection, Position } from './mapFeatures'
 import { boundsWithin, gameBounds, MANTA_CITY_VIEW, outsideBoundsMask, type MapBounds } from './mapArea'
 
 interface CityMapProps {
   map: PanelMap
   state: PanelState
   selectedSurvivorId: string | undefined
+  animationSpeed: SimulatorSpeed
 }
 
 const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfreemap.org/styles/dark'
@@ -20,7 +22,7 @@ const MAP_CENTER: Position = [-80.714, -0.9895]
 
 setWorkerUrl(mapWorkerUrl)
 
-export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
+export function CityMap({ map, state, selectedSurvivorId, animationSpeed }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const latestDataRef = useRef<FeatureCollection>(emptyCollection())
@@ -28,6 +30,12 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   const latestActorsRef = useRef<FeatureCollection>(emptyCollection())
   const previousStateRef = useRef<PanelState | null>(null)
   const animationFrameRef = useRef<number | null>(null)
+  const activeAnimationsRef = useRef(new Map<string, AnimatedMovement>())
+  const latestStateRef = useRef(state)
+  const animationSpeedRef = useRef(animationSpeed)
+  const cadenceRef = useRef<{ runId: string | undefined; turno: number | undefined; startedAt: number | null; observedTurnMs: number | null }>({ runId: state.runId, turno: state.turno, startedAt: null, observedTurnMs: null })
+  latestStateRef.current = state
+  animationSpeedRef.current = animationSpeed
   const [ready, setReady] = useState(false)
   const [is3d, setIs3d] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -126,33 +134,64 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
     const actorSource = instance.getSource('navira-actors') as GeoJSONSource | undefined
     staticSource?.setData(latestDataRef.current as never)
     if (!actorSource) return
+    const changedRun = previous !== null && previous.runId !== state.runId
+    const now = performance.now()
+    if (changedRun || cadenceRef.current.runId !== state.runId || cadenceRef.current.startedAt === null) {
+      cadenceRef.current = { runId: state.runId, turno: state.turno, startedAt: now, observedTurnMs: null }
+    } else if (previous?.snapshotVersion !== state.snapshotVersion && state.turno !== undefined && cadenceRef.current.turno !== undefined && state.turno > cadenceRef.current.turno) {
+      const turnsElapsed = state.turno - cadenceRef.current.turno
+      const sample = cadenceRef.current.startedAt === null ? null : (now - cadenceRef.current.startedAt) / turnsElapsed
+      // Ignore long gaps caused by pause, background tabs, or reconnect before adapting visual playback.
+      const observedTurnMs = sample !== null && sample <= 5000
+        ? cadenceRef.current.observedTurnMs === null ? sample : cadenceRef.current.observedTurnMs * 0.5 + sample * 0.5
+        : cadenceRef.current.observedTurnMs
+      cadenceRef.current = { runId: state.runId, turno: state.turno, startedAt: now, observedTurnMs }
+    }
     // Selection changes redraw the suggested route but must not cancel an in-flight actor transition.
     if (previous?.runId === state.runId && previous?.snapshotVersion === state.snapshotVersion) return
 
-    if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current)
+    if (changedRun) {
+      activeAnimationsRef.current.clear()
+      if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
+    }
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const animations = previous && !reducedMotion ? createMovementAnimations(map, previous, state, performance.now(), points) : []
-    if (animations.length === 0) {
+    const animations = previous && !reducedMotion ? createMovementAnimations(map, previous, state, now, points) : []
+    if (reducedMotion) {
+      activeAnimationsRef.current.clear()
+      if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
       actorSource.setData(latestActorsRef.current as never)
       return
     }
 
-    const durationMs = 1600
-    const animate = (now: number) => {
-      const positions = new Map<string, Position>()
-      let stillMoving = false
-      for (const movement of animations) {
-        const elapsed = Math.max(0, now - movement.startedAt)
-        const progress = Math.min(1, elapsed / durationMs)
-        positions.set(movement.id, positionAlongPath(movement.path, progress))
-        if (progress < 1) stillMoving = true
-      }
-      actorSource.setData(createActorFeatures(map, state, positions, points) as never)
-      if (stillMoving) animationFrameRef.current = window.requestAnimationFrame(animate)
-      else animationFrameRef.current = null
+    const actorIds = new Set([
+      ...(state.sobrevivientes ?? []).filter((actor) => actor.estado === 'activo').map((actor) => actor.id),
+      ...(state.zombies ?? []).map((actor) => actor.id),
+    ])
+    const durationMs = movementDurationMs(animationSpeedRef.current, cadenceRef.current.observedTurnMs)
+    const timedAnimations = animations.map((movement) => ({ ...movement, durationMs }))
+    activeAnimationsRef.current = mergeActiveMovements(activeAnimationsRef.current, timedAnimations, actorIds)
+
+    if (activeAnimationsRef.current.size === 0) {
+      actorSource.setData(latestActorsRef.current as never)
+      return
     }
-    animationFrameRef.current = window.requestAnimationFrame(animate)
-  }, [ready, map, state, selectedSurvivorId, points])
+
+    const animate = (now: number) => {
+      animationFrameRef.current = null
+      const positions = new Map<string, Position>()
+      for (const [id, movement] of activeAnimationsRef.current) {
+        const elapsed = Math.max(0, now - movement.startedAt)
+        const progress = Math.min(1, elapsed / (movement.durationMs ?? movementDurationMs(animationSpeedRef.current)))
+        positions.set(id, positionAlongPath(movement.path, progress))
+        if (progress >= 1) activeAnimationsRef.current.delete(id)
+      }
+      actorSource.setData(createActorFeatures(map, latestStateRef.current, positions, points) as never)
+      if (activeAnimationsRef.current.size > 0) animationFrameRef.current = window.requestAnimationFrame(animate)
+    }
+    if (animationFrameRef.current === null) animationFrameRef.current = window.requestAnimationFrame(animate)
+  }, [ready, map, state, selectedSurvivorId, points, animationSpeed])
 
   const togglePitch = () => {
     const instance = mapRef.current

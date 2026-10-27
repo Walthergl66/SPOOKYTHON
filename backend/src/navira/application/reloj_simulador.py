@@ -39,7 +39,7 @@ class RelojSimuladorLocal:
         ejecutar_ronda: EjecutarRondaAutomatica,
         *,
         periodo_s: float = 2.0,
-        velocidad: float = 1.0,
+        velocidad: float = 4.0,
     ) -> None:
         if not math.isfinite(periodo_s) or periodo_s <= 0:
             raise ValueError("El período del reloj debe ser positivo y finito.")

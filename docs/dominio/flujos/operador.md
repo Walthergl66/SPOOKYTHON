@@ -4,6 +4,8 @@ Estado: diseño previsto. Primera interfaz administrativa: CLI; una interfaz web
 
 CAM-050 añade un tablero local de demo sintética con inicio, pausa, continuación y reinicio. Se habilita solo con `NAVIRA_LOCAL_DEMO_CONTROL=1`, loopback y Origin same-host; no sustituye el panel administrativo productivo ni modifica eventos oficiales. El formulario configura perfil sintético y población, con semilla opcional solo en API. En el tablero no se muestra estado RNG ni se inventan métricas.
 
+CAM-079 fija 4× como velocidad inicial de esta demo local, con controles para 1×/2×/4×. El factor solo cambia el periodo objetivo local, sin alterar las acciones por turno ni saltar rondas; ver [flujo del simulador](simulador.md).
+
 ## Preparar e iniciar
 
 1. Autenticarse con credencial administrativa independiente.

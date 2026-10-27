@@ -1,6 +1,29 @@
 import { describe, expect, it } from 'vitest'
 import type { PanelMap, PanelState } from '../../domain/panel'
-import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, positionAlongPath } from './mapFeatures'
+import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, mergeActiveMovements, movementDurationMs, positionAlongPath } from './mapFeatures'
+
+describe('movementDurationMs', () => {
+  it('acompaña el ritmo seleccionado sin saltarse turnos', () => {
+    expect(movementDurationMs(1)).toBe(2000)
+    expect(movementDurationMs(2)).toBe(1000)
+    expect(movementDurationMs(4)).toBe(500)
+    expect(movementDurationMs(4, 1200)).toBe(1200)
+    expect(movementDurationMs(4, 300)).toBe(500)
+  })
+})
+
+describe('mergeActiveMovements', () => {
+  const move = { id: 'z', path: [[0, 0], [1, 0]] as [number, number][], startedAt: 100 }
+
+  it('conserva un trayecto confirmado si el snapshot siguiente no trae otro movimiento', () => {
+    expect(mergeActiveMovements(new Map([['z', move]]), [], new Set(['z']))).toEqual(new Map([['z', move]]))
+  })
+
+  it('retira actores que dejaron de estar visibles y sustituye por su trayecto confirmado nuevo', () => {
+    const next = { ...move, startedAt: 200 }
+    expect(mergeActiveMovements(new Map([['z', move], ['gone', move]]), [next], new Set(['z']))).toEqual(new Map([['z', next]]))
+  })
+})
 
 const map: PanelMap = {
   version: 'm1',

@@ -1,4 +1,5 @@
 import type { PanelMap, PanelState } from '../../domain/panel'
+import type { SimulatorSpeed } from '../../domain/simulator'
 
 export type Position = [number, number]
 type Geometry = { type: 'Point'; coordinates: Position } | { type: 'LineString'; coordinates: Position[] }
@@ -85,6 +86,26 @@ export interface AnimatedMovement {
   id: string
   path: Position[]
   startedAt: number
+  /** Duration is captured at confirmation so later cadence samples cannot rewind an actor. */
+  durationMs?: number
+}
+
+/** Matches the visual transition to the local turn cadence while retaining every confirmed move. */
+export function movementDurationMs(speed: SimulatorSpeed, observedTurnMs?: number | null): number {
+  const nominal = 2000 / speed
+  return observedTurnMs && Number.isFinite(observedTurnMs) && observedTurnMs > 0
+    ? Math.max(nominal, observedTurnMs)
+    : nominal
+}
+
+/** Keeps a confirmed transition alive across snapshots that only advance phase or metadata. */
+export function mergeActiveMovements(active: ReadonlyMap<string, AnimatedMovement>, confirmed: AnimatedMovement[], visibleActorIds: ReadonlySet<string>): Map<string, AnimatedMovement> {
+  const merged = new Map(active)
+  for (const id of merged.keys()) {
+    if (!visibleActorIds.has(id)) merged.delete(id)
+  }
+  for (const movement of confirmed) merged.set(movement.id, movement)
+  return merged
 }
 
 /** Builds only public actor positions so animation frames never rebuild the street graph. */
