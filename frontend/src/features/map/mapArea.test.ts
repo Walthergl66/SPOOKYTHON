@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boundsOfNodes, gameBounds, mapAreaBounds, MANTA_AREA, outsideBoundsMask, paddedBounds } from './mapArea'
+import { boundsOfNodes, boundsWithin, gameBounds, mapAreaBounds, MANTA_AREA, MANTA_CITY_VIEW, outsideBoundsMask, paddedBounds } from './mapArea'
 import type { PanelMap } from '../../domain/panel'
 
 describe('cobertura cartográfica de Manta', () => {
@@ -49,5 +49,14 @@ describe('cobertura cartográfica de Manta', () => {
       nodos: [{ id: 'persona', lng: -80.72, lat: -0.95 }, { id: 'destino', lng: -80.73, lat: -0.96 }, { id: 'lejos', lng: -80.91, lat: -1.13 }],
     }
     expect(gameBounds(map, { estado: 'activa', sobrevivientes: [{ id: 's', nodo: 'persona', estado: 'activo', control: 'automatico' }] })).toEqual([[-80.73, -0.96], [-80.72, -0.95]])
+  })
+  it('mantiene un encuadre urbano fijo independiente de la extensión jugable completa', () => {
+    expect(MANTA_CITY_VIEW).toEqual([[-80.807, -1.082], [-80.621, -0.897]])
+    expect(MANTA_CITY_VIEW[1][0] - MANTA_CITY_VIEW[0][0]).toBeLessThan(MANTA_AREA[1][0] - MANTA_AREA[0][0])
+    expect(MANTA_CITY_VIEW[1][1] - MANTA_CITY_VIEW[0][1]).toBeLessThan(MANTA_AREA[1][1] - MANTA_AREA[0][1])
+  })
+  it('recorta el foco de partida al viewport sin modificar el grafo', () => {
+    expect(boundsWithin([[-80.91, -1.13], [-80.70, -0.93]], MANTA_CITY_VIEW)).toEqual([[-80.807, -1.082], [-80.70, -0.93]])
+    expect(boundsWithin([[-80.91, -1.13], [-80.90, -1.12]], MANTA_CITY_VIEW)).toEqual(MANTA_CITY_VIEW)
   })
 })

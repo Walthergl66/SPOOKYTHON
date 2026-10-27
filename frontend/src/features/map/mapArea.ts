@@ -7,6 +7,11 @@ export type MapBounds = [Position, Position]
 // Includes urban/rural Manta; this rectangle is not an official municipal border.
 export const MANTA_AREA: MapBounds = [[-80.920, -1.140], [-80.650, -0.920]]
 
+// Approximate urban viewport traced from the user's reference image using the
+// fixed coordinates of refuges R-01..R-04. This is a presentation window, not
+// the geographic extent of the playable graph or an administrative boundary.
+export const MANTA_CITY_VIEW: MapBounds = [[-80.807, -1.082], [-80.621, -0.897]]
+
 /** Iteration avoids argument-count limits on large OSM graphs. */
 export function boundsOfNodes(nodes: readonly { lng: number; lat: number }[]): MapBounds | null {
   if (nodes.length === 0) return null
@@ -68,4 +73,14 @@ export function gameBounds(map: PanelMap, state: PanelState): MapBounds {
     ...map.refugios.map((refuge) => refuge.nodo),
   ])
   return boundsOfNodes(map.nodos.filter((node) => ids.has(node.id))) ?? mapAreaBounds(map)
+}
+
+/** Restrict a camera focus rectangle to the visible urban window. */
+export function boundsWithin(bounds: MapBounds, limit: MapBounds): MapBounds {
+  const west = Math.max(bounds[0][0], limit[0][0])
+  const south = Math.max(bounds[0][1], limit[0][1])
+  const east = Math.min(bounds[1][0], limit[1][0])
+  const north = Math.min(bounds[1][1], limit[1][1])
+  if (west > east || south > north) return limit
+  return [[west, south], [east, north]]
 }

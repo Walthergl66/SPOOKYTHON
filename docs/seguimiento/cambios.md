@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-076 — Enfocar el mapa principal a la ventana urbana de referencia
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de limitar el mapa al tamaño del recorte de la imagen adjunta.
+- Especificación/trazabilidad: PRD-04, SPEC-008 CA-008-06/07/09, P4-04 y T-27/T-38. Sigue vigente el grafo jugable ampliado de CAM-073; el cambio limita cámara/máscara, no contenido del mundo.
+- Decisión de encuadre: la captura no trae coordenadas. Se estimó el recorte `[-80.807, -1.082]`–`[-80.621, -0.897]` mediante las posiciones de R-01..R-04 visibles en ella; aproximadamente 20,7 × 20,6 km. No se afirma que sea frontera administrativa.
+- Resultado: `CityMap` inicia y limita su navegación/zoom-out y máscara a `MANTA_CITY_VIEW`; «Todo Manta» pasa a «Vista urbana». «Ver partida» acota el foco al viewport. El grafo OSM y el selector de refugios conservan cobertura amplia; personajes fuera del viewport continúan simulándose aunque no aparezcan en el mapa principal.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `mapArea.ts`, `mapArea.test.ts`; SPEC-008, mapa Manta, frontend, T-27, plan, trazabilidad, índice y [evidencia CAM-076](../calidad/resultados/ventana-urbana-cam076.md).
+- Verificación: prueba focalizada 8/8; suite frontend 79/79; `npm run build`; `check_docs.py` (104 Markdown/106 archivos); `check_sdd.py` (ocho SPEC); regresiones SDD (8/8) y `git diff --check` correctos. No se verificó visualmente CityMap: no había snapshot/partida activa disponible en el tablero local.
+- Límites: límites de la ventana aproximados; los actores fuera de ella no son visibles en el mapa principal. No cambia datos, reglas o posiciones de simulación. No es mapa de evacuación real.
+- Siguiente paso: habilitar una partida local con snapshot activo y confirmar en navegador que el recorte y el mar coinciden con la captura; retocar coordenadas solo si la comparación visual lo requiere.
+- Commit individual creado localmente en `master`; el intento de `git push origin master` falló por falta de credenciales HTTPS interactivas de GitHub.
+
 ## CAM-075 — Mostrar el mar dentro del margen cartográfico
 
 - Fecha: 2026-10-27, Ecuador continental.

@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import type { PanelMap, PanelState } from '../../domain/panel'
 import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, emptyCollection, indexMapPositions, positionAlongPath } from './mapFeatures'
 import type { FeatureCollection, Position } from './mapFeatures'
-import { gameBounds, mapAreaBounds, outsideBoundsMask, paddedBounds, type MapBounds } from './mapArea'
+import { boundsWithin, gameBounds, MANTA_CITY_VIEW, outsideBoundsMask, type MapBounds } from './mapArea'
 
 interface CityMapProps {
   map: PanelMap
@@ -16,7 +16,7 @@ interface CityMapProps {
 
 const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfreemap.org/styles/dark'
 const BUILDING_TILES = 'https://tiles.openfreemap.org/planet'
-const MAP_CENTER: Position = [-80.720, -0.954]
+const MAP_CENTER: Position = [-80.714, -0.9895]
 
 setWorkerUrl(mapWorkerUrl)
 
@@ -33,7 +33,7 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   const [mapError, setMapError] = useState<string | null>(null)
 
   const points = useMemo(() => indexMapPositions(map), [map])
-  const area = useMemo(() => mapAreaBounds(map), [map])
+  const area = MANTA_CITY_VIEW
   const areaRef = useRef(area)
   areaRef.current = area
   const overviewRef = useRef(true)
@@ -56,7 +56,7 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
         zoom: 15.2,
         pitch: 0,
         bearing: 0,
-        maxBounds: paddedBounds(areaRef.current),
+        maxBounds: areaRef.current,
         renderWorldCopies: false,
         canvasContextAttributes: { antialias: true },
       })
@@ -101,9 +101,9 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   useEffect(() => {
     const instance = mapRef.current
     if (!ready || !instance) return
-    instance.setMaxBounds(paddedBounds(area))
+    instance.setMaxBounds(area)
     const mask = instance.getSource('navira-outside-manta-mask') as GeoJSONSource | undefined
-    mask?.setData(outsideBoundsMask(paddedBounds(area)) as never)
+    mask?.setData(outsideBoundsMask(area) as never)
     fitMapToMantaArea(instance, area)
     overviewRef.current = true
     setIs3d(false)
@@ -170,14 +170,14 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   const showGame = () => {
     overviewRef.current = false
     setIs3d(false)
-    mapRef.current?.fitBounds(gameBounds(map, state), { padding: 56, maxZoom: 15, pitch: 0, bearing: 0, duration: 0 })
+    mapRef.current?.fitBounds(boundsWithin(gameBounds(map, state), area), { padding: 56, maxZoom: 15, pitch: 0, bearing: 0, duration: 0 })
   }
 
   return (
     <div className="maplibre-stage" aria-label="Mapa cartográfico 3D de Manta">
       <div ref={containerRef} className="maplibre-canvas" />
       <div className="map-view-controls" role="group" aria-label="Vista del mapa">
-      <button className="map-view-toggle" type="button" onClick={showArea} disabled={!ready}>Todo Manta</button>
+      <button className="map-view-toggle" type="button" onClick={showArea} disabled={!ready}>Vista urbana</button>
       <button className="map-view-toggle" type="button" onClick={showGame} disabled={!ready}>Ver partida</button>
       <button className="map-view-toggle" type="button" onClick={togglePitch} aria-pressed={is3d} disabled={!ready}>
         {is3d ? 'Cambiar a 2D' : 'Cambiar a 3D'}
@@ -190,12 +190,12 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   )
 }
 
-/** Frames the documented Manta data window instead of surrounding regions. */
+/** Frames the fixed urban viewport and prevents zooming out beyond its extent. */
 function fitMapToMantaArea(mapInstance: MapLibreMap, area: MapBounds) {
   // Release the old minimum before fitting a resized viewport or larger graph.
   mapInstance.setMinZoom(0)
-  mapInstance.fitBounds(area, { padding: 48, maxZoom: 13, pitch: 0, bearing: 0, duration: 0 })
-  mapInstance.setMinZoom(Math.max(0, mapInstance.getZoom() - 0.3))
+  mapInstance.fitBounds(area, { padding: 0, maxZoom: 13, pitch: 0, bearing: 0, duration: 0 })
+  mapInstance.setMinZoom(mapInstance.getZoom())
 }
 
 function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: FeatureCollection, streets: FeatureCollection, area: MapBounds) {
@@ -278,9 +278,9 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
     paint: { 'text-color': '#e8fff2', 'text-halo-color': '#142034', 'text-halo-width': 1.4 },
   })
 
-  // Keep provider tiles visible through the full 5 km navigation margin. The
-  // mask only hides cartography farther out; it never changes the playable graph.
-  map.addSource('navira-outside-manta-mask', { type: 'geojson', data: outsideBoundsMask(paddedBounds(area)) as never })
+  // This visual mask clips the basemap to the selected camera window only;
+  // snapshots and the playable graph continue to cover the full Manta fixture.
+  map.addSource('navira-outside-manta-mask', { type: 'geojson', data: outsideBoundsMask(area) as never })
   map.addLayer({
     id: 'navira-outside-manta-mask',
     source: 'navira-outside-manta-mask',
