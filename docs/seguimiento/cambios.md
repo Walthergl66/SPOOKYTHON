@@ -2,6 +2,18 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-085 — Mostrar la ficha del habitante en el panel izquierdo
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: aclaración del usuario: la información que desea mover al lado izquierdo es la del habitante seleccionado.
+- Especificación/requisitos: PRD-04, TRD-07, SPEC-003 CA-003-06, P4-01 y T-45; continuidad funcional de CAM-083.
+- Resultado: `SurvivorRoutePanel` deja de cubrir el mapa y se renderiza debajo de controles/estado de partida en la columna izquierda. Conserva el detalle derivado del snapshot actual, la ruta resaltada, la lista accesible y la selección local; la selección no envía órdenes ni altera el estado del servidor. El estilo adapta las cuatro propiedades a dos columnas en el panel estrecho.
+- Archivos: `frontend/src/app/App.tsx`, `frontend/src/features/map/SurvivorRoutePanel.tsx`, `frontend/src/styles.css`; SPEC-003/007, módulo frontend, plan, trazabilidad, índice, estado, reporte e historial.
+- Verificación: `cd frontend && npm test -- --run` — 89/89; `npm run build` — correcto, con advertencia existente de bundle cartográfico mayor a 500 kB. `curl` local devolvió 200 para Vite `:5173` y `/salud` en API `:8001`; `:8000` no está escuchando. En una pestaña nueva del navegador se observó el run vivo (turno 242), se seleccionó `S-DEMO-001` desde la lista y el detalle/ruta apareció en la columna izquierda, encima del mapa en viewport de 557 px. Pruebas docs/SDD y `git diff --check` correctas.
+- Límites: el panel se ofrece cuando la partida está activa y hay sobrevivientes activos, como antes; los terminales no se seleccionan desde este panel. No se inspeccionó visualmente el breakpoint de escritorio.
+- Siguiente paso: inspección visual opcional del layout en escritorio; funcionalmente CAM-085 queda comprobada con selección real del habitante en el panel local.
+- Commit individual de implementación: `7c60df1 feat: move resident route details to left panel`. Documentación en commit individual separado.
+
 ## CAM-084 — Conservar rutas y replantear ante amenaza cercana
 
 - Fecha: 2026-10-27, Ecuador continental.
