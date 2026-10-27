@@ -3,21 +3,52 @@
 from __future__ import annotations
 
 from threading import RLock
-from typing import Literal
+from typing import Literal, Protocol
 
 from navira.application.consultar_panel import ConsultarPanel
+from navira.application.decidir_paso import DecidirPaso, ProveedorMapas
 from navira.application.reloj_simulador import RelojSimuladorLocal
 from navira.application.simulacion_automatica import EjecutarRondaAutomatica
-from navira.demo import MAPA_MANTA_POR_DEFECTO, ContextoDemo, crear_contexto_demo
+from navira.application.snapshots import RepositorioSnapshots
+
+
+class ContextoSimulacion(Protocol):
+    """Dependencias de una partida que el control necesita para operarla."""
+
+    @property
+    def snapshots(self) -> RepositorioSnapshots: ...
+
+    @property
+    def mapas(self) -> ProveedorMapas: ...
+
+    @property
+    def servicio_decision(self) -> DecidirPaso: ...
+
+    @property
+    def run_id(self) -> str: ...
+
+
+class FabricaContextoSimulacion(Protocol):
+    """Crea una partida sintética nueva; la implementación concreta se inyecta."""
+
+    def __call__(
+        self,
+        *,
+        semilla: int | None,
+        escenario: str,
+        cantidad_sobrevivientes: int,
+        intensidad: str,
+        eventos_ciudad: bool,
+    ) -> ContextoSimulacion: ...
 
 
 class ControlSimuladorDemoLocal:
     """Crea y controla una única partida sintética volátil."""
 
-    def __init__(self, ruta_mapa: str = str(MAPA_MANTA_POR_DEFECTO)) -> None:
-        self._ruta_mapa = ruta_mapa
+    def __init__(self, crear_contexto: FabricaContextoSimulacion) -> None:
+        self._crear_contexto = crear_contexto
         self._lock = RLock()
-        self._contexto: ContextoDemo | None = None
+        self._contexto: ContextoSimulacion | None = None
         self._reloj: RelojSimuladorLocal | None = None
         self._panel: ConsultarPanel | None = None
         self._configuracion: dict[str, object] = {}
@@ -68,12 +99,11 @@ class ControlSimuladorDemoLocal:
     ) -> dict[str, object]:
         with self._lock:
             self._detener_reloj()
-            contexto = crear_contexto_demo(
-                self._ruta_mapa,
+            contexto = self._crear_contexto(
                 semilla=semilla,
                 escenario=escenario,
                 cantidad_sobrevivientes=cantidad_sobrevivientes,
-                intensidad=intensidad,  # type: ignore[arg-type]
+                intensidad=intensidad,
                 eventos_ciudad=eventos_ciudad,
             )
             ejecutar = EjecutarRondaAutomatica(

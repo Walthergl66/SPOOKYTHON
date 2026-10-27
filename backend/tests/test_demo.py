@@ -11,9 +11,10 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from navira.application.decidir_paso import SolicitudPaso
+from navira.api.seguridad import ConfiguracionSeguridad
 from navira.demo import crear_contexto_demo
-from navira.main import _crear_app_configurada, crear_app, crear_app_demo
 from navira.domain.modelo import EstadoZombie
+from navira.main import _crear_app_configurada, crear_app, crear_app_demo
 
 
 class DemoBootstrapTests(unittest.TestCase):
@@ -92,17 +93,16 @@ class DemoBootstrapTests(unittest.TestCase):
     def test_app_demo_usa_planificador_en_la_ruta_http(self) -> None:
         contexto = crear_contexto_demo(semilla=31)
         sobreviviente = contexto.snapshots.obtener(contexto.run_id).partida.sobrevivientes[0]
-        app = crear_app_demo(semilla=31)
-        with patch.dict(os.environ, {"NAVIRA_API_KEY": "demo-test-key"}, clear=True):
-            respuesta = TestClient(app).post(
-                "/paso",
-                headers={"x-api-key": "demo-test-key"},
-                json={
-                    "sobrevivienteId": sobreviviente.id,
-                    "nodoActual": sobreviviente.nodo,
-                    "turno": 0,
-                },
-            )
+        app = crear_app_demo(semilla=31, seguridad=ConfiguracionSeguridad(api_key="demo-test-key"))
+        respuesta = TestClient(app).post(
+            "/paso",
+            headers={"x-api-key": "demo-test-key"},
+            json={
+                "sobrevivienteId": sobreviviente.id,
+                "nodoActual": sobreviviente.nodo,
+                "turno": 0,
+            },
+        )
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(set(respuesta.json()), {"siguienteNodo"})
@@ -110,17 +110,20 @@ class DemoBootstrapTests(unittest.TestCase):
     def test_app_demo_admite_la_misma_cohorte_para_pruebas_http(self) -> None:
         contexto = crear_contexto_demo(semilla=17, cantidad_sobrevivientes=20)
         sobreviviente = contexto.snapshots.obtener(contexto.run_id).partida.sobrevivientes[-1]
-        app = crear_app_demo(semilla=17, cantidad_sobrevivientes=20)
-        with patch.dict(os.environ, {"NAVIRA_API_KEY": "demo-test-key"}, clear=True):
-            respuesta = TestClient(app).post(
-                "/paso",
-                headers={"x-api-key": "demo-test-key"},
-                json={
-                    "sobrevivienteId": sobreviviente.id,
-                    "nodoActual": sobreviviente.nodo,
-                    "turno": 0,
-                },
-            )
+        app = crear_app_demo(
+            semilla=17,
+            cantidad_sobrevivientes=20,
+            seguridad=ConfiguracionSeguridad(api_key="demo-test-key"),
+        )
+        respuesta = TestClient(app).post(
+            "/paso",
+            headers={"x-api-key": "demo-test-key"},
+            json={
+                "sobrevivienteId": sobreviviente.id,
+                "nodoActual": sobreviviente.nodo,
+                "turno": 0,
+            },
+        )
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(set(respuesta.json()), {"siguienteNodo"})
@@ -148,6 +151,15 @@ class DemoBootstrapTests(unittest.TestCase):
             )
 
         self.assertEqual(respuesta.status_code, 200)
+
+    def test_control_demo_local_se_cablea_desde_el_entorno(self) -> None:
+        with patch.dict(os.environ, {"NAVIRA_DEMO": "1", "NAVIRA_LOCAL_DEMO_CONTROL": "1"}, clear=True):
+            self.assertTrue(_crear_app_configurada().state.seguridad.control_demo_local)
+        with patch.dict(os.environ, {"NAVIRA_DEMO": "1"}, clear=True):
+            self.assertFalse(_crear_app_configurada().state.seguridad.control_demo_local)
+
+    def test_repr_de_seguridad_no_expone_api_key(self) -> None:
+        self.assertNotIn("secreto", repr(ConfiguracionSeguridad(api_key="secreto")))
 
     def test_juego_demo_opt_in_arranca_reloj_y_reutiliza_personaje(self) -> None:
         configuracion = {

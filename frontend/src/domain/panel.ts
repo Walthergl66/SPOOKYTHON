@@ -30,35 +30,40 @@ export interface PanelSnapshot {
   state: PanelState
 }
 
-export async function loadPanelSnapshot(signal?: AbortSignal): Promise<PanelSnapshot> {
-  const stateResponse = await fetch('/panel/estado', { signal, headers: { Accept: 'application/json' } })
-  if (!stateResponse.ok) {
-    throw new Error('No se pudo obtener el estado del panel.')
-  }
-  const state = parsePanelState(await stateResponse.json())
-  if (state.estado === 'sin_partida') return { map: null, state }
+export type PanelConnection = 'connecting' | 'live' | 'reconnecting' | 'stale'
+export type PanelCursor = { runId: string | null; sequence: number }
 
-  const mapResponse = await fetch('/panel/mapa', { signal, headers: { Accept: 'application/json' } })
-  if (!mapResponse.ok) {
-    throw new Error('No se pudo obtener una proyección activa del panel.')
-  }
+export type PanelLog = { id: string; label: string; detail: string }
 
-  const map = parsePanelMap(await mapResponse.json())
-  if (state.mapVersion !== map.version) {
-    throw new Error('La versión del mapa no coincide con el snapshot recibido.')
-  }
-  return { map, state }
+/** 'stale': secuencia anterior del mismo run; 'same': repetida; 'new': primera o de otro run. */
+export function classifyCursor(previous: PanelCursor | null, next: PanelCursor): 'stale' | 'same' | 'new' {
+  if (previous?.runId !== next.runId) return 'new'
+  if (next.sequence < previous.sequence) return 'stale'
+  return next.sequence === previous.sequence ? 'same' : 'new'
 }
 
-export async function loadPanelMap(expectedVersion: string, signal?: AbortSignal): Promise<PanelMap> {
-  const response = await fetch('/panel/mapa', { signal, headers: { Accept: 'application/json' } })
-  if (!response.ok) throw new Error('No se pudo obtener una proyección activa del panel.')
-  const map = parsePanelMap(await response.json())
-  if (map.version !== expectedVersion) throw new Error('La versión del mapa no coincide con el snapshot recibido.')
-  return map
+/** Devuelve el mapa solo si coincide con la versión del estado; si no, el cacheado con esa versión, o null. */
+export function pickMap(nextMap: PanelMap | null | undefined, cached: PanelMap | null, version: string | undefined): PanelMap | null {
+  return nextMap && nextMap.version === version ? nextMap : cached?.version === version ? cached : null
 }
 
-function parsePanelMap(value: unknown): PanelMap {
+/** Añade al registro los incidentes y el turno del snapshot (más reciente primero), sin duplicados, máximo 5. */
+export function nextPanelLog(current: PanelLog[], state: PanelState): PanelLog[] {
+  const logId = `${state.runId}:${state.snapshotVersion}`
+  const phase = (state.fase ?? 'fase desconocida').replaceAll('_', ' ')
+  const incidentes = (state.eventosCiudad ?? []).map((evento) => ({
+    id: `${state.runId}:${evento.id}`,
+    label: `Incidente vial · Turno ${evento.turno}`,
+    detail: `${evento.causa}; el cierre ya fue aplicado.`,
+  }))
+  return [
+    ...incidentes,
+    { id: logId, label: `Turno ${state.turno} · ${phase}`, detail: `${state.metricas?.sobrevivientesActivos ?? 0} personas activas · ${state.zombies?.length ?? 0} amenazas visibles` },
+    ...current.filter((item) => item.id !== logId && !incidentes.some((evento) => evento.id === item.id)),
+  ].slice(0, 5)
+}
+
+export function parsePanelMap(value: unknown): PanelMap {
   if (!isRecord(value) || typeof value.version !== 'string' || !Array.isArray(value.nodos) || !Array.isArray(value.calles) || !Array.isArray(value.refugios)) {
     throw new Error('El servicio devolvió un mapa con un formato no válido.')
   }

@@ -12,7 +12,8 @@ from fastapi.testclient import TestClient
 from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.adapters.ordenes_memoria import RepositorioOrdenesMemoria
 from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
-from navira.application.juego import RepositorioSesionesMemoria, UnirseAJuego
+from navira.adapters.sesiones_memoria import RepositorioSesionesMemoria
+from navira.application.juego import UnirseAJuego
 from navira.application.ordenes import (
     OrdenIdempotenciaConflict,
     OrdenIncompatible,

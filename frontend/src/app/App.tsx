@@ -1,168 +1,43 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { GameControls } from '../features/game/GameControls'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
-import { loadPanelMap, loadPanelSnapshot, type PanelSnapshot, type PanelState } from '../shared/api/panel'
-import { controlSimulator, getSimulatorStatus, SimulatorApiError, type SimulatorSetup, type SimulatorStatus } from '../shared/api/simulator'
-import { subscribePanel, type PanelConnection, type PanelCursor } from '../shared/realtime/panel'
+import type { PanelConnection } from '../domain/panel'
+import type { SimulatorSetup } from '../domain/simulator'
+import type { GamePort, PanelPort, SimulatorPort } from '../application/ports'
+import { usePanel } from '../application/usePanel'
+import { useSimulator } from '../application/useSimulator'
+import { useGameSession } from '../application/useGameSession'
+import { joinGame, restoreGameSession, sendGameOrder } from '../infrastructure/http/game'
+import { loadPanelMap, loadPanelSnapshot } from '../infrastructure/http/panel'
+import { controlSimulator, getSimulatorStatus } from '../infrastructure/http/simulator'
+import { subscribePanel } from '../infrastructure/realtime/panel'
+import { checkHealth } from '../infrastructure/http/health'
 import { BrandMark } from '../shared/ui/BrandMark'
 
-const CityMap = lazy(() => import('../features/map/CityMap').then(({ CityMap: Component }) => ({ default: Component })))
+// Puertos de módulo: identidad estable entre renders, que los efectos de los hooks usan como dependencia.
+const panelPort: PanelPort = { loadSnapshot: loadPanelSnapshot, loadMap: loadPanelMap, subscribe: subscribePanel }
+const simulatorPort: SimulatorPort = { getStatus: getSimulatorStatus, control: controlSimulator }
+const gamePort: GamePort = { join: joinGame, restore: restoreGameSession, sendOrder: sendGameOrder }
 
-type PanelLog = { id: string; label: string; detail: string }
+const CityMap = lazy(() => import('../features/map/CityMap').then(({ CityMap: Component }) => ({ default: Component })))
 
 export function App() {
   const [mode, setMode] = useState<NaviraMode>('simulator')
   const [selectedSurvivorId, setSelectedSurvivorId] = useState<string | undefined>()
-  const [snapshot, setSnapshot] = useState<PanelSnapshot | null>(null)
-  const [panelError, setPanelError] = useState<string | null>(null)
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null)
-  // Cargar el snapshot HTTP al abrir recupera mapa + estado; WebSocket mantiene los siguientes cambios.
-  const [refreshCount, setRefreshCount] = useState(1)
-  const [loading, setLoading] = useState(true)
-  const [connection, setConnection] = useState<PanelConnection>('connecting')
-  const [simulator, setSimulator] = useState<SimulatorStatus | null>(null)
-  const [simulatorUnavailable, setSimulatorUnavailable] = useState(false)
-  const [simulatorMessage, setSimulatorMessage] = useState<string | null>(null)
-  const [simulatorBusy, setSimulatorBusy] = useState(false)
-  const [scenario, setScenario] = useState<SimulatorSetup['escenario']>('mixto')
-  const [population, setPopulation] = useState(20)
-  const [intensity, setIntensity] = useState<SimulatorSetup['intensidad']>('media')
-  const [cityEvents, setCityEvents] = useState(true)
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
-  const [eventLog, setEventLog] = useState<PanelLog[]>([])
-  const cursorRef = useRef<PanelCursor | null>(null)
-  const mapRef = useRef<PanelSnapshot['map']>(null)
+  const panel = usePanel(panelPort)
+  const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
+  const updatedAt = panel.updatedAt !== null ? formatTime(panel.updatedAt) : null
+  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl } = useSimulator(simulatorPort, refreshPanel)
 
-  const applyPanelState = useCallback((nextState: PanelState, cursor: PanelCursor, emittedAt: string, nextMap?: PanelSnapshot['map']) => {
-    const previous = cursorRef.current
-    if (previous?.runId === cursor.runId && cursor.sequence < previous.sequence) return
-    if (previous?.runId === cursor.runId && cursor.sequence === previous.sequence) {
-      if (nextState.estado === 'activa' && nextMap && nextMap.version === nextState.mapVersion) {
-        mapRef.current = nextMap
-        setSnapshot((current) => current?.state.estado === 'activa' && current.state.runId === nextState.runId
-          ? { map: nextMap, state: current.state }
-          : current)
-      }
-      setPanelError(null)
-      setLoading(false)
-      setUpdatedAt(formatTime(emittedAt))
-      return
-    }
-    cursorRef.current = cursor
-
-    if (nextState.estado === 'sin_partida') {
-      mapRef.current = null
-      setSnapshot({ map: null, state: nextState })
-      setEventLog([])
-    } else {
-      const matchingMap: PanelSnapshot['map'] = nextMap && nextMap.version === nextState.mapVersion
-        ? nextMap
-        : mapRef.current?.version === nextState.mapVersion ? mapRef.current : null
-      mapRef.current = matchingMap
-      setSnapshot({ map: matchingMap, state: nextState })
-      const logId = `${nextState.runId}:${nextState.snapshotVersion}`
-      const phase = (nextState.fase ?? 'fase desconocida').replaceAll('_', ' ')
-      setEventLog((current) => {
-        const incidentes = (nextState.eventosCiudad ?? []).map((evento) => ({
-          id: `${nextState.runId}:${evento.id}`,
-          label: `Incidente vial · Turno ${evento.turno}`,
-          detail: `${evento.causa}; el cierre ya fue aplicado.`,
-        }))
-        return [
-          ...incidentes,
-          { id: logId, label: `Turno ${nextState.turno} · ${phase}`, detail: `${nextState.metricas?.sobrevivientesActivos ?? 0} personas activas · ${nextState.zombies?.length ?? 0} amenazas visibles` },
-          ...current.filter((item) => item.id !== logId && !incidentes.some((evento) => evento.id === item.id)),
-        ].slice(0, 5)
-      })
-      if (!matchingMap) {
-        const mapVersion = nextState.mapVersion
-        const runId = nextState.runId
-        if (!mapVersion || !runId) return
-        loadPanelMap(mapVersion)
-          .then((loadedMap) => {
-            const currentCursor = cursorRef.current
-            if (!currentCursor || currentCursor.runId !== runId || currentCursor.sequence < (nextState.snapshotVersion ?? 0)) return
-            mapRef.current = loadedMap
-            setSnapshot((current) => current?.state.estado === 'activa' && current.state.mapVersion === loadedMap.version
-              ? { map: loadedMap, state: current.state }
-              : current)
-          })
-          .catch((error: unknown) => setPanelError(error instanceof Error ? error.message : 'No se pudo cargar el mapa de la partida.'))
-      }
-    }
-    setPanelError(null)
-    setLoading(false)
-    setUpdatedAt(formatTime(emittedAt))
-  }, [])
-
-  const refreshPanel = useCallback(() => setRefreshCount((count) => count + 1), [])
+  const game = useGameSession(gamePort, { modeSelected: mode === 'game', state: snapshot?.state ?? null, map: snapshot?.map ?? null, onJoined: setSelectedSurvivorId })
 
   useEffect(() => {
-    if (refreshCount === 0) return
-    const controller = new AbortController()
-    setLoading(true)
-    loadPanelSnapshot(controller.signal)
-      .then((nextSnapshot) => {
-        const { state: nextState, map: nextMap } = nextSnapshot
-        const cursor = nextState.estado === 'activa'
-          ? { runId: nextState.runId ?? null, sequence: nextState.snapshotVersion ?? 0 }
-          : { runId: null, sequence: 0 }
-        applyPanelState(nextState, cursor, new Date().toISOString(), nextMap)
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        setPanelError(error instanceof Error ? error.message : 'El panel no está disponible.')
-      })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return () => controller.abort()
-  }, [refreshCount, applyPanelState])
-
-  useEffect(() => subscribePanel((nextState, cursor, emittedAt) => {
-    applyPanelState(nextState, cursor, emittedAt)
-  }, setConnection), [applyPanelState])
-
-  useEffect(() => { mapRef.current = snapshot?.map ?? null }, [snapshot?.map])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const refreshControl = () => getSimulatorStatus(controller.signal)
-      .then((status) => {
-        setSimulator(status)
-        setSimulatorUnavailable(false)
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        if (error instanceof SimulatorApiError && error.status === 404) setSimulatorUnavailable(true)
-      })
-    void refreshControl()
-    const timer = window.setInterval(() => void refreshControl(), 1800)
-    return () => { controller.abort(); window.clearInterval(timer) }
-  }, [])
-
-  useEffect(() => {
-    const refreshHealth = () => fetch('/salud', { headers: { Accept: 'application/json' }, cache: 'no-store' })
-      .then((response) => setHealth(response.ok ? 'online' : 'offline'))
-      .catch(() => setHealth('offline'))
+    const refreshHealth = () => checkHealth().then((ok) => setHealth(ok ? 'online' : 'offline'))
     void refreshHealth()
     const timer = window.setInterval(refreshHealth, 5000)
     return () => window.clearInterval(timer)
   }, [])
-
-  const runControl = async (action: 'iniciar' | 'pausar' | 'reanudar' | 'reiniciar') => {
-    setSimulatorBusy(true)
-    setSimulatorMessage(null)
-    try {
-      const status = await controlSimulator(action, action === 'iniciar' || action === 'reiniciar' ? { escenario: scenario, sobrevivientes: population, intensidad: intensity, eventosCiudad: cityEvents } : undefined)
-      setSimulator(status)
-      setSimulatorUnavailable(false)
-      refreshPanel()
-    } catch (error) {
-      setSimulatorMessage(error instanceof Error ? error.message : 'No se pudo controlar el simulador.')
-      if (error instanceof SimulatorApiError && error.status === 404) setSimulatorUnavailable(true)
-    } finally {
-      setSimulatorBusy(false)
-    }
-  }
 
   const state = snapshot?.state ?? null
   const map = snapshot?.map ?? null
@@ -198,22 +73,22 @@ export function App() {
           </div>
 
           <label className="setup-field">Escenario
-            <select value={scenario} onChange={(event) => setScenario(event.target.value as SimulatorSetup['escenario'])} disabled={simulatorIsRunning || simulatorBusy}>
+            <select value={setup.escenario} onChange={(event) => setSetup({ ...setup, escenario: event.target.value as SimulatorSetup['escenario'] })} disabled={simulatorIsRunning || simulatorBusy}>
               <option value="libre">Sin amenazas</option><option value="caminantes">Caminantes</option><option value="mixto">Mixto</option><option value="horda">Horda</option>
             </select>
           </label>
           <label className="setup-field">Sobrevivientes iniciales
-            <select value={population} onChange={(event) => setPopulation(Number(event.target.value))} disabled={simulatorIsRunning || simulatorBusy}>
+            <select value={setup.sobrevivientes} onChange={(event) => setSetup({ ...setup, sobrevivientes: Number(event.target.value) })} disabled={simulatorIsRunning || simulatorBusy}>
               <option value={20}>20</option><option value={80}>80</option><option value={200}>200</option>
             </select>
           </label>
           <label className="setup-field">Intensidad sintética de amenazas
-            <select value={intensity} onChange={(event) => setIntensity(event.target.value as SimulatorSetup['intensidad'])} disabled={simulatorIsRunning || simulatorBusy}>
+            <select value={setup.intensidad} onChange={(event) => setSetup({ ...setup, intensidad: event.target.value as SimulatorSetup['intensidad'] })} disabled={simulatorIsRunning || simulatorBusy}>
               <option value="baja">Baja · 6% de nodos elegibles</option><option value="media">Media · 14% de nodos elegibles</option><option value="alta">Alta · 25% de nodos elegibles</option>
             </select>
           </label>
           <label className="setup-field">Incidentes viales aleatorios
-            <select value={cityEvents ? 'si' : 'no'} onChange={(event) => setCityEvents(event.target.value === 'si')} disabled={simulatorIsRunning || simulatorBusy}>
+            <select value={setup.eventosCiudad ? 'si' : 'no'} onChange={(event) => setSetup({ ...setup, eventosCiudad: event.target.value === 'si' })} disabled={simulatorIsRunning || simulatorBusy}>
               <option value="si">Activados</option><option value="no">Desactivados</option>
             </select>
           </label>
@@ -223,7 +98,7 @@ export function App() {
           {simulator?.error ? <div className="control-notice is-error" role="alert"><strong>El reloj se detuvo</strong><span>{simulator.error}</span></div> : null}
 
           <div className="run-details"><span>Modo de vista</span><strong>{mode === 'simulator' ? 'Simulador automático' : 'Juego humano'}</strong><span>Turno observado</span><strong>{state?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
-          {mode === 'game' ? <GameControls modeSelected state={state} map={map} connection={connection} onJoined={setSelectedSurvivorId} /> : null}
+          {mode === 'game' ? <GameControls modeSelected connection={connection} game={game} /> : null}
         </aside>
 
         <section className="city-panel dashboard-map-panel" aria-label="Mapa y estado de Manta">
@@ -282,10 +157,12 @@ function MapPlaceholder() {
   return <div className="map-placeholder" role="img" aria-label="No hay un mapa de partida activo"><span className="placeholder-orbit" aria-hidden="true"><span /><span /><span /></span><strong>Inicia una simulación para cargar el mapa.</strong><span>El panel mostrará únicamente el estado publicado por el servidor.</span></div>
 }
 
+const TIME_FORMAT = new Intl.DateTimeFormat('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
 function formatTime(value: string) {
   const date = new Date(value)
   if (!Number.isFinite(date.getTime())) return 'hora no disponible'
-  return new Intl.DateTimeFormat('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(date)
+  return TIME_FORMAT.format(date)
 }
 
 function connectionLabel(connection: PanelConnection) {

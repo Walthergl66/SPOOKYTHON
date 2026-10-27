@@ -1,19 +1,18 @@
 """Autenticación de servicio para rutas del simulador."""
 
 import hmac
-import os
 
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, Request, status
 
 
-async def validar_api_key(x_api_key: str | None = Header(default=None)) -> None:
+async def validar_api_key(request: Request, x_api_key: str | None = Header(default=None)) -> None:
     """Compara la clave de servicio sin filtrar diferencias de tiempo.
 
     Si falta configuración, la API falla cerrada con 503 en vez de exponer
     accidentalmente un endpoint sin autenticación.
     """
 
-    clave_configurada = os.getenv("NAVIRA_API_KEY")
+    clave_configurada = request.app.state.seguridad.api_key
     if not clave_configurada:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

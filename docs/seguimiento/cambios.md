@@ -2,6 +2,94 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-072 — Lote 4: F4 (`useGameSession` y reglas puras de juego) y F5 (`mapFeatures.ts`)
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación de la migración de [la guía](../arquitectura/guia-clean-architecture.md) (ADR-025).
+- Especificación/tareas: sin SPEC nueva; pasos F4 y F5 de la guía.
+- Resultado F4: `domain/game.ts` incorpora funciones puras (`activeGameState`, `findPlayer`, `legalMoves`, `radioSuggestion`, `buildGameOrder`, `remainingMs`, `createActionId`, `classifyGameError`) y errores de dominio (`GameSessionMissingError`, `GameSessionExpiredError`, `GameOrderRejectedError`). `infrastructure/http/game.ts` traduce el status con `httpError`. `application/ports.ts` añade `GamePort`; `application/useGameSession.ts` contiene red, sesión, recuperación y temporizador. `GameControls.tsx` queda como presentación. `App.tsx` compone el hook con `gamePort` (constante de módulo) y `onJoined` estable. Corrección tras revisión: se limpian `pendingOrder` y `activity` al salir de la partida; la sesión se descarta si cambia `runId` o llega 403. Pruebas nuevas de infraestructura (`sendGameOrder`, `restoreGameSession`).
+- Resultado F5: `features/map/mapFeatures.ts` (tipos `Position`, `FeatureCollection`, `AnimatedMovement`; `createSimulationFeatures`, `createActorFeatures`, `createMovementAnimations`, `positionAlongPath`, `emptyCollection`) con 9 pruebas en `mapFeatures.test.ts`. Decisión: vive en `features/map` y no en `domain/` por ser proyección a GeoJSON.
+- Limpieza: se quitó el código muerto `refreshCount === 0` de `usePanel.ts`; el `Intl.DateTimeFormat` de `App.tsx` es constante de módulo.
+- Revisión (datos del orquestador): F4, arquitectura aprobada con observaciones y comportamiento sin hallazgos críticos ni importantes; F5, fidelidad sin cambio visual en el código. Observación aceptada: `GameControls` importa el tipo `GameSessionView` desde `application` (`import type`). Declarado: el hook vive en `App` (la sesión sobrevive al cambio de modo) y el temporizador de 100 ms re-renderiza `App` en modo juego; revisado sin riesgo real.
+- Verificación (datos del orquestador): `npm test` 59 pruebas correctas (6 archivos); `npm run build` correcto.
+- Validación no ejecutada: revisión visual en navegador de F3, F4 y F5 (no realizada; la debe hacer el usuario); CI remota; los hooks no tienen pruebas unitarias.
+- Deuda: `isRecord` duplicado; `import type GameSessionView` en `GameControls`.
+- Archivos: `frontend/src/{domain/game.ts,infrastructure/http/game.ts,application/{ports.ts,useGameSession.ts,usePanel.ts},features/game/GameControls.tsx,features/map/{CityMap.tsx,mapFeatures.ts,mapFeatures.test.ts},app/App.tsx}`, guía de Clean Architecture, `docs/arquitectura/modulos/frontend.md`, `docs/calidad/pruebas.md`, estado actual.
+- Siguiente acción: ver [estado actual](estado-actual.md).
+
+## CAM-071 — Lote 3: B4 (seguridad e inyección en `api/`), B5 (escenarios) y B6 (visibilidad y puertos de paso)
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación de la migración de [la guía](../arquitectura/guia-clean-architecture.md) (ADR-025). Decisión duradera: [ADR-028](../arquitectura/decisiones/0028-configuracion-de-seguridad-inyectada.md).
+- Especificación/tareas: sin SPEC nueva; pasos B4, B5 y B6 de la guía. Sin cambio de códigos HTTP ni del contrato de `POST /paso`.
+- Resultado B4a: `api/seguridad.py` (cookie de sesión, comprobación de Origin unificada para `Request` y WebSocket, loopback separado), `api/dependencias.py` (proveedores tipados de `app.state`) y helpers `_error` y `_sesion_expirada` en `api/routes.py`.
+- Resultado B4b: `main.py` (`_crear_app_configurada`) lee el entorno una sola vez y pasa `ConfiguracionSeguridad` (frozen, `api_key` con `repr=False`). `crear_app(seguridad=...)` asigna `app.state.seguridad`; sin valor, configuración más cerrada (sin clave, 503 en `/paso`; cookie Secure; control de demo local apagado). `api/` y `evaluacion_local.py` ya no leen `os.environ`; `evaluacion_local.py` pasa su clave explícita (se eliminó `_clave_temporal`). Las pruebas de api_http, planner, demo y control_simulador usan `seguridad=...`. Prueba nueva: 401 antes que 422 en `/paso` sin clave.
+- Resultado B5: los escenarios salen de `navira/demo.py` a `navira/simulation/escenarios.py` (`IntensidadEscenario`, `FRACCION_NODOS_POR_INTENSIDAD`, `ESCENARIOS`, `crear_zombies`, `crear_eventos_ciudad`; privadas `_repartir_composicion`, `_seleccionar_nodos_estratificados`). `demo.py` reexporta `IntensidadDemo` y `ESCENARIOS_DEMO`. Hash de `repr(zombies)` y del snapshot idénticos antes y después con la semilla 20261026.
+- Resultado B6: `domain/visibilidad.py` (`peligros_visibles`, `nodos_horda_visibles`) y `application/puertos_paso.py` (`PartidaNoDisponible`, `PasoIncompatible`, `EntidadNoEncontrada`, `ProveedorSnapshotsActivos`, `ProveedorMapas`). `application/decidir_paso.py` baja de 574 a 503 líneas y reexporta esos nombres con `noqa F401` (mismos objetos).
+- Limpieza: import `os` sin uso fuera de `evaluacion_local.py`; docstring de `main.py` corregido; helper `_leer_parametros_demo`; pruebas nuevas del cableado de `control_demo_local` y del repr; orden de imports en `test_demo.py` y `evaluacion_rutas.py`.
+- Revisión (datos del orquestador): B4a arquitectura aprobada, seguridad sin hallazgos medios o altos, calidad sin hallazgos reales. B4b igual (bajo: repr de la clave, corregido; limitación operativa: rotar la clave exige reiniciar). B5 arquitectura aprobada, fidelidad sin hallazgos reales. B6 arquitectura aprobada con observaciones, fidelidad sin hallazgos reales.
+- Verificación (datos del orquestador): suite backend 181 pruebas correctas (sin `-v`).
+- Validación no ejecutada: CI remota.
+- Deuda: los importadores siguen usando la fachada `decidir_paso`; migrarlos y retirar los `noqa` queda pendiente. `ESCENARIOS` es mutable; dos pruebas importan aún desde `simulation.coordinador`; `intensidad: str` en el puerto sin límite de tipo.
+- Archivos: `backend/src/navira/{api/{seguridad,dependencias,routes}.py,main.py,demo.py,evaluacion_local.py,evaluacion_rutas.py,simulation/escenarios.py,domain/visibilidad.py,application/{puertos_paso,decidir_paso}.py}`, pruebas de backend correspondientes, ADR-028, `docs/arquitectura/{contratos/api.md,modulos/backend.md,guia-clean-architecture.md}`, `docs/calidad/pruebas.md`, índices, estado actual.
+- Siguiente acción: ver [estado actual](estado-actual.md).
+
+## CAM-070 — Lote 2: B3 (sesiones a `adapters/`) y F3 (hooks `usePanel` y `useSimulator`)
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación de la migración de [la guía](../arquitectura/guia-clean-architecture.md) (ADR-025), tras los diagnósticos de `arquitecto-backend` y `arquitecto-frontend`.
+- Especificación/tareas: sin SPEC nueva; pasos B3 y F3 de la guía.
+- Resultado B3: `RepositorioSesionesMemoria` pasa a `backend/src/navira/adapters/sesiones_memoria.py` sin cambiar su firma. `application/juego.py` ya no contiene la clase ni `_huella`; `UnirseAJuego` tiene el campo final `generar_id_jugador` (`uuid4` por defecto). `secrets.token_urlsafe` y `random.Random()` no se inyectan por decisión (credencial de sesión y rehidratación del RNG del snapshot). `main.py` pasa `reloj_monotonico=time.monotonic`.
+- Resultado F3: `frontend/src/application/{ports.ts,usePanel.ts,useSimulator.ts}`. `App.tsx` pasa de unas 300 a 168 líneas y compone los hooks con puertos (constantes de módulo). `SimulatorUnavailableError` traduce el 404. Helpers puros en `domain/panel.ts` (`PanelLog`, `nextPanelLog`, `classifyCursor`, `pickMap`).
+- Revisión (datos del orquestador): B3, arquitectura aprobada, calidad sin hallazgos, seguridad sin hallazgos medios o altos (dos bajos: `_expiradas` y `_propietario_por_run` crecen sin límite; `activar_pendiente` no renueva actividad). F3, arquitectura aprobada con observaciones; calidad sin regresiones (menores: `refreshCount === 0` es código muerto heredado, `Intl.DateTimeFormat` por render, `loadMap` sin `signal`).
+- Verificación (datos del orquestador): `npm test` 27 pruebas correctas; `npm run build` correcto. Backend: la suite del conjunto completo (con la reversión de [CAM-069](#cam-069--reversión-del-aplanado-de-backendsrc-adr-027)) dio 178 pruebas correctas.
+- Validación no ejecutada: revisión manual del tablero en navegador; CI remota; los hooks no tienen pruebas unitarias (decisión: sin testing-library ni jsdom).
+- Deuda: los dos hallazgos bajos de seguridad de B3 y las observaciones menores de F3 anteriores.
+- Archivos: `backend/src/navira/adapters/sesiones_memoria.py` (nuevo), `backend/src/navira/application/juego.py`, `backend/src/navira/main.py`, `frontend/src/application/`, `frontend/src/domain/panel.ts`, `frontend/src/app/App.tsx`, guía de Clean Architecture, `docs/arquitectura/modulos/{backend,frontend}.md`, estado actual.
+- Siguiente acción: B4a en implementación; diagnóstico en curso de F4, F5 y B5; después B4b y B6.
+
+## CAM-069 — Reversión del aplanado de `backend/src` (ADR-027)
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: decisión del usuario de volver a la estructura `backend/src/navira/` tras el aplanado de [CAM-067](#cam-067--backend-b1-b2-y-aplanado-de-backendsrc-adr-026).
+- Especificación/tareas: sin SPEC nueva. Decisión [ADR-027](../arquitectura/decisiones/0027-reversion-del-aplanado-de-backend.md), que sustituye a [ADR-026](../arquitectura/decisiones/0026-aplanado-backend-y-setuptools.md).
+- Resultado: `backend/src/` vuelve a contener solo `navira/` con todo el paquete dentro. El build vuelve a `hatchling` (`packages = ["src/navira"]`), igual que en HEAD. `parents[1]` vuelve a `parents[2]` en `navira/demo.py` (líneas 38-39), `navira/evaluacion_rutas.py` (28) y `navira/evaluacion_local.py` (45). Se conservan los cambios de B1, B2, B3, F1, F2, F3 y F6. CAM-067 queda revertido solo en su parte estructural (aplanado y setuptools).
+- Arranque vigente: `cd backend && env NAVIRA_API_KEY=... NAVIRA_DEMO=1 NAVIRA_LOCAL_DEMO_CONTROL=1 .venv/bin/uvicorn navira.main:app --app-dir src` (forma original de HEAD; sin `--app-dir` también funciona).
+- Verificación (datos del orquestador): los mapas resuelven con `parents[2]`; suite backend `python -m unittest discover -s tests -p 'test_*.py'` con 178 pruebas correctas (sin `-v`); búsquedas de dependencias de la guía con 0 coincidencias.
+- Validación no ejecutada: CI de GitHub con el empaquetado revertido.
+- Límites: `backend/navira.egg-info/` es obsoleto y no está versionado; no se tocó. Pendiente de decisión del usuario: ubicación de `main.py` (hoy dentro de `navira/`; confirmar si lo quiere en `src/`).
+- Archivos: `backend/src/navira/` (restaurado), `backend/pyproject.toml`, `navira/{demo,evaluacion_rutas,evaluacion_local}.py`, ADR-027 y ADR-026 (estado), índices de `docs/`, guía de Clean Architecture, `docs/arquitectura/modulos/backend.md`, `docs/calidad/pruebas.md`, estado actual.
+- Siguiente acción: ver [estado actual](estado-actual.md).
+
+## CAM-068 — Frontend: migración a capas (F1, F2) y pruebas con vitest (F6)
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: lote 1 de la migración de [la guía](../arquitectura/guia-clean-architecture.md) (ADR-025), tras el diagnóstico de `arquitecto-frontend`.
+- Especificación/tareas: sin SPEC nueva; pasos F1, F2 y F6 de la guía.
+- Resultado F1: `fetch('/salud')` sale de `App.tsx` a `frontend/src/infrastructure/http/health.ts` (`checkHealth`).
+- Resultado F2: tipos y parsers de `shared/api` y `shared/realtime` pasan a `frontend/src/domain/{panel,game,simulator}.ts`; el `fetch` a `infrastructure/http/{panel,game,simulator}.ts` con errores `GameApiError` y `SimulatorApiError` que conservan el status; el WebSocket a `infrastructure/realtime/panel.ts`. Se borraron `shared/api` y `shared/realtime`; `shared/` solo conserva `ui/BrandMark.tsx`.
+- Resultado F6: vitest 5.0.5 (versión exacta) en `frontend/package.json`, script `"test": "vitest run"`, pruebas en `frontend/src/domain/{panel,game,simulator}.test.ts`.
+- Verificación (datos del orquestador): `npm test` 19 pruebas correctas; `npm run build` correcto; búsquedas de dependencias (domain sin infrastructure/shared; `fetch` y `WebSocket` solo en `infrastructure/`) con 0 coincidencias indebidas.
+- Validación no ejecutada: revisión manual del tablero en navegador tras la migración; lint (no se añadió); CI remota.
+- Deuda: `isRecord` está copiado en 6 sitios (aceptado en revisión). Pendientes F3 (`usePanel` y `useSimulator`; diagnóstico en curso), F4 y F5.
+- Archivos: `frontend/src/{domain,infrastructure}/`, `frontend/src/app/App.tsx`, `frontend/package.json` y su lockfile, guía de Clean Architecture, `docs/arquitectura/modulos/frontend.md`, `docs/calidad/pruebas.md`.
+- Siguiente acción: F3, cuando termine el diagnóstico.
+
+## CAM-067 — Backend: B1, B2 y aplanado de `backend/src` (ADR-026)
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: lote 1 de la migración de [la guía](../arquitectura/guia-clean-architecture.md) (ADR-025). El aplanado surgió porque la instalación editable con hatchling copiaba archivos a `site-packages`.
+- Especificación/tareas: sin SPEC nueva; pasos B1 y B2. Decisión [ADR-026](../arquitectura/decisiones/0026-aplanado-backend-y-setuptools.md), que sustituye parcialmente a ADR-024.
+- Resultado B1: `ControlSimuladorDemoLocal` (`backend/src/application/control_simulador_demo.py`) ya no importa `navira.demo`; recibe una fábrica inyectada (`Protocol` `ContextoSimulacion` y `FabricaContextoSimulacion`, en `application`). `main.py` define `crear_control_simulador_demo(ruta_mapa)` con `functools.partial(crear_contexto_demo, ruta_mapa)`. `test_control_simulador_demo.py` usa esa función.
+- Resultado B2: `SnapshotMundo`, `EventoCierre`, `MovimientoZombie` y `EstadoAleatorio` viven en `backend/src/domain/snapshot.py`. `simulation/coordinador.py` los reexporta con `noqa F401`; `simulation/resolver.py` importa `MovimientoZombie` desde `domain`; `application` y `adapters` importan `SnapshotMundo` desde `domain.snapshot`.
+- Resultado aplanado: el paquete pasó de `backend/src/navira/` a `backend/src/`; build con `setuptools>=68` y `package-dir = {"navira" = "src"}`; rutas desde `__file__` ajustadas (`parents[2]` a `parents[1]` en `demo.py`, `evaluacion_rutas.py`, `evaluacion_local.py`); se quitaron `--app-dir src` y `PYTHONPATH=src` de los comandos.
+- Verificación (datos del orquestador): suite backend `python -m unittest discover -s tests -p 'test_*.py'` con 178 pruebas correctas; arranque `uvicorn navira.main:app` sin `--app-dir`: `/salud` 200 con `{"estado":"activo","servicio":"navira"}` y `POST /paso` sin clave 401; búsquedas de la guía sin coincidencias nuevas.
+- Validación no ejecutada: CI de GitHub; no hay mypy en el repositorio.
+- Deuda: el puerto declara `intensidad: str` y `crear_contexto_demo` la valida lanzando `ValueError` (límite conocido de B1). Los tests `tests/test_decidir_paso.py:28` y `tests/test_api_planner_integration.py:15` aún importan desde `simulation.coordinador`; quitar el reexport cuando migren. Pendiente B3 (diagnóstico listo, implementación pendiente), B4–B6.
+- Hecho: el directorio sobrante `backend/src/navira/` (solo contenía un entorno huérfano, `backend/src/navira/.venv`) se borró con aprobación del usuario. El entorno real `backend/.venv` sigue funcionando: `import navira` resuelve a `backend/src/__init__.py` (dato del orquestador).
+- Archivos: `backend/src/` (movido), `backend/src/domain/snapshot.py` (nuevo), `backend/src/application/control_simulador_demo.py`, `backend/src/main.py`, `backend/pyproject.toml`, pruebas, ADR-026 y documentos de arquitectura/calidad/estado.
+- Siguiente acción: B3.
+
 ## CAM-066 — Subagentes de proyecto y guía de Clean Architecture
 
 - Fecha: 2026-10-26, Ecuador continental.

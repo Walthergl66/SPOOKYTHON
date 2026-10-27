@@ -8,10 +8,11 @@ import unittest
 from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.adapters.ordenes_memoria import RepositorioOrdenesMemoria
 from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
+from navira.adapters.sesiones_memoria import RepositorioSesionesMemoria
 from navira.application.coordinador_juego import CoordinadorJuego, JuegoIncompatible
 from navira.application.consultar_panel import ConsultarPanel
 from navira.application.decidir_paso import DecidirPaso
-from navira.application.juego import RepositorioSesionesMemoria, UnirseAJuego
+from navira.application.juego import UnirseAJuego
 from navira.application.ordenes import OrdenIncompatible, RegistrarOrdenHumana
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle

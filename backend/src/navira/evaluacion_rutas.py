@@ -17,9 +17,9 @@ from navira.domain.modelo import (
     FaseTurno,
     IntencionMovimiento,
 )
+from navira.domain.snapshot import SnapshotMundo
 from navira.routing.dijkstra import seleccionar_refugio
 from navira.simulation.coordinador import (
-    SnapshotMundo,
     abrir_siguiente_turno,
     preparar_turno_versionado,
     resolver_turno_versionado,

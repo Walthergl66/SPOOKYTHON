@@ -24,7 +24,7 @@ from navira.domain.modelo import (
     ModoPartida,
 )
 from navira.simulation.resolver import ConfiguracionReglas, ResultadoTurno
-from navira.simulation.coordinador import SnapshotMundo
+from navira.domain.snapshot import SnapshotMundo
 
 
 class JuegoIncompatible(RuntimeError):

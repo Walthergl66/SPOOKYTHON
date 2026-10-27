@@ -9,8 +9,9 @@ Estado: base React + TypeScript + Vite, panel en vivo y tablero de control local
 | `features/game/` | Personaje, vecinos, acciones, radio y resultado | Intención local y órdenes confirmadas. |
 | `features/map/` | Cartografía externa MapLibre y capas GeoJSON de snapshots | Instancia visual, cámara 2D/3D y selección de ruta. |
 | `features/session/` | Sesión temporal y recuperación | Identidad permitida, sin secretos de servicio. |
-| `shared/api/` | Única frontera HTTP, parseo de respuestas y errores tipados | Datos recibidos y solicitudes. |
-| `shared/realtime/` | WebSocket, secuencia, reconexión y sincronización | Conectado/desconectado/recuperando. |
+| `domain/` | Tipos, parsers y reglas puras (`panel`, `game`, `simulator`) con pruebas vitest | Datos validados, sin red. |
+| `infrastructure/http/` | Única frontera HTTP (`health`, `panel`, `game`, `simulator`) y errores tipados `GameApiError`/`SimulatorApiError` | Solicitudes y respuestas. |
+| `infrastructure/realtime/` | WebSocket, secuencia, reconexión y sincronización | Conectado/desconectado/recuperando. |
 | `shared/ui/` | Botones, alertas, contadores y accesibilidad | Estados visuales reutilizables. |
 
 ## Estructura implementada en P0-04
@@ -18,12 +19,16 @@ Estado: base React + TypeScript + Vite, panel en vivo y tablero de control local
 - `frontend/src/app/`: composición de la pantalla inicial y selección local entre simulador y juego.
 - `frontend/src/features/mode/`: tarjetas accesibles de modo; la selección solo altera la vista previa.
 - `frontend/src/shared/ui/`: marca vectorial reutilizable.
-- `frontend/src/shared/api/panel.ts`: cliente HTTP GET y validación runtime de esquema/mapVersion.
-- `frontend/src/shared/realtime/panel.ts`: WebSocket de solo lectura, validación de sobres, cursor por partida, estado live/stale y reconexión exponencial.
+- `frontend/src/domain/panel.ts` y `frontend/src/infrastructure/http/panel.ts`: tipos y validación runtime de esquema/mapVersion, y cliente HTTP GET (CAM-068).
+- `frontend/src/infrastructure/http/health.ts`: `checkHealth` sobre `/salud`.
+- `frontend/src/application/ports.ts`, `usePanel.ts` y `useSimulator.ts`: puertos y hooks que orquestan panel y simulador; `App.tsx` los compone con puertos definidos como constantes de módulo. `SimulatorUnavailableError` traduce el 404. Helpers puros en `domain/panel.ts` (`nextPanelLog`, `classifyCursor`, `pickMap`). Sin pruebas unitarias de hooks (CAM-070).
+- `frontend/src/infrastructure/realtime/panel.ts`: WebSocket de solo lectura, validación de sobres, cursor por partida, estado live/stale y reconexión exponencial.
 - `frontend/src/features/map/`: MapLibre con estilo vectorial externo, extrusión de huellas con altura disponible y capas de calles, cierres, rutas, refugios, sobrevivientes y zombies visibles del snapshot. Encuadra el área de extracción documentada de Manta, limita allí el pan/zoom y enmascara la cartografía exterior; no la presenta como límite administrativo. Anima transiciones entre nodos únicamente cuando llegan snapshots confirmados. Los datos de Navira no se envían al proveedor de tiles.
-- `frontend/src/features/game/GameControls.tsx`: unión, estado propio y controles de orden accesibles por teclado/mouse, deshabilitados en fase incorrecta o al perder frescura del panel.
-- `frontend/src/shared/api/game.ts`: cliente same-origin con validación runtime para sesión y acuse; la cookie HttpOnly no se expone a JavaScript.
-- `frontend/src/shared/api/simulator.ts`: cliente de estado e inicio/pausa/continuación/reinicio de demo local; no transmite API keys.
+- `frontend/src/features/game/GameControls.tsx`: presentación de la unión, el estado propio y los controles de orden accesibles por teclado/mouse, deshabilitados en fase incorrecta o al perder frescura del panel. Importa el tipo `GameSessionView` desde `application` (`import type`, observación aceptada).
+- `frontend/src/domain/game.ts`: validación runtime de sesión y acuse, funciones puras (`activeGameState`, `findPlayer`, `legalMoves`, `radioSuggestion`, `buildGameOrder`, `remainingMs`, `createActionId`, `classifyGameError`) y errores de dominio (`GameSessionMissingError`, `GameSessionExpiredError`, `GameOrderRejectedError`). `infrastructure/http/game.ts` es el cliente same-origin y traduce el status con `httpError`; la cookie HttpOnly no se expone a JavaScript (F4, CAM-072).
+- `frontend/src/application/ports.ts` añade `GamePort`; `application/useGameSession.ts` contiene la red, la sesión, la recuperación y el temporizador de 100 ms. El hook vive en `App.tsx` para que la sesión sobreviva al cambio de modo; `App` se re-renderiza con el temporizador mientras hay partida en modo juego. Se descarta la sesión si cambia `runId` o llega 403, y se limpian `pendingOrder` y `activity` al salir de la partida (CAM-072).
+- `frontend/src/features/map/mapFeatures.ts`: funciones puras de proyección a GeoJSON (`createSimulationFeatures`, `createActorFeatures`, `createMovementAnimations`, `positionAlongPath`, `emptyCollection`) y tipos `Position`, `FeatureCollection`, `AnimatedMovement`, con `mapFeatures.test.ts` (9 pruebas). Está en `features/map` y no en `domain/` por ser proyección a GeoJSON; `CityMap.tsx` solo dibuja (F5, CAM-072).
+- `frontend/src/domain/simulator.ts` y `frontend/src/infrastructure/http/simulator.ts`: cliente de estado e inicio/pausa/continuación/reinicio de demo local; no transmite API keys.
 - `frontend/src/styles.css`: tokens visuales, layout responsivo y preferencia de movimiento reducido.
 - `frontend/README.md`: inicio local y límites de esta base.
 
@@ -35,7 +40,7 @@ CAM-038 conecta la vista seleccionada «Jugar» a los contratos de sesión/orden
 
 ## Comprobación local
 
-Desde `frontend/`, `npm ci` instala el lockfile y `npm run build` valida TypeScript y produce el bundle Vite. En desarrollo, Vite reenvía `/panel`, `/juego` y `/ws` a `127.0.0.1:8000`. `.github/workflows/ci.yml` define las verificaciones backend/frontend en push a `master` y pull request; el workflow remoto no se afirma como ejecutado.
+Desde `frontend/`, `npm ci` instala el lockfile y `npm test` ejecuta vitest (59 pruebas en 6 archivos: dominio, infraestructura de `game` y `mapFeatures`; CAM-068, CAM-070 y CAM-072) y `npm run build` valida TypeScript y produce el bundle Vite. En desarrollo, Vite reenvía `/panel`, `/juego` y `/ws` a `127.0.0.1:8000`. `.github/workflows/ci.yml` define las verificaciones backend/frontend en push a `master` y pull request; el workflow remoto no se afirma como ejecutado.
 
 ## Reglas
 

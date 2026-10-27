@@ -1,7 +1,4 @@
-import { parsePanelState, type PanelState } from '../api/panel'
-
-export type PanelConnection = 'connecting' | 'live' | 'reconnecting' | 'stale'
-export type PanelCursor = { runId: string | null; sequence: number }
+import { parsePanelState, type PanelState, type PanelConnection, type PanelCursor } from '../../domain/panel'
 
 interface PanelSnapshotEvent {
   schemaVersion: 1

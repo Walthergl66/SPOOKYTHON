@@ -48,4 +48,4 @@ CAM-065: `python3 backend/scripts/check_docs.py` y `python3 backend/scripts/chec
 
 ## Sustituye / sustituida por
 
-Complementa [ADR-004](0004-documentacion-y-continuidad.md) y [ADR-022](0022-organizacion-documental-por-temas.md); no sustituye ninguna.
+Complementa [ADR-004](0004-documentacion-y-continuidad.md) y [ADR-022](0022-organizacion-documental-por-temas.md); no sustituye ninguna. [ADR-026](0026-aplanado-backend-y-setuptools.md) la sustituyó parcialmente (ruta y build), pero [ADR-027](0027-reversion-del-aplanado-de-backend.md) revirtió ese aplanado y la ruta `backend/src/navira/` vuelve a estar vigente.

@@ -9,7 +9,7 @@ from navira.application.decidir_paso import DecidirPaso, nodos_horda_visibles
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.domain.mapa import Grafo
 from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, FaseTurno, TipoZombie
-from navira.simulation.coordinador import SnapshotMundo
+from navira.domain.snapshot import SnapshotMundo
 
 
 class ProveedorSnapshotsPanel(Protocol):

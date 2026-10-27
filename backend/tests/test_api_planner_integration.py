@@ -1,13 +1,12 @@
 """Contrato HTTP cuando la aplicación se ensambla con estado y grafo."""
 
-import os
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 from navira.adapters.mapas_memoria import CatalogoMapasMemoria
+from navira.api.seguridad import ConfiguracionSeguridad
 from navira.application.decidir_paso import DecidirPaso
 from navira.domain.mapa import Grafo, cargar_mapa
 from navira.domain.modelo import EstadoPartida, FaseTurno, ModoPartida, Partida, Sobreviviente
@@ -42,18 +41,17 @@ def crear_cliente(*, snapshot_disponible: bool = True) -> TestClient:
     servicio = DecidirPaso(
         SnapshotActivo(snapshot), CatalogoMapasMemoria((grafo,))
     )
-    return TestClient(crear_app(servicio))
+    return TestClient(crear_app(servicio, seguridad=ConfiguracionSeguridad(api_key="clave-prueba")))
 
 
 class ApiPlannerIntegrationTests(unittest.TestCase):
     def test_paso_con_estado_devuelve_ruta_y_conserva_cuerpo(self) -> None:
         cliente = crear_cliente()
-        with patch.dict(os.environ, {"NAVIRA_API_KEY": "clave-prueba"}, clear=True):
-            respuesta = cliente.post(
-                "/paso",
-                headers={"x-api-key": "clave-prueba"},
-                json={"sobrevivienteId": "S-1", "nodoActual": "N-0001", "turno": 2},
-            )
+        respuesta = cliente.post(
+            "/paso",
+            headers={"x-api-key": "clave-prueba"},
+            json={"sobrevivienteId": "S-1", "nodoActual": "N-0001", "turno": 2},
+        )
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(respuesta.json(), {"siguienteNodo": "N-0002"})
 
@@ -62,20 +60,18 @@ class ApiPlannerIntegrationTests(unittest.TestCase):
         cliente_sin_estado = crear_cliente(snapshot_disponible=False)
         headers = {"x-api-key": "clave-prueba"}
         solicitud = {"sobrevivienteId": "S-1", "nodoActual": "N-0001", "turno": 2}
-        with patch.dict(os.environ, {"NAVIRA_API_KEY": "clave-prueba"}, clear=True):
-            turno_viejo = cliente.post("/paso", headers=headers, json={**solicitud, "turno": 1})
-            sin_estado = cliente_sin_estado.post("/paso", headers=headers, json=solicitud)
+        turno_viejo = cliente.post("/paso", headers=headers, json={**solicitud, "turno": 1})
+        sin_estado = cliente_sin_estado.post("/paso", headers=headers, json=solicitud)
         self.assertEqual(turno_viejo.status_code, 409)
         self.assertEqual(sin_estado.status_code, 503)
 
     def test_personaje_desconocido_recibe_404(self) -> None:
         cliente = crear_cliente()
-        with patch.dict(os.environ, {"NAVIRA_API_KEY": "clave-prueba"}, clear=True):
-            respuesta = cliente.post(
-                "/paso",
-                headers={"x-api-key": "clave-prueba"},
-                json={"sobrevivienteId": "S-404", "nodoActual": "N-0001", "turno": 2},
-            )
+        respuesta = cliente.post(
+            "/paso",
+            headers={"x-api-key": "clave-prueba"},
+            json={"sobrevivienteId": "S-404", "nodoActual": "N-0001", "turno": 2},
+        )
         self.assertEqual(respuesta.status_code, 404)
 
 

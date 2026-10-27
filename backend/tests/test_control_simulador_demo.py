@@ -2,44 +2,42 @@
 
 from __future__ import annotations
 
-import os
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from navira.application.control_simulador_demo import ControlSimuladorDemoLocal
-from navira.main import crear_app
+from navira.api.seguridad import ConfiguracionSeguridad
+from navira.main import crear_app, crear_control_simulador_demo
 
 RAIZ = Path(__file__).resolve().parents[1]
+LOCAL = ConfiguracionSeguridad(control_demo_local=True)
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
     def test_inicio_usa_dificultad_media_si_no_se_envia_configuracion(self) -> None:
-        control = ControlSimuladorDemoLocal(
+        control = crear_control_simulador_demo(
             str(RAIZ / "data/maps/manta-hackathon-v1.json")
         )
-        app = crear_app(control_simulador_demo=control)
-        with patch.dict(os.environ, {"NAVIRA_LOCAL_DEMO_CONTROL": "1"}, clear=True):
-            with TestClient(
-                app,
-                base_url="http://localhost",
-                client=("127.0.0.1", 43121),
-            ) as client:
-                response = client.post(
-                    "/demo/simulador/iniciar",
-                    headers={"Origin": "http://localhost:5180"},
-                    json={"escenario": "mixto", "sobrevivientes": 20},
-                )
-                control.cerrar()
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        with TestClient(
+            app,
+            base_url="http://localhost",
+            client=("127.0.0.1", 43121),
+        ) as client:
+            response = client.post(
+                "/demo/simulador/iniciar",
+                headers={"Origin": "http://localhost:5180"},
+                json={"escenario": "mixto", "sobrevivientes": 20},
+            )
+            control.cerrar()
 
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()["intensidad"], "media")
         self.assertTrue(response.json()["eventosCiudad"])
 
     def test_panel_y_runner_comparten_el_planificador_del_mismo_run(self) -> None:
-        control = ControlSimuladorDemoLocal(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         estado = control.iniciar(
             escenario="libre",
             cantidad_sobrevivientes=1,
@@ -57,41 +55,39 @@ class ControlSimuladorDemoTests(unittest.TestCase):
 
     def test_control_no_se_expone_sin_opt_in_de_desarrollo(self) -> None:
         app = crear_app()
-        with patch.dict(os.environ, {}, clear=True):
-            response = TestClient(app).get("/demo/simulador")
+        response = TestClient(app).get("/demo/simulador")
 
         self.assertEqual(response.status_code, 404)
 
     def test_inicio_pausa_y_panel_operan_sobre_la_misma_partida(self) -> None:
         app = crear_app(
-            control_simulador_demo=ControlSimuladorDemoLocal(
+            control_simulador_demo=crear_control_simulador_demo(
                 str(RAIZ / "data/maps/manta-hackathon-v1.json")
-            )
+            ),
+            seguridad=LOCAL,
         )
-        configuracion = {"NAVIRA_LOCAL_DEMO_CONTROL": "1"}
-        with patch.dict(os.environ, configuracion, clear=True):
-            with TestClient(
-                app,
-                base_url="http://localhost",
-                client=("127.0.0.1", 43120),
-            ) as client:
-                # Vite proxies to the backend on another port but preserves hostname.
-                headers = {"Origin": "http://localhost:5180"}
-                started = client.post(
-                    "/demo/simulador/iniciar",
-                    headers=headers,
-                    json={"escenario": "mixto", "sobrevivientes": 20, "semilla": 31, "intensidad": "alta", "eventosCiudad": True},
-                )
-                paused = client.post("/demo/simulador/pausar", headers=headers)
-                resumed = client.post("/demo/simulador/reanudar", headers=headers)
-                restarted = client.post(
-                    "/demo/simulador/reiniciar",
-                    headers=headers,
-                    json={"escenario": "caminantes", "sobrevivientes": 20},
-                )
-                status_response = client.get("/demo/simulador")
-                panel = client.get("/panel/estado")
-                map_response = client.get("/panel/mapa")
+        with TestClient(
+            app,
+            base_url="http://localhost",
+            client=("127.0.0.1", 43120),
+        ) as client:
+            # Vite proxies to the backend on another port but preserves hostname.
+            headers = {"Origin": "http://localhost:5180"}
+            started = client.post(
+                "/demo/simulador/iniciar",
+                headers=headers,
+                json={"escenario": "mixto", "sobrevivientes": 20, "semilla": 31, "intensidad": "alta", "eventosCiudad": True},
+            )
+            paused = client.post("/demo/simulador/pausar", headers=headers)
+            resumed = client.post("/demo/simulador/reanudar", headers=headers)
+            restarted = client.post(
+                "/demo/simulador/reiniciar",
+                headers=headers,
+                json={"escenario": "caminantes", "sobrevivientes": 20},
+            )
+            status_response = client.get("/demo/simulador")
+            panel = client.get("/panel/estado")
+            map_response = client.get("/panel/mapa")
 
         self.assertEqual(started.status_code, 200, started.text)
         self.assertEqual(started.json()["escenario"], "mixto")
@@ -113,57 +109,54 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertEqual(map_response.json()["version"], panel.json()["mapVersion"])
 
     def test_control_rechaza_origen_ajeno_y_conexion_no_local(self) -> None:
-        app = crear_app(control_simulador_demo=ControlSimuladorDemoLocal())
-        with patch.dict(os.environ, {"NAVIRA_LOCAL_DEMO_CONTROL": "1"}, clear=True):
-            remote = TestClient(
-                app,
-                base_url="http://localhost",
-                client=("192.0.2.8", 43210),
-            ).post(
-                "/demo/simulador/iniciar",
-                headers={"Origin": "http://localhost"},
-                json={"escenario": "libre", "sobrevivientes": 1},
-            )
-            cross_origin = TestClient(
-                app,
-                base_url="http://localhost",
-                client=("127.0.0.1", 43211),
-            ).post(
-                "/demo/simulador/iniciar",
-                headers={"Origin": "http://otro-sitio.example"},
-                json={"escenario": "libre", "sobrevivientes": 1},
-            )
+        app = crear_app(control_simulador_demo=crear_control_simulador_demo(), seguridad=LOCAL)
+        remote = TestClient(
+            app,
+            base_url="http://localhost",
+            client=("192.0.2.8", 43210),
+        ).post(
+            "/demo/simulador/iniciar",
+            headers={"Origin": "http://localhost"},
+            json={"escenario": "libre", "sobrevivientes": 1},
+        )
+        cross_origin = TestClient(
+            app,
+            base_url="http://localhost",
+            client=("127.0.0.1", 43211),
+        ).post(
+            "/demo/simulador/iniciar",
+            headers={"Origin": "http://otro-sitio.example"},
+            json={"escenario": "libre", "sobrevivientes": 1},
+        )
 
         self.assertEqual(remote.status_code, 403)
         self.assertEqual(cross_origin.status_code, 403)
 
     def test_control_acepta_aliases_localhost_en_proxy_vite(self) -> None:
-        app = crear_app(control_simulador_demo=ControlSimuladorDemoLocal())
-        with patch.dict(os.environ, {"NAVIRA_LOCAL_DEMO_CONTROL": "1"}, clear=True):
-            response = TestClient(
-                app,
-                base_url="http://127.0.0.1",
-                client=("127.0.0.1", 43212),
-            ).post(
-                "/demo/simulador/iniciar",
-                headers={"Origin": "http://localhost:5173"},
-                json={"escenario": "libre", "sobrevivientes": 1, "semilla": 31},
-            )
+        app = crear_app(control_simulador_demo=crear_control_simulador_demo(), seguridad=LOCAL)
+        response = TestClient(
+            app,
+            base_url="http://127.0.0.1",
+            client=("127.0.0.1", 43212),
+        ).post(
+            "/demo/simulador/iniciar",
+            headers={"Origin": "http://localhost:5173"},
+            json={"escenario": "libre", "sobrevivientes": 1, "semilla": 31},
+        )
 
         self.assertEqual(response.status_code, 200, response.text)
 
     def test_configuracion_fuera_de_rango_es_rechazada(self) -> None:
-        app = crear_app(control_simulador_demo=ControlSimuladorDemoLocal())
-        with patch.dict(os.environ, {"NAVIRA_LOCAL_DEMO_CONTROL": "1"}, clear=True):
-            response = TestClient(
-                app,
-                base_url="http://localhost",
-                client=("127.0.0.1", 43122),
-            ).post(
-                "/demo/simulador/iniciar",
-                headers={"Origin": "http://localhost"},
-                json={"escenario": "mixto", "sobrevivientes": 201},
-            )
+        app = crear_app(control_simulador_demo=crear_control_simulador_demo(), seguridad=LOCAL)
+        response = TestClient(
+            app,
+            base_url="http://localhost",
+            client=("127.0.0.1", 43122),
+        ).post(
+            "/demo/simulador/iniciar",
+            headers={"Origin": "http://localhost"},
+            json={"escenario": "mixto", "sobrevivientes": 201},
+        )
 
         self.assertEqual(response.status_code, 422)
 

@@ -11,6 +11,7 @@ from collections import deque
 from dataclasses import dataclass, replace
 
 from navira.domain.mapa import Calle, Grafo
+from navira.domain.snapshot import MovimientoZombie
 from navira.domain.modelo import (
     EstadoPartida,
     EstadoSobreviviente,
@@ -37,14 +38,6 @@ class ConfiguracionReglas:
     def __post_init__(self) -> None:
         if min(self.alcance_corredor_hops, self.pasos_corredor, self.radio_dormido_hops) < 0:
             raise ValueError("Los alcances y pasos de configuración no pueden ser negativos.")
-
-
-@dataclass(frozen=True, slots=True)
-class MovimientoZombie:
-    zombie_id: str
-    origen: str
-    destino: str
-    tramos: tuple[Calle, ...]
 
 
 @dataclass(frozen=True, slots=True)

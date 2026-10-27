@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from threading import Lock
-from typing import Protocol
 
 from navira.domain.mapa import Grafo
 from navira.domain.modelo import (
@@ -23,7 +22,15 @@ from navira.routing.prediccion import (
     pronosticar_zombies_visibles,
 )
 from navira.routing.temporal import CondicionTurno, buscar_ruta_temporal
-from navira.simulation.coordinador import SnapshotMundo
+from navira.domain.snapshot import SnapshotMundo
+from navira.application.puertos_paso import (  # noqa: F401
+    EntidadNoEncontrada,
+    PartidaNoDisponible,
+    PasoIncompatible,
+    ProveedorMapas,
+    ProveedorSnapshotsActivos,
+)
+from navira.domain.visibilidad import nodos_horda_visibles, peligros_visibles  # noqa: F401
 
 
 def _exposicion_pronosticada(ruta: tuple[str, ...], futuras: tuple[CondicionTurno, ...]) -> float:
@@ -54,28 +61,6 @@ class DecisionPaso:
     """Destino propuesto; el servidor resuelve y confirma el movimiento después."""
 
     siguiente_nodo: str
-
-
-class PartidaNoDisponible(RuntimeError):
-    """No existe un snapshot/mapa de partida vigente y usable."""
-
-
-class PasoIncompatible(RuntimeError):
-    """Turno, fase, personaje o posición no coinciden con el mundo vigente."""
-
-
-class EntidadNoEncontrada(LookupError):
-    """El personaje indicado no existe en la partida activa."""
-
-
-class ProveedorSnapshotsActivos(Protocol):
-    def obtener_activa(self) -> SnapshotMundo | None:
-        """Devuelve la única partida activa o nada si no hay partida."""
-
-
-class ProveedorMapas(Protocol):
-    def obtener(self, version: str) -> Grafo | None:
-        """Busca un grafo validado por su versión inmutable."""
 
 
 class DecidirPaso:
@@ -516,59 +501,3 @@ class DecidirPasoEspera:
         """Espera válida del contrato; no afirma que el nodo sea seguro."""
 
         return DecisionPaso(siguiente_nodo=solicitud.nodo_actual)
-
-
-def peligros_visibles(
-    snapshot: SnapshotMundo, grafo: Grafo
-) -> tuple[set[str], frozenset[str]]:
-    """Proyecta ocupación/horda y cruces visibles para decisión y panel.
-
-    Solo considera zombies activos para no filtrar dormidos ocultos. Las hordas
-    también bloquean vecinos entrantes/salientes según cierres vigentes.
-    """
-
-    partida = snapshot.partida
-    nodos: set[str] = set()
-    aristas_cruzadas: set[str] = set()
-    for zombie in partida.zombies:
-        if zombie.estado is not EstadoZombie.ACTIVO:
-            continue
-        nodos.add(zombie.nodo)
-    nodos.update(nodos_horda_visibles(snapshot, grafo))
-
-    for movimiento in snapshot.movimientos_zombies:
-        for tramo in movimiento.tramos:
-            aristas_cruzadas.update(
-                calle.id
-                for calle in grafo.mapa.calles
-                if calle.segmento_id == tramo.segmento_id
-                and calle.origen == tramo.destino
-                and calle.destino == tramo.origen
-            )
-    return nodos, frozenset(aristas_cruzadas)
-
-
-def nodos_horda_visibles(snapshot: SnapshotMundo, grafo: Grafo) -> frozenset[str]:
-    """Lista nodos ocupados o vecinos bloqueados por hordas ya visibles."""
-
-    bloqueados: set[str] = set()
-    for zombie in snapshot.partida.zombies:
-        if zombie.estado is not EstadoZombie.ACTIVO or zombie.tipo is not TipoZombie.HORDA:
-            continue
-        bloqueados.add(zombie.nodo)
-        bloqueados.update(
-            calle.destino
-            for calle in grafo.calles_desde(
-                zombie.nodo,
-                aristas_cerradas=snapshot.aristas_cerradas,
-                segmentos_cerrados=snapshot.segmentos_cerrados,
-            )
-        )
-        bloqueados.update(
-            calle.origen
-            for calle in grafo.mapa.calles
-            if calle.destino == zombie.nodo
-            and calle.id not in snapshot.aristas_cerradas
-            and calle.segmento_id not in snapshot.segmentos_cerrados
-        )
-    return frozenset(bloqueados)

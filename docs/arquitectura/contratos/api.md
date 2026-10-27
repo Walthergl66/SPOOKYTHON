@@ -22,6 +22,8 @@ Content-Type: application/json
 
 Éxito 200; respuesta menor a 500 ms. Conservar nombre, método, campos y cuerpo de éxito. Puede devolver el mismo nodo. Resolver partida activa en servidor sin exigir un campo adicional al evaluador. Mantener la misma decisión para una solicitud repetida sobre la misma instantánea. La ruta completa y las explicaciones van en otro canal.
 
+Nota sin cambiar códigos HTTP (ADR-028): `NAVIRA_API_KEY`, `NAVIRA_COOKIE_SECURE` y `NAVIRA_LOCAL_DEMO_CONTROL` se leen al arrancar (en `main.py`), no por petición; cambiar la clave o los flags exige reiniciar el proceso. Sin clave configurada, `POST /paso` responde 503; con clave, la credencial se comprueba antes que el esquema (401 antes que 422).
+
 Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema inválido; 404 por sobreviviente inexistente; 409 por turno/fase/posición incompatible; 503 si el estado o la versión de mapa confirmados no están disponibles. La configuración ausente de `NAVIRA_API_KEY` también produce 503. El caso de uso con estado mapea esos errores, cubierto por pruebas ASGI; el app base sin estado sigue respondiendo espera. Estos errores cuentan en la medición si aparecen en el flujo normal. Nunca responder con un turno anterior para ocultarlos.
 
 ## Rutas y permisos

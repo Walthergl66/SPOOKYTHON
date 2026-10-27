@@ -13,7 +13,6 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import json
 import math
-import os
 from pathlib import Path
 import secrets
 import socket
@@ -25,6 +24,7 @@ from typing import Iterator, TextIO
 
 import uvicorn
 
+from navira.api.seguridad import ConfiguracionSeguridad
 from navira.carga_http import SolicitudCarga, enviar_solicitud_http
 from navira.demo import ESCENARIOS_DEMO, crear_contexto_demo
 from navira.domain.modelo import (
@@ -45,22 +45,6 @@ MAPA_MANTA_POR_DEFECTO = (
     Path(__file__).resolve().parents[2] / "data/maps/manta-hackathon-v1.json"
 )
 POBLACIONES_EVALUACION = (20, 80, 200)
-_CLAVE_LOCAL = "NAVIRA_API_KEY"
-
-
-@contextmanager
-def _clave_temporal(clave: str) -> Iterator[None]:
-    """Configura una credencial efímera para el servidor de esta evaluación."""
-
-    anterior = os.environ.get(_CLAVE_LOCAL)
-    os.environ[_CLAVE_LOCAL] = clave
-    try:
-        yield
-    finally:
-        if anterior is None:
-            os.environ.pop(_CLAVE_LOCAL, None)
-        else:
-            os.environ[_CLAVE_LOCAL] = anterior
 
 
 @contextmanager
@@ -176,8 +160,8 @@ def ejecutar_evaluacion_local(
         cantidad_sobrevivientes=sobrevivientes,
     )
     mapa_version = contexto.grafo.mapa.version
-    aplicacion = crear_app(contexto.servicio_decision)
     clave = secrets.token_urlsafe(32)
+    aplicacion = crear_app(contexto.servicio_decision, seguridad=ConfiguracionSeguridad(api_key=clave))
     latencias: list[float] = []
     estados_http: Counter[str] = Counter()
     fallidas = 0
@@ -187,7 +171,7 @@ def ejecutar_evaluacion_local(
     retrasos_inicio_ms: list[float] = []
     turnos_fuera_de_periodo = 0
 
-    with _clave_temporal(clave), _servidor_loopback(aplicacion) as url:
+    with _servidor_loopback(aplicacion) as url:
         inicio_evaluacion = time.perf_counter()
         for indice_turno in range(turnos):
             inicio_objetivo = inicio_evaluacion + indice_turno * periodo_segundos

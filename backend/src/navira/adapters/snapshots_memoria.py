@@ -9,7 +9,7 @@ from __future__ import annotations
 from threading import RLock
 
 from navira.domain.modelo import EstadoPartida, FaseTurno
-from navira.simulation.coordinador import SnapshotMundo
+from navira.domain.snapshot import SnapshotMundo
 
 
 class AlmacenSnapshotsMemoria:

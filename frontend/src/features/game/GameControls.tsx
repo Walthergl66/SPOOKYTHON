@@ -1,164 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { PanelMap, PanelState } from '../../shared/api/panel'
-import { GameApiError, joinGame, restoreGameSession, sendGameOrder, type GameOrderInput, type GameOrderReceipt, type PlayerSession } from '../../shared/api/game'
-import type { PanelConnection } from '../../shared/realtime/panel'
+import type { PanelConnection } from '../../domain/panel'
+import type { GameSessionView } from '../../application/useGameSession'
+
+export type { GameSessionView }
 
 interface GameControlsProps {
   modeSelected: boolean
-  state: PanelState | null
-  map: PanelMap | null
   connection: PanelConnection
-  onJoined: (playerId: string) => void
+  game: GameSessionView
 }
 
-type Activity =
-  | { kind: 'idle' }
-  | { kind: 'recovering' }
-  | { kind: 'recovered'; session: PlayerSession }
-  | { kind: 'recovery-error'; message: string }
-  | { kind: 'session-expired' }
-  | { kind: 'joining' }
-  | { kind: 'sending' }
-  | { kind: 'accepted'; receipt: GameOrderReceipt }
-  | { kind: 'error'; message: string; canRetry: boolean }
-
-export function GameControls({ modeSelected, state, map, connection, onJoined }: GameControlsProps) {
-  const [session, setSession] = useState<PlayerSession | null>(null)
-  const [activity, setActivity] = useState<Activity>({ kind: 'idle' })
-  const pendingOrder = useRef<GameOrderInput | null>(null)
-  const [remainingMs, setRemainingMs] = useState<number | null>(null)
-  const [recoveryAttempt, setRecoveryAttempt] = useState(0)
-
-  const gameState = state?.estado === 'activa' && state.modo === 'juego' ? state : null
-  const player = gameState && session && session.runId === gameState.runId
-    ? gameState.sobrevivientes?.find(({ id }) => id === session.playerId)
-    : undefined
-  const choices = useMemo(() => {
-    if (!gameState || !map || !player) return []
-    const closedEdges = new Set(gameState.aristasBloqueadas ?? [])
-    const closedSegments = new Set(gameState.segmentosBloqueados ?? [])
-    const blockedNodes = new Set(gameState.nodosHorda ?? [])
-    const zombieNodes = new Set((gameState.zombies ?? []).map(({ nodo }) => nodo))
-    const byNode = new Map<string, PanelMap['calles'][number]>()
-    for (const street of map.calles) {
-      if (street.origen !== player.nodo || closedEdges.has(street.id) || closedSegments.has(street.segmentoId)) continue
-      if (blockedNodes.has(street.destino) || byNode.has(street.destino)) continue
-      byNode.set(street.destino, street)
-    }
-    return [...byNode.entries()].map(([node, street]) => ({ node, street, risk: zombieNodes.has(node) }))
-  }, [gameState, map, player])
-  const radioSuggestion = useMemo(() => {
-    if (!gameState || !player || gameState.fase !== 'decisiones') return null
-    const route = gameState.rutasPrevistas?.find(({ sobrevivienteId }) => sobrevivienteId === player.id)?.trayecto
-    if (!route || route[0] !== player.nodo || route.length < 2) return null
-    const nextNode = route[1]
-    const move = choices.find(({ node }) => node === nextNode)
-    return move ? { nextNode, move } : null
-  }, [gameState, player, choices])
-
-  useEffect(() => {
-    const serverRemaining = gameState?.decisionRestanteMs
-    if (serverRemaining === undefined || serverRemaining === null || gameState?.fase !== 'decisiones') {
-      setRemainingMs(null)
-      return
-    }
-    const deadlineLocal = performance.now() + serverRemaining
-    const refresh = () => setRemainingMs(Math.max(0, Math.ceil(deadlineLocal - performance.now())))
-    refresh()
-    const timer = window.setInterval(refresh, 100)
-    return () => window.clearInterval(timer)
-  }, [gameState?.decisionRestanteMs, gameState?.fase, gameState?.runId, gameState?.turno, gameState?.snapshotVersion])
-
-  useEffect(() => {
-    if (!modeSelected || !gameState) return
-    const controller = new AbortController()
-    setActivity({ kind: 'recovering' })
-    restoreGameSession(controller.signal)
-      .then((restored) => {
-        setSession(restored)
-        onJoined(restored.playerId)
-        setActivity({ kind: 'recovered', session: restored })
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        if (error instanceof GameApiError && error.status === 403) {
-          setActivity({ kind: 'idle' })
-          return
-        }
-        if (error instanceof GameApiError && error.status === 410) {
-          setSession(null)
-          setActivity({ kind: 'session-expired' })
-          return
-        }
-        setActivity({
-          kind: 'recovery-error',
-          message: error instanceof Error ? error.message : 'No se pudo consultar la sesión guardada.',
-        })
-      })
-    return () => controller.abort()
-  }, [modeSelected, gameState?.runId, recoveryAttempt, onJoined])
-
+export function GameControls({ modeSelected, connection, game }: GameControlsProps) {
   if (!modeSelected) return null
 
+  const { gameState, session, player, choices, suggestion: radioSuggestion, remainingMs: remaining, turnOpen, deadlineClosed, busy, activity, enterGame, submit, retry, retryRecovery } = game
   const isGame = gameState !== null
-  const turnOpen = gameState?.fase === 'decisiones'
-  const deadlineClosed = remainingMs === 0
   const panelFresh = connection === 'live'
-  const busy = activity.kind === 'recovering' || activity.kind === 'joining' || activity.kind === 'sending'
-
-  const enterGame = async () => {
-    setActivity({ kind: 'joining' })
-    try {
-      const joined = await joinGame()
-      setSession(joined)
-      onJoined(joined.playerId)
-      setActivity({ kind: 'idle' })
-    } catch (error) {
-      if (error instanceof GameApiError && error.status === 410) {
-        setSession(null)
-        setActivity({ kind: 'session-expired' })
-        return
-      }
-      setActivity({
-        kind: 'error',
-        message: error instanceof Error ? error.message : 'No se pudo entrar a la partida.',
-        canRetry: false,
-      })
-    }
-  }
-
-  const submit = async (destination: string, retry = false) => {
-    if (!gameState || !turnOpen || deadlineClosed || !session || !player || !gameState.runId || gameState.turno === undefined) return
-    const order = retry && pendingOrder.current ? pendingOrder.current : {
-      runId: gameState.runId,
-      turno: gameState.turno,
-      personajeId: session.playerId,
-      siguienteNodo: destination,
-      accionId: createActionId(),
-    }
-    pendingOrder.current = order
-    setActivity({ kind: 'sending' })
-    try {
-      const receipt = await sendGameOrder(order)
-      pendingOrder.current = null
-      setActivity({ kind: 'accepted', receipt })
-    } catch (error) {
-      const status = error instanceof GameApiError ? error.status : 0
-      if (status === 410) {
-        pendingOrder.current = null
-        setSession(null)
-        setActivity({ kind: 'session-expired' })
-        return
-      }
-      const canRetry = status === 0 || status >= 500
-      if (!canRetry) pendingOrder.current = null
-      setActivity({
-        kind: 'error',
-        message: error instanceof Error ? error.message : 'No se pudo enviar la orden.',
-        canRetry,
-      })
-    }
-  }
 
   return (
     <section className="game-controls" aria-labelledby="game-controls-title">
@@ -172,7 +28,7 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
 
       {!isGame ? (
         <div className="game-empty" role="status">
-          <strong>{state?.estado === 'activa' ? 'La partida activa es un simulador.' : 'No hay una partida de juego activa.'}</strong>
+          <strong>{game.activeRun ? 'La partida activa es un simulador.' : 'No hay una partida de juego activa.'}</strong>
           <span>El servicio todavía debe iniciar y habilitar una partida en modo juego.</span>
         </div>
       ) : !session ? (
@@ -181,7 +37,7 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
           <button className="game-primary" type="button" onClick={enterGame} disabled={busy || !panelFresh || activity.kind === 'session-expired'}>
             {activity.kind === 'recovering' ? 'Comprobando sesión…' : activity.kind === 'joining' ? 'Entrando…' : activity.kind === 'session-expired' ? 'Sesión vencida' : 'Entrar a la partida'}
           </button>
-          {activity.kind === 'recovery-error' ? <button type="button" className="game-retry" onClick={() => setRecoveryAttempt((attempt) => attempt + 1)}>Reintentar recuperación</button> : null}
+          {activity.kind === 'recovery-error' ? <button type="button" className="game-retry" onClick={retryRecovery}>Reintentar recuperación</button> : null}
           {!panelFresh ? <span className="game-hint">Esperando una conexión reciente con el servidor.</span> : null}
         </div>
       ) : session.runId !== gameState?.runId ? (
@@ -202,9 +58,9 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
       ) : (
         <>
           <div className="game-position"><span>Tu posición</span><strong>{player.nodo}</strong><span>{turnOpen ? 'Elige un vecino o espera.' : 'Los zombies se movieron; espera la siguiente fase de decisiones.'}</span></div>
-          {turnOpen && remainingMs !== null ? <>
-            <p className="game-clock" aria-live="off">{deadlineClosed ? 'Tiempo agotado; esperando la resolución del servidor.' : `Cierre del servidor en ${(remainingMs / 1000).toFixed(1)} s`}</p>
-            <span className="sr-only" aria-live="polite">{deadlineClosed ? 'La ventana de decisiones terminó.' : remainingMs <= 500 ? 'Queda menos de medio segundo para enviar una orden.' : ''}</span>
+          {turnOpen && remaining !== null ? <>
+            <p className="game-clock" aria-live="off">{deadlineClosed ? 'Tiempo agotado; esperando la resolución del servidor.' : `Cierre del servidor en ${(remaining / 1000).toFixed(1)} s`}</p>
+            <span className="sr-only" aria-live="polite">{deadlineClosed ? 'La ventana de decisiones terminó.' : remaining <= 500 ? 'Queda menos de medio segundo para enviar una orden.' : ''}</span>
           </> : null}
           {turnOpen ? (
             <aside className="game-radio" aria-labelledby="game-radio-title">
@@ -248,15 +104,8 @@ export function GameControls({ modeSelected, state, map, connection, onJoined }:
         {activity.kind === 'recovered' ? <><strong>Sesión recuperada</strong><span>{activity.session.lastOrder ? `Última orden recibida: turno ${activity.session.lastOrder.turn}, destino ${activity.session.lastOrder.destination}. La posición actual se toma del snapshot del servidor.` : 'Tu personaje se recuperó desde la cookie y el snapshot actual del servidor.'}</span></> : null}
         {activity.kind === 'recovery-error' ? <><strong>No se pudo recuperar la sesión guardada.</strong><span>{activity.message}</span></> : null}
         {activity.kind === 'accepted' ? <><strong>Orden recibida · #{activity.receipt.secuencia}</strong><span>El movimiento se confirmará cuando el servidor resuelva el turno {activity.receipt.turno}.</span></> : null}
-        {activity.kind === 'error' ? <><strong>No se pudo confirmar la orden.</strong><span>{activity.message}</span>{activity.canRetry && pendingOrder.current ? <button type="button" className="game-retry" onClick={() => void submit(pendingOrder.current?.siguienteNodo ?? '', true)}>Reintentar con la misma acción</button> : null}</> : null}
+        {activity.kind === 'error' ? <><strong>No se pudo confirmar la orden.</strong><span>{activity.message}</span>{activity.canRetry ? <button type="button" className="game-retry" onClick={() => void retry()}>Reintentar con la misma acción</button> : null}</> : null}
       </div>
     </section>
   )
-}
-
-function createActionId() {
-  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
-  const bytes = new Uint8Array(16)
-  crypto.getRandomValues(bytes)
-  return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }

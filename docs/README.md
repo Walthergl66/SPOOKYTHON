@@ -78,6 +78,9 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-023](arquitectura/decisiones/0023-configuracion-de-agentes.md) | Configuración de agentes en `.claude/` y guías por área en `.agents/` | Cambie reglas, skills, comandos o guías de agentes. |
 | [ADR-024](arquitectura/decisiones/0024-backend-y-frontend-por-carpeta.md) | Backend en `backend/`, frontend en `frontend/` y raíz general | Cambie la ubicación de backend, frontend o los README de cada área. |
 | [ADR-025](arquitectura/decisiones/0025-agentes-de-proyecto-y-clean-architecture.md) | Subagentes de proyecto y Clean Architecture como destino | Cambie la guía de capas o los subagentes de proyecto. |
+| [ADR-026](arquitectura/decisiones/0026-aplanado-backend-y-setuptools.md) | Aplanado de `backend/src` y setuptools (sustituida por ADR-027) | Consulte el antecedente del aplanado. |
+| [ADR-027](arquitectura/decisiones/0027-reversion-del-aplanado-de-backend.md) | Reversión del aplanado: `backend/src/navira/` y hatchling | Cambie la estructura del paquete o el sistema de build del backend. |
+| [ADR-028](arquitectura/decisiones/0028-configuracion-de-seguridad-inyectada.md) | Configuración de seguridad leída una vez e inyectada | Cambie cómo `api/` obtiene la clave o los flags de seguridad. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/

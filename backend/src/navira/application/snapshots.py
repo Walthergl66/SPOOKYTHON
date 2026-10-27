@@ -6,8 +6,8 @@ from typing import Protocol
 
 from navira.domain.mapa import Grafo
 from navira.domain.modelo import IntencionMovimiento
+from navira.domain.snapshot import SnapshotMundo
 from navira.simulation.coordinador import (
-    SnapshotMundo,
     abrir_siguiente_turno,
     preparar_turno_versionado,
     resolver_turno_versionado,
