@@ -177,6 +177,47 @@ class DecidirPasoTests(unittest.TestCase):
         # Solo el primer paso está modelado; riesgos de turnos C/D/E no se copian.
         self.assertEqual(exposicion, 0.0)
 
+    def _servicio_linea(self, nodos, calles_pares, refugio, posiciones, run_id):
+        calles = tuple(
+            Calle(f"E-{a}-{b}", f"S-{a}-{b}", a, b, 10, TipoCalle.CALLE, 20)
+            for a, b in calles_pares for a, b in ((a, b), (b, a))
+        )
+        grafo = Grafo(Mapa(
+            version=run_id, nodos=tuple(Nodo(n, 0, i) for i, n in enumerate(nodos)),
+            calles=calles, refugios=(Refugio("R-X", refugio),) if refugio else (),
+        ))
+        partida = Partida(
+            run_id=run_id, modo=ModoPartida.SIMULADOR, escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=tuple(Sobreviviente(f"S-{i}", n) for i, n in enumerate(posiciones, 1)),
+            estado=EstadoPartida.ACTIVA, turno=1, fase=FaseTurno.DECISIONES,
+        )
+        return DecidirPaso(SnapshotStub(SnapshotMundo(partida, version=1)), CatalogoMapasMemoria((grafo,)))
+
+    def test_no_oscila_ir_y_volver_que_solo_explota_el_recorte_del_horizonte(self) -> None:
+        linea = [f"P{i}" for i in range(15)]
+        pares = list(zip(linea, linea[1:])) + [("P0", "L")]
+
+        def decidir(actual):
+            servicio = self._servicio_linea(linea + ["L"], pares, "P14", [actual, actual], f"osc-{actual}")
+            futuras = tuple(
+                CondicionTurno(exposicion_nodo={"P12": 1.0} if i in (10, 11) else {}) for i in range(12)
+            )
+            escenario = SimpleNamespace(turnos=futuras, supuestos=())
+            with patch("navira.application.decidir_paso.pronosticar_zombies_visibles", return_value=escenario):
+                return servicio.ejecutar(SolicitudPaso("S-1", actual, 1)).siguiente_nodo
+
+        primero = decidir("P0")
+        segundo = decidir("P1")
+        self.assertEqual(primero, "P1")
+        self.assertNotEqual(segundo, "P0")
+
+    def test_sin_refugio_alcanzable_y_nodos_libres_espera(self) -> None:
+        servicio = self._servicio_linea(["A", "B", "Z"], [("A", "B")], "Z", ["A", "A"], "espera")
+        self.assertEqual(servicio.prever_ruta(SolicitudPaso("S-1", "A", 1)), ("A",))
+        solo = self._servicio_linea(["A", "B", "Z"], [("A", "B")], "Z", ["A"], "espera-1")
+        self.assertEqual(solo.prever_ruta(SolicitudPaso("S-1", "A", 1)), ("A",))
+
     def test_indicador_y_accion_reutilizan_la_misma_ruta_del_snapshot(self) -> None:
         servicio = self.servicio()
         with patch.object(servicio, "_seleccionar_trayecto", wraps=servicio._seleccionar_trayecto) as seleccionar:

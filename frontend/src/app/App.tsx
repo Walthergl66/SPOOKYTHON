@@ -5,20 +5,21 @@ import type { PanelConnection } from '../domain/panel'
 import type { SimulatorSetup } from '../domain/simulator'
 import type { GamePort, PanelPort, SimulatorPort } from '../application/ports'
 import { usePanel } from '../application/usePanel'
-import { useSimulator } from '../application/useSimulator'
+import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
 import { useGameSession } from '../application/useGameSession'
 import { joinGame, restoreGameSession, sendGameOrder } from '../infrastructure/http/game'
 import { loadPanelMap, loadPanelSnapshot } from '../infrastructure/http/panel'
-import { controlSimulator, getSimulatorStatus } from '../infrastructure/http/simulator'
+import { controlSimulator, getSimulatorCandidates, getSimulatorStatus } from '../infrastructure/http/simulator'
 import { subscribePanel } from '../infrastructure/realtime/panel'
 import { checkHealth } from '../infrastructure/http/health'
 import { BrandMark } from '../shared/ui/BrandMark'
 
 // Puertos de módulo: identidad estable entre renders, que los efectos de los hooks usan como dependencia.
 const panelPort: PanelPort = { loadSnapshot: loadPanelSnapshot, loadMap: loadPanelMap, subscribe: subscribePanel }
-const simulatorPort: SimulatorPort = { getStatus: getSimulatorStatus, control: controlSimulator }
+const simulatorPort: SimulatorPort = { getStatus: getSimulatorStatus, getCandidates: getSimulatorCandidates, control: controlSimulator }
 const gamePort: GamePort = { join: joinGame, restore: restoreGameSession, sendOrder: sendGameOrder }
 
+const RefugePicker = lazy(() => import('../features/map/RefugePicker').then(({ RefugePicker: Component }) => ({ default: Component })))
 const CityMap = lazy(() => import('../features/map/CityMap').then(({ CityMap: Component }) => ({ default: Component })))
 
 export function App() {
@@ -28,7 +29,7 @@ export function App() {
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
   const updatedAt = panel.updatedAt !== null ? formatTime(panel.updatedAt) : null
-  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl } = useSimulator(simulatorPort, refreshPanel)
+  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges } = useSimulator(simulatorPort, refreshPanel)
 
   const game = useGameSession(gamePort, { modeSelected: mode === 'game', state: snapshot?.state ?? null, map: snapshot?.map ?? null, onJoined: setSelectedSurvivorId })
 
@@ -47,6 +48,11 @@ export function App() {
   const survivors = (active ? state.sobrevivientes : undefined)?.filter(({ estado: survivorState }) => survivorState === 'activo') ?? []
   const selectedRouteOwner = survivors.some(({ id }) => id === selectedSurvivorId) ? selectedSurvivorId : survivors[0]?.id
   const simulatorIsRunning = simulator?.estado === 'activa'
+  const showPicker = candidates !== null && !simulatorUnavailable
+  const pickerLockedReason = simulatorIsRunning
+    ? 'La simulación está en curso. Pausa la simulación para elegir refugios.'
+    : simulatorBusy ? 'Se está actualizando la simulación. Espera un momento.' : null
+  const pickerNote = simulator?.estado === 'pausada' ? 'Pausada: los refugios se aplicarán al pulsar Reiniciar.' : null
 
   return (
     <main className="app-shell dashboard-shell">
@@ -84,7 +90,7 @@ export function App() {
           </label>
           <label className="setup-field">Intensidad sintética de amenazas
             <select value={setup.intensidad} onChange={(event) => setSetup({ ...setup, intensidad: event.target.value as SimulatorSetup['intensidad'] })} disabled={simulatorIsRunning || simulatorBusy}>
-              <option value="baja">Baja · 6% de nodos elegibles</option><option value="media">Media · 14% de nodos elegibles</option><option value="alta">Alta · 25% de nodos elegibles</option>
+              <option value="baja">Baja · 1,2% de nodos elegibles</option><option value="media">Media · 2,8% de nodos elegibles</option><option value="alta">Alta · 5% de nodos elegibles</option>
             </select>
           </label>
           <label className="setup-field">Incidentes viales aleatorios
@@ -92,6 +98,8 @@ export function App() {
               <option value="si">Activados</option><option value="no">Desactivados</option>
             </select>
           </label>
+
+          {showPicker ? <Suspense fallback={null}><RefugePicker candidates={candidates} refugeIds={REFUGE_SLOTS} slots={slots} placing={placing} onPick={pickNode} onPlace={setPlacing} onClear={clearSlot} onReset={resetRefuges} lockedReason={pickerLockedReason} note={pickerNote} /></Suspense> : null}
 
           {simulatorUnavailable ? <div className="control-notice" role="status"><strong>Control local deshabilitado</strong><span>Inicia el backend con <code>NAVIRA_LOCAL_DEMO_CONTROL=1</code> para operar una demo desde esta pantalla.</span></div> : null}
           {simulatorMessage ? <div className="control-notice is-error" role="alert"><strong>No se pudo completar la acción</strong><span>{simulatorMessage}</span></div> : null}

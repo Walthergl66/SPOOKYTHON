@@ -34,7 +34,7 @@ URL_GAD_MAPAS = "https://darf-manta.github.io/evacuacion-tsunami/"
 # Barbasquillo nombrados en el reto. Las cajas pequeñas respetan el límite de
 # nodos de la API de edición de OSM; si una excede el límite se subdivide.
 CAJA = (-0.967, -80.755, -0.935, -80.675)  # sur, oeste, norte, este
-OBJETIVO_NODOS = 300
+OBJETIVO_NODOS = 1500
 TIPOS_VIALES = {
     "motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link",
     "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified",
@@ -161,7 +161,8 @@ def _tipo_y_velocidad(etiquetas: dict[str, str]) -> tuple[str, float]:
 
 
 def construir_grafo_completo(
-    nodos_osm: dict[str, tuple[float, float]], vias_osm: dict[str, ET.Element]
+    nodos_osm: dict[str, tuple[float, float]], vias_osm: dict[str, ET.Element],
+    anclajes: dict[str, str] | None = None,
 ) -> tuple[dict[str, tuple[float, float]], list[dict[str, object]], dict[str, str]]:
     """Contrae vértices de geometría y conserva intersecciones/terminaciones."""
 
@@ -195,8 +196,14 @@ def construir_grafo_completo(
             for punto in set(tramo):
                 formas[punto].add(via_id)
 
-    # Estos puntos oficiales deben ser vértices para anclar el refugio al grafo.
-    anclas = _anclas_por_zona(nodos_osm, set(formas))
+    # Un refugio se ancla en una intersección (dos o más vías), no en el extremo
+    # de una calle: un extremo de un solo sentido puede no tener entradas y
+    # quedar inalcanzable para cualquier sobreviviente.
+    intersecciones = {ref for ref, ids_vias in formas.items() if len(ids_vias) >= 2}
+    anclas = _anclas_por_zona(nodos_osm, intersecciones)
+    if anclajes:
+        puntos = {r["id"]: (r["lat"], r["lng"]) for r in ZONAS_SEGURAS}
+        anclas = aplicar_anclajes_manuales(anclas, anclajes, nodos_osm, formas, puntos)
     anclas_osm = set(anclas.values())
     importantes = {ref for ref, ids_vias in formas.items() if len(ids_vias) != 2} | extremos | anclas_osm
     coordenadas = {ref: coord for ref, coord in nodos_osm.items() if ref in importantes and _dentro_caja(coord)}
@@ -239,6 +246,35 @@ def _anclas_por_zona(
         resultado[refugio["id"]] = ref
         disponibles.remove(ref)
     return resultado
+
+
+def aplicar_anclajes_manuales(
+    anclas: dict[str, str],
+    anclajes: dict[str, str],
+    coordenadas: dict[str, tuple[float, float]],
+    formas: dict[str, set[str]],
+    puntos_oficiales: dict[str, tuple[float, float]],
+) -> dict[str, str]:
+    """Sustituye el ancla automática de los refugios indicados por un nodo OSM manual.
+
+    `anclajes` mapea id de refugio -> id OSM (sin prefijo N-OSM-); `formas` mapea
+    nodo -> vías que lo tocan (intersección = al menos dos). Devuelve anclas nuevas.
+    """
+
+    nuevas = dict(anclas)
+    for refugio, nodo in anclajes.items():
+        if refugio not in puntos_oficiales:
+            raise RuntimeError(f"Refugio desconocido en --anclaje: {refugio}.")
+        if nodo not in coordenadas or len(formas.get(nodo, ())) < 2:
+            raise RuntimeError(f"El nodo OSM {nodo} no existe en la red o no es una intersección (refugio {refugio}).")
+        distancia = _distancia_m(puntos_oficiales[refugio], coordenadas[nodo])
+        if distancia > 350:
+            raise RuntimeError(f"El nodo OSM {nodo} está a {distancia:.0f} m de {refugio} (límite 350 m).")
+        nuevas[refugio] = nodo
+    repetidos = sorted(r for r, n in nuevas.items() if list(nuevas.values()).count(n) > 1)
+    if repetidos:
+        raise RuntimeError(f"Un mismo nodo OSM no puede anclar varios refugios: {repetidos}.")
+    return nuevas
 
 
 def seleccionar_mapa(
@@ -308,12 +344,21 @@ def seleccionar_mapa(
                 calles_json.append({"id": f"E-OSM-{way}-{segmento_id}-R", "origen": f"N-OSM-{sentido_hasta}", "destino": f"N-OSM-{sentido_desde}", **base})
 
     refugios_json = [{"id": r["id"], "nodo": f"N-OSM-{anclas[r['id']]}"} for r in ZONAS_SEGURAS]
+    # Un refugio sin calle de entrada no puede recibir a nadie: fallar es más seguro que publicarlo.
+    entradas = {refugio["nodo"]: 0 for refugio in refugios_json}
+    for calle in calles_json:
+        if calle["destino"] in entradas:
+            entradas[calle["destino"]] += 1
+    aislados = sorted(nodo for nodo, cuenta in entradas.items() if cuenta == 0)
+    if aislados:
+        raise RuntimeError(f"Refugios sin calle de entrada en el mapa: {aislados}")
     return nodos_json, calles_json, refugios_json
 
 
-def generar() -> tuple[dict[str, object], dict[str, object]]:
+def generar(anclajes: dict[str, str] | None = None) -> tuple[dict[str, object], dict[str, object]]:
+    anclajes = anclajes or {}
     nodos_osm, vias_osm = descargar_elementos()
-    coordenadas, segmentos, anclas = construir_grafo_completo(nodos_osm, vias_osm)
+    coordenadas, segmentos, anclas = construir_grafo_completo(nodos_osm, vias_osm, anclajes)
     # Las anclas pueden haber quedado fuera del grafo si la vía próxima se
     # etiquetó como peatonal o privada; fallar es más seguro que reubicarla.
     if not set(anclas.values()).issubset(coordenadas):
@@ -343,6 +388,7 @@ def generar() -> tuple[dict[str, object], dict[str, object]]:
                 "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
                 "distancia_snap_m": round(_distancia_m((r["lat"], r["lng"]), nodos_osm[anclas[r["id"]]]), 1),
                 "nodo_osm": anclas[r["id"]],
+                "anclaje_origen": "manual" if r["id"] in anclajes else "automatica",
             }
             for r in ZONAS_SEGURAS
         ],
@@ -358,8 +404,21 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--salida", type=Path, default=SALIDA_MAPA)
     parser.add_argument("--fuentes", type=Path, default=SALIDA_FUENTES)
+    parser.add_argument(
+        "--anclaje", action="append", default=[], metavar="R-0X=ID_OSM",
+        help="ancla un refugio a un nodo de intersección OSM (sin N-OSM-); repetible",
+    )
     args = parser.parse_args()
-    mapa, fuentes = generar()
+    anclajes: dict[str, str] = {}
+    for texto in args.anclaje:
+        refugio, separador, nodo = texto.partition("=")
+        if not separador or not nodo.isdigit():
+            parser.error(f"--anclaje espera R-0X=<id OSM numérico>, recibido {texto!r}")
+        anclajes[refugio] = nodo
+    try:
+        mapa, fuentes = generar(anclajes)
+    except RuntimeError as error:
+        parser.exit(1, f"Error: {error}\n")
     args.salida.parent.mkdir(parents=True, exist_ok=True)
     args.salida.write_text(json.dumps(mapa, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     args.fuentes.write_text(json.dumps(fuentes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

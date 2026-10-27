@@ -79,6 +79,13 @@ class RespuestaOrdenJuegoSchema(BaseModel):
     turno: int = Field(ge=0)
 
 
+class RefugioDemoSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    nodo: str
+
+
 class SolicitudIniciarDemoSchema(BaseModel):
     """Configuración pública y sintética de una demo operada en localhost."""
 
@@ -89,6 +96,7 @@ class SolicitudIniciarDemoSchema(BaseModel):
     semilla: int | None = Field(default=None, ge=0)
     intensidad: Literal["baja", "media", "alta"] = "media"
     eventosCiudad: bool = True
+    refugios: list[RefugioDemoSchema] | None = None
 
 
 class NodoPanelSchema(BaseModel):

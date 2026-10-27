@@ -19,7 +19,7 @@ class EvaluacionLocalTests(unittest.TestCase):
         )
 
         self.assertEqual(reporte["medicion"], "exploratoria_local_http_loopback")
-        self.assertEqual(reporte["mapaVersion"], "manta-osm-d76772f9d9e9")
+        self.assertEqual(reporte["mapaVersion"], "manta-osm-090f92326450")
         self.assertEqual(reporte["turnosEjecutados"], 2)
         self.assertEqual(reporte["solicitudes"], 39)
         self.assertEqual(reporte["fallidas"], 0)

@@ -7,6 +7,7 @@ aplicarse por dirección o al segmento completo sin confundir calles paralelas.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from dataclasses import dataclass, field
@@ -178,6 +179,43 @@ class Grafo:
         """Lista destinos adyacentes únicos en orden estable por ID de calle."""
 
         return tuple(calle.destino for calle in self.calles_desde(nodo_id, **cierres))
+
+
+def nodos_elegibles_refugio(mapa: Mapa) -> tuple[Nodo, ...]:
+    """Nodos con al menos una calle de entrada y una de salida."""
+
+    con_entrada = {calle.destino for calle in mapa.calles}
+    con_salida = {calle.origen for calle in mapa.calles}
+    return tuple(nodo for nodo in mapa.nodos if nodo.id in con_entrada and nodo.id in con_salida)
+
+
+def mapa_con_refugios(mapa: Mapa, refugios: tuple[Refugio, ...]) -> Mapa:
+    """Copia del mapa con cuatro refugios R-01..R-04 elegidos por el operador.
+
+    Valida ids, nodos distintos y elegibilidad; la versión resultante lleva un
+    sufijo con hash para no confundirse con el mapa base.
+    """
+
+    if sorted(refugio.id for refugio in refugios) != ["R-01", "R-02", "R-03", "R-04"]:
+        raise ValueError("Se requieren exactamente 4 refugios con ids R-01, R-02, R-03 y R-04, cada uno una vez.")
+    if len({refugio.nodo for refugio in refugios}) != 4:
+        raise ValueError("Los cuatro refugios deben ocupar nodos distintos.")
+    elegibles = {nodo.id for nodo in nodos_elegibles_refugio(mapa)}
+    for refugio in refugios:
+        if refugio.nodo not in mapa.nodos_por_id:
+            raise ValueError(f"El nodo {refugio.nodo} del refugio {refugio.id} no existe en el mapa.")
+        if refugio.nodo not in elegibles:
+            raise ValueError(
+                f"El nodo {refugio.nodo} del refugio {refugio.id} no tiene calle de entrada y de salida."
+            )
+    ordenados = tuple(sorted(refugios, key=lambda refugio: refugio.id))
+    huella = hashlib.sha1("|".join(f"{r.id}:{r.nodo}" for r in ordenados).encode()).hexdigest()[:8]
+    return Mapa(
+        version=f"{mapa.version}+refugios-{huella}",
+        nodos=mapa.nodos,
+        calles=mapa.calles,
+        refugios=ordenados,
+    )
 
 
 def cargar_mapa(ruta: str | Path) -> Mapa:

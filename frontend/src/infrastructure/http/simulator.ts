@@ -1,4 +1,4 @@
-import { parseSimulatorStatus, SimulatorUnavailableError, type SimulatorAction, type SimulatorSetup, type SimulatorStatus } from '../../domain/simulator'
+import { parseSimulatorCandidatos, parseSimulatorStatus, SimulatorUnavailableError, type RefugioAsignado, type SimulatorAction, type SimulatorCandidatos, type SimulatorSetup, type SimulatorStatus } from '../../domain/simulator'
 
 export class SimulatorApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -12,11 +12,21 @@ export async function getSimulatorStatus(signal?: AbortSignal): Promise<Simulato
   return parseStatus(await readJson(response), response.status)
 }
 
-export async function controlSimulator(action: SimulatorAction, setup?: SimulatorSetup): Promise<SimulatorStatus> {
+export async function getSimulatorCandidates(signal?: AbortSignal): Promise<SimulatorCandidatos> {
+  const response = await fetch('/demo/simulador/candidatos', { headers: { Accept: 'application/json' }, signal })
+  const value = await readJson(response)
+  try {
+    return parseSimulatorCandidatos(value)
+  } catch (error) {
+    throw new SimulatorApiError(error instanceof Error ? error.message : 'Candidatos incompletos.', response.status)
+  }
+}
+
+export async function controlSimulator(action: SimulatorAction, setup?: SimulatorSetup, refugios?: RefugioAsignado[]): Promise<SimulatorStatus> {
   const response = await fetch(`/demo/simulador/${action}`, {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: action === 'iniciar' || action === 'reiniciar' ? JSON.stringify(setup) : undefined,
+    body: action === 'iniciar' || action === 'reiniciar' ? JSON.stringify(refugios ? { ...setup, refugios } : setup) : undefined,
   })
   return parseStatus(await readJson(response), response.status)
 }

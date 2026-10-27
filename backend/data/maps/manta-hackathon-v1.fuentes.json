@@ -5,7 +5,7 @@
     "licencia": "Open Database License (ODbL)",
     "url": "https://www.openstreetmap.org/copyright",
     "api": "https://api.openstreetmap.org/api/0.6/map",
-    "obtenido_utc": "2026-10-26T19:18:05+00:00",
+    "obtenido_utc": "2026-10-27T03:50:53+00:00",
     "caja_wgs84": {
       "sur": -0.967,
       "oeste": -80.755,
@@ -65,8 +65,8 @@
       "fuente": "https://darf-manta.github.io/evacuacion-tsunami/parroquia-manta.html",
       "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
       "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
-      "distancia_snap_m": 35.1,
-      "nodo_osm": "4128106908"
+      "distancia_snap_m": 42.5,
+      "nodo_osm": "4128106912"
     }
   ],
   "amenazas": {

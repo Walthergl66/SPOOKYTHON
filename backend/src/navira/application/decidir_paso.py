@@ -231,6 +231,7 @@ class DecidirPaso:
                     nodos_bloqueados=actual.nodos_bloqueados, perfil=self._perfil,
                 )
             ruta_base = rutas_restantes[clave_base]
+            destino_base = None
             if ruta_base is not None and ruta_base.calles:
                 trayecto_base = (survivor.nodo, *(c.destino for c in ruta_base.calles))
                 destino_base = trayecto_base[1]
@@ -264,6 +265,14 @@ class DecidirPaso:
                 camino = (survivor.nodo, calle.destino, *(c.destino for c in ruta.calles))
                 # Collapse a duplicate destination when it is itself the shelter.
                 camino = tuple(dict.fromkeys(camino)) if ruta.destino == calle.destino else camino
+                # Guard A: "go and come back" only wins by pushing the base route
+                # past the forecast horizon; skip it when the base step is safe.
+                if (
+                    destino_base is not None and futuras and len(camino) > 2
+                    and camino[2] == survivor.nodo
+                    and futuras[0].exposicion_nodo.get(destino_base, 0.0) == 0
+                ):
+                    continue
                 riesgo = exposicion_ruta(camino)
                 costo = self._perfil.costo(calle) + ruta.costo_ponderado_m
                 existente = candidatos.get(calle.destino)
@@ -282,16 +291,26 @@ class DecidirPaso:
                     if calle.destino not in actual.nodos_bloqueados
                 )
                 if salidas:
+                    siguiente = futuras[0].exposicion_nodo if futuras else {}
                     destino = min(
                         salidas,
                         key=lambda calle: (
-                            futuras[0].exposicion_nodo.get(calle.destino, 0.0) if futuras else 0.0,
+                            siguiente.get(calle.destino, 0.0),
                             ocupacion.get(calle.destino, 0),
                             self._perfil.costo(calle),
                             calle.destino,
                         ),
                     ).destino
-                    asignados[survivor.id] = (survivor.nodo, destino)
+                    # Guard B: waiting (R-03) is a zero-cost candidate; moving
+                    # must strictly lower the forecast exposure of the node.
+                    if (
+                        survivor.nodo not in actual.nodos_bloqueados
+                        and siguiente.get(destino, 0.0) >= siguiente.get(survivor.nodo, 0.0)
+                    ):
+                        destino = survivor.nodo
+                    asignados[survivor.id] = (
+                        (survivor.nodo,) if destino == survivor.nodo else (survivor.nodo, destino)
+                    )
                     ocupacion[destino] = ocupacion.get(destino, 0) + 1
                 else:
                     asignados[survivor.id] = (survivor.nodo,)
@@ -451,8 +470,14 @@ class DecidirPaso:
             )
         if not candidatos:
             return (sobreviviente.nodo,)
-        destino = min(candidatos)[-1]
-        return (sobreviviente.nodo, destino)
+        mejor = min(candidatos)
+        # Guard B: wait unless moving strictly lowers forecast exposure (R-03).
+        if (
+            sobreviviente.nodo not in actual.nodos_bloqueados
+            and mejor[0] >= riesgo_siguiente.get(sobreviviente.nodo, 0.0)
+        ):
+            return (sobreviviente.nodo,)
+        return (sobreviviente.nodo, mejor[-1])
 
     def _pronostico_compartido(
         self,

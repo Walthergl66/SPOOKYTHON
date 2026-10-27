@@ -16,7 +16,7 @@ from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
 from navira.application.decidir_paso import DecidirPaso, ProveedorMapas
 from navira.application.snapshots import RepositorioSnapshots
-from navira.domain.mapa import Grafo, cargar_mapa
+from navira.domain.mapa import Grafo, Refugio, cargar_mapa, mapa_con_refugios
 from navira.domain.modelo import (
     EstadoPartida,
     FaseTurno,
@@ -66,6 +66,7 @@ def crear_contexto_demo(
     eventos_ciudad: bool = False,
     modo: ModoPartida = ModoPartida.SIMULADOR,
     preparar_inicial: bool = True,
+    refugios: tuple[Refugio, ...] | None = None,
 ) -> ContextoDemo:
     """Crea una partida con estado inicial aleatorio y expone dependencias.
 
@@ -83,7 +84,10 @@ def crear_contexto_demo(
         raise ValueError("La semilla debe ser un entero o None.")
     if not isinstance(modo, ModoPartida):
         raise ValueError("El modo demo no es válido.")
-    grafo = Grafo(cargar_mapa(ruta_mapa))
+    mapa = cargar_mapa(ruta_mapa)
+    if refugios is not None:
+        mapa = mapa_con_refugios(mapa, tuple(refugios))
+    grafo = Grafo(mapa)
     if escenario not in ESCENARIOS_DEMO:
         opciones = ", ".join(sorted(ESCENARIOS_DEMO))
         raise ValueError(f"Escenario demo desconocido: {escenario}. Opciones: {opciones}.")

@@ -26,6 +26,7 @@ from navira.api.seguridad import (
     fijar_cookie_sesion,
     origen_mismo_host,
 )
+from navira.domain.mapa import Refugio, nodos_elegibles_refugio
 from navira.application.consultar_panel import ConsultarPanel, PanelNoDisponible
 from navira.application.juego import (
     AparicionNoDisponible,
@@ -74,6 +75,31 @@ async def estado_demo_simulador(request: Request) -> dict[str, object]:
     return gestor.estado()
 
 
+@router.get("/demo/simulador/candidatos", tags=["demo local"])
+async def candidatos_demo_simulador(request: Request) -> dict[str, object]:
+    """Nodos elegibles para refugio, calles y refugios por defecto del mapa del simulador."""
+
+    gestor = _control_demo_local(request)
+    exigir_operador_local(request, exigir_origen=False)
+    mapa = gestor.mapa
+    if mapa is None:
+        raise HTTPException(status_code=404, detail="El control local no expone un mapa.")
+    return {
+        "version": mapa.version,
+        "nodos": [{"id": n.id, "lat": n.lat, "lng": n.lng} for n in nodos_elegibles_refugio(mapa)],
+        "calles": [{"origen": c.origen, "destino": c.destino} for c in mapa.calles],
+        "refugios": [{"id": r.id, "nodo": r.nodo} for r in mapa.refugios],
+    }
+
+
+def _refugios(solicitud: SolicitudIniciarDemoSchema) -> tuple[Refugio, ...] | None:
+    """Refugios elegidos por el operador; None conserva los del mapa."""
+
+    if solicitud.refugios is None:
+        return None
+    return tuple(Refugio(r.id, r.nodo) for r in solicitud.refugios)
+
+
 @router.post("/demo/simulador/iniciar", tags=["demo local"])
 async def iniciar_demo_simulador(
     solicitud: SolicitudIniciarDemoSchema,
@@ -88,6 +114,7 @@ async def iniciar_demo_simulador(
             intensidad=solicitud.intensidad,
             eventos_ciudad=solicitud.eventosCiudad,
             semilla=solicitud.semilla,
+            refugios=_refugios(solicitud),
         )
     except (OSError, ValueError) as error:
         raise _error(422, error) from error
@@ -126,6 +153,7 @@ async def reiniciar_demo_simulador(
             cantidad_sobrevivientes=solicitud.sobrevivientes,
             intensidad=solicitud.intensidad,
             eventos_ciudad=solicitud.eventosCiudad,
+            refugios=_refugios(solicitud),
         )
     except (OSError, ValueError) as error:
         raise _error(422, error) from error

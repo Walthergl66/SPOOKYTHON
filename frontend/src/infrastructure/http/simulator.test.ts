@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SimulatorUnavailableError } from '../../domain/simulator'
-import { getSimulatorStatus, SimulatorApiError } from './simulator'
+import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, SimulatorApiError } from './simulator'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -27,5 +27,35 @@ describe('getSimulatorStatus', () => {
     expect(error).toBeInstanceOf(SimulatorApiError)
     expect(error).not.toBeInstanceOf(SimulatorUnavailableError)
     expect((error as SimulatorApiError).status).toBe(500)
+  })
+})
+
+describe('getSimulatorCandidates', () => {
+  it('parsea candidatos válidos', async () => {
+    stub(new Response(JSON.stringify({ version: 'v', nodos: [], calles: [], refugios: [] }), { status: 200 }))
+    expect((await getSimulatorCandidates()).version).toBe('v')
+  })
+  it('traduce 404 a SimulatorUnavailableError', async () => {
+    stub(new Response(JSON.stringify({ detail: 'off' }), { status: 404 }))
+    expect(await getSimulatorCandidates().catch((e: unknown) => e)).toBeInstanceOf(SimulatorUnavailableError)
+  })
+  it('traduce 500 a SimulatorApiError con status', async () => {
+    stub(new Response(JSON.stringify({ detail: 'boom' }), { status: 500 }))
+    const error = await getSimulatorCandidates().catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(SimulatorApiError)
+    expect((error as SimulatorApiError).status).toBe(500)
+  })
+})
+
+describe('controlSimulator con refugios', () => {
+  const setup = { escenario: 'mixto', sobrevivientes: 20, intensidad: 'media', eventosCiudad: true } as const
+  const estado = { habilitado: true, estado: 'activa', runId: 'r', turno: 0, escenario: 'mixto', sobrevivientesIniciales: 20, intensidad: 'media', eventosCiudad: true, error: null }
+  it('incluye refugios en el body solo si se pasan', async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify(estado))))
+    vi.stubGlobal('fetch', fetchMock)
+    await controlSimulator('iniciar', setup, [{ id: 'R-01', nodo: 'N-1' }])
+    await controlSimulator('iniciar', setup)
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).refugios).toEqual([{ id: 'R-01', nodo: 'N-1' }])
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).refugios).toBeUndefined()
   })
 })

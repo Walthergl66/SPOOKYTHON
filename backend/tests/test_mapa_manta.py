@@ -14,10 +14,10 @@ FUENTES = ROOT / "data/maps/manta-hackathon-v1.fuentes.json"
 
 
 class MapaMantaTests(unittest.TestCase):
-    def test_fixture_tiene_300_nodos_cuatro_refugios_y_rutas_dirigidas(self) -> None:
+    def test_fixture_tiene_1500_nodos_cuatro_refugios_y_rutas_dirigidas(self) -> None:
         mapa = cargar_mapa(MAPA)
-        mapa.validar_mapa_evaluacion(minimo_nodos=300)
-        self.assertEqual(len(mapa.nodos), 300)
+        mapa.validar_mapa_evaluacion(minimo_nodos=1500)
+        self.assertEqual(len(mapa.nodos), 1500)
         self.assertEqual(len(mapa.refugios), 4)
         self.assertEqual(len({refugio.nodo for refugio in mapa.refugios}), 4)
 

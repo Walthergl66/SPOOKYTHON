@@ -10,6 +10,7 @@ from navira.application.decidir_paso import DecidirPaso, ProveedorMapas
 from navira.application.reloj_simulador import RelojSimuladorLocal
 from navira.application.simulacion_automatica import EjecutarRondaAutomatica
 from navira.application.snapshots import RepositorioSnapshots
+from navira.domain.mapa import Mapa, Refugio
 
 
 class ContextoSimulacion(Protocol):
@@ -39,14 +40,16 @@ class FabricaContextoSimulacion(Protocol):
         cantidad_sobrevivientes: int,
         intensidad: str,
         eventos_ciudad: bool,
+        refugios: tuple[Refugio, ...] | None = None,
     ) -> ContextoSimulacion: ...
 
 
 class ControlSimuladorDemoLocal:
     """Crea y controla una única partida sintética volátil."""
 
-    def __init__(self, crear_contexto: FabricaContextoSimulacion) -> None:
+    def __init__(self, crear_contexto: FabricaContextoSimulacion, mapa: Mapa | None = None) -> None:
         self._crear_contexto = crear_contexto
+        self.mapa = mapa  # mapa base del simulador; sirve para ofrecer candidatos de refugio
         self._lock = RLock()
         self._contexto: ContextoSimulacion | None = None
         self._reloj: RelojSimuladorLocal | None = None
@@ -96,6 +99,7 @@ class ControlSimuladorDemoLocal:
         intensidad: str = "media",
         eventos_ciudad: bool = True,
         semilla: int | None = None,
+        refugios: tuple[Refugio, ...] | None = None,
     ) -> dict[str, object]:
         with self._lock:
             self._detener_reloj()
@@ -105,6 +109,7 @@ class ControlSimuladorDemoLocal:
                 cantidad_sobrevivientes=cantidad_sobrevivientes,
                 intensidad=intensidad,
                 eventos_ciudad=eventos_ciudad,
+                refugios=refugios,
             )
             ejecutar = EjecutarRondaAutomatica(
                 contexto.snapshots,
@@ -152,6 +157,7 @@ class ControlSimuladorDemoLocal:
         cantidad_sobrevivientes: int | None = None,
         intensidad: str | None = None,
         eventos_ciudad: bool | None = None,
+        refugios: tuple[Refugio, ...] | None = None,
     ) -> dict[str, object]:
         return self.iniciar(
             escenario=escenario or str(self._configuracion.get("escenario", "libre")),
@@ -164,6 +170,7 @@ class ControlSimuladorDemoLocal:
                 if eventos_ciudad is not None
                 else bool(self._configuracion.get("eventos_ciudad", True))
             ),
+            refugios=refugios,
         )
 
     def cerrar(self) -> None:

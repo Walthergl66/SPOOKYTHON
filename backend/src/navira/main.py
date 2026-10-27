@@ -19,6 +19,7 @@ from navira.application.juego import ConsultarSesionJuego, UnirseAJuego
 from navira.application.ordenes import RegistrarOrdenHumana
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.application.reloj_juego import RelojJuegoLocal
+from navira.domain.mapa import cargar_mapa
 from navira.demo import (
     MAPA_DEMO_POR_DEFECTO,
     MAPA_MANTA_POR_DEFECTO,
@@ -159,7 +160,10 @@ def crear_control_simulador_demo(
 ) -> ControlSimuladorDemoLocal:
     """Ensambla el control local con la fábrica de contexto de demo."""
 
-    return ControlSimuladorDemoLocal(functools.partial(crear_contexto_demo, ruta_mapa))
+    return ControlSimuladorDemoLocal(
+        functools.partial(crear_contexto_demo, ruta_mapa),
+        mapa=cargar_mapa(ruta_mapa),
+    )
 
 
 def _leer_parametros_demo() -> tuple[str, int | None, str, int]:
