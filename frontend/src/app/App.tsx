@@ -135,7 +135,6 @@ export function App() {
           </div>
           {active && survivors.length > 0 ? <div className="route-selector"><label htmlFor="survivor-route">Ruta observada</label><select id="survivor-route" value={selectedRouteOwner ?? ''} onChange={(event) => setSelectedSurvivorId(event.target.value)}>{survivors.map((survivor) => <option key={survivor.id} value={survivor.id}>{survivor.id}</option>)}</select><span>Ruta calculada desde el snapshot actual; no garantiza seguridad.</span></div> : null}
           <div className="map-legend" aria-label="Leyenda del mapa"><span><i className="legend-refuge" /> Refugio</span><span><i className="legend-survivor" /> Sobreviviente</span><span><i className="legend-zombie" /> Zombie visible</span><span><i className="legend-route" /> Ruta prevista</span><span><i className="legend-trail" /> Movimiento confirmado</span><span><i className="legend-closure" /> Calle cerrada</span></div>
-          <div className="city-panel-footer"><span>{panelError ? 'Revisa la conexión del backend.' : updatedAt ? `Snapshot del servidor actualizado a las ${updatedAt}.` : 'El mapa se carga cuando el servidor publica una partida.'}</span><span className="north-mark">DEMO · NO ES GUÍA DE EMERGENCIA</span></div>
         </section>
 
         <aside className="stats-column" aria-label="Estadísticas de la partida">
@@ -179,7 +178,6 @@ export function App() {
         <div><span className={`status-dot is-${health === 'online' ? 'live' : health === 'offline' ? 'stale' : 'connecting'}`} /><span>API</span><strong>{health === 'online' ? 'Disponible' : health === 'offline' ? 'Sin conexión' : 'Comprobando'}</strong></div>
         <div><span className={`status-dot is-${connection}`} /><span>Panel vivo</span><strong>{connectionLabel(connection)}</strong></div>
         <div><span className={`status-dot is-${simulatorIsRunning ? 'live' : 'idle'}`} /><span>Simulador</span><strong>{simulator?.estado ?? (simulatorUnavailable ? 'Control no habilitado' : 'Sin partida')}</strong></div>
-        <div className="system-disclaimer">Fixture vial OSM para simulación · cobertura y seguridad sísmica no certificadas · no usar para emergencias reales</div>
       </footer>
     </main>
   )
