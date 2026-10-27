@@ -54,3 +54,5 @@ No crear un servicio por entidad ni extraer microservicios inicialmente. Los com
 
 
 CAM-073: el fixture `manta-hackathon-v1.json` contiene 44.590 nodos y 94.146 sentidos públicos de OSM. `RutasHaciaRefugios` crea un campo inverso temporal por snapshot, closures y objetivo para compartir rutas entre sobrevivientes; no persiste rutas entre turnos. `prediccion.py` reutiliza objetivos de corredor durante el mismo pronóstico. T-38 cubre equivalencia funcional. La serialización `GET /panel/mapa` fue aproximadamente 20 MB en HTTP loopback sin medir compresión; revisar límites de payload/cadencia antes del despliegue.
+
+CAM-077 añade `recortar_mapa()` como proyección inmutable. `crear_contexto_demo()` la aplica a mapas `manta-osm-*` antes de crear `Grafo`, apariciones, amenazas y refugios personalizados. Así rutas y movimientos usan solo el subgrafo interno. El control conserva el mapa fuente para candidatos y publica `limitesJugables`; al iniciar, el caso valida nuevamente la selección sobre el mapa recortado. T-39 cubre cotas, extremos de calles y rechazo HTTP exterior.

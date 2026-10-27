@@ -3,8 +3,8 @@ import { Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl'
 import type { GeoJSONSource } from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { mapAreaBounds, paddedBounds } from './mapArea'
-import { nodoMasCercano, type SimulatorCandidatos } from '../../domain/simulator'
+import { outsideBoundsMask } from './mapArea'
+import { nodoMasCercano, puntoDentroLimites, type SimulatorCandidatos } from '../../domain/simulator'
 
 interface RefugePickerProps {
   candidates: SimulatorCandidatos
@@ -41,34 +41,39 @@ export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, on
     if (!container) return
     let instance: MapLibreMap
     try {
-      instance = new MapLibreMap({ container, style: STYLE_URL, center: [-80.72, -0.954], zoom: 12, maxBounds: paddedBounds(mapAreaBounds(latest.current.candidates)), renderWorldCopies: false, attributionControl: { compact: true } })
+      const bounds = latest.current.candidates.limitesJugables
+      instance = new MapLibreMap({ container, style: STYLE_URL, center: [-80.72, -0.954], zoom: 12, maxBounds: bounds, renderWorldCopies: false, attributionControl: { compact: true } })
     } catch { setNotice('Este dispositivo no pudo inicializar el mapa WebGL.'); return }
     mapRef.current = instance
     instance.once('load', () => {
-      const { nodos, calles } = latest.current.candidates
-      const byId = new Map(nodos.map((n) => [n.id, n]))
+      const { nodos, calles, limitesJugables } = latest.current.candidates
+      const nodosEnZona = nodos.filter((n) => puntoDentroLimites(n, limitesJugables))
+      const nodosPorId = new Map(nodosEnZona.map((n) => [n.id, n]))
       const lines = calles.flatMap((c) => {
-        const a = byId.get(c.origen), b = byId.get(c.destino)
+        const a = nodosPorId.get(c.origen), b = nodosPorId.get(c.destino)
         return a && b ? [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[a.lng, a.lat], [b.lng, b.lat]] } }] : []
       })
-      const points = nodos.map((n) => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [n.lng, n.lat] } }))
+      const points = nodosEnZona.map((n) => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [n.lng, n.lat] } }))
+      instance.addSource('picker-outside-mask', { type: 'geojson', data: outsideBoundsMask(limitesJugables) as never })
       instance.addSource('picker-streets', { type: 'geojson', data: { type: 'FeatureCollection', features: lines } as never })
       instance.addSource('picker-nodes', { type: 'geojson', data: { type: 'FeatureCollection', features: points } as never })
       instance.addSource('picker-refuges', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
+      instance.addLayer({ id: 'picker-outside-mask', source: 'picker-outside-mask', type: 'fill', paint: { 'fill-color': '#111722', 'fill-opacity': 0.94 } })
       // Trazo igual al de CityMap: calles finas y tenues que se marcan al acercar el zoom.
       instance.addLayer({ id: 'picker-streets', source: 'picker-streets', type: 'line', paint: { 'line-color': '#85b9d2', 'line-opacity': 0.28, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.2, 16, 3.2] } })
       instance.addLayer({ id: 'picker-nodes', source: 'picker-nodes', type: 'circle', paint: { 'circle-radius': 2, 'circle-color': '#b0e2d2', 'circle-opacity': 0.6 } })
       instance.addLayer({ id: 'picker-refuges', source: 'picker-refuges', type: 'circle', paint: { 'circle-radius': 9, 'circle-color': '#47cf91', 'circle-stroke-color': '#f4f7fc', 'circle-stroke-width': 1.5 } })
       instance.addLayer({ id: 'picker-refuge-labels', source: 'picker-refuges', type: 'symbol', layout: { 'text-field': ['get', 'label'], 'text-size': 10, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true }, paint: { 'text-color': '#0b1a14' } })
-      const bounds = mapAreaBounds({ nodos })
-      if (bounds) instance.fitBounds(bounds, { padding: 16, duration: 0 })
+      instance.fitBounds(limitesJugables, { padding: 16, duration: 0 })
       setReady(true)
     })
     instance.on('click', (event) => {
       const { candidates: data, onPick: pick, disabled: locked } = latest.current
       if (locked) return
-      const nodo = nodoMasCercano({ lat: event.lngLat.lat, lng: event.lngLat.lng }, data.nodos)
-      if (!nodo) setNotice('Haz clic más cerca de una intersección')
+      const punto = { lat: event.lngLat.lat, lng: event.lngLat.lng }
+      if (!puntoDentroLimites(punto, data.limitesJugables)) { setNotice('Ese punto está fuera de la zona jugable de Manta.'); return }
+      const nodo = nodoMasCercano(punto, data.nodos, 150, data.limitesJugables)
+      if (!nodo) setNotice('Haz clic más cerca de una intersección dentro de la zona jugable')
       else if (!pick(nodo.id)) setNotice('Ese nodo ya es un refugio o no queda ranura libre; elige un chip para reemplazar.')
       else setNotice(null)
     })

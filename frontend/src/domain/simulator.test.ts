@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { nodoMasCercano, refugiosParaEnviar, parseSimulatorCandidatos, parseSimulatorStatus } from './simulator'
+import { nodoMasCercano, puntoDentroLimites, refugiosParaEnviar, parseSimulatorCandidatos, parseSimulatorStatus } from './simulator'
 
 const estado = {
   habilitado: true, estado: 'activa', runId: 'run', turno: 5, escenario: 'mixto',
@@ -29,12 +29,21 @@ describe('parseSimulatorStatus', () => {
 })
 
 describe('parseSimulatorCandidatos', () => {
-  const valido = { version: 'v1', nodos: [{ id: 'N-1', lat: -0.95, lng: -80.72 }], calles: [{ origen: 'N-1', destino: 'N-2' }], refugios: [{ id: 'R-01', nodo: 'N-1' }] }
+  const valido = { version: 'v1', limitesJugables: [[-80.807, -1.082], [-80.621, -0.897]], nodos: [{ id: 'N-1', lat: -0.95, lng: -80.72 }], calles: [{ origen: 'N-1', destino: 'N-2' }], refugios: [{ id: 'R-01', nodo: 'N-1' }] }
   it('acepta una forma válida', () => expect(parseSimulatorCandidatos(valido)).toEqual(valido))
   it('rechaza formas inválidas', () => {
     expect(() => parseSimulatorCandidatos(null)).toThrow()
     expect(() => parseSimulatorCandidatos({ ...valido, nodos: [{ id: 'N-1', lat: 'x', lng: 1 }] })).toThrow()
     expect(() => parseSimulatorCandidatos({ ...valido, calles: undefined })).toThrow()
+    expect(() => parseSimulatorCandidatos({ ...valido, limitesJugables: [[0, 2], [1, 1]] })).toThrow()
+  })
+})
+
+describe('límite al colocar refugios', () => {
+  const limites = [[-80.807, -1.082], [-80.621, -0.897]] as [[number, number], [number, number]]
+  it('incluye bordes y rechaza puntos externos aunque estén cerca de una calle', () => {
+    expect(puntoDentroLimites({ lng: -80.807, lat: -1.082 }, limites)).toBe(true)
+    expect(nodoMasCercano({ lng: -80.808, lat: -0.95 }, [{ id: 'fuera', lng: -80.808, lat: -0.95 }], 150, limites)).toBeNull()
   })
 })
 

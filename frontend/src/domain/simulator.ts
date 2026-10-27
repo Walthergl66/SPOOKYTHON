@@ -26,13 +26,14 @@ export type SimulatorSetup = {
 export type CandidatoNodo = { id: string; lat: number; lng: number }
 export type CandidatoCalle = { origen: string; destino: string }
 export type RefugioAsignado = { id: string; nodo: string }
+export type LimitesJugables = [[number, number], [number, number]]
 /** Refugios a enviar: solo al iniciar o reiniciar y con todos los slots colocados; si no, undefined (mapa por defecto). */
 export function refugiosParaEnviar(action: SimulatorAction, slots: (string | null)[], ids: readonly string[]): RefugioAsignado[] | undefined {
   if ((action !== 'iniciar' && action !== 'reiniciar') || slots.length !== ids.length || !slots.every((nodo) => nodo !== null)) return undefined
   return ids.map((id, i) => ({ id, nodo: slots[i] as string }))
 }
 
-export type SimulatorCandidatos = { version: string; nodos: CandidatoNodo[]; calles: CandidatoCalle[]; refugios: RefugioAsignado[] }
+export type SimulatorCandidatos = { version: string; limitesJugables: LimitesJugables; nodos: CandidatoNodo[]; calles: CandidatoCalle[]; refugios: RefugioAsignado[] }
 
 /** El backend no expone el control local de demo (HTTP 404). */
 export class SimulatorUnavailableError extends Error {}
@@ -68,7 +69,11 @@ export function parseSimulatorStatus(value: unknown): SimulatorStatus {
 
 export function parseSimulatorCandidatos(value: unknown): SimulatorCandidatos {
   const invalid = () => new Error('El backend devolvió candidatos de refugio incompletos.')
-  if (!isRecord(value) || typeof value.version !== 'string' || !Array.isArray(value.nodos) || !Array.isArray(value.calles) || !Array.isArray(value.refugios)) throw invalid()
+  if (!isRecord(value) || typeof value.version !== 'string' || !Array.isArray(value.limitesJugables) || value.limitesJugables.length !== 2 || !Array.isArray(value.nodos) || !Array.isArray(value.calles) || !Array.isArray(value.refugios)) throw invalid()
+  const limites = value.limitesJugables
+  if (!limites.every((p) => Array.isArray(p) && p.length === 2 && p.every((coordinate) => typeof coordinate === 'number' && Number.isFinite(coordinate)))) throw invalid()
+  const limitesJugables = limites as LimitesJugables
+  if (limitesJugables[0][0] >= limitesJugables[1][0] || limitesJugables[0][1] >= limitesJugables[1][1]) throw invalid()
   const nodos = value.nodos.map((n): CandidatoNodo => {
     if (!isRecord(n) || typeof n.id !== 'string' || !Number.isFinite(n.lat) || !Number.isFinite(n.lng)) throw invalid()
     return { id: n.id, lat: n.lat as number, lng: n.lng as number }
@@ -81,16 +86,23 @@ export function parseSimulatorCandidatos(value: unknown): SimulatorCandidatos {
     if (!isRecord(r) || typeof r.id !== 'string' || typeof r.nodo !== 'string') throw invalid()
     return { id: r.id, nodo: r.nodo }
   })
-  return { version: value.version, nodos, calles, refugios }
+  return { version: value.version, limitesJugables, nodos, calles, refugios }
 }
 
-/** Nodo más cercano al punto dentro de `maxMetros` (equirectangular, suficiente a escala urbana) o null. */
-export function nodoMasCercano(punto: { lat: number; lng: number }, nodos: CandidatoNodo[], maxMetros = 150): CandidatoNodo | null {
+/** Indica si una coordenada pertenece a la caja jugable inclusiva. */
+export function puntoDentroLimites(punto: { lat: number; lng: number }, limites: LimitesJugables): boolean {
+  return limites[0][0] <= punto.lng && punto.lng <= limites[1][0] && limites[0][1] <= punto.lat && punto.lat <= limites[1][1]
+}
+
+/** Nodo más cercano dentro del radio y, si se indica, de la caja jugable. */
+export function nodoMasCercano(punto: { lat: number; lng: number }, nodos: CandidatoNodo[], maxMetros = 150, limites?: LimitesJugables): CandidatoNodo | null {
+  if (limites && !puntoDentroLimites(punto, limites)) return null
   const mPorGrado = 111_320
   const cosLat = Math.cos((punto.lat * Math.PI) / 180)
   let mejor: CandidatoNodo | null = null
   let mejorDist = maxMetros
   for (const nodo of nodos) {
+    if (limites && !puntoDentroLimites(nodo, limites)) continue
     const d = Math.hypot((nodo.lat - punto.lat) * mPorGrado, (nodo.lng - punto.lng) * mPorGrado * cosLat)
     if (d <= mejorDist) { mejor = nodo; mejorDist = d }
   }

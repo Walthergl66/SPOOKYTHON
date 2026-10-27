@@ -14,10 +14,32 @@ from navira.application.decidir_paso import SolicitudPaso
 from navira.api.seguridad import ConfiguracionSeguridad
 from navira.demo import crear_contexto_demo
 from navira.domain.modelo import EstadoZombie
+from navira.domain.mapa import Refugio, cargar_mapa
 from navira.main import _crear_app_configurada, crear_app, crear_app_demo
 
 
 class DemoBootstrapTests(unittest.TestCase):
+    def test_partida_manta_recorta_apariciones_y_rechaza_refugio_fuera_de_zona(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        mapa_original = cargar_mapa(ruta_manta)
+        fuera = next(
+            nodo for nodo in mapa_original.nodos
+            if nodo.lng < -80.807 or nodo.lng > -80.621 or nodo.lat < -1.082 or nodo.lat > -0.897
+        )
+        contexto = crear_contexto_demo(ruta_manta, semilla=88, cantidad_sobrevivientes=20, intensidad="alta")
+        partida = contexto.snapshots.obtener(contexto.run_id).partida
+
+        self.assertTrue(all(nodo in contexto.grafo.mapa.nodos_por_id for nodo in (s.nodo for s in partida.sobrevivientes)))
+        self.assertTrue(all(nodo in contexto.grafo.mapa.nodos_por_id for nodo in (z.nodo for z in partida.zombies)))
+        self.assertTrue(all(calle.origen in contexto.grafo.mapa.nodos_por_id and calle.destino in contexto.grafo.mapa.nodos_por_id for calle in contexto.grafo.mapa.calles))
+        with self.assertRaisesRegex(ValueError, "no existe en el mapa"):
+            crear_contexto_demo(ruta_manta, refugios=(
+                Refugio("R-01", fuera.id),
+                Refugio("R-02", mapa_original.refugios[1].nodo),
+                Refugio("R-03", mapa_original.refugios[2].nodo),
+                Refugio("R-04", mapa_original.refugios[3].nodo),
+            ))
+
     def test_intensidad_alta_distribuye_composicion_sintetica_por_la_ciudad(self) -> None:
         ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
         contexto = crear_contexto_demo(

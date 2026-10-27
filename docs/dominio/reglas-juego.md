@@ -18,6 +18,7 @@ Estado: implementación parcial del grafo, movimiento zombie, cierres programado
 | R-10 | Mordida por cruzar la misma calle en sentido opuesto | Comparar cada tramo zombie, incluido el primero de un corredor. |
 | R-11 | `/paso` responde en menos de 500 ms | Un timeout deja quieto al sobreviviente; no equivale a estar a salvo. |
 | R-12 | Cada sobreviviente puede dirigirse al refugio elegido por el equipo | La política de rutas selecciona destino; llegada y mordida respetan el orden acordado. |
+| R-13 | En partidas sobre el fixture Manta, la caja urbana aprobada es el límite del mundo jugable | Nodos, calles, apariciones, amenazas, rutas y refugios personalizados quedan dentro; una calle que cruce el borde se excluye. El fixture fuente ampliado no se modifica. |
 
 ## Decisiones de diseño
 

@@ -51,6 +51,7 @@ El código implementa `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimient
 6. Ningún consumidor observable recibe datos privados por compartir tipos o referencias mutables.
 7. La aleatoriedad pertenece al estado privado versionado de la partida; nunca se consulta desde planificadores o proyecciones.
 8. Repetir una decisión HTTP para la misma instantánea conserva su respuesta, aunque la trayectoria del mundo cambie en turnos posteriores.
+9. Para mapas Manta, el grafo de la partida es una proyección acotada: ninguna intención, aparición o ruta puede referir un nodo exterior; el recorte es inmutable y el mapa fuente permanece separado.
 
 ## Casos de uso, repositorios y eventos
 

@@ -32,7 +32,7 @@ describe('getSimulatorStatus', () => {
 
 describe('getSimulatorCandidates', () => {
   it('parsea candidatos válidos', async () => {
-    stub(new Response(JSON.stringify({ version: 'v', nodos: [], calles: [], refugios: [] }), { status: 200 }))
+    stub(new Response(JSON.stringify({ version: 'v', limitesJugables: [[-80.807, -1.082], [-80.621, -0.897]], nodos: [], calles: [], refugios: [] }), { status: 200 }))
     expect((await getSimulatorCandidates()).version).toBe('v')
   })
   it('traduce 404 a SimulatorUnavailableError', async () => {

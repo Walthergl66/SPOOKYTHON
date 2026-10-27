@@ -15,6 +15,30 @@ LOCAL = ConfiguracionSeguridad(control_demo_local=True)
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
+    def test_selector_publica_limites_y_rechaza_refugio_fuera_del_recorte(self) -> None:
+        mapa_path = RAIZ / "data/maps/manta-hackathon-v1.json"
+        control = crear_control_simulador_demo(str(mapa_path))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        outside = next(nodo for nodo in control.mapa.nodos if nodo.lng < -80.807)
+        refugios = [
+            {"id": f"R-0{i}", "nodo": outside.id if i == 1 else control.mapa.refugios[i - 1].nodo}
+            for i in range(1, 5)
+        ]
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43122)) as client:
+            headers = {"Origin": "http://localhost:5180"}
+            candidatos = client.get("/demo/simulador/candidatos", headers=headers)
+            inicio = client.post(
+                "/demo/simulador/iniciar",
+                headers=headers,
+                json={"escenario": "libre", "sobrevivientes": 1, "refugios": refugios},
+            )
+            control.cerrar()
+
+        self.assertEqual(candidatos.status_code, 200)
+        self.assertEqual(candidatos.json()["limitesJugables"], [[-80.807, -1.082], [-80.621, -0.897]])
+        self.assertIn(outside.id, {n["id"] for n in candidatos.json()["nodos"]})
+        self.assertEqual(inicio.status_code, 422)
+
     def test_inicio_usa_dificultad_media_si_no_se_envia_configuracion(self) -> None:
         control = crear_control_simulador_demo(
             str(RAIZ / "data/maps/manta-hackathon-v1.json")

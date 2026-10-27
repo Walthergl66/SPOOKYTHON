@@ -27,7 +27,7 @@ from navira.api.seguridad import (
     fijar_cookie_sesion,
     origen_mismo_host,
 )
-from navira.domain.mapa import Refugio, nodos_elegibles_refugio
+from navira.domain.mapa import MANTA_PLAYABLE_BOUNDS, Refugio, nodos_elegibles_refugio
 from navira.application.consultar_panel import ConsultarPanel, PanelNoDisponible
 from navira.application.juego import (
     AparicionNoDisponible,
@@ -87,6 +87,7 @@ async def candidatos_demo_simulador(request: Request) -> dict[str, object]:
         raise HTTPException(status_code=404, detail="El control local no expone un mapa.")
     return {
         "version": mapa.version,
+        "limitesJugables": MANTA_PLAYABLE_BOUNDS,
         "nodos": [{"id": n.id, "lat": n.lat, "lng": n.lng} for n in nodos_elegibles_refugio(mapa)],
         "calles": [{"origen": c.origen, "destino": c.destino} for c in mapa.calles],
         "refugios": [{"id": r.id, "nodo": r.nodo} for r in mapa.refugios],

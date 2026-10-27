@@ -2,6 +2,22 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-077 — Ventana urbana como límite jugable
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: el usuario pidió que fuera del límite establecido ya no se pudiera jugar. Confirmó que el selector de refugios también debía limitarse al recorte.
+- Especificación/trazabilidad: PRD-01, TRD-15, SPEC-008 CA-008-07/09/10, ADR-030, P4-04 y T-39.
+- Motivo: CAM-076 restringía cámara y máscara, pero las partidas seguían usando el grafo OSM amplio y el selector admitía nodos exteriores.
+- Resultado: el dominio crea una proyección Manta con nodos internos y calles cuyos dos extremos son internos; inicio, zombies, rutas y movimientos usan solo ese subgrafo. Los refugios personalizados exteriores se rechazan antes de iniciar (HTTP 422). `GET /demo/simulador/candidatos` informa los límites y el frontend encuadra, dibuja y permite elegir únicamente dentro de ellos. El fixture fuente OSM no se modifica.
+- Alcance medido: fuente 44.590 nodos/94.146 sentidos; proyección 35.518 nodos/75.548 sentidos. La caja `[-80.807, -1.082]`–`[-80.621, -0.897]` es aproximada y no constituye un límite municipal certificado.
+- Archivos: dominio `mapa.py`, ensamblaje `demo.py`, API de candidatos, tests de mapa/demo/control, dominio HTTP del frontend y `RefugePicker`; PRD/TRD, mapa, datos, SPEC-008, ADR-030, T-39, módulos, plan, estado y este registro.
+- Verificación: `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_mapa_manta tests.test_demo tests.test_control_simulador_demo -v` (25 pruebas correctas); `cd frontend && npm test -- --run` (80 pruebas en siete archivos); `cd frontend && npm run build`; `python3 backend/scripts/check_docs.py` (106 Markdown/108 archivos); `python3 backend/scripts/check_sdd.py` (ocho SPEC); regresiones SDD (8/8) y `git diff --check` correctos. La primera suite frontend detectó un fixture HTTP sin `limitesJugables`; se actualizó y la repetición pasó.
+- Prueba local: el selector abrió visualmente encuadrado en el recorte. La API se reinició para cargar la regla, perdiéndose la ronda volátil anterior del turno 147; luego se inició una nueva partida. `GET /panel/mapa` devolvió 35.518 nodos; snapshot observado con 20 sobrevivientes/159 zombies y cero actores referidos fuera del mapa. Run activo en turno 13 al actualizar estado.
+- Pendientes: probar un clic real para colocar refugio dentro/fuera; medir payload/cadencia objetivo; auditar calles/cobertura OSM y el fallback del proveedor/WebGL.
+- Estado real: implementación, pruebas automatizadas, validadores y mapa en partida local verificados; colocación interactiva puntual pendiente. Evidencia: [reporte CAM-077](../calidad/resultados/limite-jugable-cam077.md).
+- Siguiente paso: continuar P4-04 con prueba controlada del fallback WebGL/proveedor y medición del payload en entorno objetivo.
+- Commit individual en `master`: `5790135 feat: confine Manta gameplay to urban bounds`; no se publicó a remoto.
+
 ## CAM-076 — Enfocar el mapa principal a la ventana urbana de referencia
 
 - Fecha: 2026-10-27, Ecuador continental.

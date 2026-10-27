@@ -17,6 +17,8 @@ Una partida tiene un modo fijo y un `runId`. Cambiar de modo inicia otra partida
 
 Ambos modos comparten grafo, reloj, zombies, cierres, reglas de mordida y refugios. El cliente anima posiciones confirmadas; no determina colisiones ni acelera el mundo. Los dormidos permanecen ocultos para jugador, panel y motor mientras corresponda.
 
+En la demo del mapa Manta, ambos modos comparten el subgrafo urbano limitado por la caja de [ADR-030](../arquitectura/decisiones/0030-ventana-urbana-zona-jugable.md); no aparecen personajes o amenazas fuera de ella. Los mapas sintéticos conservan sus propios límites.
+
 ## Pantalla inicial prevista
 
 - «Simulador»: observar partida; iniciar o configurar requiere rol operador.

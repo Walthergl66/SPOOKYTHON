@@ -26,6 +26,14 @@ class TipoCalle(StrEnum):
     PUENTE = "puente"
 
 
+# Window requested for the main map. Coordinates are WGS84 as (west/south,
+# east/north); this is a local playable box, not an official boundary.
+MANTA_PLAYABLE_BOUNDS: tuple[tuple[float, float], tuple[float, float]] = (
+    (-80.807, -1.082),
+    (-80.621, -0.897),
+)
+
+
 @dataclass(frozen=True, slots=True)
 class Nodo:
     """Intersección de la ciudad expresada en coordenadas WGS84."""
@@ -218,6 +226,37 @@ def nodos_elegibles_refugio(mapa: Mapa) -> tuple[Nodo, ...]:
     con_entrada = {calle.destino for calle in mapa.calles}
     con_salida = {calle.origen for calle in mapa.calles}
     return tuple(nodo for nodo in mapa.nodos if nodo.id in con_entrada and nodo.id in con_salida)
+
+
+def recortar_mapa(mapa: Mapa, limites: tuple[tuple[float, float], tuple[float, float]]) -> Mapa:
+    """Proyecta el mapa a una caja WGS84 para que fuera de ella no haya juego.
+
+    Conserva nodos dentro de los límites inclusivos y solo calles cuyos dos
+    extremos permanecen en la zona; así rutas, apariciones y movimientos del
+    grafo no pueden cruzar el borde. Todos los refugios base deben quedar
+    dentro para evitar crear una partida sin destinos válidos.
+    """
+
+    (oeste, sur), (este, norte) = limites
+    if not (oeste < este and sur < norte):
+        raise ValueError("Los límites jugables deben formar una caja geográfica válida.")
+    nodos = tuple(
+        nodo for nodo in mapa.nodos
+        if oeste <= nodo.lng <= este and sur <= nodo.lat <= norte
+    )
+    ids = {nodo.id for nodo in nodos}
+    refugios_fuera = tuple(refugio.id for refugio in mapa.refugios if refugio.nodo not in ids)
+    if refugios_fuera:
+        raise ValueError(f"El recorte dejaría refugios fuera de la zona jugable: {', '.join(refugios_fuera)}.")
+    if not nodos:
+        raise ValueError("El recorte no contiene nodos jugables.")
+    calles = tuple(calle for calle in mapa.calles if calle.origen in ids and calle.destino in ids)
+    return Mapa(
+        version=f"{mapa.version}+zona-urbana",
+        nodos=nodos,
+        calles=calles,
+        refugios=mapa.refugios,
+    )
 
 
 def mapa_con_refugios(mapa: Mapa, refugios: tuple[Refugio, ...]) -> Mapa:

@@ -2,11 +2,11 @@
 
 ID: SPEC-008
 Estado: implementada
-Requisitos: PRD-01, PRD-04, TRD-07, TRD-09
+Requisitos: PRD-01, PRD-04, TRD-07, TRD-09, TRD-15
 Tareas: P1-01, P4-04
-Pruebas: T-27, T-38
-Cambio: CAM-076
-Evidencia: [ventana urbana CAM-076](../../calidad/resultados/ventana-urbana-cam076.md), [cobertura CAM-073](../../calidad/resultados/cobertura-manta-cam073.md), [margen de navegación CAM-074](../../calidad/resultados/margen-navegacion-5km-cam074.md), [mar visible CAM-075](../../calidad/resultados/mar-visible-cam075.md), [reporte CAM-051](../../calidad/resultados/mapa-cartografico-3d-cam051.md), [reporte CAM-052](../../calidad/resultados/movimiento-mapa-cam052.md), [reporte CAM-053](../../calidad/resultados/limites-mapa-cam053.md), [reporte CAM-054](../../calidad/resultados/ampliacion-mapa-cam054.md), [reporte CAM-055](../../calidad/resultados/ampliacion-50km-mapa-cam055.md), [reporte CAM-056](../../calidad/resultados/reduccion-15km-mapa-cam056.md)
+Pruebas: T-27, T-38, T-39
+Cambio: CAM-077
+Evidencia: [límite jugable CAM-077](../../calidad/resultados/limite-jugable-cam077.md), [ventana urbana CAM-076](../../calidad/resultados/ventana-urbana-cam076.md), [cobertura CAM-073](../../calidad/resultados/cobertura-manta-cam073.md), [margen de navegación CAM-074](../../calidad/resultados/margen-navegacion-5km-cam074.md), [mar visible CAM-075](../../calidad/resultados/mar-visible-cam075.md), [reportes CAM-051..056](../../calidad/resultados/)
 
 ## Objetivo y alcance
 
@@ -24,16 +24,17 @@ La primera implementación ofrece estilo oscuro, edificios extruidos cuando los 
 | CA-008-04 | Falla del proveedor/WebGL muestra un estado comprensible y la interfaz mantiene disponibles las estadísticas/control; el build de frontend compila. | T-27 |
 | CA-008-05 | Cuando llega un snapshot de una partida en curso, cada actor cuya posición confirmada cambió se interpola por el trayecto entre nodos; respeta movimiento reducido y nunca modifica el estado del servidor. | T-27 |
 | CA-008-06 | Al iniciar o reiniciar una partida, la cámara abre en la ventana urbana enfocada, ofrece «Vista urbana»/«Ver partida» y el WebSocket sigue el nuevo `runId` sin exigir recarga o actualización manual. «Ver partida» enfoca actores y refugios visibles dentro de esa ventana. | T-27 |
-| CA-008-07 | La cámara y la máscara del mapa principal se limitan al recorte aproximado `[-80.807, -1.082]`–`[-80.621, -0.897]`, estimado desde la referencia visual. «Vista urbana» lo encuadra y el pan/zoom no muestra tiles fuera. El grafo y la simulación conservan la extensión jugable completa del fixture; el recorte no es límite administrativo. | T-27, T-38 |
+| CA-008-07 | La cámara y la máscara del mapa principal se limitan al recorte aproximado `[-80.807, -1.082]`–`[-80.621, -0.897]`, estimado desde la referencia visual. «Vista urbana» lo encuadra y el pan/zoom no muestra tiles fuera. Este recorte es además el límite jugable definido en CA-008-10, no una frontera administrativa. | T-27, T-39 |
 | CA-008-08 | El grafo del servidor cubre la zona jugable ampliada con calles públicas OSM conectadas en dirección a refugios; las fuentes/versión quedan identificadas y la cobertura/latencia tienen límites explícitos. | T-38 |
-| CA-008-09 | La cartografía del proveedor permanece visible dentro del viewport urbano fijado y los polígonos/canales de agua se distinguen del terreno; el recorte opaco comienza fuera de esa ventana. No se altera el grafo ni el límite de movimiento de actores. | T-27 |
+| CA-008-09 | La cartografía del proveedor permanece visible dentro del viewport urbano fijado y los polígonos/canales de agua se distinguen del terreno; el recorte opaco comienza fuera de esa ventana. La vista y el selector usan el mismo recorte. | T-27, T-39 |
+| CA-008-10 | En partidas Manta, el grafo de juego excluye nodos fuera de la ventana y calles que crucen su borde; inicios, zombies, rutas y movimientos solo usan ese subgrafo. El selector encuadra la misma ventana, solo ofrece nodos internos y el endpoint rechaza una selección exterior. El fixture fuente ampliado permanece intacto. | T-39 |
 
 ## Plan y límites
 
-Ampliación autorizada CAM-073: PRD-01/04, P1-01/P4-04 y T-07/T-27. Plan: (1) ampliar el exportador y generar la red pública conectada en la envolvente del cantón documentada en `mapa-manta.md`; (2) mostrar toda esa extensión con controles «Todo Manta» y «Ver partida», compartir encuadre con el selector de refugios y evitar reconstruir índices de calles por fotograma; (3) verificar cobertura fuera del recorte anterior, caminos dirigidos hacia refugios, arranque/avance y render; (4) registrar conteos, fuentes, limitaciones y evidencia. Esta ampliación no certifica que OSM contenga todas las calles existentes.
+CAM-073 amplió el fixture fuente a la envolvente OSM. CAM-077 fija la ventana estimada por el usuario como zona jugable y recorta el mapa de partida; conserva el fixture original para candidatos/contexto, pero el selector solo muestra y acepta ubicaciones dentro de la ventana. Plan de CAM-077: derivar el subgrafo en dominio, validar refugios y movimientos contra él, exponer límites al selector, probar recorte y rechazo de puntos externos y registrar la evidencia. El cambio no certifica la caja como polígono municipal ni OSM como red exhaustiva.
 
 P4-04 sustituye la capa SVG por un componente MapLibre. Las transiciones visuales usan snapshots públicos consecutivos; no cambian el dominio, el contrato de `/paso`, el grafo versionado ni el estado autoritativo. El WebSocket vuelve a resolver el proveedor del panel durante la observación para seguir una partida local recién creada. Para calzar rutas curvas con la red real, una evolución debe conservar geometría completa OSM en el grafo público; esta versión conecta los nodos seleccionados con las coordenadas actuales.
 
-CAM-073 amplía el grafo jugable a la envolvente OSM documentada en [mapa-manta.md](../../dominio/mapa-manta.md). CAM-074/075 añaden margen a la vista completa y hacen visible el agua. CAM-076 atiende la referencia más reciente del usuario: el mapa principal inicia en una ventana urbana de unos 20 km, fija cámara/pan/máscara a ella y conserva el grafo jugable ampliado. La estimación no equivale a límite administrativo; los tiles siguen dependiendo de OpenFreeMap. «Ver partida» enfoca los actores/refugios dentro de la ventana y usa el viewport completo si no hay entidades visibles allí.
+CAM-073 conserva la envolvente OSM amplia en el artefacto fuente. CAM-076 introdujo la ventana urbana visual; CAM-077 la aplica también a la zona jugable derivada y al selector. La caja se estima desde la referencia del usuario y no equivale a límite administrativo; los tiles siguen dependiendo de OpenFreeMap.
 
 Validación CAM-073: suite de datos/cobertura, equivalencia del campo de rutas con Dijkstra, `npm test`, compilación, validadores documentales y recorrido local con partida iniciada; véase el [reporte](../../calidad/resultados/cobertura-manta-cam073.md). Quedan por medir el payload/cadencia objetivo y la falla controlada de tiles/WebGL; por eso esta SPEC permanece parcial. No hay herramienta de test de componentes configurada. El mapa depende de conexión a internet para tiles; el uso público de OpenFreeMap no tiene SLA. El fixture de rutas sigue siendo parcial, y los refugios no están certificados para amenaza sísmica.

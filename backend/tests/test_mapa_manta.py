@@ -5,7 +5,7 @@ import unittest
 from collections import defaultdict, deque
 from pathlib import Path
 
-from navira.domain.mapa import Grafo, cargar_mapa
+from navira.domain.mapa import MANTA_PLAYABLE_BOUNDS, Grafo, cargar_mapa, recortar_mapa
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +14,18 @@ FUENTES = ROOT / "data/maps/manta-hackathon-v1.fuentes.json"
 
 
 class MapaMantaTests(unittest.TestCase):
+    def test_recorte_urbano_es_limite_topologico_del_mapa_jugable(self) -> None:
+        original = cargar_mapa(MAPA)
+        mapa = recortar_mapa(original, MANTA_PLAYABLE_BOUNDS)
+        (oeste, sur), (este, norte) = MANTA_PLAYABLE_BOUNDS
+        ids = set(mapa.nodos_por_id)
+
+        self.assertLess(len(mapa.nodos), len(original.nodos))
+        self.assertTrue(all(oeste <= nodo.lng <= este and sur <= nodo.lat <= norte for nodo in mapa.nodos))
+        self.assertTrue(all(calle.origen in ids and calle.destino in ids for calle in mapa.calles))
+        self.assertEqual({refugio.id for refugio in mapa.refugios}, {"R-01", "R-02", "R-03", "R-04"})
+        self.assertTrue(all(refugio.nodo in ids for refugio in mapa.refugios))
+
     def test_fixture_tiene_caja_completa_cuatro_refugios_y_rutas_dirigidas(self) -> None:
         mapa = cargar_mapa(MAPA)
         mapa.validar_mapa_evaluacion(minimo_nodos=40000)

@@ -11,7 +11,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../../producto/PRD.m
 | [SPEC-005](SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Lista con dependencias externas pendientes. |
 | [SPEC-006](SPEC-006-metodologia.md) | Incorporación PRD/TRD/ODDD/SDD | Ver estado y evidencia en su archivo. |
 | [SPEC-007](SPEC-007-panel-operador-local.md) | Panel de simulación con control local de demo | Verificado localmente con CAM-050 y T-26; no habilita operaciones públicas ni despliegue. |
-| [SPEC-008](SPEC-008-mapa-cartografico-3d.md) | Mapa cartográfico real con vista 3D y actores animados | CAM-073 amplía grafo y vista a la envolvente jugable de Manta (T-38); CAM-051/052/053/054/055/056 cubren cartografía y fichas. Cobertura OSM, tamaño de payload y fallback de proveedor todavía requieren verificación adicional. |
+| [SPEC-008](SPEC-008-mapa-cartografico-3d.md) | Mapa cartográfico real con vista 3D y actores animados | CAM-077 convierte la ventana urbana en límite jugable y restringe el selector (T-39). El fixture fuente OSM ampliado se conserva; cobertura, payload y fallback de proveedor mantienen sus límites documentados. |
 
 ## Uso
 

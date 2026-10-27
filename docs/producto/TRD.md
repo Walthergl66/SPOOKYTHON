@@ -60,6 +60,10 @@ Aplicar [SDD](../metodo/SDD.md), leer `docs/` antes de editar y enlazar requisit
 
 En cada decisión, la política temporal minimiza primero la exposición estimada en la ventana observable; turnos, costo de calle y desempates solo se consideran después. Comparar resultados reales en orden lexicográfico `(mordidos ascendente, evacuados descendente)`. La predicción usa solo amenazas observables, respeta el presupuesto configurado y recurre a Dijkstra si no obtiene una ruta completa; `/paso` conserva su contrato. Reportar puntaje estimado y conteo real como conceptos separados. Detalle: [algoritmos](../arquitectura/algoritmos.md), [ADR-018](../arquitectura/decisiones/0018-politica-riesgo-prioritario.md).
 
+### TRD-15 — Límite geográfico jugable
+
+Las partidas sobre el fixture Manta usan una proyección del grafo dentro de la caja WGS84 `[-80.807, -1.082]`–`[-80.621, -0.897]`. Solo nodos internos y calles con ambos extremos internos participan en apariciones, amenazas, rutas y movimiento. El selector de refugios enfoca esa misma caja y solo acepta nodos internos; el backend vuelve a validar la selección antes de iniciar. El fixture OSM fuente completo no se modifica. Esta ventana estimada no es frontera administrativa. Detalle: [SPEC-008](../metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md), [ADR-030](../arquitectura/decisiones/0030-ventana-urbana-zona-jugable.md).
+
 ## Riesgos y aceptación
 
 Reglas ambiguas, región, TLS y sesiones siguen en [pendientes](../seguimiento/pendientes.md); ningún documento nuevo las cierra por inferencia. Verificar con las especificaciones y pruebas correspondientes antes de marcar implementado/verificado. Una discrepancia con código se investiga, no se resuelve adaptando silenciosamente los requisitos al fallo.

@@ -52,6 +52,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-36 | Límite del pronóstico | En una ruta más larga que el pronóstico, la exposición de turnos no modelados aporta cero al puntaje; no se repite la última condición conocida. |
 | T-37 | Dificultad inicial de la demo | Sin intensidad en el control HTTP local, la demo usa intensidad media; eventos y selector siguen configurables. |
 | T-38 | Mapa jugable ampliado de Manta | Conteos concuerdan con sidecar, sectores urbanos/rurales seleccionados tienen red cercana, cada nodo incluido puede alcanzar refugio en dirección de calles, el campo de rutas compartido coincide con Dijkstra bajo cierres/bloqueos y el margen de navegación equivale a 5 km por lado sin alterar el grafo. Cobertura muestreada no es auditoría calle por calle ni límite municipal. |
+| T-39 | Recorte jugable y selección de refugios | El mapa de partida Manta conserva solo nodos dentro de `[-80.807, -1.082]`–`[-80.621, -0.897]` y calles cuyos extremos están dentro; apariciones/zombies no salen del subgrafo, el selector usa la misma caja y una colocación exterior recibe HTTP 422. El fixture fuente OSM permanece intacto. La caja no es frontera municipal certificada. |
 
 ## Medición de la prueba de fuego
 
@@ -75,7 +76,7 @@ Ejecutar Dijkstra y política mejorada sobre los mismos escenarios, versiones y 
 
 ### T-27 — Cartografía 3D del panel
 
-`cd frontend && npm run build` verifica compilación MapLibre/TypeScript. En navegador con red, revisar que el estilo vectorial de Manta cargue, se vea la atribución, el agua sea distinguible y los tiles estén visibles dentro de la ventana urbana de CAM-076; la máscara opaca debe empezar fuera de ella. También revisar los controles 2D/3D, la cámara y el pan/zoom limitados al viewport, «Vista urbana»/«Ver partida», los actores visibles, sus transiciones y el seguimiento de un nuevo run; comprobar que el grafo mantiene la extensión completa aunque algunos actores queden fuera de la ventana y revisar el estado de error del proveedor/WebGL. CAM-052 agrega una regresión WebSocket de cambio de contexto; CAM-053 comprueba el recorte en 2D/3D y al arrastrar; CAM-074 verifica el margen de 5 km de la vista histórica completa; CAM-075 inspecciona el contraste del mar; CAM-076 verifica cotas y recorte geométrico con pruebas frontend y revisión visual. La comprobación visual no certifica proveedor, alturas, precisión cartográfica, frontera municipal ni seguridad de evacuación. El error controlado del proveedor/WebGL sigue pendiente.
+`cd frontend && npm run build` verifica compilación MapLibre/TypeScript. En navegador con red, revisar estilo/atribución, agua, controles 2D/3D, cámara/pan/zoom, «Vista urbana»/«Ver partida», fichas y animaciones. T-39 verifica por código que partidas Manta usan el subgrafo recortado y el selector solo acepta nodos interiores, incluido rechazo backend exterior. T-38 mantiene evidencia del fixture fuente ampliado. CAM-052 cubre cambio WebSocket; CAM-053 el recorte visual; CAM-074/075 la vista histórica y contraste del mar; CAM-076 la ventana visual; CAM-077 el límite jugable. La comprobación no certifica cobertura OSM, frontera municipal ni seguridad de evacuación. El error controlado del proveedor/WebGL sigue pendiente.
 
 ### T-28/T-29 — Intensidad e incidentes sintéticos
 

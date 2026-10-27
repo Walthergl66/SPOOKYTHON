@@ -16,7 +16,7 @@ from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
 from navira.application.decidir_paso import DecidirPaso, ProveedorMapas
 from navira.application.snapshots import RepositorioSnapshots
-from navira.domain.mapa import Grafo, Refugio, cargar_mapa, mapa_con_refugios
+from navira.domain.mapa import Grafo, Refugio, MANTA_PLAYABLE_BOUNDS, cargar_mapa, mapa_con_refugios, recortar_mapa
 from navira.domain.modelo import (
     EstadoPartida,
     FaseTurno,
@@ -85,6 +85,10 @@ def crear_contexto_demo(
     if not isinstance(modo, ModoPartida):
         raise ValueError("El modo demo no es válido.")
     mapa = cargar_mapa(ruta_mapa)
+    # Only the real Manta OSM fixture uses the urban play area. Synthetic maps
+    # remain unchanged so unit fixtures and local scenarios keep their topology.
+    if mapa.version.startswith("manta-osm-"):
+        mapa = recortar_mapa(mapa, MANTA_PLAYABLE_BOUNDS)
     if refugios is not None:
         mapa = mapa_con_refugios(mapa, tuple(refugios))
     grafo = Grafo(mapa)
