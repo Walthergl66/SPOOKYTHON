@@ -2,6 +2,16 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-092 — Mantener rutas recomendadas visibles durante Reto
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: al hacer clic en un habitante del modo Reto, la interfaz no mostraba su ruta recomendada.
+- Causa: `ConsultarPanel` solo agregaba `rutasPrevistas` en fase `decisiones`; el simulador automático entrega snapshots también en `preparacion`, `zombies_movidos` y `resuelta`, por lo que la ficha quedaba sin ruta la mayor parte del ciclo.
+- Resultado: el modo automático proyecta ruta vigente para cada sobreviviente activo en todas las fases; el juego humano conserva la restricción a `decisiones`. La selección sigue siendo local y no modifica órdenes/movimientos.
+- Archivos: `backend/src/navira/application/consultar_panel.py`, `backend/tests/test_panel.py`, contrato API, flujo espectador, módulo backend/frontend, T-45, contexto, estado e historial.
+- Validación: `tests.test_panel` 16/16; la prueba nueva confirma rutas para todos los sobrevivientes activos en fase `resuelta`, y otra confirma que juego humano no publica rutas fuera de `decisiones`. Frontend 90/90, build correcto con advertencia existente del chunk de mapa >500 kB, compileall, `check_docs.py`, `check_sdd.py`, pruebas del validador SDD 8/8 y `git diff --check` pasan. Smoke del endpoint por Vite: R1 respondió 200 y el panel entregó 20 rutas para 20 sobrevivientes en fases `resuelta` en turnos 0 y 1.
+- Commit de código: `5aeedf4`; documentación en commit separado posterior.
+
 ## CAM-091 — Mostrar un único contador acumulado de mordidos
 
 - Fecha: 2026-10-27, Ecuador continental.
