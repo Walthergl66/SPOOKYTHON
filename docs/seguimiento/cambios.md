@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-073 — Mapa y zona jugable ampliados a la envolvente de Manta
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de ampliar a Manta completa también la zona jugable, incluyendo parroquias rurales.
+- Especificación/trazabilidad: [PRD-01/04](../producto/PRD.md), [SPEC-001](../metodo/especificaciones/SPEC-001-mundo-simulacion.md), [SPEC-008](../metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md), P1-01/P4-04, T-27/T-38. Decisión [ADR-029](../arquitectura/decisiones/0029-cobertura-y-rutas-mapa-ampliado.md).
+- Resultado: extracción Overpass en caja con margen de la relación OSM 112895: 44.590 nodos y 94.146 sentidos dirigidos; 581 nodos desconectados de los refugios excluidos. Artefacto `manta-osm-df97a2f3a878`, hash de respuesta documentado. Mantiene geometría OSM por vértice y sentidos únicos. La caja no es límite municipal certificado.
+- Simulación: campo inverso Dijkstra temporal compartido para cohortes con el mismo snapshot/objetivo/cierres/amenazas. Reutiliza búsquedas de rutas, mantiene filtros de peligros visibles, desempate y el escape desde nodo de origen bloqueado. Pronóstico reutiliza objetivo de corredor durante el mismo horizonte; grafo memoiza listas de entradas por cierre y evita construir tuplas completas para nodos sin filtros.
+- Frontend: encuadre derivado del grafo más área mínima documentada, controles «Todo Manta»/«Ver partida», máscara y límites de navegación ampliados, selector de refugios compartido, memoización de índice de coordenadas/capas. Nota de producto aclara fuente OSM y uso exclusivo de simulación.
+- Pruebas: suite backend completa anterior a GZip: 206 correcta (219,1 s); tras el middleware GZip, 7 pruebas HTTP focalizadas correctas; cobertura del fixture 3, exportador 2 y campo inverso 10 pruebas focalizadas correctas; frontend 75 pruebas en siete archivos; build correcto con advertencia de chunk de mapa de 1,065 kB (289 kB gzip); `check_docs.py` 101 Markdown/103 archivos, `check_sdd.py` ocho SPEC y `git diff --check` correctos. Estos validadores no miden rendimiento.
+- Prueba local visual: partida nueva en el frontend recibió `manta-osm-df97a2f3a878`, mostró cuatro refugios, 20 sobrevivientes y controles de encuadre; backend `/panel/mapa` devolvió 20.082.198 bytes por loopback. Simulador pausado después de inspección. La compresión y latencia del payload no se midieron; pendiente prueba de tamaño/cadencia objetivo y proveedor/WebGL.
+- Limitaciones: datos/calles de OSM no exhaustivos, muestra de sectores no es auditoría, paths sólo para red pública etiquetada; no se verifica estado real, rutas vigentes, seguridad sísmica ni frontera municipal. Tiles externos requieren internet. No equivale a despliegue.
+- Archivos principales: exportador y fixture/sidecar en `backend/`; planificador, pronóstico y adyacencia en `backend/src/navira/`; `frontend/src/features/map/` y `frontend/src/app/App.tsx`; PRD/contexto, docs del mapa, SPEC-001/008, T-38, ADR-029, estado y evidencia.
+- Siguiente paso: medir transferencia comprimida, memoria y cadencia del mapa ampliado; evaluar la falla del proveedor y auditar cobertura vial/peatonal. Ver [estado actual](estado-actual.md).
+
 ## CAM-072 — Lote 4: F4 (`useGameSession` y reglas puras de juego) y F5 (`mapFeatures.ts`)
 
 - Fecha: 2026-10-26, Ecuador continental.

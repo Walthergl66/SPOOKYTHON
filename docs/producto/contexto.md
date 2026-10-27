@@ -1,6 +1,6 @@
 # Contexto del proyecto
 
-Estado: alcance acordado y diseño pendiente de implementación. Fecha: 2026-10-26.
+Estado: alcance acordado; implementación local parcial. Fecha: 2026-10-27.
 
 ## Problema y objetivo
 
@@ -19,6 +19,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 7. Al incorporar lugares seguros en Manta, Ecuador, considerar amenazas de tsunami y terremoto.
 8. El simulador debe tener variación aleatoria de mundo y decisiones permitidas; cambios pequeños en semilla, estado o eventos pueden desviar la evolución posterior.
 9. Aclaración del usuario (2026-10-26): el objetivo de la evacuación es encontrar rutas que minimicen las personas mordidas durante la simulación; las evacuaciones se consideran después de ese objetivo primario.
+10. Solicitud del usuario (2026-10-27): ampliar todo el mapa y la zona jugable a Manta completa, más allá de la caja urbana anterior; se confirma incluir las zonas rurales y permitir aparición/rutas de juego en esa área.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 
@@ -47,4 +48,4 @@ Entrega: miércoles 28 de octubre de 2026 a las 10:00, Ecuador continental (UTC�
 
 ## Límites actuales
 
-Existe implementación parcial y un fixture geográfico de Manta para simulación; el mapa aún no tiene cobertura exhaustiva validada, y no existe despliegue verificado. Las aclaraciones de reglas, cobertura del mapa y seguridad sísmica están en [pendientes](../seguimiento/pendientes.md). El trabajo debe empezar desde [estado actual](../seguimiento/estado-actual.md), sin asumir que los archivos previstos en el plan ya existen.
+Existe una extracción OSM ampliada para simulación en una envolvente con margen del cantón (CAM-073); no certifica que estén todas las calles ni el límite municipal exacto, y no existe despliegue verificado. Las aclaraciones de reglas, cobertura del mapa y seguridad sísmica están en [pendientes](../seguimiento/pendientes.md). El trabajo debe empezar desde [estado actual](../seguimiento/estado-actual.md), sin asumir que los archivos previstos en el plan ya existen.

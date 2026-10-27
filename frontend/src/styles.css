@@ -288,7 +288,8 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .maplibre-stage, .maplibre-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .maplibre-stage { isolation: isolate; background: #172238; }
 .maplibre-canvas { z-index: 0; }
-.map-view-toggle { position: absolute; z-index: 4; top: 13px; left: 14px; min-width: 72px; border: 1px solid rgba(215, 228, 245, .3); border-radius: 5px; padding: 8px 10px; background: rgba(20, 31, 49, .92); color: #eaf2fc; font: 600 12px 'DM Sans', sans-serif; cursor: pointer; }
+.map-view-controls { position: absolute; z-index: 4; top: 13px; left: 14px; right: 50px; display: flex; flex-wrap: wrap; gap: 6px; }
+.map-view-toggle { min-width: 72px; border: 1px solid rgba(215, 228, 245, .3); border-radius: 5px; padding: 8px 10px; background: rgba(20, 31, 49, .92); color: #eaf2fc; font: 600 12px 'DM Sans', sans-serif; cursor: pointer; }
 .map-view-toggle:hover:not(:disabled) { border-color: #60cdd2; background: #223752; }
 .map-view-toggle:focus-visible { outline: 2px solid #60cdd2; outline-offset: 2px; }
 .map-view-toggle:disabled { opacity: .6; cursor: wait; }

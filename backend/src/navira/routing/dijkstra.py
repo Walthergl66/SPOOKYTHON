@@ -203,3 +203,70 @@ def seleccionar_refugio(
         key=lambda ruta: (ruta.costo_ponderado_m, ruta.refugio_id, tuple(calle.id for calle in ruta.calles)),
         default=None,
     )
+
+
+class RutasHaciaRefugios:
+    """Campo inverso reutilizable para muchos orígenes del mismo snapshot.
+
+    Costo positivo, dirección y filtros son los mismos de Dijkstra. Se propaga
+    desde todos los refugios y se desempata por ID del refugio y primera calle.
+    Los siguientes tramos se reconstruyen desde el campo, sin copiar caminos
+    completos por cada nodo de una red grande. El consumidor limita su vida a
+    una combinación de mapa, cierres y peligros observables del turno.
+    """
+
+    def __init__(
+        self, grafo: Grafo, *, refugio_objetivo: str | None = None,
+        aristas_cerradas: frozenset[str] = frozenset(),
+        segmentos_cerrados: frozenset[str] = frozenset(),
+        nodos_bloqueados: frozenset[str] = frozenset(),
+        perfil: PerfilCostos = PerfilCostos(),
+    ) -> None:
+        self._grafo = grafo
+        refugios = tuple(r for r in grafo.mapa.refugios if refugio_objetivo is None or r.id == refugio_objetivo)
+        if refugio_objetivo is not None and not refugios:
+            raise KeyError(f"Refugio desconocido: {refugio_objetivo}.")
+        self._destinos = {r.id: r.nodo for r in refugios}
+        self._mejor: dict[str, tuple[float, str]] = {}
+        self._siguiente: dict[str, Calle] = {}
+        entrantes: dict[str, list[Calle]] = {}
+        for calle in grafo.mapa.calles:
+            if calle.id not in aristas_cerradas and calle.segmento_id not in segmentos_cerrados:
+                entrantes.setdefault(calle.destino, []).append(calle)
+        pendientes: list[tuple[float, str, str]] = []
+        for refugio in sorted(refugios, key=lambda r: r.id):
+            etiqueta = (0.0, refugio.id)
+            if refugio.nodo not in self._mejor:
+                self._mejor[refugio.nodo] = etiqueta
+                heapq.heappush(pendientes, (*etiqueta, refugio.nodo))
+        while pendientes:
+            costo, refugio_id, nodo = heapq.heappop(pendientes)
+            if self._mejor.get(nodo) != (costo, refugio_id) or nodo in nodos_bloqueados:
+                continue
+            for calle in entrantes.get(nodo, ()):
+                candidato = (costo + perfil.costo(calle), refugio_id)
+                previo = self._mejor.get(calle.origen)
+                if previo is None or candidato < previo:
+                    self._mejor[calle.origen] = candidato
+                    self._siguiente[calle.origen] = calle
+                    heapq.heappush(pendientes, (*candidato, calle.origen))
+                elif candidato == previo and calle.id < self._siguiente[calle.origen].id:
+                    self._siguiente[calle.origen] = calle
+
+    def desde(self, origen: str) -> Ruta | None:
+        """Reconstruye una ruta legal; permite salir de un origen bloqueado."""
+
+        if origen not in self._grafo.mapa.nodos_por_id:
+            raise KeyError(f"Nodo de origen desconocido: {origen}.")
+        etiqueta = self._mejor.get(origen)
+        if etiqueta is None:
+            return None
+        costo, refugio_id = etiqueta
+        destino = self._destinos[refugio_id]
+        calles: list[Calle] = []
+        nodo = origen
+        while nodo != destino:
+            calle = self._siguiente[nodo]
+            calles.append(calle)
+            nodo = calle.destino
+        return Ruta(origen, destino, tuple(calles), costo, refugio_id)

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import unittest
 
+from navira.demo import MAPA_MANTA_POR_DEFECTO
+from navira.domain.mapa import cargar_mapa
 from navira.evaluacion_local import ejecutar_evaluacion_local
 
 
@@ -19,7 +21,7 @@ class EvaluacionLocalTests(unittest.TestCase):
         )
 
         self.assertEqual(reporte["medicion"], "exploratoria_local_http_loopback")
-        self.assertEqual(reporte["mapaVersion"], "manta-osm-9ad9f078e0a9")
+        self.assertEqual(reporte["mapaVersion"], cargar_mapa(MAPA_MANTA_POR_DEFECTO).version)
         self.assertEqual(reporte["turnosEjecutados"], 2)
         self.assertEqual(reporte["solicitudes"], 40)
         self.assertEqual(reporte["fallidas"], 0)

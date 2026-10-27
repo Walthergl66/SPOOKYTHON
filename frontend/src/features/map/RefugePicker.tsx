@@ -3,7 +3,8 @@ import { Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl'
 import type { GeoJSONSource } from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { nodoMasCercano, type CandidatoNodo, type SimulatorCandidatos } from '../../domain/simulator'
+import { mapAreaBounds, paddedBounds } from './mapArea'
+import { nodoMasCercano, type SimulatorCandidatos } from '../../domain/simulator'
 
 interface RefugePickerProps {
   candidates: SimulatorCandidatos
@@ -23,13 +24,6 @@ const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfr
 
 setWorkerUrl(mapWorkerUrl)
 
-/** Caja [[oeste, sur], [este, norte]] que cubren los nodos; null si no hay nodos. */
-function limitesDeNodos(nodos: CandidatoNodo[]): [[number, number], [number, number]] | null {
-  if (nodos.length === 0) return null
-  const lngs = nodos.map((n) => n.lng), lats = nodos.map((n) => n.lat)
-  return [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]]
-}
-
 /** Selector de refugios: el mapa es decorativo; el estado accesible está en el texto y los chips. */
 export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, onPlace, onClear, onReset, lockedReason = null }: RefugePickerProps) {
   const disabled = lockedReason !== null
@@ -47,7 +41,7 @@ export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, on
     if (!container) return
     let instance: MapLibreMap
     try {
-      instance = new MapLibreMap({ container, style: STYLE_URL, center: [-80.72, -0.954], zoom: 12, renderWorldCopies: false, attributionControl: { compact: true } })
+      instance = new MapLibreMap({ container, style: STYLE_URL, center: [-80.72, -0.954], zoom: 12, maxBounds: paddedBounds(mapAreaBounds(latest.current.candidates)), renderWorldCopies: false, attributionControl: { compact: true } })
     } catch { setNotice('Este dispositivo no pudo inicializar el mapa WebGL.'); return }
     mapRef.current = instance
     instance.once('load', () => {
@@ -66,7 +60,7 @@ export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, on
       instance.addLayer({ id: 'picker-nodes', source: 'picker-nodes', type: 'circle', paint: { 'circle-radius': 2, 'circle-color': '#b0e2d2', 'circle-opacity': 0.6 } })
       instance.addLayer({ id: 'picker-refuges', source: 'picker-refuges', type: 'circle', paint: { 'circle-radius': 9, 'circle-color': '#47cf91', 'circle-stroke-color': '#f4f7fc', 'circle-stroke-width': 1.5 } })
       instance.addLayer({ id: 'picker-refuge-labels', source: 'picker-refuges', type: 'symbol', layout: { 'text-field': ['get', 'label'], 'text-size': 10, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true }, paint: { 'text-color': '#0b1a14' } })
-      const bounds = limitesDeNodos(nodos)
+      const bounds = mapAreaBounds({ nodos })
       if (bounds) instance.fitBounds(bounds, { padding: 16, duration: 0 })
       setReady(true)
     })

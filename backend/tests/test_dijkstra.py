@@ -1,9 +1,10 @@
 """Pruebas de rutas dirigidas, ponderadas y con peligros visibles."""
 
 import unittest
+import random
 
 from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle
-from navira.routing.dijkstra import PerfilCostos, encontrar_ruta, seleccionar_refugio
+from navira.routing.dijkstra import PerfilCostos, RutasHaciaRefugios, encontrar_ruta, seleccionar_refugio
 
 
 def grafo_rutas(distancia_directa: float = 10.0) -> Grafo:
@@ -80,6 +81,44 @@ class DijkstraTests(unittest.TestCase):
             PerfilCostos({TipoCalle.CALLE: 0.0})
         with self.assertRaises(KeyError):
             encontrar_ruta(self.grafo, "N-x", "N-2")
+
+
+class CampoRutasTests(unittest.TestCase):
+    def test_equivale_a_busqueda_directa_con_cierres_peligros_y_objetivos(self) -> None:
+        for opciones in (
+            {}, {"nodos_bloqueados": frozenset({"N-1"})},
+            {"nodos_bloqueados": frozenset({"N-2"})},
+            {"aristas_cerradas": frozenset({"E-01"})},
+            {"segmentos_cerrados": frozenset({"S-A", "S-D"})},
+            {"refugio_objetivo": "R-Z"},
+            {"perfil": PerfilCostos({TipoCalle.CALLEJON: 3})},
+        ):
+            grafo = grafo_rutas(12)
+            campo = RutasHaciaRefugios(grafo, **opciones)
+            for nodo in grafo.mapa.nodos:
+                with self.subTest(opciones=opciones, origen=nodo.id):
+                    self.assertEqual(campo.desde(nodo.id), seleccionar_refugio(grafo, nodo.id, **opciones))
+
+    def test_equivale_en_redes_dirigidas_con_empates_y_ciclos(self) -> None:
+        rng = random.Random(73)
+        nodos = tuple(Nodo(str(i), 0, i / 100) for i in range(15))
+        for caso in range(25):
+            calles = tuple(
+                Calle(f"e-{a.id}-{b.id}", f"s-{a.id}-{b.id}", a.id, b.id, rng.randint(1, 8), TipoCalle.CALLE, 30)
+                for a in nodos for b in nodos if a != b and rng.random() < 0.15
+            )
+            grafo = Grafo(Mapa(str(caso), nodos, calles, (Refugio("R-A", "0"), Refugio("R-B", "14"))))
+            opciones = {"nodos_bloqueados": frozenset(rng.sample([n.id for n in nodos], 3))}
+            campo = RutasHaciaRefugios(grafo, **opciones)
+            for nodo in nodos:
+                with self.subTest(caso=caso, origen=nodo.id):
+                    self.assertEqual(campo.desde(nodo.id), seleccionar_refugio(grafo, nodo.id, **opciones))
+
+    def test_rechaza_origen_y_refugio_desconocidos(self) -> None:
+        with self.assertRaises(KeyError):
+            RutasHaciaRefugios(grafo_rutas(), refugio_objetivo="desconocido")
+        with self.assertRaises(KeyError):
+            RutasHaciaRefugios(grafo_rutas()).desde("desconocido")
 
 
 if __name__ == "__main__":

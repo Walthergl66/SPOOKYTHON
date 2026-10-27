@@ -4,15 +4,42 @@
     "atribucion": "© OpenStreetMap contributors",
     "licencia": "Open Database License (ODbL)",
     "url": "https://www.openstreetmap.org/copyright",
-    "api": "https://api.openstreetmap.org/api/0.6/map",
-    "obtenido_utc": "2026-10-27T04:42:20+00:00",
-    "caja_wgs84": {
-      "sur": -0.967,
-      "oeste": -80.755,
-      "norte": -0.935,
-      "este": -80.675
+    "api": "https://overpass-api.de/api/interpreter",
+    "generado_utc": "2026-10-27T11:31:33+00:00",
+    "datos_osm_hasta": "2026-10-27T11:26:34Z",
+    "respuesta_sha256": "d9a455055ca3e49d630ad0d2fc7fd4a6256fc5002af99d3e497acf82e0b778f8",
+    "referencia_extension": "https://www.openstreetmap.org/relation/112895",
+    "alcance": "envolvente del cantón Manta con margen; puede incluir sectores vecinos",
+    "tipos_viales": [
+      "living_street",
+      "motorway",
+      "motorway_link",
+      "primary",
+      "primary_link",
+      "residential",
+      "road",
+      "secondary",
+      "secondary_link",
+      "service",
+      "tertiary",
+      "tertiary_link",
+      "trunk",
+      "trunk_link",
+      "unclassified"
+    ],
+    "conteos": {
+      "nodos": 44590,
+      "sentidos": 94146,
+      "refugios": 4,
+      "nodos_sin_ruta_a_refugio": 581
     },
-    "simplificacion": "se conservan intersecciones, extremos de vías y anclas de refugios; costo/distancia por geometría OSM",
+    "caja_wgs84": {
+      "sur": -1.14,
+      "oeste": -80.92,
+      "norte": -0.92,
+      "este": -80.65
+    },
+    "simplificacion": "sin contracción: se conservan intersecciones y vértices de geometría; cada tramo sigue nodos consecutivos OSM",
     "velocidades": "maxspeed OSM si está etiquetado; en otro caso valores de juego documentados en el exportador"
   },
   "refugios": [

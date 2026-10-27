@@ -6,6 +6,7 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from starlette.middleware.gzip import GZipMiddleware
 
 from navira.adapters.ordenes_memoria import RepositorioOrdenesMemoria
 from navira.adapters.sesiones_memoria import RepositorioSesionesMemoria
@@ -60,6 +61,8 @@ def crear_app(
         version="0.1.0",
         lifespan=lifespan,
     )
+    # The full OSM graph is large; compress JSON map projections for browsers.
+    aplicacion.add_middleware(GZipMiddleware, minimum_size=1000)
     aplicacion.state.seguridad = seguridad or ConfiguracionSeguridad()
     aplicacion.state.decidir_paso = servicio_decision or DecidirPasoEspera()
     aplicacion.state.consultar_panel = consultar_panel

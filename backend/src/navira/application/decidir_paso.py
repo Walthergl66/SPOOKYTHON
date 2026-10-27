@@ -15,7 +15,7 @@ from navira.domain.modelo import (
     Sobreviviente,
     TipoZombie,
 )
-from navira.routing.dijkstra import PerfilCostos, Ruta, seleccionar_refugio
+from navira.routing.dijkstra import PerfilCostos, Ruta, RutasHaciaRefugios, seleccionar_refugio
 from navira.routing.prediccion import (
     SobrevivienteObservable,
     ZombieObservable,
@@ -219,18 +219,24 @@ class DecidirPaso:
         orden = sorted(activos, key=lambda s: (-riesgo_actual.get(s.nodo, 0.0), s.id))
         asignados: dict[str, tuple[str, ...]] = {}
         ocupacion: dict[str, int] = {}
-        rutas_restantes: dict[tuple[str, str | None], Ruta | None] = {}
-        for survivor in orden:
-            candidatos: dict[str, tuple[float, float, tuple[str, ...]]] = {}
-            clave_base = (survivor.nodo, survivor.refugio_objetivo)
-            if clave_base not in rutas_restantes:
-                rutas_restantes[clave_base] = seleccionar_refugio(
-                    grafo, survivor.nodo, refugio_objetivo=survivor.refugio_objetivo,
-                    aristas_cerradas=actual.aristas_cerradas | actual.aristas_cruce_peligroso,
+        # At most one reverse search per target/filter set, shared by this
+        # cohort only. Current crossings must not contaminate future tails.
+        campos: dict[tuple[str | None, frozenset[str]], RutasHaciaRefugios] = {}
+
+        def ruta_desde(origen: str, objetivo: str | None, *, paso_actual: bool = False) -> Ruta | None:
+            cierres = actual.aristas_cerradas | actual.aristas_cruce_peligroso if paso_actual else actual.aristas_cerradas
+            clave = (objetivo, cierres)
+            if clave not in campos:
+                campos[clave] = RutasHaciaRefugios(
+                    grafo, refugio_objetivo=objetivo, aristas_cerradas=cierres,
                     segmentos_cerrados=actual.segmentos_cerrados,
                     nodos_bloqueados=actual.nodos_bloqueados, perfil=self._perfil,
                 )
-            ruta_base = rutas_restantes[clave_base]
+            return campos[clave].desde(origen)
+
+        for survivor in orden:
+            candidatos: dict[str, tuple[float, float, tuple[str, ...]]] = {}
+            ruta_base = ruta_desde(survivor.nodo, survivor.refugio_objetivo, paso_actual=True)
             destino_base = None
             if ruta_base is not None and ruta_base.calles:
                 trayecto_base = (survivor.nodo, *(c.destino for c in ruta_base.calles))
@@ -251,15 +257,7 @@ class DecidirPaso:
             ):
                 if calle.destino in actual.nodos_bloqueados:
                     continue
-                clave_ruta = (calle.destino, survivor.refugio_objetivo)
-                if clave_ruta not in rutas_restantes:
-                    rutas_restantes[clave_ruta] = seleccionar_refugio(
-                        grafo, calle.destino, refugio_objetivo=survivor.refugio_objetivo,
-                        aristas_cerradas=actual.aristas_cerradas,
-                        segmentos_cerrados=actual.segmentos_cerrados,
-                        nodos_bloqueados=actual.nodos_bloqueados, perfil=self._perfil,
-                    )
-                ruta = rutas_restantes[clave_ruta]
+                ruta = ruta_desde(calle.destino, survivor.refugio_objetivo)
                 if ruta is None:
                     continue
                 camino = (survivor.nodo, calle.destino, *(c.destino for c in ruta.calles))

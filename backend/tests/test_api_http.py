@@ -12,6 +12,15 @@ class ApiHttpTests(unittest.TestCase):
     def setUp(self) -> None:
         self.cliente = TestClient(crear_app(seguridad=ConfiguracionSeguridad(api_key="clave-de-prueba")))
 
+    def test_comprime_respuestas_json_grandes_para_el_mapa(self) -> None:
+        respuesta = TestClient(crear_app()).get(
+            "/openapi.json", headers={"Accept-Encoding": "gzip"}
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.headers.get("content-encoding"), "gzip")
+        self.assertIn("/salud", respuesta.json()["paths"])
+
     def test_salud_es_publica_y_minima(self) -> None:
         respuesta = self.cliente.get("/salud")
         self.assertEqual(respuesta.status_code, 200)

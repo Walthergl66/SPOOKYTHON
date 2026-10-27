@@ -10,7 +10,7 @@ Ayudar a sobrevivientes a llegar a refugios sobre un mapa que cambia durante el 
 
 ### PRD-01 — Mundo reconocible y refugios
 
-Disponer de un grafo de Manta de unas 300 intersecciones, calles con distancia/tipo y cuatro refugios. Conservar conectividad entre los barrios del reto y representar cierres. Cuando el escenario modele evacuación por tsunami, preferir destinos señalados como “Zona Segura” por la fuente oficial; no inferir seguridad ante sismos sin evaluación específica. Prioridad: obligatoria por reto. Detalle: [reglas](../dominio/reglas-juego.md), [datos](../dominio/datos.md) y [dataset Manta](../dominio/mapa-manta.md).
+Disponer de un grafo de Manta con calles dirigidas, distancia/tipo y cuatro refugios. La base del reto considera unas 300 intersecciones; el usuario solicitó además ampliar la zona jugable a toda la envolvente del cantón, incluidas parroquias rurales. La cobertura OSM debe ser suficientemente conectada para ubicar habitantes y calcular rutas en esa zona. La envolvente con margen no certifica límite municipal ni integridad de cada calle. Conservar conectividad entre los barrios del reto y representar cierres. Cuando el escenario modele evacuación por tsunami, preferir destinos señalados como “Zona Segura” por la fuente oficial; no inferir seguridad ante sismos sin evaluación específica. Prioridad: obligatoria por reto. Detalle: [reglas](../dominio/reglas-juego.md), [datos](../dominio/datos.md) y [dataset Manta](../dominio/mapa-manta.md).
 
 ### PRD-02 — Simulación dinámica y reglas comunes
 

@@ -5,31 +5,64 @@ type Geometry = { type: 'Point'; coordinates: Position } | { type: 'LineString';
 type Feature = { type: 'Feature'; id?: string; geometry: Geometry; properties: Record<string, string | number | boolean> }
 export type FeatureCollection = { type: 'FeatureCollection'; features: Feature[] }
 
-/** Projects only public panel data into local GeoJSON; no gameplay state is sent to the tile provider. */
-export function createSimulationFeatures(map: PanelMap, state: PanelState, selectedSurvivorId: string | undefined): FeatureCollection {
-  const pointById = new Map(map.nodos.map((node) => [node.id, [node.lng, node.lat] as Position]))
+/** Reused across animation frames; the graph is immutable for a map version. */
+export function indexMapPositions(map: PanelMap): ReadonlyMap<string, Position> {
+  return new Map(map.nodos.map((node) => [node.id, [node.lng, node.lat] as Position]))
+}
+
+type MapStreet = PanelMap['calles'][number]
+type StreetIndex = { bySegment: Map<string, MapStreet>; byEdge: Map<string, MapStreet> }
+const streetIndexes = new WeakMap<PanelMap, StreetIndex>()
+
+/** Builds each OSM segment once for the immutable map version; turns do not resend this GeoJSON. */
+export function createStreetFeatures(map: PanelMap, pointById = indexMapPositions(map)): FeatureCollection {
   const features: Feature[] = []
-  const blockedEdges = new Set(state.aristasBloqueadas ?? [])
-  const blockedSegments = new Set(state.segmentosBloqueados ?? [])
-  // Streets are undirected for display, so a closure on either directed edge marks the shared segment.
-  const streetsBySegment = new Map<string, typeof map.calles>()
-  for (const street of map.calles) {
-    const segment = streetsBySegment.get(street.segmentoId) ?? []
-    segment.push(street)
-    streetsBySegment.set(street.segmentoId, segment)
-  }
-  const seenSegments = new Set<string>()
-  for (const street of map.calles) {
-    if (seenSegments.has(street.segmentoId)) continue
+  for (const street of getStreetIndex(map).bySegment.values()) {
     const from = pointById.get(street.origen)
     const to = pointById.get(street.destino)
     if (!from || !to) continue
-    seenSegments.add(street.segmentoId)
-    const blocked = blockedSegments.has(street.segmentoId) || (streetsBySegment.get(street.segmentoId) ?? []).some(({ id }) => blockedEdges.has(id))
     features.push({
       type: 'Feature', id: street.segmentoId,
       geometry: { type: 'LineString', coordinates: [from, to] },
-      properties: { kind: 'street', blocked },
+      properties: { kind: 'street' },
+    })
+  }
+  return { type: 'FeatureCollection', features }
+}
+
+function getStreetIndex(map: PanelMap): StreetIndex {
+  const cached = streetIndexes.get(map)
+  if (cached) return cached
+  const bySegment = new Map<string, MapStreet>()
+  const byEdge = new Map<string, MapStreet>()
+  for (const street of map.calles) {
+    if (!bySegment.has(street.segmentoId)) bySegment.set(street.segmentoId, street)
+    byEdge.set(street.id, street)
+  }
+  const index = { bySegment, byEdge }
+  streetIndexes.set(map, index)
+  return index
+}
+
+/** Projects changing public panel data. Immutable OSM streets use createStreetFeatures once per map. */
+export function createSimulationFeatures(map: PanelMap, state: PanelState, selectedSurvivorId: string | undefined, pointById = indexMapPositions(map)): FeatureCollection {
+  const features: Feature[] = []
+  const blocked = new Set(state.segmentosBloqueados ?? [])
+  const streetIndex = getStreetIndex(map)
+  for (const edgeId of state.aristasBloqueadas ?? []) {
+    const street = streetIndex.byEdge.get(edgeId)
+    if (street) blocked.add(street.segmentoId)
+  }
+  for (const segmentId of blocked) {
+    const street = streetIndex.bySegment.get(segmentId)
+    if (!street) continue
+    const from = pointById.get(street.origen)
+    const to = pointById.get(street.destino)
+    if (!from || !to) continue
+    features.push({
+      type: 'Feature', id: `blocked-${segmentId}`,
+      geometry: { type: 'LineString', coordinates: [from, to] },
+      properties: { kind: 'blocked-street' },
     })
   }
   for (const route of state.rutasPrevistas ?? []) {
@@ -55,8 +88,7 @@ export interface AnimatedMovement {
 }
 
 /** Builds only public actor positions so animation frames never rebuild the street graph. */
-export function createActorFeatures(map: PanelMap, state: PanelState, overrides = new Map<string, Position>()): FeatureCollection {
-  const pointById = new Map(map.nodos.map((node) => [node.id, [node.lng, node.lat] as Position]))
+export function createActorFeatures(map: PanelMap, state: PanelState, overrides = new Map<string, Position>(), pointById = indexMapPositions(map)): FeatureCollection {
   const features: Feature[] = []
   for (const survivor of state.sobrevivientes ?? []) {
     if (survivor.estado !== 'activo') continue
@@ -71,9 +103,8 @@ export function createActorFeatures(map: PanelMap, state: PanelState, overrides 
 }
 
 /** Creates transitions only from consecutive public snapshots; it cannot commit or predict a move. */
-export function createMovementAnimations(map: PanelMap, previous: PanelState, current: PanelState, startedAt: number): AnimatedMovement[] {
+export function createMovementAnimations(map: PanelMap, previous: PanelState, current: PanelState, startedAt: number, pointById = indexMapPositions(map)): AnimatedMovement[] {
   if (!previous.runId || previous.runId !== current.runId || previous.snapshotVersion === current.snapshotVersion) return []
-  const pointById = new Map(map.nodos.map((node) => [node.id, [node.lng, node.lat] as Position]))
   const movements: AnimatedMovement[] = []
   const previousSurvivors = new Map((previous.sobrevivientes ?? []).map((actor) => [actor.id, actor]))
   for (const actor of current.sobrevivientes ?? []) {

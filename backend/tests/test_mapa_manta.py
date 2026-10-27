@@ -16,8 +16,10 @@ FUENTES = ROOT / "data/maps/manta-hackathon-v1.fuentes.json"
 class MapaMantaTests(unittest.TestCase):
     def test_fixture_tiene_caja_completa_cuatro_refugios_y_rutas_dirigidas(self) -> None:
         mapa = cargar_mapa(MAPA)
-        mapa.validar_mapa_evaluacion(minimo_nodos=8366)
-        self.assertEqual(len(mapa.nodos), 8366)
+        mapa.validar_mapa_evaluacion(minimo_nodos=40000)
+        fuentes = json.loads(FUENTES.read_text(encoding="utf-8"))
+        self.assertEqual(len(mapa.nodos), fuentes["osm"]["conteos"]["nodos"])
+        self.assertEqual(len(mapa.calles), fuentes["osm"]["conteos"]["sentidos"])
         self.assertEqual(len(mapa.refugios), 4)
         self.assertEqual(len({refugio.nodo for refugio in mapa.refugios}), 4)
 
@@ -36,6 +38,20 @@ class MapaMantaTests(unittest.TestCase):
         self.assertGreater(len(mapa.calles), 0)
         self.assertTrue(all(calle.distancia_m > 0 for calle in mapa.calles))
         self.assertIsInstance(Grafo(mapa).calles_desde(mapa.nodos[0].id), tuple)
+
+    def test_red_alcanza_sectores_urbanos_y_rurales_ampliados(self) -> None:
+        mapa = cargar_mapa(MAPA)
+        # Referencias aproximadas de cobertura, no ubicaciones de refugios.
+        for nombre, lat, lng in (
+            ("San Mateo", -0.963, -80.810),
+            ("Santa Marianita", -0.985, -80.854),
+            ("San Lorenzo", -1.064, -80.904),
+            ("Eloy Alfaro", -0.980, -80.690),
+            ("Aeropuerto", -0.950, -80.680),
+        ):
+            with self.subTest(sector=nombre):
+                distancia = min(((n.lat-lat)**2+(n.lng-lng)**2)**0.5 * 111000 for n in mapa.nodos)
+                self.assertLess(distancia, 1000)
 
     def test_fuentes_distinguen_evidencia_de_tsunami_y_sismo(self) -> None:
         fuentes = json.loads(FUENTES.read_text(encoding="utf-8"))

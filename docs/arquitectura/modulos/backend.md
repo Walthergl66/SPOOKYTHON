@@ -51,3 +51,6 @@ Las credenciales de sesión se validan en el borde y producen una identidad simp
 6. Consultar proyección y exportar resultado.
 
 No crear un servicio por entidad ni extraer microservicios inicialmente. Los comentarios y docstrings explican invariantes, unidades, fase del turno y motivos difíciles de deducir; no repiten cada línea. Un cambio de responsabilidad requiere actualizar este documento y el historial.
+
+
+CAM-073: el fixture `manta-hackathon-v1.json` contiene 44.590 nodos y 94.146 sentidos públicos de OSM. `RutasHaciaRefugios` crea un campo inverso temporal por snapshot, closures y objetivo para compartir rutas entre sobrevivientes; no persiste rutas entre turnos. `prediccion.py` reutiliza objetivos de corredor durante el mismo pronóstico. T-38 cubre equivalencia funcional. La serialización `GET /panel/mapa` fue aproximadamente 20 MB en HTTP loopback sin medir compresión; revisar límites de payload/cadencia antes del despliegue.

@@ -184,7 +184,7 @@ export function App() {
         <div><span className={`status-dot is-${health === 'online' ? 'live' : health === 'offline' ? 'stale' : 'connecting'}`} /><span>API</span><strong>{health === 'online' ? 'Disponible' : health === 'offline' ? 'Sin conexión' : 'Comprobando'}</strong></div>
         <div><span className={`status-dot is-${connection}`} /><span>Panel vivo</span><strong>{connectionLabel(connection)}</strong></div>
         <div><span className={`status-dot is-${simulatorIsRunning ? 'live' : 'idle'}`} /><span>Simulador</span><strong>{simulator?.estado ?? (simulatorUnavailable ? 'Control no habilitado' : 'Sin partida')}</strong></div>
-        <div className="system-disclaimer">Fixture parcial de Manta · no acredita seguridad ante sismos · no usar para emergencias reales</div>
+        <div className="system-disclaimer">Fixture vial OSM para simulación · cobertura y seguridad sísmica no certificadas · no usar para emergencias reales</div>
       </footer>
     </main>
   )

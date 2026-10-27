@@ -13,7 +13,6 @@ import hashlib
 import json
 import math
 import re
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -27,13 +26,12 @@ from typing import Iterable
 RAIZ = Path(__file__).resolve().parents[1]
 SALIDA_MAPA = RAIZ / "data/maps/manta-hackathon-v1.json"
 SALIDA_FUENTES = RAIZ / "data/maps/manta-hackathon-v1.fuentes.json"
-URL_OSM_API = "https://api.openstreetmap.org/api/0.6/map"
+URL_OSM_API = "https://overpass-api.de/api/interpreter"
 URL_GAD_MAPAS = "https://darf-manta.github.io/evacuacion-tsunami/"
 
-# Recorte urbano que cubre los corredores de Tarqui, Los Esteros, Jocay y
-# Barbasquillo nombrados en el reto. Las cajas pequeñas respetan el límite de
-# nodos de la API de edición de OSM; si una excede el límite se subdivide.
-CAJA = (-0.967, -80.755, -0.935, -80.675)  # sur, oeste, norte, este
+# Envolvente del cantón Manta (relación OSM 112895) con margen de extracción.
+# Fuente y límites: docs/dominio/mapa-manta.md. No es un polígono administrativo.
+CAJA = (-1.140, -80.920, -0.920, -80.650)  # sur, oeste, norte, este
 TIPOS_VIALES = {
     "motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link",
     "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified",
@@ -70,55 +68,48 @@ ZONAS_SEGURAS = (
 )
 
 
-def _consultar_caja(caja: tuple[float, float, float, float], profundidad: int = 0) -> ET.Element:
-    """Lee una caja OSM y la subdivide solo ante el límite de nodos del API."""
+def descargar_xml() -> bytes:
+    """Consulta solo vías elegibles y sus nodos mediante la API de lectura OSM.
 
-    sur, oeste, norte, este = caja
-    parametros = urllib.parse.urlencode({"bbox": f"{oeste},{sur},{este},{norte}"})
+    Una consulta acotada reemplaza las múltiples cajas del API de edición.
+    El artefacto se genera fuera del ciclo del juego; no se consulta OSM al jugar.
+    """
+
+    tipos = "|".join(sorted(TIPOS_VIALES))
+    caja = ",".join(str(valor) for valor in CAJA)
+    consulta = f'[out:xml][timeout:90];way[highway~"^({tipos})$"]({caja});(._;>;);out body;'
     solicitud = urllib.request.Request(
-        f"{URL_OSM_API}?{parametros}",
+        URL_OSM_API,
+        data=urllib.parse.urlencode({"data": consulta}).encode(),
         headers={"User-Agent": "NaviraHackathonMap/0.1 (https://github.com/Walthergl66/SPOOKYTHON)"},
     )
     try:
-        with urllib.request.urlopen(solicitud, timeout=60) as respuesta:
-            return ET.fromstring(respuesta.read())
-    except urllib.error.HTTPError as error:
-        cuerpo = error.read().decode("utf-8", "replace")
-        if error.code == 400 and "too many nodes" in cuerpo.lower() and profundidad < 5:
-            mitad_lon = (oeste + este) / 2
-            mitad_lat = (sur + norte) / 2
-            partes = (
-                (sur, oeste, mitad_lat, mitad_lon), (sur, mitad_lon, mitad_lat, este),
-                (mitad_lat, oeste, norte, mitad_lon), (mitad_lat, mitad_lon, norte, este),
-            )
-            raiz = ET.Element("osm")
-            for parte in partes:
-                for elemento in _consultar_caja(parte, profundidad + 1):
-                    raiz.append(elemento)
-                time.sleep(1)
-            return raiz
-        raise RuntimeError(f"OSM rechazó la caja {caja}: HTTP {error.code}: {cuerpo[:300]}") from error
+        with urllib.request.urlopen(solicitud, timeout=110) as respuesta:
+            return respuesta.read()
+    except (urllib.error.URLError, TimeoutError) as error:
+        raise RuntimeError(f"No se pudo descargar OSM: {error}") from error
 
 
-def descargar_elementos() -> tuple[dict[str, tuple[float, float]], dict[str, ET.Element]]:
-    """Descarga y deduplica los nodos/vías incluidos en la extensión urbana."""
+def leer_elementos(xml: bytes) -> tuple[dict[str, tuple[float, float]], dict[str, ET.Element]]:
+    """Valida una descarga completa y deduplica nodos/vías, también sin red."""
 
-    sur, oeste, norte, este = CAJA
-    mitad_lon, mitad_lat = (oeste + este) / 2, (sur + norte) / 2
-    cajas = (
-        (sur, oeste, mitad_lat, mitad_lon), (sur, mitad_lon, mitad_lat, este),
-        (mitad_lat, oeste, norte, mitad_lon), (mitad_lat, mitad_lon, norte, este),
-    )
-    nodos: dict[str, tuple[float, float]] = {}
-    vias: dict[str, ET.Element] = {}
-    for indice, caja in enumerate(cajas):
-        for elemento in _consultar_caja(caja):
-            if elemento.tag == "node":
-                nodos[elemento.attrib["id"]] = (float(elemento.attrib["lat"]), float(elemento.attrib["lon"]))
-            elif elemento.tag == "way" and elemento.find("tag[@k='highway']") is not None:
-                vias[elemento.attrib["id"]] = elemento
-        if indice < len(cajas) - 1:
-            time.sleep(1)
+    raiz = ET.fromstring(xml)
+    advertencia = raiz.find("remark")
+    if raiz.tag != "osm" or advertencia is not None:
+        detalle = advertencia.text if advertencia is not None else raiz.tag
+        raise RuntimeError(f"Respuesta OSM incompleta: {detalle}")
+    nodos = {
+        elemento.attrib["id"]: (float(elemento.attrib["lat"]), float(elemento.attrib["lon"]))
+        for elemento in raiz.findall("node")
+    }
+    vias = {
+        elemento.attrib["id"]: elemento for elemento in raiz.findall("way")
+        if elemento.find("tag[@k='highway']") is not None
+    }
+    if not nodos or not vias:
+        raise RuntimeError("OSM no devolvió nodos y vías para la extensión solicitada.")
+    if any(nd.attrib["ref"] not in nodos for via in vias.values() for nd in via.findall("nd")):
+        raise RuntimeError("Respuesta OSM incompleta: faltan nodos referenciados por vías.")
     return nodos, vias
 
 
@@ -163,7 +154,12 @@ def construir_grafo_completo(
     nodos_osm: dict[str, tuple[float, float]], vias_osm: dict[str, ET.Element],
     anclajes: dict[str, str] | None = None,
 ) -> tuple[dict[str, tuple[float, float]], list[dict[str, object]], dict[str, str]]:
-    """Contrae vértices de geometría y conserva intersecciones/terminaciones."""
+    """Conserva nodos OSM y cruces para seguir la geometría vial sin atajos.
+
+    El contrato actual de una calle contiene dos extremos, no una polilínea.
+    Por eso se retienen también los vértices de curva: eliminarlos dibujaría
+    cuerdas fuera de la vía y podría desconectar cruces de exactamente dos ways.
+    """
 
     vias: list[tuple[str, list[str], dict[str, str]]] = []
     formas: defaultdict[str, set[str]] = defaultdict(set)
@@ -204,7 +200,7 @@ def construir_grafo_completo(
         puntos = {r["id"]: (r["lat"], r["lng"]) for r in ZONAS_SEGURAS}
         anclas = aplicar_anclajes_manuales(anclas, anclajes, nodos_osm, formas, puntos)
     anclas_osm = set(anclas.values())
-    importantes = {ref for ref, ids_vias in formas.items() if len(ids_vias) != 2} | extremos | anclas_osm
+    importantes = set(formas) | extremos | anclas_osm
     coordenadas = {ref: coord for ref, coord in nodos_osm.items() if ref in importantes and _dentro_caja(coord)}
     segmentos: list[dict[str, object]] = []
     for indice_tramo, (via_id, referencias, etiquetas) in enumerate(vias):
@@ -281,7 +277,7 @@ def seleccionar_mapa(
     segmentos: list[dict[str, object]],
     anclas: dict[str, str],
 ) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, str]]]:
-    """Elige un subgrafo conectado de 300 nodos que conserva los refugios."""
+    """Conserva toda la red con camino dirigido a algún refugio, sin tope de nodos."""
 
     predecesores: defaultdict[str, set[str]] = defaultdict(set)
     segmentos_por_par: defaultdict[tuple[str, str], list[dict[str, object]]] = defaultdict(list)
@@ -351,9 +347,14 @@ def seleccionar_mapa(
     return nodos_json, calles_json, refugios_json
 
 
-def generar(anclajes: dict[str, str] | None = None) -> tuple[dict[str, object], dict[str, object]]:
+def generar(
+    anclajes: dict[str, str] | None = None, *, xml: bytes | None = None,
+) -> tuple[dict[str, object], dict[str, object]]:
+    """Genera mapa y procedencia desde una respuesta Overpass completa o archivada."""
+
     anclajes = anclajes or {}
-    nodos_osm, vias_osm = descargar_elementos()
+    xml = descargar_xml() if xml is None else xml
+    nodos_osm, vias_osm = leer_elementos(xml)
     coordenadas, segmentos, anclas = construir_grafo_completo(nodos_osm, vias_osm, anclajes)
     # Las anclas pueden haber quedado fuera del grafo si la vía próxima se
     # etiquetó como peatonal o privada; fallar es más seguro que reubicarla.
@@ -371,9 +372,15 @@ def generar(anclajes: dict[str, str] | None = None) -> tuple[dict[str, object], 
             "licencia": "Open Database License (ODbL)",
             "url": "https://www.openstreetmap.org/copyright",
             "api": URL_OSM_API,
-            "obtenido_utc": recuperado,
+            "generado_utc": recuperado,
+            "datos_osm_hasta": ET.fromstring(xml).find("meta").get("osm_base") if ET.fromstring(xml).find("meta") is not None else None,
+            "respuesta_sha256": hashlib.sha256(xml).hexdigest(),
+            "referencia_extension": "https://www.openstreetmap.org/relation/112895",
+            "alcance": "envolvente del cantón Manta con margen; puede incluir sectores vecinos",
+            "tipos_viales": sorted(TIPOS_VIALES),
+            "conteos": {"nodos": len(nodos), "sentidos": len(calles), "refugios": len(refugios), "nodos_sin_ruta_a_refugio": len(coordenadas) - len(nodos)},
             "caja_wgs84": {"sur": CAJA[0], "oeste": CAJA[1], "norte": CAJA[2], "este": CAJA[3]},
-            "simplificacion": "se conservan intersecciones, extremos de vías y anclas de refugios; costo/distancia por geometría OSM",
+            "simplificacion": "sin contracción: se conservan intersecciones y vértices de geometría; cada tramo sigue nodos consecutivos OSM",
             "velocidades": "maxspeed OSM si está etiquetado; en otro caso valores de juego documentados en el exportador",
         },
         "refugios": [
@@ -398,6 +405,7 @@ def generar(anclajes: dict[str, str] | None = None) -> tuple[dict[str, object], 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--osm", type=Path, help="respuesta XML Overpass guardada; permite regenerar sin red")
     parser.add_argument("--salida", type=Path, default=SALIDA_MAPA)
     parser.add_argument("--fuentes", type=Path, default=SALIDA_FUENTES)
     parser.add_argument(
@@ -412,7 +420,7 @@ def main() -> int:
             parser.error(f"--anclaje espera R-0X=<id OSM numérico>, recibido {texto!r}")
         anclajes[refugio] = nodo
     try:
-        mapa, fuentes = generar(anclajes)
+        mapa, fuentes = generar(anclajes, xml=args.osm.read_bytes() if args.osm else None)
     except RuntimeError as error:
         parser.exit(1, f"Error: {error}\n")
     args.salida.parent.mkdir(parents=True, exist_ok=True)

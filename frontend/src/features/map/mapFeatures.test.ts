@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PanelMap, PanelState } from '../../domain/panel'
-import { createActorFeatures, createMovementAnimations, createSimulationFeatures, positionAlongPath } from './mapFeatures'
+import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, positionAlongPath } from './mapFeatures'
 
 const map: PanelMap = {
   version: 'm1',
@@ -61,14 +61,14 @@ describe('createMovementAnimations', () => {
 })
 
 describe('createSimulationFeatures', () => {
-  const streets = (s: PanelState) => createSimulationFeatures(map, s, undefined).features.filter((f) => f.properties.kind === 'street')
-  it('marca calle bloqueada por segmento o arista, una vez por segmento', () => {
+  const streets = () => createStreetFeatures(map).features
+  it('indexa cada calle inmutable una vez y separa cierres por turno', () => {
+    expect(streets()).toHaveLength(1)
     for (const s of [state({ segmentosBloqueados: ['s1'] }), state({ aristasBloqueadas: ['b-a'] })]) {
-      const out = streets(s)
-      expect(out).toHaveLength(1)
-      expect(out[0].properties.blocked).toBe(true)
+      const blocked = createSimulationFeatures(map, s, undefined).features.filter((feature) => feature.properties.kind === 'blocked-street')
+      expect(blocked).toHaveLength(1)
     }
-    expect(streets(state())[0].properties.blocked).toBe(false)
+    expect(createSimulationFeatures(map, state(), undefined).features.some((feature) => feature.properties.kind === 'blocked-street')).toBe(false)
   })
   it('solo incluye la ruta del seleccionado', () => {
     const s = state({ rutasPrevistas: [{ sobrevivienteId: 's', trayecto: ['a', 'b'] }] })

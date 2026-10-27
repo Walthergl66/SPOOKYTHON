@@ -170,6 +170,8 @@ class Grafo:
 
         if nodo_id not in self._salientes:
             raise KeyError(f"Nodo desconocido: {nodo_id}")
+        if not aristas_cerradas and not segmentos_cerrados:
+            return self._salientes[nodo_id]
         return tuple(
             calle
             for calle in self._salientes[nodo_id]

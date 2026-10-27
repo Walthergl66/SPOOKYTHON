@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Map as MapLibreMap, NavigationControl, ScaleControl, setWorkerUrl } from 'maplibre-gl'
 import type { GeoJSONSource } from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { PanelMap, PanelState } from '../../domain/panel'
-import { createActorFeatures, createMovementAnimations, createSimulationFeatures, emptyCollection, positionAlongPath } from './mapFeatures'
+import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, emptyCollection, indexMapPositions, positionAlongPath } from './mapFeatures'
 import type { FeatureCollection, Position } from './mapFeatures'
+import { gameBounds, mapAreaBounds, paddedBounds, type MapBounds } from './mapArea'
 
 interface CityMapProps {
   map: PanelMap
@@ -16,9 +17,6 @@ interface CityMapProps {
 const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfreemap.org/styles/dark'
 const BUILDING_TILES = 'https://tiles.openfreemap.org/planet'
 const MAP_CENTER: Position = [-80.720, -0.954]
-// Extends the OSM extraction window by approximately 15 km in every direction.
-// This is a cartographic viewport, not Manta's official boundary or simulation coverage.
-const MANTA_BOUNDS: [Position, Position] = [[-80.890, -1.103], [-80.540, -0.799]]
 
 setWorkerUrl(mapWorkerUrl)
 
@@ -26,15 +24,22 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const latestDataRef = useRef<FeatureCollection>(emptyCollection())
+  const latestStreetsRef = useRef<FeatureCollection>(emptyCollection())
   const latestActorsRef = useRef<FeatureCollection>(emptyCollection())
   const previousStateRef = useRef<PanelState | null>(null)
   const animationFrameRef = useRef<number | null>(null)
   const [ready, setReady] = useState(false)
-  const [is3d, setIs3d] = useState(true)
+  const [is3d, setIs3d] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
 
-  latestDataRef.current = createSimulationFeatures(map, state, selectedSurvivorId)
-  latestActorsRef.current = createActorFeatures(map, state)
+  const points = useMemo(() => indexMapPositions(map), [map])
+  const area = useMemo(() => mapAreaBounds(map), [map])
+  const areaRef = useRef(area)
+  areaRef.current = area
+  const overviewRef = useRef(true)
+  latestStreetsRef.current = useMemo(() => createStreetFeatures(map, points), [map, points])
+  latestDataRef.current = useMemo(() => createSimulationFeatures(map, state, selectedSurvivorId, points), [map, state, selectedSurvivorId, points])
+  latestActorsRef.current = useMemo(() => createActorFeatures(map, state, undefined, points), [map, state, points])
 
   useEffect(() => {
     const container = containerRef.current
@@ -49,9 +54,9 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
         style: STYLE_URL,
         center: MAP_CENTER,
         zoom: 15.2,
-        pitch: 30,
-        bearing: -8,
-        maxBounds: MANTA_BOUNDS,
+        pitch: 0,
+        bearing: 0,
+        maxBounds: paddedBounds(areaRef.current),
         renderWorldCopies: false,
         canvasContextAttributes: { antialias: true },
       })
@@ -65,8 +70,8 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
     instance.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-right')
     instance.once('load', () => {
       initialized = true
-      fitMapToMantaArea(instance)
-      addMapLayers(instance, latestDataRef.current, latestActorsRef.current)
+      fitMapToMantaArea(instance, areaRef.current)
+      addMapLayers(instance, latestDataRef.current, latestActorsRef.current, latestStreetsRef.current, areaRef.current)
       setReady(true)
       setMapError(null)
     })
@@ -76,7 +81,16 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
         setMapError('No se pudo cargar la cartografía. Revisa tu conexión; los controles de Navira siguen disponibles.')
       }
     })
+    instance.on('dragstart', () => { overviewRef.current = false })
+    instance.on('zoomstart', (event) => { if (event.originalEvent) overviewRef.current = false })
+    const resizeObserver = new ResizeObserver(() => {
+      if (container.clientWidth === 0 || container.clientHeight === 0) return
+      instance.resize()
+      if (initialized && overviewRef.current) fitMapToMantaArea(instance, areaRef.current)
+    })
+    resizeObserver.observe(container)
     return () => {
+      resizeObserver.disconnect()
       if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current)
       mapRef.current = null
       instance.remove()
@@ -86,9 +100,20 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
   useEffect(() => {
     const instance = mapRef.current
     if (!ready || !instance) return
-    instance.setMaxBounds(MANTA_BOUNDS)
-    fitMapToMantaArea(instance)
-  }, [map.version, ready])
+    instance.setMaxBounds(paddedBounds(area))
+    const mask = instance.getSource('navira-outside-manta-mask') as GeoJSONSource | undefined
+    mask?.setData(outsideMantaMask(area) as never)
+    fitMapToMantaArea(instance, area)
+    overviewRef.current = true
+    setIs3d(false)
+  }, [area, ready])
+
+  useEffect(() => {
+    const instance = mapRef.current
+    if (!ready || !instance) return
+    const source = instance.getSource('navira-streets') as GeoJSONSource | undefined
+    source?.setData(latestStreetsRef.current as never)
+  }, [map, points, ready])
 
   useEffect(() => {
     const instance = mapRef.current
@@ -105,7 +130,7 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
 
     if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current)
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const animations = previous && !reducedMotion ? createMovementAnimations(map, previous, state, performance.now()) : []
+    const animations = previous && !reducedMotion ? createMovementAnimations(map, previous, state, performance.now(), points) : []
     if (animations.length === 0) {
       actorSource.setData(latestActorsRef.current as never)
       return
@@ -121,26 +146,42 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
         positions.set(movement.id, positionAlongPath(movement.path, progress))
         if (progress < 1) stillMoving = true
       }
-      actorSource.setData(createActorFeatures(map, state, positions) as never)
+      actorSource.setData(createActorFeatures(map, state, positions, points) as never)
       if (stillMoving) animationFrameRef.current = window.requestAnimationFrame(animate)
       else animationFrameRef.current = null
     }
     animationFrameRef.current = window.requestAnimationFrame(animate)
-  }, [ready, map, state, selectedSurvivorId])
+  }, [ready, map, state, selectedSurvivorId, points])
 
   const togglePitch = () => {
     const instance = mapRef.current
     const next = !is3d
     setIs3d(next)
+    overviewRef.current = false
     if (instance) instance.easeTo({ pitch: next ? 52 : 0, bearing: next ? -18 : 0, duration: 700 })
+  }
+
+  const showArea = () => {
+    if (mapRef.current) fitMapToMantaArea(mapRef.current, area)
+    overviewRef.current = true
+    setIs3d(false)
+  }
+  const showGame = () => {
+    overviewRef.current = false
+    setIs3d(false)
+    mapRef.current?.fitBounds(gameBounds(map, state), { padding: 56, maxZoom: 15, pitch: 0, bearing: 0, duration: 0 })
   }
 
   return (
     <div className="maplibre-stage" aria-label="Mapa cartográfico 3D de Manta">
       <div ref={containerRef} className="maplibre-canvas" />
+      <div className="map-view-controls" role="group" aria-label="Vista del mapa">
+      <button className="map-view-toggle" type="button" onClick={showArea} disabled={!ready}>Todo Manta</button>
+      <button className="map-view-toggle" type="button" onClick={showGame} disabled={!ready}>Ver partida</button>
       <button className="map-view-toggle" type="button" onClick={togglePitch} aria-pressed={is3d} disabled={!ready}>
-        {is3d ? 'Vista 3D' : 'Vista 2D'}
+        {is3d ? 'Cambiar a 2D' : 'Cambiar a 3D'}
       </button>
+      </div>
       {mapError ? <div className="map-provider-error" role="status">{mapError}</div> : null}
       {!ready && !mapError ? <div className="map-provider-loading" role="status">Cargando mapa de Manta…</div> : null}
       <span className="map-provider-label">Cartografía OSM · representación de simulación</span>
@@ -149,16 +190,14 @@ export function CityMap({ map, state, selectedSurvivorId }: CityMapProps) {
 }
 
 /** Frames the documented Manta data window instead of surrounding regions. */
-function fitMapToMantaArea(mapInstance: MapLibreMap) {
-  mapInstance.fitBounds(
-    MANTA_BOUNDS,
-    { padding: 32, maxZoom: 14.3, duration: 0 },
-  )
-  // Keep zoom-out at the scale that fits the whole declared area in this viewport.
-  mapInstance.setMinZoom(mapInstance.getZoom())
+function fitMapToMantaArea(mapInstance: MapLibreMap, area: MapBounds) {
+  // Release the old minimum before fitting a resized viewport or larger graph.
+  mapInstance.setMinZoom(0)
+  mapInstance.fitBounds(area, { padding: 48, maxZoom: 13, pitch: 0, bearing: 0, duration: 0 })
+  mapInstance.setMinZoom(Math.max(0, mapInstance.getZoom() - 0.3))
 }
 
-function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: FeatureCollection) {
+function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: FeatureCollection, streets: FeatureCollection, area: MapBounds) {
   map.addSource('openfreemap-buildings', { type: 'vector', url: BUILDING_TILES })
   const firstSymbolLayer = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id
   // render_height/render_min_height are provider tile attributes in metres; omit unknown heights instead of inventing them.
@@ -176,16 +215,21 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
       'fill-extrusion-opacity': 0.68,
     },
   }, firstSymbolLayer)
+  map.addSource('navira-streets', { type: 'geojson', data: streets as never })
   map.addSource('navira-simulation', { type: 'geojson', data: data as never })
   map.addSource('navira-actors', { type: 'geojson', data: actors as never })
   map.addLayer({
-    id: 'navira-streets', source: 'navira-simulation', type: 'line',
-    filter: ['==', ['get', 'kind'], 'street'],
+    id: 'navira-streets', source: 'navira-streets', type: 'line',
     paint: {
-      'line-color': ['case', ['get', 'blocked'], '#f05e62', '#85b9d2'],
+      'line-color': '#85b9d2',
       'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.2, 16, 3.2],
       'line-opacity': ['case', ['get', 'blocked'], 0.95, 0.28],
     },
+  })
+  map.addLayer({
+    id: 'navira-blocked-streets', source: 'navira-simulation', type: 'line',
+    filter: ['==', ['get', 'kind'], 'blocked-street'],
+    paint: { 'line-color': '#f05e62', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.8, 16, 4], 'line-opacity': 0.98 },
   })
   map.addLayer({
     id: 'navira-route', source: 'navira-simulation', type: 'line',
@@ -235,7 +279,7 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
 
   // The inner ring leaves the documented Manta extraction window visible and
   // paints a dark mask over provider tiles everywhere outside it.
-  map.addSource('navira-outside-manta-mask', { type: 'geojson', data: outsideMantaMask() as never })
+  map.addSource('navira-outside-manta-mask', { type: 'geojson', data: outsideMantaMask(area) as never })
   map.addLayer({
     id: 'navira-outside-manta-mask',
     source: 'navira-outside-manta-mask',
@@ -244,8 +288,8 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
   })
 }
 
-function outsideMantaMask() {
-  const [[west, south], [east, north]] = MANTA_BOUNDS
+function outsideMantaMask(area: MapBounds) {
+  const [[west, south], [east, north]] = area
   const [outerWest, outerSouth, outerEast, outerNorth] = [-83, -3, -78, 2]
   const polygon = (ring: number[][]) => ({
     type: 'Feature',

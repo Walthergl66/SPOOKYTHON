@@ -29,7 +29,7 @@ def peligros_visibles(
         for tramo in movimiento.tramos:
             aristas_cruzadas.update(
                 calle.id
-                for calle in grafo.mapa.calles
+                for calle in grafo.salientes(tramo.destino)
                 if calle.segmento_id == tramo.segmento_id
                 and calle.origen == tramo.destino
                 and calle.destino == tramo.origen
@@ -54,10 +54,8 @@ def nodos_horda_visibles(snapshot: SnapshotMundo, grafo: Grafo) -> frozenset[str
             )
         )
         bloqueados.update(
-            calle.origen
-            for calle in grafo.mapa.calles
-            if calle.destino == zombie.nodo
-            and calle.id not in snapshot.aristas_cerradas
-            and calle.segmento_id not in snapshot.segmentos_cerrados
+            grafo.entrantes_habilitadas(
+                snapshot.aristas_cerradas, snapshot.segmentos_cerrados
+            )[zombie.nodo]
         )
     return frozenset(bloqueados)

@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Mapping
+from functools import cache
+from typing import Callable, Mapping
 
 from navira.domain.mapa import Calle, Grafo
 from navira.domain.modelo import TipoZombie
@@ -83,6 +84,15 @@ def pronosticar_zombies_visibles(
     destinos_sobrevivientes = tuple(sorted((item.id, item.nodo) for item in sobrevivientes))
     aristas_inversas = _indice_aristas_inversas(grafo)
 
+    # Posiciones, cierres y alcance son fijos durante este pronóstico. Reusar
+    # destinos evita repetir la misma BFS por cada zombie y turno del horizonte.
+    @cache
+    def objetivo_visible(origen: str) -> str | None:
+        return _objetivo_visible(
+            grafo, origen, destinos_sobrevivientes, alcance_corredor_hops,
+            aristas_cerradas, segmentos_cerrados,
+        )
+
     for zombie in sorted(zombies, key=lambda item: item.id):
         if zombie.tipo is TipoZombie.HORDA:
             supuestos.add("horda_estatica_provisional")
@@ -95,10 +105,7 @@ def pronosticar_zombies_visibles(
                 )
             )
             footprint.update(
-                calle.origen for calle in grafo.mapa.calles
-                if calle.destino == zombie.nodo
-                and calle.id not in aristas_cerradas
-                and calle.segmento_id not in segmentos_cerrados
+                grafo.entrantes_habilitadas(aristas_cerradas, segmentos_cerrados)[zombie.nodo]
             )
             for bloqueados in bloqueos:
                 bloqueados.update(footprint)
@@ -124,8 +131,7 @@ def pronosticar_zombies_visibles(
                 estados_corredor, ocupacion_turno, cruces_turno = _avanzar_corredor(
                     grafo,
                     estados_corredor,
-                    destinos_sobrevivientes,
-                    alcance_corredor_hops,
+                    objetivo_visible,
                     pasos_corredor,
                     aristas_cerradas,
                     segmentos_cerrados,
@@ -185,8 +191,7 @@ def _avanzar_caminante(
 def _avanzar_corredor(
     grafo: Grafo,
     estados: Mapping[str, float],
-    sobrevivientes: tuple[tuple[str, str], ...],
-    alcance: int,
+    objetivo_visible: Callable[[str], str | None],
     pasos: int,
     aristas_cerradas: frozenset[str],
     segmentos_cerrados: frozenset[str],
@@ -197,9 +202,7 @@ def _avanzar_corredor(
     cruces: dict[str, float] = {}
     for inicio, peso in estados.items():
         nodo = inicio
-        objetivo = _objetivo_visible(
-            grafo, nodo, sobrevivientes, alcance, aristas_cerradas, segmentos_cerrados
-        )
+        objetivo = objetivo_visible(nodo)
         distribucion = {nodo: peso}
         for _ in range(pasos):
             actualizada: dict[str, float] = {}
