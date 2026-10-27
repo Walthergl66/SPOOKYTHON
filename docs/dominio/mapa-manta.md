@@ -14,6 +14,8 @@ CAM-073 amplió el fixture fuente a la envolvente OSM documentada. CAM-074/075 d
 
 La caja se estimó de la captura con coordenadas estables de refugios; no es un polígono oficial, no delimita el cantón y puede incluir sectores vecinos. La red jugable derivada puede tener menos nodos o componentes que el fixture fuente; solo se eligen inicios con camino dirigido a refugio. «Vista urbana» y el selector usan la caja jugable, mientras que el archivo de fuente conserva la cobertura ampliada como referencia.
 
+CAM-078 añade a la simulación Manta un búfer de una cuadra topológica alrededor de cada refugio: el nodo refugio y sus intersecciones conectadas por una calle, entrante o saliente. El muestreo inicial y el movimiento de zombies respetan el búfer. Esta regla es una abstracción del juego, no una validación de seguridad territorial; una arista no tiene longitud uniforme de cuadra. Véanse [reglas](reglas-juego.md) y [ADR-031](../arquitectura/decisiones/0031-perimetro-refugios-manta.md).
+
 Cuatro destinos se transcribieron de las capas “Zonas Seguras” de los mapas de evacuación por tsunami publicados por la Dirección de Ambiente y Riesgos del GAD Manta:
 
 | ID | Lugar | Parroquia | Ajuste a red vial |

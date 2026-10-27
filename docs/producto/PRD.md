@@ -48,6 +48,10 @@ Comparar política base con predicción de corredores y búsqueda temporal. Cons
 
 La política de ruta debe priorizar la reducción del número de sobrevivientes mordidos como objetivo primario; entre políticas con igual cantidad de mordidos, favorecer más evacuados. El planificador usa exposición futura estimada a partir de amenazas visibles y debe recalcular cuando cambie el snapshot. Las mordidas reales se miden al resolver el mundo y prevalecen para comparar resultados; una estimación no es garantía de supervivencia. Prioridad: obligatoria para la política del simulador. Detalle: [algoritmos](../arquitectura/algoritmos.md), [SPEC-002](../metodo/especificaciones/SPEC-002-motor-paso.md).
 
+### PRD-11 — Perímetro de protección de refugios
+
+En partidas del mapa Manta, impedir que los zombies aparezcan o avancen a menos de una cuadra topológica de un refugio. La protección incluye el nodo del refugio y las intersecciones conectadas directamente por cualquier sentido de calle; solo el grafo Manta usa esta regla, porque los mapas pequeños sintéticos no representan distancias urbanas. Prioridad: mejora solicitada por el usuario. Detalle: [reglas](../dominio/reglas-juego.md) y [SPEC-001](../metodo/especificaciones/SPEC-001-mundo-simulacion.md).
+
 ## Alcance y exclusiones
 
 Comprometido: los requisitos anteriores, implementados de forma incremental. Fuera del mínimo: múltiples partidas concurrentes, multijugador simultáneo, cuentas permanentes, movimiento libre continuo, LLM para decidir pasos y app móvil. Capacidad de refugios y camionetas son extras condicionados, no requisitos activos nuevos.

@@ -10,7 +10,7 @@ import random
 from collections import deque
 from dataclasses import dataclass, replace
 
-from navira.domain.mapa import Calle, Grafo
+from navira.domain.mapa import Calle, Grafo, nodos_protegidos_refugios
 from navira.domain.snapshot import MovimientoZombie
 from navira.domain.modelo import (
     EstadoPartida,
@@ -113,6 +113,13 @@ def preparar_turno(
 
     zombies_actualizados: list[Zombie] = []
     movimientos_zombies: list[MovimientoZombie] = []
+    # The one-block sanctuary buffer is part of the Manta simulation rules.
+    # Small synthetic graphs use refuges as arbitrary test nodes, not places.
+    protegidos = (
+        nodos_protegidos_refugios(grafo)
+        if grafo.mapa.version.startswith("manta-osm-")
+        else frozenset()
+    )
     for zombie in sorted(partida.zombies, key=lambda item: item.id):
         actualizado, movimiento = _mover_zombie(
             zombie,
@@ -123,6 +130,7 @@ def preparar_turno(
             aristas_cerradas,
             segmentos_cerrados,
             configuracion,
+            protegidos,
         )
         zombies_actualizados.append(actualizado)
         movimientos_zombies.append(movimiento)
@@ -247,6 +255,7 @@ def _mover_zombie(
     aristas_cerradas: frozenset[str],
     segmentos_cerrados: frozenset[str],
     configuracion: ConfiguracionReglas,
+    nodos_protegidos: frozenset[str],
 ) -> tuple[Zombie, MovimientoZombie]:
     origen = zombie.nodo
     se_desperto = False
@@ -294,10 +303,20 @@ def _mover_zombie(
             aristas_cerradas=aristas_cerradas,
             segmentos_cerrados=segmentos_cerrados,
         )
+        # An actor already inside the buffer may remain or leave, but no new
+        # zombie step may enter a protected intersection.
+        salientes = tuple(calle for calle in salientes if calle.destino not in nodos_protegidos)
         if not salientes:
             break
         if objetivo is not None:
-            ruta = _ruta_corta(nodo_actual, objetivo, grafo, aristas_cerradas, segmentos_cerrados)
+            ruta = _ruta_corta(
+                nodo_actual,
+                objetivo,
+                grafo,
+                aristas_cerradas,
+                segmentos_cerrados,
+                nodos_protegidos,
+            )
             siguiente = ruta[0] if ruta else None
         else:
             siguiente = None
@@ -334,6 +353,7 @@ def _ruta_corta(
     grafo: Grafo,
     aristas_cerradas: frozenset[str],
     segmentos_cerrados: frozenset[str],
+    nodos_protegidos: frozenset[str] = frozenset(),
 ) -> tuple[Calle, ...]:
     """Ruta por saltos con desempate estable por ID de calle."""
 
@@ -348,6 +368,8 @@ def _ruta_corta(
             aristas_cerradas=aristas_cerradas,
             segmentos_cerrados=segmentos_cerrados,
         ):
+            if calle.destino in nodos_protegidos:
+                continue
             if calle.destino in anterior:
                 continue
             anterior[calle.destino] = (actual, calle)

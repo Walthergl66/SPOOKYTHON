@@ -14,7 +14,7 @@ from navira.application.decidir_paso import SolicitudPaso
 from navira.api.seguridad import ConfiguracionSeguridad
 from navira.demo import crear_contexto_demo
 from navira.domain.modelo import EstadoZombie
-from navira.domain.mapa import Refugio, cargar_mapa
+from navira.domain.mapa import Refugio, cargar_mapa, nodos_protegidos_refugios
 from navira.main import _crear_app_configurada, crear_app, crear_app_demo
 
 
@@ -31,6 +31,8 @@ class DemoBootstrapTests(unittest.TestCase):
 
         self.assertTrue(all(nodo in contexto.grafo.mapa.nodos_por_id for nodo in (s.nodo for s in partida.sobrevivientes)))
         self.assertTrue(all(nodo in contexto.grafo.mapa.nodos_por_id for nodo in (z.nodo for z in partida.zombies)))
+        protegidos = nodos_protegidos_refugios(contexto.grafo)
+        self.assertTrue(all(zombie.nodo not in protegidos for zombie in partida.zombies))
         self.assertTrue(all(calle.origen in contexto.grafo.mapa.nodos_por_id and calle.destino in contexto.grafo.mapa.nodos_por_id for calle in contexto.grafo.mapa.calles))
         with self.assertRaisesRegex(ValueError, "no existe en el mapa"):
             crear_contexto_demo(ruta_manta, refugios=(

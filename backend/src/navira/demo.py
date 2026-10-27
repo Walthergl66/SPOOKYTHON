@@ -16,7 +16,15 @@ from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.adapters.snapshots_memoria import AlmacenSnapshotsMemoria
 from navira.application.decidir_paso import DecidirPaso, ProveedorMapas
 from navira.application.snapshots import RepositorioSnapshots
-from navira.domain.mapa import Grafo, Refugio, MANTA_PLAYABLE_BOUNDS, cargar_mapa, mapa_con_refugios, recortar_mapa
+from navira.domain.mapa import (
+    Grafo,
+    Refugio,
+    MANTA_PLAYABLE_BOUNDS,
+    cargar_mapa,
+    mapa_con_refugios,
+    nodos_protegidos_refugios,
+    recortar_mapa,
+)
 from navira.domain.modelo import (
     EstadoPartida,
     FaseTurno,
@@ -110,9 +118,15 @@ def crear_contexto_demo(
     else:
         posiciones = tuple(rng.choice(nodos_inicio) for _ in range(cantidad_sobrevivientes))
     coordenadas = {nodo.id: (nodo.lat, nodo.lng) for nodo in grafo.mapa.nodos}
+    nodos_zombie_elegibles = nodos_inicio
+    if grafo.mapa.version.startswith("manta-osm-"):
+        nodos_protegidos = nodos_protegidos_refugios(grafo)
+        nodos_zombie_elegibles = tuple(
+            nodo for nodo in nodos_inicio if nodo not in nodos_protegidos
+        )
     zombies = crear_zombies(
         escenario,
-        nodos_inicio,
+        nodos_zombie_elegibles,
         posiciones,
         coordenadas,
         intensidad,

@@ -5,7 +5,7 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 
-from navira.domain.mapa import Grafo, cargar_mapa
+from navira.domain.mapa import Grafo, Refugio, cargar_mapa, nodos_protegidos_refugios
 from navira.domain.modelo import (
     ControlSobreviviente,
     EstadoPartida,
@@ -76,6 +76,49 @@ class ResolverTests(unittest.TestCase):
         movimiento = resultado.movimientos_zombies[0]
         self.assertEqual(movimiento.destino, "N-0003")
         self.assertEqual(tuple(calle.id for calle in movimiento.tramos), ("E-0001", "E-0003"))
+
+    def test_zombies_no_entran_en_el_bufer_de_una_cuadra_de_refugio_manta(self) -> None:
+        mapa = replace(
+            self.mapa,
+            version="manta-osm-prueba",
+            refugios=(Refugio("R-01", "N-0004"),),
+        )
+        grafo = Grafo(mapa)
+        protegidos = nodos_protegidos_refugios(grafo)
+        partida = replace(
+            iniciar(
+                sobrevivientes=(Sobreviviente("S-1", "N-0004"),),
+                zombies=(Zombie("Z-W", TipoZombie.CAMINANTE, "N-0002"),),
+            ),
+            map_version=mapa.version,
+        )
+
+        resultado = resolver_turno(partida, grafo, rng=random.Random(7))
+
+        self.assertEqual(protegidos, frozenset({"N-0003", "N-0004"}))
+        self.assertNotIn(resultado.partida.zombies[0].nodo, protegidos)
+        self.assertTrue(all(tramo.destino not in protegidos for tramo in resultado.movimientos_zombies[0].tramos))
+
+    def test_corredor_descarta_ruta_que_cruza_el_bufer_del_refugio(self) -> None:
+        mapa = replace(
+            self.mapa,
+            version="manta-osm-prueba",
+            refugios=(Refugio("R-01", "N-0004"),),
+        )
+        grafo = Grafo(mapa)
+        partida = replace(
+            iniciar(
+                sobrevivientes=(Sobreviviente("S-1", "N-0004"),),
+                zombies=(Zombie("Z-C", TipoZombie.CORREDOR, "N-0002"),),
+            ),
+            map_version=mapa.version,
+        )
+
+        resultado = resolver_turno(partida, grafo, rng=random.Random(7))
+
+        self.assertTrue(
+            all(tramo.destino not in {"N-0003", "N-0004"} for tramo in resultado.movimientos_zombies[0].tramos)
+        )
 
     def test_horda_queda_fija_y_bloquea_nodo_vecino(self) -> None:
         horda = Zombie("Z-H", TipoZombie.HORDA, "N-0003")

@@ -53,6 +53,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-37 | Dificultad inicial de la demo | Sin intensidad en el control HTTP local, la demo usa intensidad media; eventos y selector siguen configurables. |
 | T-38 | Mapa jugable ampliado de Manta | Conteos concuerdan con sidecar, sectores urbanos/rurales seleccionados tienen red cercana, cada nodo incluido puede alcanzar refugio en dirección de calles, el campo de rutas compartido coincide con Dijkstra bajo cierres/bloqueos y el margen de navegación equivale a 5 km por lado sin alterar el grafo. Cobertura muestreada no es auditoría calle por calle ni límite municipal. |
 | T-39 | Recorte jugable y selección de refugios | El mapa de partida Manta conserva solo nodos dentro de `[-80.807, -1.082]`–`[-80.621, -0.897]` y calles cuyos extremos están dentro; apariciones/zombies no salen del subgrafo, el selector usa la misma caja y una colocación exterior recibe HTTP 422. El fixture fuente OSM permanece intacto. La caja no es frontera municipal certificada. |
+| T-40 | Perímetro de refugios ante zombies | Para mapa Manta, generación y movimiento no colocan ni mueven zombies hacia refugios o nodos conectados a una cuadra, aun con vías unidireccionales o cierres; un actor ya dentro solo permanece o sale. Fixtures sintéticos no se modifican. |
 
 ## Medición de la prueba de fuego
 

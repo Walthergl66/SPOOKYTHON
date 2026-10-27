@@ -35,7 +35,7 @@ class SimulacionMapaMantaTests(unittest.TestCase):
                 )
 
                 self.assertEqual(len(reportes), 3)
-                self.assertEqual(reportes[0]["versionMapa"], grafo.mapa.version)
+                self.assertEqual(reportes[0]["versionMapa"], contexto.grafo.mapa.version)
                 self.assertTrue(all(reporte["semilla"] == 20261026 for reporte in reportes))
                 self.assertEqual(len(iniciales), poblacion)
                 self.assertTrue(all(sobreviviente.nodo not in refugios for sobreviviente in iniciales))

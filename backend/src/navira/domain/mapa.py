@@ -220,6 +220,23 @@ class Grafo:
         return tuple(calle.destino for calle in self.calles_desde(nodo_id, **cierres))
 
 
+def nodos_protegidos_refugios(grafo: Grafo) -> frozenset[str]:
+    """Devuelve cada refugio y las intersecciones a una cuadra topológica.
+
+    El búfer usa todos los sentidos existentes como vecindad física, para que
+    una calle de sentido único no deje desprotegido un lado del refugio. Los
+    cierres temporales no cambian la zona: se deriva de la topología del mapa.
+    """
+
+    refugios = {refugio.nodo for refugio in grafo.mapa.refugios}
+    protegidos = set(refugios)
+    for calle in grafo.mapa.calles:
+        if calle.origen in refugios or calle.destino in refugios:
+            protegidos.add(calle.origen)
+            protegidos.add(calle.destino)
+    return frozenset(protegidos)
+
+
 def nodos_elegibles_refugio(mapa: Mapa) -> tuple[Nodo, ...]:
     """Nodos con al menos una calle de entrada y una de salida."""
 

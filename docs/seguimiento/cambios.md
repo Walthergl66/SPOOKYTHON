@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-078 — Perímetro de una cuadra alrededor de refugios Manta
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de impedir que los zombies se acerquen a las zonas seguras dentro de aproximadamente una cuadra por lado.
+- Especificación/requisitos: PRD-11, TRD-16, SPEC-001 CA-001-12, ADR-031 y prueba T-40.
+- Motivo: antes de este cambio la población inicial podía aparecer junto a los refugios y los caminantes/corredores podían llegar a esos nodos.
+- Resultado: partidas Manta calculan el conjunto protegido como nodo del refugio más intersecciones directamente conectadas por calles entrantes o salientes. El generador no coloca zombies en él; el resolutor filtra los destinos de caminantes y corredores y evita que una ruta del corredor atraviese el perímetro. Los cierres temporales no modifican su alcance. Fixtures sintéticos permanecen intactos; una entidad preexistente en el búfer puede quedarse o salir.
+- Archivos: `backend/src/navira/domain/mapa.py`, `backend/src/navira/simulation/resolver.py`, `backend/src/navira/demo.py`; `backend/tests/test_resolver.py`, `test_demo.py`, `test_evaluacion_local.py`, `test_simulacion_mapa_manta.py`; PRD/TRD, contexto, reglas, dataset, SPEC-001, trazabilidad, pruebas, módulos, ADR-031, P-17, plan, índice, reporte y estado.
+- Decisión: la cuadra se aproxima con un salto topológico porque no hay radio métrico validado por refugio. Una arista OSM no representa siempre la misma distancia. Ver ADR-031.
+- Verificación: pruebas focalizadas de resolución/demo (27/27) y suite backend completa (212/212) pasaron. Se alinearon dos expectativas de integración que comparaban la versión recortada jugable con la versión del fixture fuente. `check_docs.py` (108 Markdown/110 archivos), `check_sdd.py` (ocho SPEC estructuralmente válidas), regresiones SDD (8/8) y `git diff --check` pasaron. Smoke local: `/salud`, `/panel/mapa` y `/panel/estado` devolvieron 200; en el turno 5 había 159 zombies visibles y ninguno en los 17 nodos protegidos.
+- Límites y pendientes: P-17 queda abierto para calibración geográfica. El perímetro es una regla del juego, no certificación de seguridad real ni sísmica. No cambia la regla de mordida ni garantiza que un sobreviviente quede protegido fuera del modelo.
+- Estado: implementación y smoke local verificados; la app quedó activa con una nueva partida. El reinicio del backend perdió la partida efímera anterior.
+- Siguiente acción: continuar P1-03; calibrar la equivalencia métrica de una cuadra si se obtiene referencia por refugio. No se solicitó publicación.
+
 ## CAM-077 — Ventana urbana como límite jugable
 
 - Fecha: 2026-10-27, Ecuador continental.

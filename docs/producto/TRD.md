@@ -64,6 +64,10 @@ En cada decisión, la política temporal minimiza primero la exposición estimad
 
 Las partidas sobre el fixture Manta usan una proyección del grafo dentro de la caja WGS84 `[-80.807, -1.082]`–`[-80.621, -0.897]`. Solo nodos internos y calles con ambos extremos internos participan en apariciones, amenazas, rutas y movimiento. El selector de refugios enfoca esa misma caja y solo acepta nodos internos; el backend vuelve a validar la selección antes de iniciar. El fixture OSM fuente completo no se modifica. Esta ventana estimada no es frontera administrativa. Detalle: [SPEC-008](../metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md), [ADR-030](../arquitectura/decisiones/0030-ventana-urbana-zona-jugable.md).
 
+### TRD-16 — Exclusión topológica de zombies alrededor de refugios
+
+En partidas Manta, el servidor calcula al inicio de cada preparación el conjunto formado por cada refugio y los nodos enlazados directamente a él, considerando calles dirigidas en ambos sentidos y sin depender de cierres temporales. El generador no coloca zombies en ese conjunto y el resolutor descarta cualquier paso zombie cuyo destino esté dentro. Una entidad preexistente dentro del búfer puede permanecer o salir, pero no avanzar a otro nodo protegido. Mapas sintéticos conservan sus reglas sin este búfer. Detalle: [reglas](../dominio/reglas-juego.md), [SPEC-001](../metodo/especificaciones/SPEC-001-mundo-simulacion.md).
+
 ## Riesgos y aceptación
 
 Reglas ambiguas, región, TLS y sesiones siguen en [pendientes](../seguimiento/pendientes.md); ningún documento nuevo las cierra por inferencia. Verificar con las especificaciones y pruebas correspondientes antes de marcar implementado/verificado. Una discrepancia con código se investiga, no se resuelve adaptando silenciosamente los requisitos al fallo.
