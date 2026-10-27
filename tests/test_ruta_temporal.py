@@ -16,6 +16,7 @@ def grafo_temporal() -> Grafo:
             calles=(
                 Calle("E-12", "S-12", "N-1", "N-2", 10, TipoCalle.CALLE, 20),
                 Calle("E-13", "S-13", "N-1", "N-3", 6, TipoCalle.AVENIDA, 30),
+                Calle("E-34", "S-34", "N-3", "N-4", 12, TipoCalle.CALLE, 20),
                 Calle("E-32", "S-32", "N-3", "N-2", 6, TipoCalle.AVENIDA, 30),
                 Calle("E-24", "S-24", "N-2", "N-4", 4, TipoCalle.CALLE, 20),
             ),
@@ -74,6 +75,31 @@ class BusquedaTemporalTests(unittest.TestCase):
         self.assertEqual(resultado.trayecto, ("N-1", "N-1", "N-2"))
         self.assertEqual(resultado.turnos, 2)
 
+    def test_cruce_conocido_bloquea_solo_el_paso_actual(self) -> None:
+        resultado = buscar_ruta_temporal(
+            self.grafo,
+            "N-1",
+            frozenset({"R-2"}),
+            peligros_actuales=CondicionTurno(aristas_cruce_peligroso=frozenset({"E-12"})),
+            pronostico=(CondicionTurno(),),
+        )
+
+        self.assertEqual(resultado.trayecto, ("N-1", "N-1", "N-2"))
+        self.assertEqual(resultado.turnos, 2)
+
+    def test_prioriza_evitar_cruce_opuesto_estimado_aunque_alargue_la_ruta(self) -> None:
+        resultado = buscar_ruta_temporal(
+            self.grafo,
+            "N-1",
+            frozenset({"R-4"}),
+            pronostico=tuple(
+                CondicionTurno(exposicion_arista={"E-24": 0.9}) for _ in range(4)
+            ),
+        )
+
+        self.assertEqual(resultado.trayecto, ("N-1", "N-3", "N-4"))
+        self.assertEqual(resultado.exposicion_acumulada, 0)
+
     def test_presupuesto_agotado_descarta_trayecto_parcial(self) -> None:
         resultado = buscar_ruta_temporal(
             self.grafo,
@@ -102,6 +128,8 @@ class BusquedaTemporalTests(unittest.TestCase):
             buscar_ruta_temporal(self.grafo, "N-1", frozenset({"R-2"}), horizonte_turnos=13)
         with self.assertRaises(ValueError):
             CondicionTurno(exposicion_nodo={"N-1": 1.1})
+        with self.assertRaises(ValueError):
+            CondicionTurno(exposicion_arista={"E-12": -0.1})
         with self.assertRaises(KeyError):
             buscar_ruta_temporal(
                 self.grafo,

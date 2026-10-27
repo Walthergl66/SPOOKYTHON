@@ -17,21 +17,26 @@ from navira.routing.dijkstra import PerfilCostos
 class CondicionTurno:
     """Bloqueos conocidos y exposición estimada para una fase de decisión.
 
-    La exposición por nodo está en [0, 1] para una fase. Su suma en la ruta es
-    una puntuación acumulada, no una probabilidad calibrada de supervivencia.
-    Las condiciones futuras deben derivarse solo de información observable.
+    La exposición por nodo y arista está en [0, 1] por fase. Su suma en la
+    ruta es una puntuación acumulada, no una probabilidad calibrada de
+    supervivencia. Los cruces ya confirmados solo bloquean el paso actual;
+    las condiciones futuras derivan de información observable.
     """
 
     nodos_bloqueados: frozenset[str] = frozenset()
     aristas_cerradas: frozenset[str] = frozenset()
     segmentos_cerrados: frozenset[str] = frozenset()
     exposicion_nodo: Mapping[str, float] = field(default_factory=dict)
+    exposicion_arista: Mapping[str, float] = field(default_factory=dict)
+    aristas_cruce_peligroso: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "nodos_bloqueados", frozenset(self.nodos_bloqueados))
         object.__setattr__(self, "aristas_cerradas", frozenset(self.aristas_cerradas))
         object.__setattr__(self, "segmentos_cerrados", frozenset(self.segmentos_cerrados))
+        object.__setattr__(self, "aristas_cruce_peligroso", frozenset(self.aristas_cruce_peligroso))
         exposicion = dict(self.exposicion_nodo)
+        exposicion_aristas = dict(self.exposicion_arista)
         if any(
             not isinstance(nodo, str)
             or not nodo
@@ -43,6 +48,17 @@ class CondicionTurno:
         ):
             raise ValueError("La exposición temporal requiere nodos y valores finitos entre 0 y 1.")
         object.__setattr__(self, "exposicion_nodo", MappingProxyType(exposicion))
+        if any(
+            not isinstance(arista, str)
+            or not arista
+            or isinstance(valor, bool)
+            or not isinstance(valor, (int, float))
+            or not math.isfinite(valor)
+            or not 0 <= valor <= 1
+            for arista, valor in exposicion_aristas.items()
+        ):
+            raise ValueError("La exposición por cruce requiere aristas y valores finitos entre 0 y 1.")
+        object.__setattr__(self, "exposicion_arista", MappingProxyType(exposicion_aristas))
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,7 +146,9 @@ def buscar_ruta_temporal(
             sucesores.append((nodo, None, 0.0))
         for calle in grafo.calles_desde(
             nodo,
-            aristas_cerradas=condicion.aristas_cerradas,
+            aristas_cerradas=condicion.aristas_cerradas | (
+                condicion.aristas_cruce_peligroso if turnos == 0 else frozenset()
+            ),
             segmentos_cerrados=condicion.segmentos_cerrados,
         ):
             if calle.destino in condicion.nodos_bloqueados:
@@ -139,7 +157,11 @@ def buscar_ruta_temporal(
 
         for destino, id_calle, costo_tramo in sucesores:
             nuevo_turno = turnos + 1
-            nueva_exposicion = round(exposicion + condicion.exposicion_nodo.get(destino, 0.0), 12)
+            riesgo_nodo = condicion.exposicion_nodo.get(destino, 0.0)
+            riesgo_cruce = condicion.exposicion_arista.get(id_calle, 0.0) if id_calle else 0.0
+            # Final-node contact and opposite-edge crossings are distinct bite
+            # mechanisms in the resolver. Keep their combined score bounded.
+            nueva_exposicion = round(exposicion + min(1.0, riesgo_nodo + riesgo_cruce), 12)
             nuevo_costo = costo + costo_tramo
             nueva_accion = acciones + ((id_calle if id_calle is not None else "~esperar"),)
             nuevo_trayecto = trayecto + (destino,)
@@ -177,6 +199,7 @@ def _pronostico_en(
             segmento for paso in anteriores for segmento in paso.segmentos_cerrados
         ),
         exposicion_nodo=futuro.exposicion_nodo,
+        exposicion_arista=futuro.exposicion_arista,
     )
 
 
@@ -193,8 +216,10 @@ def _validar_condicion(condicion: CondicionTurno, grafo: Grafo) -> None:
     segmentos_conocidos = {calle.segmento_id for calle in grafo.mapa.calles}
     if condicion.nodos_bloqueados - nodos_conocidos or set(condicion.exposicion_nodo) - nodos_conocidos:
         raise KeyError("La condición temporal referencia un nodo desconocido.")
-    if condicion.aristas_cerradas - aristas_conocidas:
+    if condicion.aristas_cerradas - aristas_conocidas or condicion.aristas_cruce_peligroso - aristas_conocidas:
         raise KeyError("La condición temporal referencia una arista desconocida.")
+    if set(condicion.exposicion_arista) - aristas_conocidas:
+        raise KeyError("La condición temporal referencia una arista de exposición desconocida.")
     if condicion.segmentos_cerrados - segmentos_conocidos:
         raise KeyError("La condición temporal referencia un segmento desconocido.")
 

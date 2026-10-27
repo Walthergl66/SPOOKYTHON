@@ -76,7 +76,11 @@ class ControlSimuladorDemoLocal:
                 intensidad=intensidad,  # type: ignore[arg-type]
                 eventos_ciudad=eventos_ciudad,
             )
-            ejecutar = EjecutarRondaAutomatica(contexto.snapshots, contexto.mapas)
+            ejecutar = EjecutarRondaAutomatica(
+                contexto.snapshots,
+                contexto.mapas,
+                decidir=contexto.servicio_decision,
+            )
             reloj = RelojSimuladorLocal(contexto.run_id, contexto.snapshots, ejecutar)
             self._contexto = contexto
             self._reloj = reloj

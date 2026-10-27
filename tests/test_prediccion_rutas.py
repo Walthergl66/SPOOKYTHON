@@ -5,6 +5,7 @@ from __future__ import annotations
 import unittest
 
 from navira.domain.modelo import TipoZombie
+from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle
 from navira.routing.prediccion import (
     SobrevivienteObservable,
     ZombieObservable,
@@ -43,6 +44,29 @@ class PronosticoRutasTests(unittest.TestCase):
 
         self.assertEqual(dict(resultado.turnos[0].exposicion_nodo), {"N-2": 1.0, "N-4": 1.0})
         self.assertIn("corredor_objetivo_con_sobrevivientes_estaticos", resultado.supuestos)
+
+    def test_pronostica_cruce_opuesto_del_caminante_sobre_calle_bidireccional(self) -> None:
+        grafo = Grafo(
+            Mapa(
+                version="cruce-pronosticado-v1",
+                nodos=(Nodo("A", 0, 0), Nodo("B", 0, 1)),
+                calles=(
+                    Calle("A-B", "S-AB", "A", "B", 10, TipoCalle.CALLE, 20),
+                    Calle("B-A", "S-AB", "B", "A", 10, TipoCalle.CALLE, 20),
+                ),
+                refugios=(Refugio("R-A", "A"),),
+            )
+        )
+        resultado = pronosticar_zombies_visibles(
+            grafo,
+            (ZombieObservable("Z-1", TipoZombie.CAMINANTE, "A"),),
+            (),
+            turno_actual=0,
+            horizonte_turnos=1,
+        )
+
+        self.assertEqual(resultado.turnos[0].exposicion_arista["B-A"], 0.5)
+        self.assertNotIn("A-B", resultado.turnos[0].exposicion_arista)
 
     def test_horda_mantiene_bloqueado_su_nodo_y_vecinos_de_ambos_sentidos(self) -> None:
         resultado = pronosticar_zombies_visibles(

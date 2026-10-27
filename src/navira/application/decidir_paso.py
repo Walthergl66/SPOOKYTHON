@@ -91,10 +91,14 @@ class DecidirPaso:
         self._cache_pronostico_lock = Lock()
         self._cache_pronostico_clave: tuple[str, int, str] | None = None
         self._cache_pronostico_valor: tuple[CondicionTurno, tuple[CondicionTurno, ...]] | None = None
+        self._cache_rutas_lock = Lock()
+        self._cache_rutas_snapshot: tuple[str, int, str] | None = None
+        self._cache_rutas: dict[str, tuple[str, ...]] = {}
+        self._cache_rutas_por_personaje: dict[str, Lock] = {}
 
     def ejecutar(self, solicitud: SolicitudPaso) -> DecisionPaso:
         snapshot, sobreviviente, grafo = self._obtener_contexto(solicitud)
-        trayecto = self._seleccionar_trayecto(snapshot, grafo, sobreviviente)
+        trayecto = self._trayecto_cacheado(snapshot, grafo, sobreviviente)
         return DecisionPaso(trayecto[1] if len(trayecto) > 1 else sobreviviente.nodo)
 
     def prever_ruta(self, solicitud: SolicitudPaso) -> tuple[str, ...]:
@@ -106,7 +110,7 @@ class DecidirPaso:
         """
 
         snapshot, sobreviviente, grafo = self._obtener_contexto(solicitud)
-        return self._seleccionar_trayecto(snapshot, grafo, sobreviviente)
+        return self._trayecto_cacheado(snapshot, grafo, sobreviviente)
 
     def prever_ruta_en_snapshot(
         self, snapshot: SnapshotMundo, sobreviviente_id: str, grafo: Grafo
@@ -125,7 +129,36 @@ class DecidirPaso:
         )
         if sobreviviente is None or sobreviviente.estado is not EstadoSobreviviente.ACTIVO:
             raise EntidadNoEncontrada("El sobreviviente activo no existe en el snapshot consultado.")
-        return self._seleccionar_trayecto(snapshot, grafo, sobreviviente)
+        return self._trayecto_cacheado(snapshot, grafo, sobreviviente)
+
+    def _trayecto_cacheado(
+        self, snapshot: SnapshotMundo, grafo: Grafo, sobreviviente: Sobreviviente
+    ) -> tuple[str, ...]:
+        """Shares the exact preview/action for one immutable snapshot.
+
+        The temporal search has a wall-clock budget, so rerunning it could
+        otherwise time out differently in the panel and automatic resolver.
+        Keeping only one snapshot bounds memory and aligns the route line with
+        the next server-authored move.
+        """
+
+        clave = (snapshot.partida.run_id, snapshot.version, grafo.mapa.version)
+        with self._cache_rutas_lock:
+            if clave != self._cache_rutas_snapshot:
+                self._cache_rutas_snapshot = clave
+                self._cache_rutas.clear()
+                self._cache_rutas_por_personaje.clear()
+            lock_personaje = self._cache_rutas_por_personaje.setdefault(sobreviviente.id, Lock())
+        with lock_personaje:
+            with self._cache_rutas_lock:
+                trayecto = self._cache_rutas.get(sobreviviente.id) if clave == self._cache_rutas_snapshot else None
+            if trayecto is not None:
+                return trayecto
+            trayecto = self._seleccionar_trayecto(snapshot, grafo, sobreviviente)
+            with self._cache_rutas_lock:
+                if clave == self._cache_rutas_snapshot:
+                    self._cache_rutas[sobreviviente.id] = trayecto
+            return trayecto
 
     def _obtener_contexto(self, solicitud: SolicitudPaso) -> tuple[SnapshotMundo, Sobreviviente, Grafo]:
         """Valida identidad temporal y carga el grafo antes de planificar."""
@@ -160,8 +193,8 @@ class DecidirPaso:
         self, snapshot: SnapshotMundo, grafo: Grafo, sobreviviente: Sobreviviente
     ) -> tuple[str, ...]:
         """Intenta exposición futura observable y conserva Dijkstra como respaldo."""
-        nodos_bloqueados, aristas_peligrosas = peligros_visibles(snapshot, grafo)
-        aristas_cerradas = snapshot.aristas_cerradas | aristas_peligrosas
+        nodos_bloqueados, cruces_peligrosos = peligros_visibles(snapshot, grafo)
+        aristas_cerradas = snapshot.aristas_cerradas
         refugios = (
             frozenset({sobreviviente.refugio_objetivo})
             if sobreviviente.refugio_objetivo is not None
@@ -171,6 +204,7 @@ class DecidirPaso:
             nodos_bloqueados=frozenset(nodos_bloqueados),
             aristas_cerradas=aristas_cerradas,
             segmentos_cerrados=snapshot.segmentos_cerrados,
+            aristas_cruce_peligroso=cruces_peligrosos,
         )
         zombies = tuple(
             ZombieObservable(zombie.id, zombie.tipo, zombie.nodo)
@@ -206,14 +240,70 @@ class DecidirPaso:
             grafo,
             sobreviviente.nodo,
             refugio_objetivo=sobreviviente.refugio_objetivo,
-            aristas_cerradas=aristas_cerradas,
+            aristas_cerradas=aristas_cerradas | cruces_peligrosos,
             segmentos_cerrados=snapshot.segmentos_cerrados,
             nodos_bloqueados=frozenset(nodos_bloqueados),
             perfil=self._perfil,
         )
         if ruta is None:
-            return (sobreviviente.nodo,)
+            return self._ruta_escape_inmediato(
+                grafo,
+                sobreviviente,
+                condicion_actual,
+                condiciones_futuras,
+            )
         return (ruta.origen, *(calle.destino for calle in ruta.calles))
+
+    def _ruta_escape_inmediato(
+        self,
+        grafo: Grafo,
+        sobreviviente: Sobreviviente,
+        actual: CondicionTurno,
+        futuras: tuple[CondicionTurno, ...],
+    ) -> tuple[str, ...]:
+        """Leaves immediate danger if all complete routes to shelter are cut.
+
+        Waiting on a node occupied by a zombie is a known bite, while a
+        topologically valid move to a clear neighbor may buy another turn.
+        Rank legal escape neighbors by next-turn forecast, then by remaining
+        static cost to a refuge. If every exit is occupied or closed, waiting
+        remains the only legal action.
+        """
+
+        riesgo_siguiente = futuras[0].exposicion_nodo if futuras else {}
+        candidatos: list[tuple[float, float, float, str]] = []
+        for calle in grafo.calles_desde(
+            sobreviviente.nodo,
+            aristas_cerradas=actual.aristas_cerradas | actual.aristas_cruce_peligroso,
+            segmentos_cerrados=actual.segmentos_cerrados,
+        ):
+            if calle.destino in actual.nodos_bloqueados:
+                continue
+            ruta_refugio = seleccionar_refugio(
+                grafo,
+                calle.destino,
+                refugio_objetivo=sobreviviente.refugio_objetivo,
+                aristas_cerradas=actual.aristas_cerradas,
+                segmentos_cerrados=actual.segmentos_cerrados,
+                perfil=self._perfil,
+            )
+            costo_refugio = (
+                sum(self._perfil.costo(tramo) for tramo in ruta_refugio.calles)
+                if ruta_refugio is not None
+                else float("inf")
+            )
+            candidatos.append(
+                (
+                    riesgo_siguiente.get(calle.destino, 0.0),
+                    costo_refugio,
+                    self._perfil.costo(calle),
+                    calle.destino,
+                )
+            )
+        if not candidatos:
+            return (sobreviviente.nodo,)
+        destino = min(candidatos)[-1]
+        return (sobreviviente.nodo, destino)
 
     def _pronostico_compartido(
         self,

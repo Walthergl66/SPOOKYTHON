@@ -168,6 +168,65 @@ class DecidirPasoTests(unittest.TestCase):
         self.assertEqual(trayecto, ("N-1", "N-3", "N-6", "N-4"))
         self.assertEqual(pronosticar.call_count, 1)
 
+    def test_indicador_y_accion_reutilizan_la_misma_ruta_del_snapshot(self) -> None:
+        servicio = self.servicio()
+        with patch.object(servicio, "_seleccionar_trayecto", wraps=servicio._seleccionar_trayecto) as seleccionar:
+            ruta = servicio.prever_ruta(self.solicitud())
+            decision = servicio.ejecutar(self.solicitud())
+
+        self.assertEqual(decision.siguiente_nodo, ruta[1])
+        self.assertEqual(seleccionar.call_count, 1)
+
+    def test_snapshot_nuevo_invalida_el_trayecto_cacheado(self) -> None:
+        servicio = self.servicio()
+        stub = servicio._snapshots
+        with patch.object(
+            servicio,
+            "_seleccionar_trayecto",
+            side_effect=(("N-0001", "N-0002"), ("N-0001", "N-0003")),
+        ) as seleccionar:
+            primera = servicio.prever_ruta(self.solicitud())
+            stub.snapshot = SnapshotMundo(self.partida, version=2)
+            segunda = servicio.prever_ruta(self.solicitud())
+
+        self.assertEqual(primera, ("N-0001", "N-0002"))
+        self.assertEqual(segunda, ("N-0001", "N-0003"))
+        self.assertEqual(seleccionar.call_count, 2)
+
+    def test_sin_ruta_completa_escapa_de_zombie_si_hay_vecino_libre(self) -> None:
+        grafo = Grafo(
+            Mapa(
+                version="escape-inmediato-v1",
+                nodos=(Nodo("A", 0, 0), Nodo("B", 0, 1), Nodo("C", 0, 2)),
+                calles=(
+                    Calle("E-AB", "S-AB", "A", "B", 10, TipoCalle.CALLE, 20),
+                    Calle("E-BC", "S-BC", "B", "C", 10, TipoCalle.CALLE, 20),
+                ),
+                refugios=(Refugio("R-C", "C"),),
+            )
+        )
+        partida = Partida(
+            run_id="run-escape-inmediato",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(Sobreviviente("S-escape", "A"),),
+            zombies=(Zombie("Z-ocupando-refugio", TipoZombie.CAMINANTE, "C"),),
+            estado=EstadoPartida.ACTIVA,
+            turno=1,
+            fase=FaseTurno.DECISIONES,
+        )
+        servicio = DecidirPaso(
+            SnapshotStub(SnapshotMundo(partida, version=1)),
+            CatalogoMapasMemoria((grafo,)),
+        )
+
+        decision = servicio.ejecutar(SolicitudPaso("S-escape", "A", 1))
+        ruta = servicio.prever_ruta(SolicitudPaso("S-escape", "A", 1))
+
+        self.assertEqual(decision.siguiente_nodo, "B")
+        self.assertEqual(ruta[:2], ("A", "B"))
+
 
 if __name__ == "__main__":
     unittest.main()

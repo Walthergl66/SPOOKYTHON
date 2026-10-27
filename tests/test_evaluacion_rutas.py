@@ -36,6 +36,22 @@ class EvaluacionRutasTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             comparar_politicas(semillas=(1,), poblaciones=(201,), turnos=1)
 
+    def test_permite_reproducir_la_intensidad_y_eventos_del_panel(self) -> None:
+        reporte = comparar_politicas(
+            ruta_mapa=MAPA_DEMO_POR_DEFECTO,
+            semillas=(31,),
+            escenarios=("mixto",),
+            poblaciones=(2,),
+            turnos=1,
+            horizonte=3,
+            intensidad="alta",
+            eventos_ciudad=True,
+        )
+
+        self.assertEqual(reporte["intensidad"], "alta")
+        self.assertTrue(reporte["eventosCiudad"])
+        self.assertEqual(reporte["comparaciones"][0]["dijkstra"]["evacuados"] + reporte["comparaciones"][0]["dijkstra"]["mordidos"] + reporte["comparaciones"][0]["dijkstra"]["activos"], 2)
+
     def test_prioriza_menos_mordidos_aunque_haya_menos_evacuados(self) -> None:
         self.assertEqual(
             _comparar_prioridad(

@@ -77,9 +77,11 @@ def pronosticar_zombies_visibles(
                         alcance_corredor_hops, pasos_corredor, aristas_cerradas,
                         segmentos_cerrados)
     por_turno: list[dict[str, float]] = [dict() for _ in range(horizonte_turnos)]
+    cruces_por_turno: list[dict[str, float]] = [dict() for _ in range(horizonte_turnos)]
     bloqueos: list[set[str]] = [set() for _ in range(horizonte_turnos)]
     supuestos: set[str] = set()
     destinos_sobrevivientes = tuple(sorted((item.id, item.nodo) for item in sobrevivientes))
+    aristas_inversas = _indice_aristas_inversas(grafo)
 
     for zombie in sorted(zombies, key=lambda item: item.id):
         if zombie.tipo is TipoZombie.HORDA:
@@ -107,17 +109,19 @@ def pronosticar_zombies_visibles(
             estados: dict[tuple[str, int], float] = {(zombie.nodo, 0): 0.5, (zombie.nodo, 1): 0.5}
             for indice in range(horizonte_turnos):
                 turno_futuro = turno_actual + indice + 1
-                estados = _avanzar_caminante(
-                    grafo, estados, turno_futuro, aristas_cerradas, segmentos_cerrados
+                estados, cruces = _avanzar_caminante(
+                    grafo, estados, turno_futuro, aristas_cerradas, segmentos_cerrados,
+                    aristas_inversas,
                 )
                 _acumular_ocupacion(por_turno[indice], estados)
+                _acumular_exposicion_aristas(cruces_por_turno[indice], cruces)
             continue
 
         if zombie.tipo is TipoZombie.CORREDOR:
             supuestos.add("corredor_objetivo_con_sobrevivientes_estaticos")
             estados_corredor: dict[str, float] = {zombie.nodo: 1.0}
             for indice in range(horizonte_turnos):
-                estados_corredor, ocupacion_turno = _avanzar_corredor(
+                estados_corredor, ocupacion_turno, cruces_turno = _avanzar_corredor(
                     grafo,
                     estados_corredor,
                     destinos_sobrevivientes,
@@ -125,8 +129,10 @@ def pronosticar_zombies_visibles(
                     pasos_corredor,
                     aristas_cerradas,
                     segmentos_cerrados,
+                    aristas_inversas,
                 )
                 _acumular_ocupacion(por_turno[indice], ocupacion_turno)
+                _acumular_exposicion_aristas(cruces_por_turno[indice], cruces_turno)
 
     condiciones = tuple(
         CondicionTurno(
@@ -134,6 +140,11 @@ def pronosticar_zombies_visibles(
             exposicion_nodo={
                 nodo: round(min(1.0, puntaje), 12)
                 for nodo, puntaje in por_turno[indice].items()
+                if puntaje > 0
+            },
+            exposicion_arista={
+                arista: round(min(1.0, puntaje), 12)
+                for arista, puntaje in cruces_por_turno[indice].items()
                 if puntaje > 0
             },
         )
@@ -148,8 +159,10 @@ def _avanzar_caminante(
     turno: int,
     aristas_cerradas: frozenset[str],
     segmentos_cerrados: frozenset[str],
-) -> dict[tuple[str, int], float]:
+    aristas_inversas: Mapping[str, tuple[str, ...]],
+) -> tuple[dict[tuple[str, int], float], dict[str, float]]:
     siguientes: dict[tuple[str, int], float] = {}
+    cruces: dict[str, float] = {}
     for (nodo, fase), peso in estados.items():
         if turno % 2 != fase:
             siguientes[(nodo, fase)] = siguientes.get((nodo, fase), 0.0) + peso
@@ -164,7 +177,9 @@ def _avanzar_caminante(
         for calle in salientes:
             clave = (calle.destino, fase)
             siguientes[clave] = siguientes.get(clave, 0.0) + por_salida
-    return siguientes
+            for arista_inversa in aristas_inversas.get(calle.id, ()):
+                cruces[arista_inversa] = cruces.get(arista_inversa, 0.0) + por_salida
+    return siguientes, cruces
 
 
 def _avanzar_corredor(
@@ -175,9 +190,11 @@ def _avanzar_corredor(
     pasos: int,
     aristas_cerradas: frozenset[str],
     segmentos_cerrados: frozenset[str],
-) -> tuple[dict[str, float], dict[str, float]]:
+    aristas_inversas: Mapping[str, tuple[str, ...]],
+) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
     siguientes: dict[str, float] = {}
     ocupacion: dict[str, float] = {}
+    cruces: dict[str, float] = {}
     for inicio, peso in estados.items():
         nodo = inicio
         objetivo = _objetivo_visible(
@@ -207,12 +224,37 @@ def _avanzar_corredor(
                 por_salida = masa / len(elegidas)
                 for calle in elegidas:
                     actualizada[calle.destino] = actualizada.get(calle.destino, 0.0) + por_salida
+                    for arista_inversa in aristas_inversas.get(calle.id, ()):
+                        cruces[arista_inversa] = cruces.get(arista_inversa, 0.0) + por_salida
             distribucion = actualizada
             for posicion, masa in distribucion.items():
                 ocupacion[posicion] = ocupacion.get(posicion, 0.0) + masa
         for posicion, masa in distribucion.items():
             siguientes[posicion] = siguientes.get(posicion, 0.0) + masa
-    return siguientes, ocupacion
+    return siguientes, ocupacion, cruces
+
+
+def _indice_aristas_inversas(grafo: Grafo) -> Mapping[str, tuple[str, ...]]:
+    """Builds a linear-time reverse-edge lookup for the immutable graph."""
+
+    por_direccion: dict[tuple[str, str, str], list[str]] = {}
+    for calle in grafo.mapa.calles:
+        por_direccion.setdefault(
+            (calle.segmento_id, calle.origen, calle.destino), []
+        ).append(calle.id)
+    return {
+        calle.id: tuple(
+            por_direccion.get((calle.segmento_id, calle.destino, calle.origen), ())
+        )
+        for calle in grafo.mapa.calles
+    }
+
+
+def _acumular_exposicion_aristas(destino: dict[str, float], fuente: Mapping[str, float]) -> None:
+    """Caps accumulated zombie edge mass as a bounded exposure score."""
+
+    for arista, masa in fuente.items():
+        destino[arista] = min(1.0, destino.get(arista, 0.0) + masa)
 
 
 def _objetivo_visible(

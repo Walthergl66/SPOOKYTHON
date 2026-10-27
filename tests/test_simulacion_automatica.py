@@ -107,7 +107,9 @@ class SimulacionAutomaticaTests(unittest.TestCase):
         resultado = ejecutor.ejecutar(partida.run_id, version_esperada=0)
 
         self.assertEqual(resultado.movimientos_zombies[0].destino, "D-004")
-        self.assertEqual(resultado.movimientos_sobrevivientes[0].destino, "D-001")
+        # The route forecast can keep moving when the post-zombie snapshot
+        # exposes no occupied node or dangerous opposite crossing ahead.
+        self.assertEqual(resultado.movimientos_sobrevivientes[0].destino, "D-002")
 
     def test_rechaza_version_antigua_y_modo_juego(self) -> None:
         with self.assertRaises(SnapshotObsoleto):

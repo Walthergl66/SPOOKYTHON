@@ -16,6 +16,23 @@ RAIZ = Path(__file__).resolve().parents[1]
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
+    def test_panel_y_runner_comparten_el_planificador_del_mismo_run(self) -> None:
+        control = ControlSimuladorDemoLocal(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        estado = control.iniciar(
+            escenario="libre",
+            cantidad_sobrevivientes=1,
+            intensidad="baja",
+            eventos_ciudad=False,
+            semilla=31,
+        )
+        control.pausar()
+        try:
+            planificador = control.consultar_panel.planificador
+            self.assertIs(planificador, control._reloj._ejecutar_ronda._decidir)
+            self.assertEqual(estado["runId"], control._contexto.run_id)
+        finally:
+            control.cerrar()
+
     def test_control_no_se_expone_sin_opt_in_de_desarrollo(self) -> None:
         app = crear_app()
         with patch.dict(os.environ, {}, clear=True):

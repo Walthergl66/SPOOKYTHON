@@ -40,11 +40,12 @@ class EjecutarRondaAutomatica:
         mapas: ProveedorMapas,
         *,
         reglas: ConfiguracionReglas = ConfiguracionReglas(),
+        decidir: DecidirPaso | None = None,
     ) -> None:
         self._snapshots = snapshots
         self._mapas = mapas
         self._reglas = reglas
-        self._decidir = DecidirPaso(snapshots, mapas)
+        self._decidir = decidir or DecidirPaso(snapshots, mapas)
 
     def ejecutar(self, run_id: str, *, version_esperada: int) -> ResultadoTurno:
         """Prepara si hace falta, decide para cada sobreviviente y resuelve."""

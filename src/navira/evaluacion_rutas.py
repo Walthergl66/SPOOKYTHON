@@ -10,22 +10,14 @@ from time import perf_counter
 from typing import Iterable, TextIO
 import sys
 
-from navira.application.decidir_paso import peligros_visibles
+from navira.application.decidir_paso import DecidirPaso, peligros_visibles
 from navira.demo import ESCENARIOS_DEMO, crear_contexto_demo
 from navira.domain.modelo import (
     EstadoSobreviviente,
-    EstadoZombie,
     FaseTurno,
     IntencionMovimiento,
-    TipoZombie,
 )
-from navira.routing.dijkstra import PerfilCostos, seleccionar_refugio
-from navira.routing.prediccion import (
-    SobrevivienteObservable,
-    ZombieObservable,
-    pronosticar_zombies_visibles,
-)
-from navira.routing.temporal import CondicionTurno, buscar_ruta_temporal
+from navira.routing.dijkstra import seleccionar_refugio
 from navira.simulation.coordinador import (
     SnapshotMundo,
     abrir_siguiente_turno,
@@ -44,6 +36,8 @@ def comparar_politicas(
     poblaciones: Iterable[int] = (20, 80, 200),
     turnos: int = 3,
     horizonte: int = 6,
+    intensidad: str = "media",
+    eventos_ciudad: bool = False,
 ) -> dict[str, object]:
     """Ejecuta cada política desde mundos nuevos con pares semilla/perfil iguales.
 
@@ -53,16 +47,18 @@ def comparar_politicas(
     """
 
     semillas, escenarios, poblaciones = tuple(semillas), tuple(escenarios), tuple(poblaciones)
-    _validar_entrada(semillas, escenarios, poblaciones, turnos, horizonte)
+    _validar_entrada(semillas, escenarios, poblaciones, turnos, horizonte, intensidad, eventos_ciudad)
     resultados: list[dict[str, object]] = []
     for escenario in escenarios:
         for semilla in semillas:
             for poblacion in poblaciones:
                 base = _ejecutar_corrida(
-                    "dijkstra", ruta_mapa, escenario, semilla, poblacion, turnos, horizonte
+                    "dijkstra", ruta_mapa, escenario, semilla, poblacion, turnos, horizonte,
+                    intensidad, eventos_ciudad,
                 )
                 temporal = _ejecutar_corrida(
-                    "temporal", ruta_mapa, escenario, semilla, poblacion, turnos, horizonte
+                    "temporal", ruta_mapa, escenario, semilla, poblacion, turnos, horizonte,
+                    intensidad, eventos_ciudad,
                 )
                 resultados.append(
                     {
@@ -87,6 +83,8 @@ def comparar_politicas(
         "poblaciones": poblaciones,
         "horizonte": horizonte,
         "turnos": turnos,
+        "intensidad": intensidad,
+        "eventosCiudad": eventos_ciudad,
         "comparaciones": resultados,
         "resumen": {
             "pares": len(resultados),
@@ -131,17 +129,23 @@ def _ejecutar_corrida(
     poblacion: int,
     turnos: int,
     horizonte: int,
+    intensidad: str,
+    eventos_ciudad: bool,
 ) -> dict[str, object]:
     contexto = crear_contexto_demo(
-        ruta_mapa, semilla=semilla, escenario=escenario, cantidad_sobrevivientes=poblacion
+        ruta_mapa, semilla=semilla, escenario=escenario, cantidad_sobrevivientes=poblacion,
+        intensidad=intensidad, eventos_ciudad=eventos_ciudad,
     )
     snapshot = contexto.snapshots.obtener(contexto.run_id)
     if snapshot is None:
         raise RuntimeError("No existe snapshot inicial para la evaluación de rutas.")
     llamadas_ms: list[float] = []
-    preparacion_pronostico_ms: list[float] = []
-    fallback = 0
     turnos_ejecutados = 0
+    planificador = (
+        DecidirPaso(contexto.snapshots, contexto.mapas, horizonte_turnos=horizonte)
+        if politica == "temporal"
+        else None
+    )
 
     for _ in range(turnos):
         if snapshot.partida.fase is FaseTurno.RESUELTA:
@@ -157,13 +161,6 @@ def _ejecutar_corrida(
         ruta_base_por_id, tiempos_base = _rutas_dijkstra(snapshot, contexto.grafo)
         if politica == "dijkstra":
             llamadas_ms.extend(tiempos_base.values())
-        pronostico = ()
-        peligros_actuales = None
-        if politica == "temporal":
-            inicio_pronostico = perf_counter()
-            pronostico, peligros_actuales = _crear_pronostico(snapshot, contexto.grafo, horizonte)
-            preparacion_pronostico_ms.append((perf_counter() - inicio_pronostico) * 1000)
-
         intenciones: list[IntencionMovimiento] = []
         for sobreviviente in snapshot.partida.sobrevivientes:
             if sobreviviente.estado is not EstadoSobreviviente.ACTIVO:
@@ -172,25 +169,12 @@ def _ejecutar_corrida(
             destino = ruta_base.siguiente_nodo if ruta_base is not None else sobreviviente.nodo
             if politica == "temporal":
                 inicio_busqueda = perf_counter()
-                refugios = (
-                    frozenset({sobreviviente.refugio_objetivo})
-                    if sobreviviente.refugio_objetivo is not None
-                    else frozenset(refugio.id for refugio in contexto.grafo.mapa.refugios)
-                )
-                temporal = buscar_ruta_temporal(
-                    contexto.grafo,
-                    sobreviviente.nodo,
-                    refugios,
-                    peligros_actuales=peligros_actuales,
-                    pronostico=pronostico,
-                    horizonte_turnos=horizonte,
-                    perfil=PerfilCostos(),
+                assert planificador is not None
+                trayecto = planificador.prever_ruta_en_snapshot(
+                    snapshot, sobreviviente.id, contexto.grafo
                 )
                 llamadas_ms.append((perf_counter() - inicio_busqueda) * 1000)
-                if temporal.estado == "ruta_encontrada" and temporal.trayecto:
-                    destino = temporal.trayecto[1] if len(temporal.trayecto) > 1 else sobreviviente.nodo
-                else:
-                    fallback += 1
+                destino = trayecto[1] if len(trayecto) > 1 else sobreviviente.nodo
 
             intenciones.append(
                 IntencionMovimiento(
@@ -212,16 +196,15 @@ def _ejecutar_corrida(
 
     sobrevivientes = snapshot.partida.sobrevivientes
     latencia_p95 = _percentil_nearest_rank(llamadas_ms, 0.95)
-    forecast_p95 = _percentil_nearest_rank(preparacion_pronostico_ms, 0.95)
     return {
         "turnosEjecutados": turnos_ejecutados,
         "evacuados": sum(item.estado is EstadoSobreviviente.EVACUADO for item in sobrevivientes),
         "mordidos": sum(item.estado is EstadoSobreviviente.MORDIDO for item in sobrevivientes),
         "activos": sum(item.estado is EstadoSobreviviente.ACTIVO for item in sobrevivientes),
         "recomendacionesEvaluadas": len(llamadas_ms),
-        "fallbackDijkstra": fallback,
+        "fallbackDijkstra": None if politica == "temporal" else 0,
         "p95TiempoPorRecomendacionMs": latencia_p95,
-        "p95PreparacionPronosticoMs": forecast_p95,
+        "p95PreparacionPronosticoMs": None,
     }
 
 
@@ -246,36 +229,6 @@ def _rutas_dijkstra(snapshot: SnapshotMundo, grafo):
     return rutas, tiempos
 
 
-def _crear_pronostico(snapshot: SnapshotMundo, grafo, horizonte: int):
-    nodos_bloqueados, aristas_cruzadas = peligros_visibles(snapshot, grafo)
-    aristas_cerradas = snapshot.aristas_cerradas | aristas_cruzadas
-    actual = CondicionTurno(
-        nodos_bloqueados=frozenset(nodos_bloqueados),
-        aristas_cerradas=aristas_cerradas,
-        segmentos_cerrados=snapshot.segmentos_cerrados,
-    )
-    zombies = tuple(
-        ZombieObservable(zombie.id, zombie.tipo, zombie.nodo)
-        for zombie in snapshot.partida.zombies
-        if zombie.estado is EstadoZombie.ACTIVO and zombie.tipo is not TipoZombie.DORMIDO
-    )
-    sobrevivientes = tuple(
-        SobrevivienteObservable(item.id, item.nodo)
-        for item in snapshot.partida.sobrevivientes
-        if item.estado is EstadoSobreviviente.ACTIVO
-    )
-    resultado = pronosticar_zombies_visibles(
-        grafo,
-        zombies,
-        sobrevivientes,
-        turno_actual=snapshot.partida.turno,
-        horizonte_turnos=horizonte,
-        aristas_cerradas=aristas_cerradas,
-        segmentos_cerrados=snapshot.segmentos_cerrados,
-    )
-    return resultado.turnos, actual
-
-
 def _percentil_nearest_rank(valores: list[float], fraccion: float) -> float | None:
     if not valores:
         return None
@@ -290,6 +243,8 @@ def _validar_entrada(
     poblaciones: tuple[int, ...],
     turnos: int,
     horizonte: int,
+    intensidad: str,
+    eventos_ciudad: bool,
 ) -> None:
     if not semillas or any(isinstance(seed, bool) or not isinstance(seed, int) for seed in semillas):
         raise ValueError("Se requiere al menos una semilla entera.")
@@ -301,6 +256,10 @@ def _validar_entrada(
         raise ValueError("Los turnos deben estar entre 1 y 150.")
     if isinstance(horizonte, bool) or not isinstance(horizonte, int) or not 1 <= horizonte <= 12:
         raise ValueError("El horizonte debe estar entre 1 y 12.")
+    if intensidad not in {"baja", "media", "alta"}:
+        raise ValueError("La intensidad debe ser baja, media o alta.")
+    if not isinstance(eventos_ciudad, bool):
+        raise ValueError("eventos_ciudad debe ser booleano.")
 
 
 def _entero(valor: str) -> int:
@@ -330,6 +289,8 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
     parser.add_argument("--poblaciones", type=_positivo, nargs="+", default=(20, 80, 200))
     parser.add_argument("--turnos", type=_positivo, default=3)
     parser.add_argument("--horizonte", type=_positivo, default=6)
+    parser.add_argument("--intensidad", choices=("baja", "media", "alta"), default="media")
+    parser.add_argument("--eventos-ciudad", action=argparse.BooleanOptionalAction, default=False)
     args = parser.parse_args(argv)
     try:
         resultado = comparar_politicas(
@@ -339,6 +300,8 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
             poblaciones=args.poblaciones,
             turnos=args.turnos,
             horizonte=args.horizonte,
+            intensidad=args.intensidad,
+            eventos_ciudad=args.eventos_ciudad,
         )
     except (OSError, RuntimeError, ValueError, KeyError) as error:
         parser.error(str(error))
