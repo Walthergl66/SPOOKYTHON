@@ -84,6 +84,42 @@ class PronosticoRutasTests(unittest.TestCase):
         self.assertEqual(resultado.turnos[0].nodos_bloqueados, resultado.turnos[1].nodos_bloqueados)
         self.assertIn("horda_estatica_provisional", resultado.supuestos)
 
+    def test_agrupar_zombies_lineales_conserva_exposicion_de_nodos_y_cruces(self) -> None:
+        survivors = (
+            SobrevivienteObservable("S-1", "N-3"),
+            SobrevivienteObservable("S-2", "N-4"),
+        )
+        for tipo, nodos in (
+            (TipoZombie.CAMINANTE, ("N-1", "N-2")),
+            (TipoZombie.CORREDOR, ("N-1", "N-2")),
+        ):
+            with self.subTest(tipo=tipo):
+                zombies = tuple(
+                    ZombieObservable(f"Z-{index}", tipo, nodo)
+                    for index, nodo in enumerate(nodos, start=1)
+                )
+                combinado = pronosticar_zombies_visibles(
+                    self.grafo, zombies, survivors, turno_actual=2, horizonte_turnos=3
+                )
+                individuales = [
+                    pronosticar_zombies_visibles(
+                        self.grafo, (zombie,), survivors, turno_actual=2, horizonte_turnos=3
+                    )
+                    for zombie in zombies
+                ]
+
+                for indice, turno in enumerate(combinado.turnos):
+                    esperada_nodos: dict[str, float] = {}
+                    esperadas_aristas: dict[str, float] = {}
+                    for individual in individuales:
+                        for node, exposure in individual.turnos[indice].exposicion_nodo.items():
+                            esperada_nodos[node] = min(1.0, esperada_nodos.get(node, 0.0) + exposure)
+                        for edge, exposure in individual.turnos[indice].exposicion_arista.items():
+                            esperadas_aristas[edge] = min(1.0, esperadas_aristas.get(edge, 0.0) + exposure)
+
+                    self.assertEqual(dict(turno.exposicion_nodo), esperada_nodos)
+                    self.assertEqual(dict(turno.exposicion_arista), esperadas_aristas)
+
     def test_no_acepta_dormidos_ni_observaciones_fuera_del_grafo(self) -> None:
         with self.assertRaises(ValueError):
             ZombieObservable("Z-D", TipoZombie.DORMIDO, "N-1")

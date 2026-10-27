@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from functools import cache
+from functools import cache, lru_cache
 from typing import Callable, Mapping
 
 from navira.domain.mapa import Calle, Grafo
@@ -82,14 +82,19 @@ def pronosticar_zombies_visibles(
     bloqueos: list[set[str]] = [set() for _ in range(horizonte_turnos)]
     supuestos: set[str] = set()
     destinos_sobrevivientes = tuple(sorted((item.id, item.nodo) for item in sobrevivientes))
+    sobrevivientes_por_nodo: dict[str, list[str]] = {}
+    for sobreviviente_id, nodo in destinos_sobrevivientes:
+        sobrevivientes_por_nodo.setdefault(nodo, []).append(sobreviviente_id)
     aristas_inversas = _indice_aristas_inversas(grafo)
+    estados_caminante: dict[tuple[str, int], float] = {}
+    estados_corredor: dict[str, float] = {}
 
     # Posiciones, cierres y alcance son fijos durante este pronóstico. Reusar
     # destinos evita repetir la misma BFS por cada zombie y turno del horizonte.
     @cache
     def objetivo_visible(origen: str) -> str | None:
         return _objetivo_visible(
-            grafo, origen, destinos_sobrevivientes, alcance_corredor_hops,
+            grafo, origen, sobrevivientes_por_nodo, alcance_corredor_hops,
             aristas_cerradas, segmentos_cerrados,
         )
 
@@ -113,32 +118,44 @@ def pronosticar_zombies_visibles(
 
         if zombie.tipo is TipoZombie.CAMINANTE:
             supuestos.add("caminante_uniforme_fase_desconocida")
-            estados: dict[tuple[str, int], float] = {(zombie.nodo, 0): 0.5, (zombie.nodo, 1): 0.5}
-            for indice in range(horizonte_turnos):
-                turno_futuro = turno_actual + indice + 1
-                estados, cruces = _avanzar_caminante(
-                    grafo, estados, turno_futuro, aristas_cerradas, segmentos_cerrados,
-                    aristas_inversas,
-                )
-                _acumular_ocupacion(por_turno[indice], estados)
-                _acumular_exposicion_aristas(cruces_por_turno[indice], cruces)
+            for fase in (0, 1):
+                clave = (zombie.nodo, fase)
+                estados_caminante[clave] = estados_caminante.get(clave, 0.0) + 0.5
             continue
 
         if zombie.tipo is TipoZombie.CORREDOR:
             supuestos.add("corredor_objetivo_con_sobrevivientes_estaticos")
-            estados_corredor: dict[str, float] = {zombie.nodo: 1.0}
-            for indice in range(horizonte_turnos):
-                estados_corredor, ocupacion_turno, cruces_turno = _avanzar_corredor(
-                    grafo,
-                    estados_corredor,
-                    objetivo_visible,
-                    pasos_corredor,
-                    aristas_cerradas,
-                    segmentos_cerrados,
-                    aristas_inversas,
-                )
-                _acumular_ocupacion(por_turno[indice], ocupacion_turno)
-                _acumular_exposicion_aristas(cruces_por_turno[indice], cruces_turno)
+            estados_corredor[zombie.nodo] = estados_corredor.get(zombie.nodo, 0.0) + 1.0
+
+    # Both forecast transitions are linear in probability mass. Merging equal
+    # type/state distributions avoids replaying the same graph walk once per
+    # zombie, while preserving aggregate node and crossing exposure exactly.
+    if estados_caminante:
+        for indice in range(horizonte_turnos):
+            estados_caminante, cruces = _avanzar_caminante(
+                grafo,
+                estados_caminante,
+                turno_actual + indice + 1,
+                aristas_cerradas,
+                segmentos_cerrados,
+                aristas_inversas,
+            )
+            _acumular_ocupacion(por_turno[indice], estados_caminante)
+            _acumular_exposicion_aristas(cruces_por_turno[indice], cruces)
+
+    if estados_corredor:
+        for indice in range(horizonte_turnos):
+            estados_corredor, ocupacion_turno, cruces_turno = _avanzar_corredor(
+                grafo,
+                estados_corredor,
+                objetivo_visible,
+                pasos_corredor,
+                aristas_cerradas,
+                segmentos_cerrados,
+                aristas_inversas,
+            )
+            _acumular_ocupacion(por_turno[indice], ocupacion_turno)
+            _acumular_exposicion_aristas(cruces_por_turno[indice], cruces_turno)
 
     condiciones = tuple(
         CondicionTurno(
@@ -237,6 +254,7 @@ def _avanzar_corredor(
     return siguientes, ocupacion, cruces
 
 
+@lru_cache(maxsize=2)
 def _indice_aristas_inversas(grafo: Grafo) -> Mapping[str, tuple[str, ...]]:
     """Builds a linear-time reverse-edge lookup for the immutable graph."""
 
@@ -263,14 +281,11 @@ def _acumular_exposicion_aristas(destino: dict[str, float], fuente: Mapping[str,
 def _objetivo_visible(
     grafo: Grafo,
     origen: str,
-    sobrevivientes: tuple[tuple[str, str], ...],
+    sobrevivientes_por_nodo: Mapping[str, list[str]],
     alcance: int,
     aristas_cerradas: frozenset[str],
     segmentos_cerrados: frozenset[str],
 ) -> str | None:
-    sobrevivientes_por_nodo: dict[str, list[str]] = {}
-    for sobreviviente_id, nodo in sobrevivientes:
-        sobrevivientes_por_nodo.setdefault(nodo, []).append(sobreviviente_id)
     if origen in sobrevivientes_por_nodo:
         return origen
 
