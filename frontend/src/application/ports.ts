@@ -1,6 +1,6 @@
 import type { GameOrderInput, GameOrderReceipt, PlayerSession } from '../domain/game'
 import type { PanelConnection, PanelCursor, PanelMap, PanelSnapshot, PanelState } from '../domain/panel'
-import type { RefugioAsignado, SimulatorAction, SimulatorCandidatos, SimulatorSetup, SimulatorStatus } from '../domain/simulator'
+import type { RefugioAsignado, SimulatorAction, SimulatorCandidatos, SimulatorSetup, SimulatorSpeed, SimulatorStatus } from '../domain/simulator'
 
 export interface PanelPort {
   loadSnapshot(signal?: AbortSignal): Promise<PanelSnapshot>
@@ -16,6 +16,7 @@ export interface SimulatorPort {
   getStatus(signal?: AbortSignal): Promise<SimulatorStatus>
   getCandidates(signal?: AbortSignal): Promise<SimulatorCandidatos>
   control(action: SimulatorAction, setup?: SimulatorSetup, refugios?: RefugioAsignado[]): Promise<SimulatorStatus>
+  setSpeed(velocidad: SimulatorSpeed): Promise<SimulatorStatus>
 }
 
 export interface GamePort {

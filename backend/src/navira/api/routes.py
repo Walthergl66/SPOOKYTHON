@@ -18,6 +18,7 @@ from navira.api.schemas import (
     SolicitudOrdenJuegoSchema,
     SolicitudPasoSchema,
     SolicitudIniciarDemoSchema,
+    SolicitudVelocidadDemoSchema,
 )
 from navira.api.seguridad import (
     COOKIE_SESION_JUGADOR,
@@ -138,6 +139,16 @@ async def reanudar_demo_simulador(request: Request) -> dict[str, object]:
         return gestor.reanudar()
     except RuntimeError as error:
         raise _error(409, error) from error
+
+
+@router.post("/demo/simulador/velocidad", tags=["demo local"])
+async def velocidad_demo_simulador(
+    solicitud: SolicitudVelocidadDemoSchema,
+    request: Request,
+) -> dict[str, object]:
+    gestor = _control_demo_local(request)
+    exigir_operador_local(request)
+    return gestor.fijar_velocidad(float(solicitud.velocidad))
 
 
 @router.post("/demo/simulador/reiniciar", tags=["demo local"])

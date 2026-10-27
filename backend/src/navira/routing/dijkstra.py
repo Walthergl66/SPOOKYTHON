@@ -86,21 +86,48 @@ def encontrar_ruta(
     if destino in nodos_bloqueados:
         return None
 
+    return _rutas_desde(
+        grafo,
+        origen,
+        frozenset((destino,)),
+        aristas_cerradas=aristas_cerradas,
+        segmentos_cerrados=segmentos_cerrados,
+        nodos_bloqueados=nodos_bloqueados,
+        perfil=perfil,
+    ).get(destino)
+
+
+def _rutas_desde(
+    grafo: Grafo,
+    origen: str,
+    destinos: frozenset[str],
+    *,
+    aristas_cerradas: frozenset[str],
+    segmentos_cerrados: frozenset[str],
+    nodos_bloqueados: frozenset[str],
+    perfil: PerfilCostos,
+) -> dict[str, Ruta]:
+    """Un solo Dijkstra desde `origen` que para cuando todos los `destinos` quedan fijados.
+
+    Expande los mismos nodos en el mismo orden que una búsqueda por destino, así
+    que cada ruta coincide con la de `encontrar_ruta`; solo evita repetir la
+    expansión por cada refugio. Los destinos deben ser distintos de `origen`.
+    """
+
     mejor: dict[str, tuple[float, tuple[str, ...]]] = {origen: (0.0, ())}
     anterior: dict[str, tuple[str, Calle]] = {}
     pendientes: list[tuple[float, tuple[str, ...], str]] = [(0.0, (), origen)]
+    por_fijar = set(destinos)
 
-    while pendientes:
+    while pendientes and por_fijar:
         costo, secuencia, nodo = heapq.heappop(pendientes)
         if mejor.get(nodo) != (costo, secuencia):
             continue
-        if nodo == destino:
-            break
-        for calle in grafo.calles_desde(
-            nodo,
-            aristas_cerradas=aristas_cerradas,
-            segmentos_cerrados=segmentos_cerrados,
-        ):
+        por_fijar.discard(nodo)
+        for calle in grafo.salientes(nodo):
+            # Mismo filtro que `calles_desde`, sin construir una tupla por nodo expandido.
+            if calle.id in aristas_cerradas or calle.segmento_id in segmentos_cerrados:
+                continue
             if calle.destino in nodos_bloqueados:
                 continue
             nuevo_costo = costo + perfil.costo(calle)
@@ -113,16 +140,19 @@ def encontrar_ruta(
             anterior[calle.destino] = (nodo, calle)
             heapq.heappush(pendientes, (nuevo_costo, nueva_secuencia, calle.destino))
 
-    if destino not in mejor:
-        return None
-    calles: list[Calle] = []
-    nodo_actual = destino
-    while nodo_actual != origen:
-        previo, calle = anterior[nodo_actual]
-        calles.append(calle)
-        nodo_actual = previo
-    calles.reverse()
-    return Ruta(origen, destino, tuple(calles), mejor[destino][0])
+    rutas: dict[str, Ruta] = {}
+    for destino in destinos:
+        if destino not in mejor or destino in por_fijar:
+            continue
+        calles: list[Calle] = []
+        nodo_actual = destino
+        while nodo_actual != origen:
+            previo, calle = anterior[nodo_actual]
+            calles.append(calle)
+            nodo_actual = previo
+        calles.reverse()
+        rutas[destino] = Ruta(origen, destino, tuple(calles), mejor[destino][0])
+    return rutas
 
 
 def seleccionar_refugio(
@@ -145,17 +175,25 @@ def seleccionar_refugio(
         if not refugios:
             raise KeyError(f"Refugio desconocido: {refugio_objetivo}.")
 
+    for refugio in refugios:
+        if refugio.nodo not in grafo.mapa.nodos_por_id:
+            raise KeyError(f"Nodo de destino desconocido: {refugio.nodo}.")
+    destinos = frozenset(
+        refugio.nodo for refugio in refugios
+        if refugio.nodo != origen and refugio.nodo not in nodos_bloqueados
+    )
+    rutas = _rutas_desde(
+        grafo,
+        origen,
+        destinos,
+        aristas_cerradas=aristas_cerradas,
+        segmentos_cerrados=segmentos_cerrados,
+        nodos_bloqueados=nodos_bloqueados,
+        perfil=perfil,
+    )
     opciones: list[Ruta] = []
     for refugio in refugios:
-        ruta = encontrar_ruta(
-            grafo,
-            origen,
-            refugio.nodo,
-            aristas_cerradas=aristas_cerradas,
-            segmentos_cerrados=segmentos_cerrados,
-            nodos_bloqueados=nodos_bloqueados,
-            perfil=perfil,
-        )
+        ruta = Ruta(origen, origen, (), 0.0) if refugio.nodo == origen else rutas.get(refugio.nodo)
         if ruta is not None:
             opciones.append(
                 Ruta(ruta.origen, ruta.destino, ruta.calles, ruta.costo_ponderado_m, refugio.id)

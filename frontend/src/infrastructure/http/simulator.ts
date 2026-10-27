@@ -1,4 +1,4 @@
-import { parseSimulatorCandidatos, parseSimulatorStatus, SimulatorUnavailableError, type RefugioAsignado, type SimulatorAction, type SimulatorCandidatos, type SimulatorSetup, type SimulatorStatus } from '../../domain/simulator'
+import { parseSimulatorCandidatos, parseSimulatorStatus, SimulatorUnavailableError, type RefugioAsignado, type SimulatorAction, type SimulatorCandidatos, type SimulatorSetup, type SimulatorSpeed, type SimulatorStatus } from '../../domain/simulator'
 
 export class SimulatorApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -27,6 +27,15 @@ export async function controlSimulator(action: SimulatorAction, setup?: Simulato
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: action === 'iniciar' || action === 'reiniciar' ? JSON.stringify(refugios ? { ...setup, refugios } : setup) : undefined,
+  })
+  return parseStatus(await readJson(response), response.status)
+}
+
+export async function setSimulatorSpeed(velocidad: SimulatorSpeed): Promise<SimulatorStatus> {
+  const response = await fetch('/demo/simulador/velocidad', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ velocidad }),
   })
   return parseStatus(await readJson(response), response.status)
 }

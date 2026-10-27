@@ -3,21 +3,21 @@ import { GameControls } from '../features/game/GameControls'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { RefugeDialog } from '../features/map/RefugeDialog'
 import type { PanelConnection } from '../domain/panel'
-import type { SimulatorSetup } from '../domain/simulator'
+import { SIMULATOR_SPEEDS, type SimulatorSetup } from '../domain/simulator'
 import type { GamePort, PanelPort, SimulatorPort } from '../application/ports'
 import { usePanel } from '../application/usePanel'
 import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
 import { useGameSession } from '../application/useGameSession'
 import { joinGame, restoreGameSession, sendGameOrder } from '../infrastructure/http/game'
 import { loadPanelMap, loadPanelSnapshot } from '../infrastructure/http/panel'
-import { controlSimulator, getSimulatorCandidates, getSimulatorStatus } from '../infrastructure/http/simulator'
+import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, setSimulatorSpeed } from '../infrastructure/http/simulator'
 import { subscribePanel } from '../infrastructure/realtime/panel'
 import { checkHealth } from '../infrastructure/http/health'
 import { BrandMark } from '../shared/ui/BrandMark'
 
 // Puertos de módulo: identidad estable entre renders, que los efectos de los hooks usan como dependencia.
 const panelPort: PanelPort = { loadSnapshot: loadPanelSnapshot, loadMap: loadPanelMap, subscribe: subscribePanel }
-const simulatorPort: SimulatorPort = { getStatus: getSimulatorStatus, getCandidates: getSimulatorCandidates, control: controlSimulator }
+const simulatorPort: SimulatorPort = { getStatus: getSimulatorStatus, getCandidates: getSimulatorCandidates, control: controlSimulator, setSpeed: setSimulatorSpeed }
 const gamePort: GamePort = { join: joinGame, restore: restoreGameSession, sendOrder: sendGameOrder }
 
 const RefugePicker = lazy(() => import('../features/map/RefugePicker').then(({ RefugePicker: Component }) => ({ default: Component })))
@@ -30,7 +30,7 @@ export function App() {
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
   const updatedAt = panel.updatedAt !== null ? formatTime(panel.updatedAt) : null
-  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges } = useSimulator(simulatorPort, refreshPanel)
+  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, changeSpeed } = useSimulator(simulatorPort, refreshPanel)
 
   const game = useGameSession(gamePort, { modeSelected: mode === 'game', state: snapshot?.state ?? null, map: snapshot?.map ?? null, onJoined: setSelectedSurvivorId })
 
@@ -89,6 +89,13 @@ export function App() {
               : simulator?.estado === 'pausada' ? <button className="sim-action sim-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy}>Continuar</button>
                 : <button className="sim-action sim-start" type="button" onClick={() => setRefugeDialogOpen(true)} disabled={simulatorBusy || simulatorUnavailable}>{simulatorBusy ? 'Iniciando…' : 'Iniciar simulación'}</button>}
             <button className="sim-action sim-reset" type="button" onClick={() => simulatorIsRunning ? void runControl('reiniciar') : setRefugeDialogOpen(true)} disabled={simulatorBusy || simulatorUnavailable}>{simulator?.runId ? 'Reiniciar' : 'Nueva partida'}</button>
+          </div>
+
+          <div className="speed-row" role="group" aria-label="Velocidad de la simulación">
+            <span>Velocidad</span>
+            {SIMULATOR_SPEEDS.map((speed) => (
+              <button key={speed} className="speed-button" type="button" aria-pressed={simulator?.velocidad === speed} onClick={() => void changeSpeed(speed)} disabled={simulatorBusy || simulatorUnavailable}>{speed}×</button>
+            ))}
           </div>
 
           <label className="setup-field">Escenario

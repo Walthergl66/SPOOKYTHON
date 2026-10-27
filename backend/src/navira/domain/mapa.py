@@ -153,6 +153,7 @@ class Grafo:
         self._salientes = MappingProxyType(
             {nodo_id: tuple(sorted(calles, key=lambda calle: calle.id)) for nodo_id, calles in por_origen.items()}
         )
+        self._entrantes: dict[tuple[frozenset[str], frozenset[str]], dict[str, tuple[str, ...]]] = {}
 
     def calles_desde(
         self,
@@ -174,6 +175,34 @@ class Grafo:
             for calle in self._salientes[nodo_id]
             if calle.id not in aristas_cerradas and calle.segmento_id not in segmentos_cerrados
         )
+
+    def salientes(self, nodo_id: str) -> tuple[Calle, ...]:
+        """Sentidos salientes sin filtrar, en orden estable; quien itera aplica los cierres."""
+
+        return self._salientes[nodo_id]
+
+    def entrantes_habilitadas(
+        self,
+        aristas_cerradas: frozenset[str],
+        segmentos_cerrados: frozenset[str],
+    ) -> dict[str, tuple[str, ...]]:
+        """Orígenes de los sentidos entrantes habilitados, por nodo.
+
+        Se calcula una vez por combinación de cierres: recorrer todas las calles
+        en cada consulta de distancia costaba más que la búsqueda misma. Se
+        guardan pocas combinaciones porque los cierres cambian con los eventos.
+        """
+
+        clave = (aristas_cerradas, segmentos_cerrados)
+        if clave not in self._entrantes:
+            if len(self._entrantes) >= 8:
+                self._entrantes.clear()
+            entrantes: dict[str, list[str]] = {nodo_id: [] for nodo_id in self.mapa.nodos_por_id}
+            for calle in self.mapa.calles:
+                if calle.id not in aristas_cerradas and calle.segmento_id not in segmentos_cerrados:
+                    entrantes[calle.destino].append(calle.origen)
+            self._entrantes[clave] = {nodo_id: tuple(origenes) for nodo_id, origenes in entrantes.items()}
+        return self._entrantes[clave]
 
     def vecinos_desde(self, nodo_id: str, **cierres: frozenset[str]) -> tuple[str, ...]:
         """Lista destinos adyacentes únicos en orden estable por ID de calle."""

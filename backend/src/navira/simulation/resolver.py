@@ -251,10 +251,11 @@ def _mover_zombie(
     origen = zombie.nodo
     se_desperto = False
     if zombie.estado is EstadoZombie.DORMIDO:
+        alcanzables = _distancias_hasta(
+            origen, configuracion.radio_dormido_hops, grafo, aristas_cerradas, segmentos_cerrados, dirigido=False
+        )
         cerca = any(
-            sobreviviente.estado is EstadoSobreviviente.ACTIVO
-            and _distancia_hops(origen, sobreviviente.nodo, grafo, aristas_cerradas, segmentos_cerrados, dirigido=False)
-            <= configuracion.radio_dormido_hops
+            sobreviviente.estado is EstadoSobreviviente.ACTIVO and sobreviviente.nodo in alcanzables
             for sobreviviente in sobrevivientes
         )
         if not cerca:
@@ -316,19 +317,13 @@ def _objetivo_corredor(
     segmentos_cerrados: frozenset[str],
     alcance: int,
 ) -> str | None:
+    distancias = _distancias_hasta(zombie.nodo, alcance, grafo, aristas_cerradas, segmentos_cerrados, dirigido=True)
     candidatos: list[tuple[int, str, str]] = []
     for sobreviviente in sobrevivientes:
         if sobreviviente.estado is not EstadoSobreviviente.ACTIVO:
             continue
-        distancia = _distancia_hops(
-            zombie.nodo,
-            sobreviviente.nodo,
-            grafo,
-            aristas_cerradas,
-            segmentos_cerrados,
-            dirigido=True,
-        )
-        if distancia <= alcance:
+        distancia = distancias.get(sobreviviente.nodo)
+        if distancia is not None:
             candidatos.append((distancia, sobreviviente.id, sobreviviente.nodo))
     return min(candidatos)[2] if candidatos else None
 
@@ -373,28 +368,29 @@ def _ruta_corta(
     return tuple(ruta)
 
 
-def _distancia_hops(
+def _distancias_hasta(
     inicio: str,
-    destino: str,
+    limite: int,
     grafo: Grafo,
     aristas_cerradas: frozenset[str],
     segmentos_cerrados: frozenset[str],
     *,
     dirigido: bool,
-) -> int:
-    if inicio == destino:
-        return 0
-    pendientes = deque([(inicio, 0)])
-    visitados = {inicio}
-    inversas: dict[str, list[str]] | None = None
-    if not dirigido:
-        inversas = {nodo_id: [] for nodo_id in grafo.mapa.nodos_por_id}
-        for calle in grafo.mapa.calles:
-            if calle.id not in aristas_cerradas and calle.segmento_id not in segmentos_cerrados:
-                inversas[calle.destino].append(calle.origen)
+) -> dict[str, int]:
+    """Saltos mínimos desde `inicio` a cada nodo a distancia `limite` o menos.
 
+    Una búsqueda acotada reemplaza una búsqueda completa por sobreviviente:
+    las distancias dentro del límite son exactas y los nodos más lejos no aparecen.
+    """
+
+    distancias = {inicio: 0}
+    pendientes = deque([inicio])
+    inversas = None if dirigido else grafo.entrantes_habilitadas(aristas_cerradas, segmentos_cerrados)
     while pendientes:
-        nodo, distancia = pendientes.popleft()
+        nodo = pendientes.popleft()
+        distancia = distancias[nodo]
+        if distancia >= limite:
+            continue
         vecinos = [
             calle.destino
             for calle in grafo.calles_desde(
@@ -406,12 +402,10 @@ def _distancia_hops(
         if inversas is not None:
             vecinos.extend(inversas[nodo])
         for vecino in vecinos:
-            if vecino == destino:
-                return distancia + 1
-            if vecino not in visitados:
-                visitados.add(vecino)
-                pendientes.append((vecino, distancia + 1))
-    return 10**9
+            if vecino not in distancias:
+                distancias[vecino] = distancia + 1
+                pendientes.append(vecino)
+    return distancias
 
 
 def _calle_hacia(

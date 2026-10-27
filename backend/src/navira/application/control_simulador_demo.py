@@ -7,7 +7,7 @@ from typing import Literal, Protocol
 
 from navira.application.consultar_panel import ConsultarPanel
 from navira.application.decidir_paso import DecidirPaso, ProveedorMapas
-from navira.application.reloj_simulador import RelojSimuladorLocal
+from navira.application.reloj_simulador import RelojSimuladorLocal, validar_velocidad
 from navira.application.simulacion_automatica import EjecutarRondaAutomatica
 from navira.application.snapshots import RepositorioSnapshots
 from navira.domain.mapa import Mapa, Refugio
@@ -56,6 +56,8 @@ class ControlSimuladorDemoLocal:
         self._panel: ConsultarPanel | None = None
         self._configuracion: dict[str, object] = {}
         self._estado: Literal["sin_partida", "activa", "pausada", "finalizada", "error"] = "sin_partida"
+        # La velocidad es del operador, no de una partida: sobrevive a iniciar y reiniciar.
+        self._velocidad: float = 1.0
 
     @property
     def consultar_panel(self) -> ConsultarPanel | None:
@@ -88,6 +90,7 @@ class ControlSimuladorDemoLocal:
                 "sobrevivientesIniciales": self._configuracion.get("cantidad_sobrevivientes"),
                 "intensidad": self._configuracion.get("intensidad"),
                 "eventosCiudad": self._configuracion.get("eventos_ciudad"),
+                "velocidad": self._velocidad,
                 "error": self._reloj.error if self._reloj is not None else None,
             }
 
@@ -116,7 +119,7 @@ class ControlSimuladorDemoLocal:
                 contexto.mapas,
                 decidir=contexto.servicio_decision,
             )
-            reloj = RelojSimuladorLocal(contexto.run_id, contexto.snapshots, ejecutar)
+            reloj = RelojSimuladorLocal(contexto.run_id, contexto.snapshots, ejecutar, velocidad=self._velocidad)
             self._contexto = contexto
             self._reloj = reloj
             self._panel = ConsultarPanel(
@@ -140,6 +143,13 @@ class ControlSimuladorDemoLocal:
                 raise RuntimeError("No hay una simulación local activa para pausar.")
             self._reloj.pausar()
             self._estado = "pausada"
+            return self.estado()
+
+    def fijar_velocidad(self, velocidad: float) -> dict[str, object]:
+        with self._lock:
+            self._velocidad = validar_velocidad(velocidad)
+            if self._reloj is not None:
+                self._reloj.fijar_velocidad(self._velocidad)
             return self.estado()
 
     def reanudar(self) -> dict[str, object]:

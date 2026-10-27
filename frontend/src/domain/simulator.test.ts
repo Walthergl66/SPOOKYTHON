@@ -3,12 +3,16 @@ import { nodoMasCercano, refugiosParaEnviar, parseSimulatorCandidatos, parseSimu
 
 const estado = {
   habilitado: true, estado: 'activa', runId: 'run', turno: 5, escenario: 'mixto',
-  sobrevivientesIniciales: 10, intensidad: 'media', eventosCiudad: true, error: null,
+  sobrevivientesIniciales: 10, intensidad: 'media', eventosCiudad: true, velocidad: 1, error: null,
 }
 
 describe('parseSimulatorStatus', () => {
   it('acepta un estado válido y descarta campos extra', () => {
     expect(parseSimulatorStatus({ ...estado, extra: 1 })).toEqual(estado)
+  })
+
+  it('rechaza una velocidad que el panel no ofrece', () => {
+    expect(() => parseSimulatorStatus({ ...estado, velocidad: 3 })).toThrow()
   })
   it('acepta campos null', () => {
     const vacio = { ...estado, estado: 'sin_partida', runId: null, turno: null, escenario: null, sobrevivientesIniciales: null, intensidad: null, eventosCiudad: null }

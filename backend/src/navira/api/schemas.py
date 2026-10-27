@@ -99,6 +99,14 @@ class SolicitudIniciarDemoSchema(BaseModel):
     refugios: list[RefugioDemoSchema] | None = None
 
 
+class SolicitudVelocidadDemoSchema(BaseModel):
+    """Factor de velocidad del reloj de simulación; solo los valores que ofrece el panel."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    velocidad: Literal[1, 2, 4]
+
+
 class NodoPanelSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

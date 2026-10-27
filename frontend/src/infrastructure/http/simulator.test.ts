@@ -49,7 +49,7 @@ describe('getSimulatorCandidates', () => {
 
 describe('controlSimulator con refugios', () => {
   const setup = { escenario: 'mixto', sobrevivientes: 20, intensidad: 'media', eventosCiudad: true } as const
-  const estado = { habilitado: true, estado: 'activa', runId: 'r', turno: 0, escenario: 'mixto', sobrevivientesIniciales: 20, intensidad: 'media', eventosCiudad: true, error: null }
+  const estado = { habilitado: true, estado: 'activa', runId: 'r', turno: 0, escenario: 'mixto', sobrevivientesIniciales: 20, intensidad: 'media', eventosCiudad: true, velocidad: 1, error: null }
   it('incluye refugios en el body solo si se pasan', async () => {
     const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify(estado))))
     vi.stubGlobal('fetch', fetchMock)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { SimulatorUnavailableError, refugiosParaEnviar, type SimulatorAction, type SimulatorCandidatos, type SimulatorSetup, type SimulatorStatus } from '../domain/simulator'
+import { SimulatorUnavailableError, refugiosParaEnviar, type SimulatorAction, type SimulatorCandidatos, type SimulatorSetup, type SimulatorSpeed, type SimulatorStatus } from '../domain/simulator'
 import type { SimulatorPort } from './ports'
 
 const pollIntervalMs = 1800
@@ -59,6 +59,15 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
     }
   }
 
+  /** Cambia la velocidad en caliente; el backend la conserva también para la siguiente partida. */
+  const changeSpeed = async (velocidad: SimulatorSpeed) => {
+    try {
+      setStatus(await port.setSpeed(velocidad))
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'No se pudo cambiar la velocidad.')
+    }
+  }
+
   /** Asigna el nodo a la ranura en modo "colocar" o a la primera libre. Devuelve false si no hay ranura o el nodo ya está usado. */
   const pickNode = (nodo: string): boolean => {
     const target = placing ?? slots.indexOf(null)
@@ -70,5 +79,5 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
   const clearSlot = (index: number) => { setSlots(slots.map((s, i) => (i === index ? null : s))); setPlacing(null) }
   const resetRefuges = () => { setSlots(emptySlots()); setPlacing(null) }
 
-  return { status, unavailable, message, busy, setup, setSetup, run, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges }
+  return { status, unavailable, message, busy, setup, setSetup, run, changeSpeed, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges }
 }

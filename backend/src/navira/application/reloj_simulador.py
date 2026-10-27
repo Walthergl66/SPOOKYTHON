@@ -12,13 +12,24 @@ from navira.application.snapshots import RepositorioSnapshots
 from navira.domain.modelo import EstadoPartida, EstadoSobreviviente
 
 _LOG = logging.getLogger(__name__)
+_PAUSA_MINIMA_S = 0.02
+
+
+def validar_velocidad(velocidad: float) -> float:
+    """Factor de aceleración: divide el periodo entre rondas; debe ser positivo y finito."""
+
+    if not math.isfinite(velocidad) or velocidad <= 0:
+        raise ValueError("La velocidad del reloj debe ser positiva y finita.")
+    return velocidad
 
 
 class RelojSimuladorLocal:
     """Impulsa rondas automáticas en un único proceso de desarrollo.
 
-    El periodo se mide desde el inicio de cada ciclo. Pausar evita abrir una
-    ronda nueva; el estado confirmado de la ronda en curso no se revierte.
+    El periodo se mide desde el inicio de cada ciclo y se divide entre la
+    velocidad: x4 solo se cumple si cada ronda termina antes del nuevo periodo.
+    Pausar evita abrir una ronda nueva; el estado confirmado de la ronda en
+    curso no se revierte.
     """
 
     def __init__(
@@ -28,6 +39,7 @@ class RelojSimuladorLocal:
         ejecutar_ronda: EjecutarRondaAutomatica,
         *,
         periodo_s: float = 2.0,
+        velocidad: float = 1.0,
     ) -> None:
         if not math.isfinite(periodo_s) or periodo_s <= 0:
             raise ValueError("El período del reloj debe ser positivo y finito.")
@@ -35,6 +47,7 @@ class RelojSimuladorLocal:
         self._snapshots = snapshots
         self._ejecutar_ronda = ejecutar_ronda
         self._periodo_s = periodo_s
+        self._velocidad = validar_velocidad(velocidad)
         self._detener = Event()
         self._pausado = Event()
         self._hilo: Thread | None = None
@@ -58,6 +71,15 @@ class RelojSimuladorLocal:
         """Permite que el siguiente turno automático continúe."""
 
         self._pausado.clear()
+
+    def fijar_velocidad(self, velocidad: float) -> None:
+        """Cambia el factor en caliente; el siguiente ciclo ya usa el nuevo periodo."""
+
+        self._velocidad = validar_velocidad(velocidad)
+
+    @property
+    def velocidad(self) -> float:
+        return self._velocidad
 
     def detener(self, timeout_s: float = 3.0) -> None:
         """Solicita cierre ordenado y espera un intervalo acotado."""
@@ -98,6 +120,7 @@ class RelojSimuladorLocal:
                 for item in snapshot.partida.sobrevivientes
             ):
                 return
+            inicio_ronda = monotonic()
             try:
                 self._ejecutar_ronda.ejecutar(
                     self._run_id,
@@ -107,4 +130,8 @@ class RelojSimuladorLocal:
                 self._error = str(error)
                 _LOG.exception("Se detuvo el simulador local para run %s", self._run_id)
                 return
-            siguiente_inicio = monotonic() + self._periodo_s
+            # Cede la CPU entre rondas: si una ronda tarda más que el periodo, sin esta pausa
+            # el hilo acapara el GIL y la API responde con retraso.
+            if self._detener.wait(_PAUSA_MINIMA_S):
+                return
+            siguiente_inicio = inicio_ronda + self._periodo_s / self._velocidad

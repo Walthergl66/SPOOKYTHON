@@ -1,3 +1,7 @@
+/** Factores de velocidad que ofrece el panel; el backend acepta exactamente estos valores. */
+export type SimulatorSpeed = 1 | 2 | 4
+export const SIMULATOR_SPEEDS: readonly SimulatorSpeed[] = [1, 2, 4]
+
 export type SimulatorStatus = {
   habilitado: true
   estado: 'sin_partida' | 'activa' | 'pausada' | 'finalizada' | 'error'
@@ -7,6 +11,7 @@ export type SimulatorStatus = {
   sobrevivientesIniciales: number | null
   intensidad: 'baja' | 'media' | 'alta' | null
   eventosCiudad: boolean | null
+  velocidad: SimulatorSpeed
   error: string | null
 }
 
@@ -43,6 +48,7 @@ export function parseSimulatorStatus(value: unknown): SimulatorStatus {
     !(typeof value.sobrevivientesIniciales === 'number' || value.sobrevivientesIniciales === null) ||
     !(value.intensidad === 'baja' || value.intensidad === 'media' || value.intensidad === 'alta' || value.intensidad === null) ||
     !(typeof value.eventosCiudad === 'boolean' || value.eventosCiudad === null) ||
+    !(value.velocidad === 1 || value.velocidad === 2 || value.velocidad === 4) ||
     !(typeof value.error === 'string' || value.error === null)) {
     throw new Error('El backend devolvió un estado de simulador incompleto.')
   }
@@ -55,6 +61,7 @@ export function parseSimulatorStatus(value: unknown): SimulatorStatus {
     sobrevivientesIniciales: value.sobrevivientesIniciales,
     intensidad: value.intensidad,
     eventosCiudad: value.eventosCiudad,
+    velocidad: value.velocidad,
     error: value.error,
   }
 }

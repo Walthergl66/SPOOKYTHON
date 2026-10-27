@@ -400,6 +400,12 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 @media (min-width: 761px) { .refuge-dialog .refuge-chips { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .refuge-dialog-close:focus-visible { outline: 2px solid var(--sea-bright); outline-offset: 2px; }
 .refuge-dialog-hint { margin: 0 0 12px; color: #f0c37f; font-size: 13px; line-height: 1.45; }
+.speed-row { display: flex; align-items: center; gap: 6px; margin: 0 0 14px; color: #c5d0df; font-size: 13px; }
+.speed-row > span { margin-right: auto; }
+.speed-button { min-width: 48px; min-height: 36px; padding: 0 8px; border: 1px solid rgba(181, 200, 224, .3); border-radius: 5px; background: #2a3d5a; color: var(--ink); font: 600 13px 'DM Sans', sans-serif; cursor: pointer; }
+.speed-button[aria-pressed='true'] { background: #16875e; border-color: #5fe0aa; color: #fff; }
+.speed-button:disabled { opacity: .55; cursor: not-allowed; }
+.speed-button:focus-visible { outline: 2px solid var(--sea-bright); outline-offset: 2px; }
 .refuge-picker-hint, .refuge-picker-notice { margin: 0; color: #c0cad8; font-size: 12px; line-height: 1.5; }
 .refuge-picker-notice { color: #f0c37f; }
 .refuge-chip:focus-visible, .refuge-chip-clear:focus-visible, .refuge-reset:focus-visible { outline: 2px solid var(--sea-bright); outline-offset: 2px; }
