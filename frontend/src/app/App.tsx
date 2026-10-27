@@ -29,7 +29,6 @@ export function App() {
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
-  const updatedAt = panel.updatedAt !== null ? formatTime(panel.updatedAt) : null
   const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, changeSpeed } = useSimulator(simulatorPort, refreshPanel)
 
   const game = useGameSession(gamePort, { modeSelected: mode === 'game', state: snapshot?.state ?? null, map: snapshot?.map ?? null, onJoined: setSelectedSurvivorId })
@@ -189,14 +188,6 @@ function Metric({ label, value }: { label: string; value?: number | null }) {
 
 function MapPlaceholder() {
   return <div className="map-placeholder" role="img" aria-label="No hay un mapa de partida activo"><span className="placeholder-orbit" aria-hidden="true"><span /><span /><span /></span><strong>Inicia una simulación para cargar el mapa.</strong><span>El panel mostrará únicamente el estado publicado por el servidor.</span></div>
-}
-
-const TIME_FORMAT = new Intl.DateTimeFormat('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-
-function formatTime(value: string) {
-  const date = new Date(value)
-  if (!Number.isFinite(date.getTime())) return 'hora no disponible'
-  return TIME_FORMAT.format(date)
 }
 
 function connectionLabel(connection: PanelConnection) {

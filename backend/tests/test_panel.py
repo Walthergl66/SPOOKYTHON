@@ -126,8 +126,32 @@ class PanelPublicoTests(unittest.TestCase):
         self.assertTrue(contexto.snapshots.guardar_si_version(contexto.run_id, actual.version, decisiones))
 
         estado = panel.consultar_estado()
-        self.assertEqual(estado["eventosCiudad"][0]["id"], "EV-CIUDAD-001")
-        self.assertEqual(estado["eventosCiudad"][0]["turno"], 2)
+        evento_publicado = estado["eventosCiudad"][0]
+        self.assertEqual(evento_publicado["id"], "EV-CIUDAD-001")
+        self.assertEqual(evento_publicado["turno"], 2)
+        self.assertTrue(-90 <= evento_publicado["lat"] <= 90)
+        self.assertTrue(-180 <= evento_publicado["lng"] <= 180)
+        self.assertIn(evento_publicado["segmentoId"], estado["segmentosBloqueados"])
+        nodos = contexto.grafo.mapa.nodos_por_id
+        segmentos_por_par = {
+            (calle.origen, calle.destino): calle.segmento_id
+            for calle in contexto.grafo.mapa.calles
+        }
+        for ruta in estado["rutasPrevistas"]:
+            tramos = zip(ruta["trayecto"], ruta["trayecto"][1:])
+            self.assertTrue(
+                all(
+                    segmentos_por_par.get((origen, destino)) not in estado["segmentosBloqueados"]
+                    for origen, destino in tramos
+                )
+            )
+        evento_segmento = next(
+            calle for calle in contexto.grafo.mapa.calles
+            if calle.segmento_id == evento_publicado["segmentoId"]
+        )
+        origen, destino = nodos[evento_segmento.origen], nodos[evento_segmento.destino]
+        self.assertAlmostEqual(evento_publicado["lat"], (origen.lat + destino.lat) / 2)
+        self.assertAlmostEqual(evento_publicado["lng"], (origen.lng + destino.lng) / 2)
 
     def test_mapa_corresponde_a_la_version_activa_y_no_incluye_estado(self) -> None:
         contexto = crear_contexto_demo(semilla=9)

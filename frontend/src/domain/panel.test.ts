@@ -16,7 +16,7 @@ const estadoActivo = {
   sobrevivientes: [{ id: 's', nodo: 'a', estado: 'activo', control: 'humano' }],
   rutasPrevistas: [{ sobrevivienteId: 's', trayecto: ['a', 'b'] }],
   aristasBloqueadas: ['c1'], segmentosBloqueados: ['s1'], nodosHorda: ['a'],
-  eventosCiudad: [{ id: 'e', turno: 1, causa: 'x' }],
+  eventosCiudad: [{ id: 'e', turno: 1, causa: 'x', segmentoId: 's1', lat: 0.25, lng: 0.75 }],
   metricas: { sobrevivientesActivos: 1, mordidos: 0, mordidosUltimoTurno: 0, evacuados: 0, zombiesVisibles: 1 },
 }
 
@@ -63,6 +63,12 @@ describe('parsePanelState', () => {
   it('rechaza un plazo de decisión negativo', () => {
     expect(() => parsePanelState({ ...estadoActivo, decisionRestanteMs: -1 }))
       .toThrow('El servicio devolvió el plazo de decisiones con un formato no válido.')
+  })
+  it('rechaza coordenadas de incidente parciales o fuera de rango numérico', () => {
+    expect(() => parsePanelState({ ...estadoActivo, eventosCiudad: [{ id: 'e', turno: 1, causa: 'x', lat: 2 }] }))
+      .toThrow('El servicio devolvió eventos de ciudad con un formato no válido.')
+    expect(() => parsePanelState({ ...estadoActivo, eventosCiudad: [{ id: 'e', turno: 1, causa: 'x', segmentoId: 's1', lat: Number.NaN, lng: 0 }] }))
+      .toThrow('El servicio devolvió eventos de ciudad con un formato no válido.')
   })
 })
 

@@ -20,6 +20,7 @@ Estado: implementación parcial del grafo, movimiento zombie, cierres programado
 | R-12 | Cada sobreviviente puede dirigirse al refugio elegido por el equipo | La política de rutas selecciona destino; llegada y mordida respetan el orden acordado. |
 | R-13 | En partidas sobre el fixture Manta, la caja urbana aprobada es el límite del mundo jugable | Nodos, calles, apariciones, amenazas, rutas y refugios personalizados quedan dentro; una calle que cruce el borde se excluye. El fixture fuente ampliado no se modifica. |
 | R-14 | Zombies no aparecen ni avanzan dentro de una cuadra de los refugios Manta | El perímetro comprende el nodo refugio y los nodos con una calle directamente conectada, considerando sentidos entrantes y salientes aunque exista cierre vial. Si una entidad ya estuviera en el perímetro, puede quedarse o salir, pero no entrar a otro nodo protegido. |
+| R-15 (demo sintética) | Incidentes viales aleatorios cierran segmentos | En el control local se sortean al iniciar 1–10 segmentos distintos, con semilla privada; se cierran cada tres turnos desde el turno 2. Se aplican antes de decisiones y sus rutas usan el cierre vigente. El panel los alerta solo al aplicarse. No son incidentes reales ni reglas oficiales del reto (ADR-033). |
 
 ## Decisiones de diseño
 
@@ -31,6 +32,7 @@ Estado: implementación parcial del grafo, movimiento zombie, cierres programado
 - Un sobreviviente mordido no vuelve a decidir ni vuelve a recibir mordidas. Un evacuado deja de participar después de resolver su llegada de manera válida y no puede ser mordido en turnos posteriores (CAM-060/T-34).
 - Un destino marcado como zona segura se interpreta siempre dentro de la amenaza y fuente que lo respalda. En el fixture actual, “Zona Segura” corresponde a los mapas de evacuación por tsunami del GAD Manta; no acredita seguridad ante terremotos ni sustituye alertas oficiales. Ver [fuentes y límites](mapa-manta.md).
 - R-14 es una mecánica del simulador, no una certificación de que el área real alrededor del marcador sea inmune a zombies, tsunami o terremotos. “Una cuadra” se aproxima con una arista topológica en el grafo OSM; la longitud física de las cuadras puede variar. Solo se activa en el mapa Manta; fixtures sintéticos no geográficos mantienen sus reglas.
+- En la demo local, R-15 configura cierres viales sintéticos, no amenazas de desastre; ver [ADR-033](../arquitectura/decisiones/0033-alerta-y-cierres-aleatorios.md).
 - El mundo usa una secuencia aleatoria privada por partida para seleccionar estados iniciales y decisiones que las reglas dejan al azar. Una modificación pequeña de la entrada puede desviar el recorrido y alterar rutas, encuentros, mordidas y evacuaciones siguientes.
 - La aleatoriedad no reemplaza las reglas: el corredor sigue persiguiendo según la regla configurada; la horda sigue bloqueando nodo y vecinos; sus movimientos quedan sometidos a P-07. El motor conserva respuesta estable para solicitudes repetidas sobre la misma instantánea.
 

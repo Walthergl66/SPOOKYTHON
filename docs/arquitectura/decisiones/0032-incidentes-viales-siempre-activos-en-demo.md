@@ -13,7 +13,7 @@ El control local permitía elegir si crear incidentes viales aleatorios. La pers
 
 El tablero no ofrece selector ni guarda esa opción en `SimulatorSetup`; el frontend omite `eventosCiudad` al iniciar y reiniciar. `ControlSimuladorDemoLocal` siempre llama al generador con `eventos_ciudad=True`. El endpoint conserva el campo opcional legado para no romper clientes previos, pero no lo pasa al caso de uso y lo marca obsoleto en el esquema.
 
-La aleatoriedad de la posición/segmento y del turno de aplicación permanece determinada por intensidad y semilla. Los cierres se siguen mostrando en el panel solo cuando ya fueron aplicados. Generadores y herramientas de evaluación que invocan directamente `crear_contexto_demo` conservan su configuración explícita.
+La decisión posterior [ADR-033](0033-alerta-y-cierres-aleatorios.md) fija el conteo aleatorio en 1–10, independiente de intensidad, y agrega el punto/alerta visible al aplicarse. El panel sigue ocultando todos los cierres futuros. Generadores y herramientas de evaluación que invocan directamente `crear_contexto_demo` conservan su configuración explícita.
 
 ## Alternativas
 
@@ -25,4 +25,4 @@ La aleatoriedad de la posición/segmento y del turno de aplicación permanece de
 
 Los nuevos controles locales no permiten iniciar una partida sin incidentes; los clientes antiguos reciben el mismo resultado aunque envíen `false`. T-43 comprueba que iniciar/reiniciar mantienen `eventosCiudad=true` en la respuesta y que el cliente ya no envía el campo. Los tests de escenarios mantienen la posibilidad de omitir incidentes fuera del control de demo.
 
-Documentos propietarios: [SPEC-007](../../metodo/especificaciones/SPEC-007-panel-operador-local.md), [contrato API](../contratos/api.md), [módulos frontend](../modulos/frontend.md), [pruebas](../../calidad/pruebas.md) y CAM-081.
+Documentos propietarios: [SPEC-007](../../metodo/especificaciones/SPEC-007-panel-operador-local.md), [contrato API](../contratos/api.md), [módulos frontend](../modulos/frontend.md), [pruebas](../../calidad/pruebas.md) y CAM-081. La cantidad, calendario, cierre/replanificación y alerta visual vigentes se definen en [ADR-033](0033-alerta-y-cierres-aleatorios.md).

@@ -21,7 +21,7 @@ export interface PanelState {
   aristasBloqueadas?: string[]
   segmentosBloqueados?: string[]
   nodosHorda?: string[]
-  eventosCiudad?: Array<{ id: string; turno: number; causa: string }>
+  eventosCiudad?: Array<{ id: string; turno: number; causa: string; segmentoId?: string; lat?: number; lng?: number }>
   metricas?: { sobrevivientesActivos: number; mordidos: number; mordidosUltimoTurno: number | null; evacuados: number; zombiesVisibles: number }
 }
 
@@ -129,8 +129,12 @@ export function parsePanelState(value: unknown): PanelState {
     const ids = value[key]
     if (!Array.isArray(ids) || !ids.every((id: unknown) => typeof id === 'string')) throw new Error(`El servicio devolvió ${key} con un formato no válido.`)
   }
-  if (!Array.isArray(value.eventosCiudad) || !value.eventosCiudad.every((item) =>
-    isRecord(item) && typeof item.id === 'string' && Number.isInteger(item.turno) && typeof item.causa === 'string')) {
+  const eventosCiudadValidos = Array.isArray(value.eventosCiudad) && value.eventosCiudad.every((item) =>
+    isRecord(item) && typeof item.id === 'string' && Number.isInteger(item.turno) && typeof item.causa === 'string'
+    && ((item.lat === undefined && item.lng === undefined && item.segmentoId === undefined)
+      || (typeof item.segmentoId === 'string' && typeof item.lat === 'number' && Number.isFinite(item.lat)
+        && typeof item.lng === 'number' && Number.isFinite(item.lng))))
+  if (!eventosCiudadValidos) {
     throw new Error('El servicio devolvió eventos de ciudad con un formato no válido.')
   }
   return {
@@ -149,7 +153,7 @@ export function parsePanelState(value: unknown): PanelState {
     aristasBloqueadas: value.aristasBloqueadas as string[],
     segmentosBloqueados: value.segmentosBloqueados as string[],
     nodosHorda: value.nodosHorda as string[],
-    eventosCiudad: value.eventosCiudad as Array<{ id: string; turno: number; causa: string }>,
+    eventosCiudad: value.eventosCiudad as Array<{ id: string; turno: number; causa: string; segmentoId?: string; lat?: number; lng?: number }>,
     metricas: {
       sobrevivientesActivos: metricas.sobrevivientesActivos as number,
       mordidos: metricas.mordidos as number,

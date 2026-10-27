@@ -37,5 +37,6 @@ Un ADR documenta una elección duradera y su motivo. «Aceptada para diseño» n
 | [ADR-030](0030-ventana-urbana-zona-jugable.md) | Ventana urbana aplicada como límite topológico jugable y del selector de refugios | Aceptada e implementada localmente; revisión visual pendiente | CAM-077/T-39. |
 | [ADR-031](0031-perimetro-refugios-manta.md) | Búfer topológico de una cuadra para impedir la aproximación zombie a refugios Manta | Aceptada e implementada localmente; calibración geográfica pendiente | CAM-078/T-40; P-17. |
 | [ADR-032](0032-incidentes-viales-siempre-activos-en-demo.md) | Incidentes viales siempre activos y sin selector en el control local | Aceptada e implementada localmente | CAM-081/T-43; el parámetro HTTP legado se ignora. |
+| [ADR-033](0033-alerta-y-cierres-aleatorios.md) | Sorteo 1–10, cierre antes de decisiones, alerta/punto y rutas actualizadas | Aceptada e implementada localmente | CAM-082/T-44; solo se publica tras aplicación. |
 
 Usar [plantilla](../../metodo/plantillas/decision.md). Numeración correlativa, fecha, contexto, decisión, alternativas, consecuencias, pendientes y enlaces. No renumerar IDs ya citados. Para cambiar una decisión relevante, añadir ADR nuevo y marcar el anterior sustituido con enlace recíproco. Correcciones menores pueden aclararse sin fingir que la decisión original ya decía otra cosa.

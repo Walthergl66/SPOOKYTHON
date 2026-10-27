@@ -163,18 +163,23 @@ def crear_eventos_ciudad(
     intensidad: IntensidadEscenario,
     rng: random.Random,
 ) -> tuple[EventoCierre, ...]:
-    """Programa cierres viales genéricos; no representa amenazas naturales."""
+    """Sorts 1–10 closures once, then spaces them three turns apart.
 
-    cantidad = {"baja": 1, "media": 2, "alta": 3}[intensidad]
+    Intensity stays in the signature for callers that share scenario settings,
+    but incident count is independent of zombie intensity. Segment selection,
+    count, and therefore the schedule are reproducible from the private RNG.
+    This is a generic road closure, not a model of a real crash or natural hazard.
+    """
+
     segmentos = sorted({calle.segmento_id for calle in grafo.mapa.calles})
     if not segmentos:
         return ()
-    seleccionados = rng.sample(segmentos, min(cantidad, len(segmentos)))
-    turnos = (2, 5, 8)
+    cantidad = rng.randint(1, min(10, len(segmentos)))
+    seleccionados = rng.sample(segmentos, cantidad)
     return tuple(
         EventoCierre(
             id=f"EV-CIUDAD-{indice:03d}",
-            turno_objetivo=turnos[indice - 1],
+            turno_objetivo=2 + 3 * (indice - 1),
             segmentos=frozenset((segmento,)),
             causa="Incidente vial simulado",
         )

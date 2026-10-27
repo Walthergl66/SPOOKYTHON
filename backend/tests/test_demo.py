@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import random
 import time
 import unittest
 from pathlib import Path
@@ -16,6 +17,7 @@ from navira.demo import crear_contexto_demo
 from navira.domain.modelo import EstadoZombie
 from navira.domain.mapa import Refugio, cargar_mapa, nodos_protegidos_refugios
 from navira.main import _crear_app_configurada, crear_app, crear_app_demo
+from navira.simulation.escenarios import crear_eventos_ciudad
 
 
 class DemoBootstrapTests(unittest.TestCase):
@@ -84,6 +86,21 @@ class DemoBootstrapTests(unittest.TestCase):
             tuple((z.tipo, z.nodo, z.fase_movimiento) for z in repetido_inicial.partida.zombies),
         )
         self.assertEqual(inicial.eventos_programados, repetido_inicial.eventos_programados)
+        self.assertGreaterEqual(len(inicial.eventos_programados), 1)
+        self.assertLessEqual(len(inicial.eventos_programados), 10)
+        self.assertEqual(
+            tuple(evento.turno_objetivo for evento in inicial.eventos_programados),
+            tuple(2 + 3 * indice for indice in range(len(inicial.eventos_programados))),
+        )
+        self.assertEqual(
+            len({segmento for evento in inicial.eventos_programados for segmento in evento.segmentos}),
+            len(inicial.eventos_programados),
+        )
+        cantidades = {
+            len(crear_eventos_ciudad(primero.grafo, "alta", random.Random(semilla)))
+            for semilla in range(20)
+        }
+        self.assertGreater(len(cantidades), 1)
 
     def test_nueva_partida_obtiene_semilla_y_run_id_independientes(self) -> None:
         with patch("navira.demo.secrets.randbits", side_effect=(101, 202)):

@@ -14,7 +14,7 @@ Disponer de un grafo de Manta con calles dirigidas, distancia/tipo y cuatro refu
 
 ### PRD-02 — Simulación dinámica y reglas comunes
 
-Ejecutar zombies, turnos, bloqueos, mordidas y llegadas según las reglas del reto. El escenario debe variar de forma estocástica entre ejecuciones; pequeñas diferencias de semilla, estado o eventos pueden cambiar rutas y resultados posteriores. La demo debe permitir intensidades sintéticas de amenazas distribuidas por el grafo para observar rutas bajo presión; no representar esos presets como densidades oficiales de Manta. Humano y automáticos usan un mismo mundo y resolutor. Prioridad: obligatoria. No convertir ambigüedades pendientes en reglas oficiales; ver [pendientes](../seguimiento/pendientes.md).
+Ejecutar zombies, turnos, bloqueos, mordidas y llegadas según las reglas del reto. El escenario debe variar de forma estocástica entre ejecuciones; pequeñas diferencias de semilla, estado o eventos pueden cambiar rutas y resultados posteriores. La demo debe permitir intensidades sintéticas de amenazas distribuidas por el grafo para observar rutas bajo presión; no representar esos presets como densidades oficiales de Manta. En el control local, cada partida activa desde 1 hasta 10 cierres viales aleatorios definidos al inicio, sin relación con la intensidad zombie. Humano y automáticos usan un mismo mundo y resolutor. Prioridad: obligatoria. No convertir ambigüedades pendientes en reglas oficiales; ver [pendientes](../seguimiento/pendientes.md).
 
 ### PRD-03 — Evacuación automática
 
@@ -22,7 +22,7 @@ Recomendar un siguiente paso válido hacia un refugio, priorizando menos mordida
 
 ### PRD-04 — Observación comprensible en vivo
 
-Mostrar zombies visibles por tipo, sobrevivientes, rutas, refugios, cierres y turno. Comunicar desconexión y última actualización. Prioridad: obligatoria; un mapa detenido no se presenta como vivo. Detalle: [espectador](../dominio/flujos/espectador.md).
+Mostrar zombies visibles por tipo, sobrevivientes, rutas, refugios, cierres y turno. Al confirmarse un incidente vial, alertar en el mapa y señalar el punto afectado; las nuevas recomendaciones deben rodear el cierre. Comunicar desconexión y última actualización. Prioridad: obligatoria; un mapa detenido no se presenta como vivo. Detalle: [espectador](../dominio/flujos/espectador.md).
 
 ### PRD-05 — Juego humano complementario
 

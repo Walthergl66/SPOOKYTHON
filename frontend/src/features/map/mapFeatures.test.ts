@@ -98,6 +98,15 @@ describe('createSimulationFeatures', () => {
     expect(kinds(s, 's')).toContain('route')
     expect(kinds(s, 'x')).not.toContain('route')
   })
+  it('proyecta cada incidente aplicado como punto geográfico amarillo identificable', () => {
+    const features = createSimulationFeatures(map, state({
+      eventosCiudad: [{ id: 'event-1', turno: 2, causa: 'Incidente vial simulado', segmentoId: 's1', lat: 0.4, lng: 0.6 }],
+    }), undefined).features
+    const incident = features.find((feature) => feature.properties.kind === 'road-incident')
+    expect(incident?.id).toBe('incident-event-1')
+    expect(incident?.geometry).toEqual({ type: 'Point', coordinates: [0.6, 0.4] })
+    expect(incident?.properties.glyph).toBe('!')
+  })
   it('filtra nodos desconocidos', () => {
     const s = state({ rutasPrevistas: [{ sobrevivienteId: 's', trayecto: ['a', 'zz'] }] as never })
     expect(kinds(s, 's')).not.toContain('route')

@@ -160,6 +160,9 @@ class EventoCiudadPanelSchema(BaseModel):
     id: str
     turno: int = Field(ge=0)
     causa: str
+    segmentoId: str | None = None
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lng: float | None = Field(default=None, ge=-180, le=180)
 
 
 class MovimientoZombiePanelSchema(BaseModel):

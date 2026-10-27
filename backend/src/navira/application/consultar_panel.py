@@ -9,7 +9,7 @@ from navira.application.decidir_paso import DecidirPaso, nodos_horda_visibles
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.domain.mapa import Grafo
 from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, FaseTurno, TipoZombie
-from navira.domain.snapshot import SnapshotMundo
+from navira.domain.snapshot import EventoCierre, SnapshotMundo
 
 
 class ProveedorSnapshotsPanel(Protocol):
@@ -142,13 +142,12 @@ class ConsultarPanel:
             # Solo se publica el evento después de quedar confirmado como aplicado;
             # el panel no puede anticipar el segmento que cerrará en el futuro.
             "eventosCiudad": tuple(
-                {
-                    "id": evento.id,
-                    "turno": evento.turno_objetivo,
-                    "causa": evento.causa,
-                }
+                proyeccion
                 for evento in snapshot.eventos_programados
                 if evento.id in snapshot.eventos_aplicados
+                for proyeccion in (
+                    self._proyectar_evento_ciudad(evento, grafo),
+                )
             ),
             "metricas": {
                 "sobrevivientesActivos": sum(
@@ -169,6 +168,37 @@ class ConsultarPanel:
                 "zombiesVisibles": len(zombies_visibles),
             },
         }
+
+    @staticmethod
+    def _proyectar_evento_ciudad(evento: EventoCierre, grafo: Grafo) -> dict[str, object]:
+        """Expose only an applied incident and the midpoint of its closed road."""
+
+        segmento = next(iter(evento.segmentos), None)
+        calle = next(
+            (
+                candidata
+                for candidata in grafo.mapa.calles
+                if candidata.segmento_id in evento.segmentos
+                or candidata.id in evento.aristas
+            ),
+            None,
+        )
+        proyeccion: dict[str, object] = {
+            "id": evento.id,
+            "turno": evento.turno_objetivo,
+            "causa": evento.causa,
+        }
+        if calle is not None:
+            origen = grafo.mapa.nodos_por_id[calle.origen]
+            destino = grafo.mapa.nodos_por_id[calle.destino]
+            proyeccion.update(
+                {
+                    "segmentoId": calle.segmento_id if segmento is None else segmento,
+                    "lat": (origen.lat + destino.lat) / 2,
+                    "lng": (origen.lng + destino.lng) / 2,
+                }
+            )
+        return proyeccion
 
     def consultar_mapa(self) -> dict[str, object]:
         """Proyecta el mapa exacto de la partida activa, sin datos privados."""

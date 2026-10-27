@@ -4,8 +4,8 @@ ID: SPEC-001
 Estado: implementada
 Requisitos: PRD-01, PRD-02, PRD-11, TRD-03, TRD-04, TRD-05, TRD-09, TRD-11, TRD-12, TRD-16
 Tareas: P1-01, P1-02, P1-03, P1-04, P1-05
-Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18, T-24, T-28, T-29, T-40, T-42, T-43
-Cambio: CAM-081
+Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18, T-24, T-28, T-29, T-40, T-42, T-43, T-44
+Cambio: CAM-082
 Evidencia: parcial; ver reporte de generador espacial en resultados.
 
 ## Objetivo y alcance
@@ -26,13 +26,13 @@ Ejecutar un único mundo de Manta con reglas comunes para humano/automáticos, c
 | CA-001-08 | El generador demo crea exactamente la población solicitada (1–200), fuera de nodos refugio, con posiciones repetibles por semilla. | T-10 |
 | CA-001-09 | Las partidas nuevas usan estado aleatorio independiente; cambiar semilla/estado/eventos puede divergir en ubicaciones, movimiento zombie y rutas posteriores. Se respetan reglas y la misma instantánea conserva decisión HTTP estable. | Parcial: semilla nueva, posiciones/fase inicial aleatorias, divergencia de rutas entre semillas y decisión estable al repetir snapshot; composición/eventos oficiales y persistencia integral pendientes (T-10, T-24) |
 | CA-001-10 | La demo ofrece intensidades sintéticas baja/media/alta que escalan la cantidad inicial de zombies al grafo, distribuyen ubicaciones por sectores disponibles y componen caminantes/corredores/hordas/dormidos según el perfil. Misma semilla y configuración reproducen posiciones y tipos; dormidos siguen ocultos. | T-28 |
-| CA-001-11 | La demo local programa siempre incidentes viales aleatorios que cierran segmentos desde turnos definidos; el panel solo publica el incidente aplicado, y la planificación usa cierres confirmados. Los generadores/evaluaciones explícitos pueden configurarse independientemente. No se simulan ni atribuyen amenazas sísmicas/tsunami. | T-29, T-43 |
+| CA-001-11 | La demo local sortea al iniciar de 1 a 10 segmentos distintos, independientemente de la intensidad zombie, y agenda un cierre cada tres turnos desde el 2. El coordinador lo aplica antes de decisiones; las rutas recomendadas en ese snapshot evitan todos los segmentos cerrados. El panel publica solo los eventos aplicados, con punto geográfico para alerta/marcador amarillo; nunca revela el calendario futuro. Los generadores/evaluaciones directos conservan su configuración explícita. No se simulan ni atribuyen amenazas sísmicas/tsunami. | T-29, T-43, T-44 |
 | CA-001-12 | En partidas Manta ningún zombie aparece ni ejecuta un tramo hacia el nodo refugio o una intersección enlazada directamente; el conjunto no depende de dirección de calle ni cierres. Una entidad ya dentro solo puede permanecer o salir. Mapas sintéticos no se alteran. | T-40 |
 | CA-001-13 | Cada resolución conserva de forma única quién fue mordido; el panel separa el acumulado de estados terminales de las mordidas de la última resolución confirmada. | T-42 |
 
 ## Plan y módulos
 
-P1-01 valida mapa/fixture; P1-02 define entidades e intenciones; P1-03 implementa reglas puras; P1-04 integra reloj/snapshots; P1-05 fija escenarios. La demo local configura densidad sintética y distribución estratificada por sectores; usa `EventoCierre` existente para incidentes viales y los proyecta cuando ya se aplicaron. Las cantidades oficiales, movimiento de horda, incidentes sísmicos y tsunami permanecen pendientes. Áreas previstas: dominio, simulación, aplicación y adaptadores. No consultar HTTP dentro del dominio ni publicar mundo privado.
+P1-01 valida mapa/fixture; P1-02 define entidades e intenciones; P1-03 implementa reglas puras; P1-04 integra reloj/snapshots; P1-05 fija escenarios. La demo local configura densidad sintética y distribución estratificada por sectores; genera 1–10 `EventoCierre` reproducibles al inicio de cada partida, los aplica antes de abrir decisiones y los proyecta con coordenadas solo cuando ya se aplicaron. Las cantidades oficiales, movimiento de horda, incidentes sísmicos y tsunami permanecen pendientes. Áreas previstas: dominio, simulación, aplicación y adaptadores. No consultar HTTP dentro del dominio ni publicar mundo privado.
 
 ## Casos límite, dudas y verificación
 

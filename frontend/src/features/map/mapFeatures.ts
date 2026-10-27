@@ -79,6 +79,14 @@ export function createSimulationFeatures(map: PanelMap, state: PanelState, selec
     const coordinates = pointById.get(refuge.nodo)
     if (coordinates) features.push({ type: 'Feature', id: refuge.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'refuge', label: refuge.id } })
   }
+  for (const event of state.eventosCiudad ?? []) {
+    if (typeof event.lat !== 'number' || typeof event.lng !== 'number') continue
+    features.push({
+      type: 'Feature', id: `incident-${event.id}`,
+      geometry: { type: 'Point', coordinates: [event.lng, event.lat] },
+      properties: { kind: 'road-incident', glyph: '!' },
+    })
+  }
   return { type: 'FeatureCollection', features }
 }
 

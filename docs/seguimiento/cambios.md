@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-082 — Cierres aleatorios con alerta cartográfica y rutas actualizadas
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de sortear 1–10 incidentes al iniciar, alertar en el mapa con un punto amarillo parpadeante, bloquear la zona y redirigir las recomendaciones.
+- Especificación/requisitos: PRD-02/03/04, TRD-05/07, SPEC-001 CA-001-11, SPEC-003 CA-003-05, SPEC-007 CA-007-08; P1-05/P4-01/P4-03; T-44; ADR-033.
+- Motivo: antes, la demo generaba 1/2/3 cierres según intensidad y el panel solo mostraba metadatos sin ubicación; el backend ya cerraba antes de decisiones, pero el usuario no veía una alerta/punto nuevo.
+- Resultado: cada partida con incidentes habilitados sortea uniformemente entre 1 y 10 segmentos físicos disponibles (acotado si el mapa contiene menos), independientemente de intensidad zombie, y los agenda cada tres turnos desde el turno 2. El coordinador conserva orden de aplicación anterior a movimiento zombie/decisiones; el plan vigente del snapshot evita los segmentos cerrados. La proyección expone ubicación WGS84 de un evento solo tras aplicar el cierre. MapLibre añade marcador amarillo con “!” pulsante y un aviso accesible de ocho segundos; movimiento reducido deja el punto estático. No se revela el calendario futuro.
+- Archivos: generador de escenarios, proyección y esquema HTTP del panel, pruebas backend/frontend y `CityMap`/GeoJSON/estilos; PRD/TRD/contexto, reglas, flujo, contratos, módulos, SPEC-001/003/007, T-44, ADR-033, plan, trazabilidad, índices, reporte y estado.
+- Verificación: backend enfocado (34/34), frontend (87/87), build, `compileall`, comprobadores docs (113 Markdown/115 archivos) y SDD (8 SPEC + regresiones 8/8), y `git diff --check` correctos. Smoke navegador/API local: 20 iniciales, turno 13, cuatro cierres aplicados con ubicación, 19 rutas previstas, alerta accesible del turno 11; snapshot 19 activos/1 evacuado/0 mordidos. Evidencia y límites: [resultado CAM-082](../calidad/resultados/alerta-incidentes-cam082.md).
+- Límites: es un cierre vial sintético, no un choque real ni una amenaza natural. El marcador usa el punto medio del segmento OSM, no localización oficial de accidente. Mapas con menos de diez segmentos tienen un máximo menor. No se mide impacto causal agregado en mordidas/evacuados ni rendimiento prolongado.
+- Siguiente paso: registrar el commit individual en `master` y dejar el servidor local con la partida de smoke activa para revisión.
+- Commit: pendiente.
+
 ## CAM-081 — Incidentes viales siempre activos en la demo
 
 - Fecha: 2026-10-27, Ecuador continental.

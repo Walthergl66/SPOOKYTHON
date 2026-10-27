@@ -85,6 +85,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-030](arquitectura/decisiones/0030-ventana-urbana-zona-jugable.md) | Ventana urbana como límite topológico jugable y del selector de refugios | CAM-077; caja no certificada como frontera municipal. |
 | [ADR-031](arquitectura/decisiones/0031-perimetro-refugios-manta.md) | Perímetro zombie de una cuadra alrededor de refugios | CAM-078/T-40; calibración geográfica pendiente. |
 | [ADR-032](arquitectura/decisiones/0032-incidentes-viales-siempre-activos-en-demo.md) | Incidentes viales siempre activos, sin control en el menú de demo | CAM-081/T-43; campo HTTP legado ignorado. |
+| [ADR-033](arquitectura/decisiones/0033-alerta-y-cierres-aleatorios.md) | Incidentes viales 1–10, cierre y alerta cartográfica al aplicarse | CAM-082/T-44; no se revelan eventos futuros. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
@@ -145,6 +146,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/perimetro-refugios-cam078.md](calidad/resultados/perimetro-refugios-cam078.md) | Protección topológica de una cuadra alrededor de refugios Manta frente a generación y movimiento zombie. | Cambie el búfer, su alcance o la evidencia de verificación. |
 | [resultados/fluidez-turnos-cam079.md](calidad/resultados/fluidez-turnos-cam079.md) | Evidencia de velocidad local 4× e interpolación continua de movimientos confirmados CAM-079. | Cambie la cadencia, la política de animación o se ejecute una medición visual/de carga. |
 | [resultados/incidentes-siempre-activos-cam081.md](calidad/resultados/incidentes-siempre-activos-cam081.md) | Campo legado ignorado y ausencia del selector de incidentes en la demo local. | Cambie el comportamiento o los controles de incidentes. |
+| [resultados/alerta-incidentes-cam082.md](calidad/resultados/alerta-incidentes-cam082.md) | Sorteo de 1–10 cierres, alerta cartográfica y recálculo de rutas tras aplicar. | Cambie el generador, la proyección o el marcador; no representa choques reales ni uso de emergencia. |
 | [resultados/generador-amenazas-cam057.md](calidad/resultados/generador-amenazas-cam057.md) | Verificación del generador sintético de amenazas y cierres viales CAM-057 | Repetir pruebas de densidad espacial, semilla, privacidad de dormidos y aplicación de incidentes; no acredita parámetros oficiales. |
 | [resultados/politica-riesgo-cam058.md](calidad/resultados/politica-riesgo-cam058.md) | Integración local y comparación emparejada riesgo-primero CAM-058 | Cambien la política o se repita la evaluación; no acredita T-11 ni mejora por semilla o uso de emergencia. |
 | [resultados/ruta-cruces-cam059.md](calidad/resultados/ruta-cruces-cam059.md) | Diagnóstico 20/20 mordidos, exposición de cruces futuros y consistencia de ruta CAM-059 | Cambien el modelo de cruces o se repita evaluación; evidencia parcial no acredita menor mortalidad universal. |

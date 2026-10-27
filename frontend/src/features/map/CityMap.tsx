@@ -34,11 +34,30 @@ export function CityMap({ map, state, selectedSurvivorId, animationSpeed }: City
   const latestStateRef = useRef(state)
   const animationSpeedRef = useRef(animationSpeed)
   const cadenceRef = useRef<{ runId: string | undefined; turno: number | undefined; startedAt: number | null; observedTurnMs: number | null }>({ runId: state.runId, turno: state.turno, startedAt: null, observedTurnMs: null })
+  const seenIncidentsRef = useRef(new Set<string>())
+  const [incidentAlert, setIncidentAlert] = useState<{ id: string; turno: number; causa: string } | null>(null)
   latestStateRef.current = state
   animationSpeedRef.current = animationSpeed
   const [ready, setReady] = useState(false)
   const [is3d, setIs3d] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const incident = (state.eventosCiudad ?? []).find((event) => {
+      const key = `${state.runId}:${event.id}`
+      if (seenIncidentsRef.current.has(key)) return false
+      seenIncidentsRef.current.add(key)
+      return true
+    })
+    if (!incident) return
+    setIncidentAlert(incident)
+  }, [state.runId, state.eventosCiudad])
+
+  useEffect(() => {
+    if (!incidentAlert) return
+    const timer = window.setTimeout(() => setIncidentAlert((current) => current?.id === incidentAlert.id ? null : current), 8000)
+    return () => window.clearTimeout(timer)
+  }, [incidentAlert])
 
   const points = useMemo(() => indexMapPositions(map), [map])
   const area = MANTA_CITY_VIEW
@@ -116,6 +135,19 @@ export function CityMap({ map, state, selectedSurvivorId, animationSpeed }: City
     overviewRef.current = true
     setIs3d(false)
   }, [area, ready])
+
+  useEffect(() => {
+    const instance = mapRef.current
+    if (!ready || !instance || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    let visible = true
+    const timer = window.setInterval(() => {
+      visible = !visible
+      if (!instance.getLayer('navira-incident-halo')) return
+      instance.setPaintProperty('navira-incident-halo', 'circle-radius', visible ? 20 : 12)
+      instance.setPaintProperty('navira-incident-halo', 'circle-opacity', visible ? 0.26 : 0.08)
+    }, 650)
+    return () => window.clearInterval(timer)
+  }, [ready])
 
   useEffect(() => {
     const instance = mapRef.current
@@ -215,6 +247,10 @@ export function CityMap({ map, state, selectedSurvivorId, animationSpeed }: City
   return (
     <div className="maplibre-stage" aria-label="Mapa cartográfico 3D de Manta">
       <div ref={containerRef} className="maplibre-canvas" />
+      {incidentAlert ? <div className="map-incident-alert" role="alert" aria-live="assertive">
+        <span className="map-incident-alert-mark" aria-hidden="true">!</span>
+        <span><strong>ALERTA VIAL · TURNO {incidentAlert.turno}</strong><small>{incidentAlert.causa}. Vía cerrada; rutas de evacuación actualizadas.</small></span>
+      </div> : null}
       <div className="map-view-controls" role="group" aria-label="Vista del mapa">
       <button className="map-view-toggle" type="button" onClick={showArea} disabled={!ready}>Vista urbana</button>
       <button className="map-view-toggle" type="button" onClick={showGame} disabled={!ready}>Ver partida</button>
@@ -285,6 +321,22 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
     id: 'navira-horde-area', source: 'navira-actors', type: 'circle',
     filter: ['==', ['get', 'kind'], 'horde'],
     paint: { 'circle-radius': 24, 'circle-color': '#f05058', 'circle-opacity': 0.24, 'circle-stroke-color': '#f05058', 'circle-stroke-width': 2 },
+  })
+  map.addLayer({
+    id: 'navira-incident-halo', source: 'navira-simulation', type: 'circle',
+    filter: ['==', ['get', 'kind'], 'road-incident'],
+    paint: { 'circle-radius': 20, 'circle-color': '#ffc83d', 'circle-opacity': 0.24, 'circle-stroke-color': '#ffd84a', 'circle-stroke-width': 2 },
+  })
+  map.addLayer({
+    id: 'navira-incident-markers', source: 'navira-simulation', type: 'circle',
+    filter: ['==', ['get', 'kind'], 'road-incident'],
+    paint: { 'circle-radius': 9, 'circle-color': '#ffd43b', 'circle-stroke-color': '#fff8db', 'circle-stroke-width': 2 },
+  })
+  map.addLayer({
+    id: 'navira-incident-glyphs', source: 'navira-simulation', type: 'symbol',
+    filter: ['==', ['get', 'kind'], 'road-incident'],
+    layout: { 'text-field': ['get', 'glyph'], 'text-size': 13, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true, 'text-ignore-placement': true },
+    paint: { 'text-color': '#2b2412', 'text-halo-color': '#fff2bf', 'text-halo-width': 0.6 },
   })
   map.addLayer({
     id: 'navira-markers', source: 'navira-simulation', type: 'circle',
