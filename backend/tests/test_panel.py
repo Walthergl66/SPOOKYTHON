@@ -11,7 +11,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from navira.application.decidir_paso import SolicitudPaso
 from navira.application.consultar_panel import ConsultarPanel
-from navira.domain.modelo import EstadoSobreviviente, EstadoZombie, FaseTurno, TipoZombie, Zombie
+from navira.domain.modelo import EstadoSobreviviente, EstadoZombie, FaseTurno, ModoPartida, TipoZombie, Zombie
 from navira.demo import MAPA_MANTA_POR_DEFECTO, crear_contexto_demo
 from navira.main import crear_app, crear_app_demo
 from navira.simulation.coordinador import (
@@ -181,6 +181,57 @@ class PanelPublicoTests(unittest.TestCase):
         self.assertEqual(ruta[0], personaje["nodo"])
         self.assertEqual(ruta[1] if len(ruta) > 1 else ruta[0], decision.siguiente_nodo)
         self.assertIn(ruta[-1], {refugio["nodo"] for refugio in cliente.get("/panel/mapa").json()["refugios"]})
+
+    def test_panel_mantiene_rutas_recomendadas_en_todas_las_fases_del_simulador(self) -> None:
+        contexto = crear_contexto_demo(semilla=12, escenario="libre")
+        snapshot = contexto.snapshots.obtener(contexto.run_id)
+        assert snapshot is not None
+        resuelto = replace(
+            snapshot,
+            partida=replace(snapshot.partida, fase=FaseTurno.RESUELTA),
+            version=snapshot.version + 1,
+        )
+        self.assertTrue(
+            contexto.snapshots.guardar_si_version(
+                contexto.run_id, snapshot.version, resuelto
+            )
+        )
+
+        estado = ConsultarPanel(
+            contexto.snapshots, contexto.mapas, contexto.servicio_decision
+        ).consultar_estado()
+
+        activos = {
+            persona["id"]
+            for persona in estado["sobrevivientes"]
+            if persona["estado"] == EstadoSobreviviente.ACTIVO.value
+        }
+        rutas = {ruta["sobrevivienteId"] for ruta in estado["rutasPrevistas"]}
+        self.assertTrue(activos)
+        self.assertEqual(rutas, activos)
+
+    def test_panel_no_publica_rutas_humanas_fuera_de_fase_de_decisiones(self) -> None:
+        contexto = crear_contexto_demo(
+            semilla=13, escenario="libre", modo=ModoPartida.JUEGO
+        )
+        snapshot = contexto.snapshots.obtener(contexto.run_id)
+        assert snapshot is not None
+        resuelto = replace(
+            snapshot,
+            partida=replace(snapshot.partida, fase=FaseTurno.RESUELTA),
+            version=snapshot.version + 1,
+        )
+        self.assertTrue(
+            contexto.snapshots.guardar_si_version(
+                contexto.run_id, snapshot.version, resuelto
+            )
+        )
+
+        estado = ConsultarPanel(
+            contexto.snapshots, contexto.mapas, contexto.servicio_decision
+        ).consultar_estado()
+
+        self.assertEqual(estado["rutasPrevistas"], ())
 
     def test_mapa_sin_partida_devuelve_servicio_no_disponible(self) -> None:
         respuesta = TestClient(crear_app()).get("/panel/mapa")

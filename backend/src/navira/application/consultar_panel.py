@@ -116,7 +116,13 @@ class ConsultarPanel:
             if (
                 personaje.estado is EstadoSobreviviente.ACTIVO
                 and self.planificador is not None
-                and partida.fase is FaseTurno.DECISIONES
+                # En simulador automático la tarjeta de selección necesita una
+                # recomendación disponible durante todas las fases del turno.
+                # En juego humano se conserva la ventana oficial de decisiones.
+                and (
+                    partida.modo.value == "simulador"
+                    or partida.fase is FaseTurno.DECISIONES
+                )
             )
         )
 
