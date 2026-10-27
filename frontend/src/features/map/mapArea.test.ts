@@ -17,6 +17,17 @@ describe('cobertura cartográfica de Manta', () => {
     expect(area[0]).toEqual([-80.94, -1.16])
     expect(paddedBounds(area)[0][0]).toBeLessThan(area[0][0])
   })
+  it('limita el margen de navegación a cinco kilómetros en cada lado', () => {
+    const area = mapAreaBounds({ nodos: [] })
+    const padded = paddedBounds(area)
+    const middleLatitudeRadians = ((area[0][1] + area[1][1]) / 2) * Math.PI / 180
+    const kmPerLongitudeDegree = 111.32 * Math.cos(middleLatitudeRadians)
+    expect((area[0][1] - padded[0][1]) * 111.32).toBeCloseTo(5, 5)
+    expect((padded[1][1] - area[1][1]) * 111.32).toBeCloseTo(5, 5)
+    expect((area[0][0] - padded[0][0]) * kmPerLongitudeDegree).toBeCloseTo(5, 5)
+    expect((padded[1][0] - area[1][0]) * kmPerLongitudeDegree).toBeCloseTo(5, 5)
+    expect(area).toEqual(MANTA_AREA)
+  })
   it('recorre grafos grandes sin expandir arrays como argumentos', () => {
     const nodes = Array.from({ length: 150_000 }, (_, i) => ({ lng: -80.92 + i / 1_000_000, lat: -1.14 }))
     expect(boundsOfNodes(nodes)).toEqual([[-80.92, -1.14], [nodes.at(-1)!.lng, -1.14]])

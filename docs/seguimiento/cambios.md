@@ -2,6 +2,17 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-074 — Limitar la navegación del mapa a 5 km por lado
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de enfocar más el mapa dejando una extensión de 5 km por lado.
+- Especificación/trazabilidad: PRD-04, SPEC-008 CA-008-07, P4-04 y T-38. Es un ajuste visual; no cambia PRD-01 ni la cobertura jugable.
+- Resultado: `paddedBounds` convierte 5 km a grados de latitud y longitud según la latitud media de la caja. MapLibre y el selector de refugios comparten ese margen. La caja de 44.590 nodos y 94.146 calles dirigidas, los refugios y los lugares de aparición no se recortan.
+- Archivos: `frontend/src/features/map/mapArea.ts`, `mapArea.test.ts`; documentación propietaria del mapa, criterio SPEC-008, T-38, estado e índice; evidencia [CAM-074](../calidad/resultados/margen-navegacion-5km-cam074.md).
+- Verificación: prueba focalizada 5/5; suite frontend 76/76; build correcto con el aviso conocido de chunk MapLibre; `check_docs.py` 102 Markdown/104 archivos; `check_sdd.py` ocho SPEC; regresiones SDD 8/8; `git diff --check` correcto. En el navegador local cargaron el fixture y snapshots en vivo, sin errores de consola. No se arrastró manualmente al borde en la inspección visual. Evidencia: [CAM-074](../calidad/resultados/margen-navegacion-5km-cam074.md).
+- Límites: los 5 km son una conversión local aproximada sobre una caja rectangular OSM, no una distancia exacta siguiendo el terreno ni una frontera municipal. No se modifican tiles o geometría de juego.
+- Siguiente paso: conservar margen de 5 km al modificar futuros encuadres; el mapa jugable continúa incluyendo toda la envolvente CAM-073.
+
 ## CAM-073 — Mapa y zona jugable ampliados a la envolvente de Manta
 
 - Fecha: 2026-10-27, Ecuador continental.

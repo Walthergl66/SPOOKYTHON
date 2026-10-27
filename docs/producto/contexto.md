@@ -20,6 +20,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 8. El simulador debe tener variación aleatoria de mundo y decisiones permitidas; cambios pequeños en semilla, estado o eventos pueden desviar la evolución posterior.
 9. Aclaración del usuario (2026-10-26): el objetivo de la evacuación es encontrar rutas que minimicen las personas mordidas durante la simulación; las evacuaciones se consideran después de ese objetivo primario.
 10. Solicitud del usuario (2026-10-27): ampliar todo el mapa y la zona jugable a Manta completa, más allá de la caja urbana anterior; se confirma incluir las zonas rurales y permitir aparición/rutas de juego en esa área.
+11. Solicitud del usuario (2026-10-27): reducir a 5 km por lado el margen de navegación del mapa para enfocarlo en Manta, manteniendo íntegra la zona jugable.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 

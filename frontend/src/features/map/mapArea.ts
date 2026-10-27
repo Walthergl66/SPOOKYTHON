@@ -30,12 +30,15 @@ export function mapAreaBounds(map: Pick<PanelMap, 'nodos'>): MapBounds {
   ]
 }
 
-/** Navigation margin lets fitBounds show the entire area with screen padding. */
+/** Allow map navigation up to five kilometres beyond the playable Manta box. */
 export function paddedBounds(bounds: MapBounds): MapBounds {
   const [[west, south], [east, north]] = bounds
-  const x = Math.max((east - west) * 0.25, 0.005)
-  const y = Math.max((north - south) * 0.25, 0.005)
-  return [[west - x, south - y], [east + x, north + y]]
+  const marginKm = 5
+  const degreesPerKm = 1 / 111.32
+  const latitudeMargin = marginKm * degreesPerKm
+  const middleLatitudeRadians = ((south + north) / 2) * Math.PI / 180
+  const longitudeMargin = latitudeMargin / Math.cos(middleLatitudeRadians)
+  return [[west - longitudeMargin, south - latitudeMargin], [east + longitudeMargin, north + latitudeMargin]]
 }
 
 /** Focus uses public characters and refuges, including terminal characters. */
