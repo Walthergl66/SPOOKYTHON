@@ -22,7 +22,7 @@ Recomendar un siguiente paso válido hacia un refugio, priorizando menos mordida
 
 ### PRD-04 — Observación comprensible en vivo
 
-Mostrar zombies visibles por tipo, sobrevivientes, rutas, refugios, cierres y turno. Al confirmarse un incidente vial, alertar en el mapa y señalar el punto afectado; las nuevas recomendaciones deben rodear el cierre. Comunicar desconexión y última actualización. Prioridad: obligatoria; un mapa detenido no se presenta como vivo. Detalle: [espectador](../dominio/flujos/espectador.md).
+Mostrar zombies visibles por tipo, sobrevivientes, rutas, refugios, cierres y turno. Al seleccionar un sobreviviente en el mapa, mostrar sus datos y la ruta recomendada del snapshot actual. Al confirmarse un incidente vial, alertar en el mapa y señalar el punto afectado; las nuevas recomendaciones deben rodear el cierre. Comunicar desconexión y última actualización. Prioridad: obligatoria; un mapa detenido no se presenta como vivo. Detalle: [espectador](../dominio/flujos/espectador.md).
 
 ### PRD-05 — Juego humano complementario
 

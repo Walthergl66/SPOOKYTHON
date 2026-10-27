@@ -123,6 +123,7 @@ describe('createActorFeatures', () => {
     const { features } = createActorFeatures(map, s, new Map([['s', [9, 9]]]))
     expect(features.map((f) => f.id)).toEqual(['s', 'h'])
     expect(features[0].geometry).toEqual({ type: 'Point', coordinates: [9, 9] })
+    expect(features[0].properties).toMatchObject({ kind: 'survivor', actorId: 's' })
     expect(features[1].properties).toEqual({ kind: 'horde', glyph: 'H' })
   })
 })

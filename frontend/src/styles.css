@@ -123,11 +123,31 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .metric:last-child { border-right: 0; }
 .metric span { color: var(--dim); font: 8px var(--mono); letter-spacing: .08em; }
 .metric strong { color: #dbe9e1; font: 600 17px 'Manrope', sans-serif; }
-.route-selector { padding: 11px 16px; display: grid; grid-template-columns: auto minmax(80px, 150px) 1fr; align-items: center; gap: 11px; border-bottom: 1px solid var(--line); }
-.route-selector label { color: var(--dim); font: 8px var(--mono); letter-spacing: .08em; }
-.route-selector select { min-width: 0; padding: 7px 9px; border: 1px solid rgba(146, 200, 184, .3); border-radius: 0; color: var(--ink); background: #1b3032; font-size: 10px; }
-.route-selector option { background: #17272b; }
-.route-selector span { color: var(--dim); font-size: 9px; text-align: right; }
+.survivor-route-panel { display: grid; gap: 12px; padding: 15px 17px; border-bottom: 1px solid var(--line); background: rgba(17, 29, 38, .74); }
+.survivor-route-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.survivor-route-heading h3 { margin: 3px 0 0; color: #eef5fc; font: 600 15px 'Manrope', sans-serif; }
+.survivor-state { padding: 4px 8px; border: 1px solid rgba(101, 211, 171, .35); color: #7de0b0; background: rgba(54, 160, 118, .12); font: 9px var(--mono); text-transform: uppercase; }
+.survivor-state.is-mordido { border-color: rgba(240, 94, 98, .4); color: #ff9699; background: rgba(240, 94, 98, .1); }
+.survivor-state.is-evacuado { border-color: rgba(131, 200, 220, .4); color: #9fdef0; background: rgba(65, 145, 177, .12); }
+.survivor-route-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.survivor-route-facts div { min-width: 0; display: grid; gap: 4px; padding: 8px 10px; border: 1px solid rgba(190, 207, 228, .1); background: rgba(29, 42, 59, .68); }
+.survivor-route-facts span, .survivor-route-path > span { color: var(--dim); font: 8px var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.survivor-route-facts strong { overflow: hidden; color: #e5edf8; font: 500 11px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.survivor-route-path { display: grid; gap: 7px; }
+.survivor-route-path p { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 0; }
+.survivor-route-path p span { display: inline-flex; align-items: center; gap: 5px; padding: 5px 7px; border: 1px solid rgba(54, 215, 188, .2); color: #b9f1e5; background: rgba(34, 129, 116, .12); font: 9px var(--mono); }
+.survivor-route-path p b { color: #60cdb9; font-size: 12px; }
+.survivor-route-path details { color: var(--muted); font-size: 10px; }
+.survivor-route-path summary, .survivor-list-fallback summary { width: fit-content; color: #9bded2; cursor: pointer; }
+.survivor-route-path ol { display: flex; flex-wrap: wrap; gap: 5px 20px; max-height: 150px; overflow: auto; margin: 8px 0 0; padding: 0 0 0 22px; color: var(--muted); font: 9px var(--mono); }
+.survivor-route-empty, .survivor-route-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.survivor-route-hint { display: grid; gap: 4px; }
+.survivor-route-hint strong { color: #e5edf8; font: 500 12px 'Manrope', sans-serif; }
+.survivor-list-fallback { color: var(--muted); font-size: 10px; }
+.survivor-list-fallback > div { display: flex; flex-wrap: wrap; gap: 6px; max-height: 135px; overflow: auto; margin-top: 8px; }
+.survivor-list-fallback button { display: inline-flex; gap: 7px; padding: 5px 7px; border: 1px solid rgba(190, 207, 228, .14); color: var(--ink); background: rgba(29, 42, 59, .68); font: 9px var(--mono); cursor: pointer; }
+.survivor-list-fallback button:hover, .survivor-list-fallback button.is-selected { border-color: var(--sea-bright); }
+.survivor-list-fallback small { color: var(--dim); font: inherit; }
 .game-controls { padding: 21px 22px 23px; border-bottom: 1px solid var(--line); background: rgba(12, 24, 27, .38); }
 .game-controls-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .game-controls-heading h2 { margin: 4px 0 0; color: #e3ede7; font: 600 19px/1.2 'Manrope', sans-serif; letter-spacing: -.035em; }
@@ -203,8 +223,7 @@ h1 em { color: var(--sea-bright); font-style: normal; }
   .metric:nth-child(2) { border-right: 0; }
   .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .map-legend { gap: 10px 13px; }
-  .route-selector { grid-template-columns: 1fr 1fr; }
-  .route-selector span { grid-column: 1 / -1; text-align: left; }
+  .survivor-route-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-controls { padding: 18px 15px 20px; }
   .game-move-list { grid-template-columns: 1fr; }
   .city-panel-footer { align-items: flex-start; flex-direction: column; }
@@ -285,6 +304,9 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .dashboard-map-panel .refresh-button { border-radius: 5px; font-family: 'DM Sans', sans-serif; font-size: 12px; letter-spacing: 0; }
 .dashboard-map-panel .map-stage { flex: 1; height: min(72vh, 860px); min-height: 480px; background: #253650; }
 .dashboard-map-panel .map-stage::after { background: linear-gradient(0deg, rgba(14, 24, 39, .52), transparent 22%); }
+.map-detail-overlay { position: absolute; z-index: 8; left: 14px; bottom: 14px; width: min(460px, calc(100% - 28px)); max-height: 48%; overflow: auto; border: 1px solid rgba(167, 193, 222, .22); border-radius: 10px; box-shadow: 0 12px 36px rgba(4, 11, 20, .34); }
+.map-detail-overlay .survivor-route-panel { max-height: 100%; border: 0; background: rgba(19, 31, 49, .96); backdrop-filter: blur(10px); }
+.map-detail-overlay .survivor-route-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .maplibre-stage, .maplibre-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .maplibre-stage { isolation: isolate; background: #172238; }
 .map-incident-alert { position: absolute; z-index: 5; top: 58px; left: 50%; display: flex; align-items: center; gap: 10px; width: min(470px, calc(100% - 32px)); padding: 11px 14px; transform: translateX(-50%); border: 1px solid rgba(255, 213, 71, .76); border-radius: 7px; background: rgba(55, 43, 16, .94); box-shadow: 0 8px 28px rgba(4, 10, 19, .38); color: #fff4c2; }

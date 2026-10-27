@@ -22,6 +22,7 @@ const gamePort: GamePort = { join: joinGame, restore: restoreGameSession, sendOr
 
 const RefugePicker = lazy(() => import('../features/map/RefugePicker').then(({ RefugePicker: Component }) => ({ default: Component })))
 const CityMap = lazy(() => import('../features/map/CityMap').then(({ CityMap: Component }) => ({ default: Component })))
+const SurvivorRoutePanel = lazy(() => import('../features/map/SurvivorRoutePanel').then(({ SurvivorRoutePanel: Component }) => ({ default: Component })))
 
 export function App() {
   const [mode, setMode] = useState<NaviraMode>('simulator')
@@ -54,8 +55,8 @@ export function App() {
   const active = state?.estado === 'activa'
   const cityName = map?.version.includes('manta') ? 'Manta, Manabí' : map ? 'Mapa sintético de prueba' : 'Manta, Ecuador'
   const statusLabel = active ? `Turno ${state.turno} · ${(state.fase ?? 'fase desconocida').replaceAll('_', ' ')}` : state?.estado === 'sin_partida' ? 'Sin partida activa' : loading ? 'Conectando con el panel' : 'Datos no disponibles'
-  const survivors = (active ? state.sobrevivientes : undefined)?.filter(({ estado: survivorState }) => survivorState === 'activo') ?? []
-  const selectedRouteOwner = survivors.some(({ id }) => id === selectedSurvivorId) ? selectedSurvivorId : survivors[0]?.id
+  const allSurvivors = active ? state.sobrevivientes ?? [] : []
+  const selectedRouteOwner = allSurvivors.some(({ id }) => id === selectedSurvivorId) ? selectedSurvivorId : undefined
   const simulatorIsRunning = simulator?.estado === 'activa'
   const showPicker = candidates !== null && !simulatorUnavailable
   const pickerLockedReason = simulatorBusy ? 'Se está actualizando la simulación. Espera un momento.' : null
@@ -128,11 +129,11 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} animationSpeed={simulator?.velocidad ?? 4} /></Suspense> : <MapPlaceholder />}
+            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} /></Suspense> : <MapPlaceholder />}
+            {active && allSurvivors.length > 0 && map ? <div className="map-detail-overlay"><Suspense fallback={null}><SurvivorRoutePanel state={state} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} /></Suspense></div> : null}
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{map?.version ?? (simulatorUnavailable ? 'BACKEND SIN CONTROL LOCAL' : 'AÚN SIN SNAPSHOT')}</div>
           </div>
-          {active && survivors.length > 0 ? <div className="route-selector"><label htmlFor="survivor-route">Ruta observada</label><select id="survivor-route" value={selectedRouteOwner ?? ''} onChange={(event) => setSelectedSurvivorId(event.target.value)}>{survivors.map((survivor) => <option key={survivor.id} value={survivor.id}>{survivor.id}</option>)}</select><span>Ruta calculada desde el snapshot actual; no garantiza seguridad.</span></div> : null}
           <div className="map-legend" aria-label="Leyenda del mapa"><span><i className="legend-refuge" /> Refugio</span><span><i className="legend-survivor" /> Sobreviviente</span><span><i className="legend-zombie" /> Zombie visible</span><span><i className="legend-route" /> Ruta prevista</span><span><i className="legend-trail" /> Movimiento confirmado</span><span><i className="legend-closure" /> Calle cerrada</span></div>
         </section>
 

@@ -122,7 +122,7 @@ export function createActorFeatures(map: PanelMap, state: PanelState, overrides 
   for (const survivor of state.sobrevivientes ?? []) {
     if (survivor.estado !== 'activo') continue
     const coordinates = overrides.get(survivor.id) ?? pointById.get(survivor.nodo)
-    if (coordinates) features.push({ type: 'Feature', id: survivor.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'survivor', glyph: 'S' } })
+    if (coordinates) features.push({ type: 'Feature', id: survivor.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'survivor', glyph: 'S', actorId: survivor.id } })
   }
   for (const zombie of state.zombies ?? []) {
     const coordinates = overrides.get(zombie.id) ?? pointById.get(zombie.nodo)

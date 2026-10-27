@@ -2,6 +2,18 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-083 — Seleccionar habitantes desde el mapa
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de reemplazar el selector «Ruta observada» por clic sobre el habitante y mostrar sus datos y ruta actual.
+- Especificación/requisitos: PRD-04, TRD-07, SPEC-003 CA-003-06, P4-01 y T-45.
+- Resultado: los marcadores activos seleccionan un habitante y resaltan su ruta calculada; una ficha superpuesta muestra estado, control, nodo, siguiente paso y destino desde el snapshot actual. El trayecto completo puede expandirse. Una lista expandible conserva selección accesible para marcadores superpuestos. La interacción solo cambia la vista local y no envía órdenes.
+- Archivos: `App.tsx`, `CityMap.tsx`, `mapFeatures.ts`, `SurvivorRoutePanel.tsx`, `survivorRoute.ts`, pruebas frontend, estilos; PRD/TRD/contexto, SPEC-003, módulos frontend, T-45, plan, trazabilidad, estado y este historial.
+- Verificación: `cd frontend && npm test -- --run` — 89/89 pruebas; `npm run build` — correcto, con la advertencia conocida de bundle cartográfico >500 kB; validadores docs (113 Markdown/115 archivos), SDD (8 SPEC + regresiones 8/8) y `git diff --check` correctos. Smoke browser: clic en marcador seleccionó `S-DEMO-020`; la ficha mostró nodo actual, siguiente paso, refugio R-02 y ruta de 39 pasos; panel en vivo turno 266.
+- Límites: la ruta es una recomendación del snapshot y puede cambiar en la siguiente actualización; el mapa puede tener marcadores superpuestos, por lo que permanece una lista alternativa. No modifica la partida ni representa movimiento confirmado.
+- Siguiente paso: registrar commit individual en `master`.
+- Commit: pendiente.
+
 ## CAM-082 — Cierres aleatorios con alerta cartográfica y rutas actualizadas
 
 - Fecha: 2026-10-27, Ecuador continental.

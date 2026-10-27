@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Map as MapLibreMap, NavigationControl, ScaleControl, setWorkerUrl } from 'maplibre-gl'
-import type { GeoJSONSource } from 'maplibre-gl'
+import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { PanelMap, PanelState } from '../../domain/panel'
@@ -13,6 +13,7 @@ interface CityMapProps {
   map: PanelMap
   state: PanelState
   selectedSurvivorId: string | undefined
+  onSelectSurvivor: (survivorId: string) => void
   animationSpeed: SimulatorSpeed
 }
 
@@ -22,7 +23,7 @@ const MAP_CENTER: Position = [-80.714, -0.9895]
 
 setWorkerUrl(mapWorkerUrl)
 
-export function CityMap({ map, state, selectedSurvivorId, animationSpeed }: CityMapProps) {
+export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, animationSpeed }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const latestDataRef = useRef<FeatureCollection>(emptyCollection())
@@ -33,11 +34,13 @@ export function CityMap({ map, state, selectedSurvivorId, animationSpeed }: City
   const activeAnimationsRef = useRef(new Map<string, AnimatedMovement>())
   const latestStateRef = useRef(state)
   const animationSpeedRef = useRef(animationSpeed)
+  const onSelectSurvivorRef = useRef(onSelectSurvivor)
   const cadenceRef = useRef<{ runId: string | undefined; turno: number | undefined; startedAt: number | null; observedTurnMs: number | null }>({ runId: state.runId, turno: state.turno, startedAt: null, observedTurnMs: null })
   const seenIncidentsRef = useRef(new Set<string>())
   const [incidentAlert, setIncidentAlert] = useState<{ id: string; turno: number; causa: string } | null>(null)
   latestStateRef.current = state
   animationSpeedRef.current = animationSpeed
+  onSelectSurvivorRef.current = onSelectSurvivor
   const [ready, setReady] = useState(false)
   const [is3d, setIs3d] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -100,6 +103,18 @@ export function CityMap({ map, state, selectedSurvivorId, animationSpeed }: City
       fitMapToMantaArea(instance, areaRef.current)
       highlightWater(instance)
       addMapLayers(instance, latestDataRef.current, latestActorsRef.current, latestStreetsRef.current, areaRef.current)
+      const selectSurvivor = (event: MapLayerMouseEvent) => {
+        const survivor = event.features?.find((feature) => feature.properties?.kind === 'survivor')
+        const survivorId = survivor?.properties?.actorId
+        if (typeof survivorId === 'string') onSelectSurvivorRef.current(survivorId)
+      }
+      const setActorCursor = () => { instance.getCanvas().style.cursor = 'pointer' }
+      const clearActorCursor = () => { instance.getCanvas().style.cursor = '' }
+      for (const layer of ['navira-actor-markers', 'navira-actor-glyphs']) {
+        instance.on('click', layer, selectSurvivor)
+        instance.on('mouseenter', layer, setActorCursor)
+        instance.on('mouseleave', layer, clearActorCursor)
+      }
       setReady(true)
       setMapError(null)
     })

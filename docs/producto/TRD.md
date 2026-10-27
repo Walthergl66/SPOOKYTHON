@@ -30,7 +30,7 @@ Separar credencial de servicio, operador y sesión propietaria. Validar origen, 
 
 ### TRD-07 — Tiempo real y acceso a la interfaz
 
-Eventos identificados por partida, fase y secuencia; recuperación sin huecos y marca visible de desconexión. Los incidentes aplicados deben publicar ubicación para su marcador y alerta accesibles; el parpadeo se respeta bajo movimiento reducido. Juego operable con mouse y teclado, foco visible y estados no dependientes solo del color. Detalle: [eventos](../arquitectura/contratos/eventos.md), [frontend](../arquitectura/modulos/frontend.md).
+Eventos identificados por partida, fase y secuencia; recuperación sin huecos y marca visible de desconexión. Los incidentes aplicados deben publicar ubicación para su marcador y alerta accesibles; el parpadeo se respeta bajo movimiento reducido. El panel permite seleccionar sobrevivientes desde el marcador o una lista accesible y presenta información/ruta calculada solo desde el snapshot vigente. Juego operable con mouse y teclado, foco visible y estados no dependientes solo del color. Detalle: [eventos](../arquitectura/contratos/eventos.md), [frontend](../arquitectura/modulos/frontend.md).
 
 ### TRD-08 — AWS y presupuesto
 
