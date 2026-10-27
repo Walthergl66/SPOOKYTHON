@@ -2,6 +2,17 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-086 — Reducir trabajo redundante del pronóstico y suavizar turnos
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de hacer más fluido el ciclo de simulación y reducir la espera entre turnos.
+- Especificación/requisitos: PRD-03/10, TRD-05/14, SPEC-002, P3-02/P3-03; la cadencia objetivo de 500 ms sigue pendiente, no se declara cumplida.
+- Resultado: agrega distribuciones de caminantes y corredores de igual estado antes de propagar su pronóstico, reutiliza el índice de sobrevivientes por nodo dentro de cada ejecución y cachea el índice inverso del grafo. La equivalencia de exposición de nodos/cruces tiene regresión. No cambia el reloj, orden de turnos ni reglas de resolución.
+- Archivos: `backend/src/navira/routing/prediccion.py`, `backend/tests/test_prediccion_rutas.py`; algoritmos, SPEC-002, trazabilidad, pruebas, índice, estado e [informe CAM-086](../calidad/resultados/fluidez-pronostico-cam086.md).
+- Verificación: pronóstico (7), planificador (15) y suite backend completa (214) correctos; suite tomó 90,870 s. `python3 backend/scripts/check_docs.py` (116 Markdown/118 archivos), `check_sdd.py` (8 SPEC), sus ocho regresiones, `compileall` y `git diff --check` pasan. Tres rondas en fixture mediano midieron 1,266/1,388/1,443 s bajo contención del backend local; CAM-079 no es comparable.
+- Límites: no se afirma que el turno completo sea más rápido ni que alcance 500 ms. No se reinició Uvicorn porque contiene una partida activa en memoria; el backend servido aún no carga esta optimización. Equivalencia funcional no sustituye medición de latencia controlada.
+- Siguiente paso: registrar resultados de suite y validadores, revisar diff y separar commits de implementación/documentación. En un reinicio posterior, comparar ronda/etapas con mapa, escenario, población y semilla iguales.
+
 ## CAM-085 — Mostrar la ficha del habitante en el panel izquierdo
 
 - Fecha: 2026-10-27, Ecuador continental.

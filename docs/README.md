@@ -47,7 +47,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | Documento | Fuente principal de | Actualizar cuando |
 |---|---|---|
 | [arquitectura.md](arquitectura/arquitectura.md) | Componentes, límites y dependencias | Cambien estructura o comunicaciones. |
-| [algoritmos.md](arquitectura/algoritmos.md) | Planificación y predicción, incluida coordinación por snapshot CAM-061 | Cambie la política de rutas. |
+| [algoritmos.md](arquitectura/algoritmos.md) | Planificación y predicción, incluida coordinación por snapshot CAM-061 y reducción de trabajo del pronóstico CAM-086 | Cambie la política o rendimiento del pronóstico. |
 | [contratos/api.md](arquitectura/contratos/api.md) | Contrato HTTP y autenticación | Cambien rutas, cuerpos o errores. Estado y ejemplos de las proyecciones del panel incluyen CAM-031. |
 | [contratos/eventos.md](arquitectura/contratos/eventos.md) | Contrato WebSocket y orden de mensajes | Cambien eventos o recuperación. El canal de snapshots del panel se implementa localmente en CAM-032. |
 | [modulos/backend.md](arquitectura/modulos/backend.md) | Ubicación de responsabilidades backend | Se cree o mueva un caso de uso. |
@@ -147,6 +147,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/limite-jugable-cam077.md](calidad/resultados/limite-jugable-cam077.md) | Recorte topológico del mundo Manta y restricción del selector de refugios. | Cambie el límite, la proyección o la selección. |
 | [resultados/perimetro-refugios-cam078.md](calidad/resultados/perimetro-refugios-cam078.md) | Protección topológica de una cuadra alrededor de refugios Manta frente a generación y movimiento zombie. | Cambie el búfer, su alcance o la evidencia de verificación. |
 | [resultados/fluidez-turnos-cam079.md](calidad/resultados/fluidez-turnos-cam079.md) | Evidencia de velocidad local 4× e interpolación continua de movimientos confirmados CAM-079. | Cambie la cadencia, la política de animación o se ejecute una medición visual/de carga. |
+| [resultados/fluidez-pronostico-cam086.md](calidad/resultados/fluidez-pronostico-cam086.md) | Optimización del pronóstico de amenazas mediante agregación lineal y caché del grafo; registra pruebas y límites de medición en CAM-086. | Cambie el algoritmo de pronóstico o se mida cadencia comparable bajo carga. |
 | [resultados/incidentes-siempre-activos-cam081.md](calidad/resultados/incidentes-siempre-activos-cam081.md) | Campo legado ignorado y ausencia del selector de incidentes en la demo local. | Cambie el comportamiento o los controles de incidentes. |
 | [resultados/alerta-incidentes-cam082.md](calidad/resultados/alerta-incidentes-cam082.md) | Sorteo de 1–10 cierres, alerta cartográfica y recálculo de rutas tras aplicar. | Cambie el generador, la proyección o el marcador; no representa choques reales ni uso de emergencia. |
 | [resultados/generador-amenazas-cam057.md](calidad/resultados/generador-amenazas-cam057.md) | Verificación del generador sintético de amenazas y cierres viales CAM-057 | Repetir pruebas de densidad espacial, semilla, privacidad de dormidos y aplicación de incidentes; no acredita parámetros oficiales. |
