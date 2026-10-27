@@ -30,11 +30,11 @@ Permitir entrar como personaje en un nodo aleatorio elegible y llevarlo a un ref
 
 ### PRD-06 — Roles y separación de modos
 
-Separar espectador, jugador, operador y servicio. El modo queda fijo por partida; la evaluación oficial no admite control humano y sus métricas se separan del juego. Prioridad: necesaria para integrar el complemento sin alterar el reto. Detalle: [roles](../dominio/flujos/roles.md), [modos](../dominio/modos.md).
+Separar espectador, jugador, operador y servicio. El modo queda fijo por partida; la evaluación oficial no admite control humano y sus métricas se separan del juego. En la interfaz, «Simulador» es demo libre, «Reto» configura rondas de evaluación sobre el modo automático existente y «Jugar» conserva el control humano. Prioridad: necesaria para integrar el complemento sin alterar el reto. Detalle: [roles](../dominio/flujos/roles.md), [modos](../dominio/modos.md), [SPEC-009](../metodo/especificaciones/SPEC-009-modo-reto.md).
 
 ### PRD-07 — Evaluación reproducible
 
-Ejecutar las tres rondas de cinco minutos con 20, 80 y 200 sobrevivientes y eventos requeridos. La ejecución ordinaria obtiene un estado aleatorio nuevo; al fijar semilla, versión, configuración, eventos y órdenes se puede reproducir esa ejecución. Conservar esos datos y resultados suficientes para auditar. Prioridad: obligatoria. Vivos, evacuados y pendientes se reportan separados.
+Ejecutar secuencialmente las tres rondas de cinco minutos con 20, 80 y 200 sobrevivientes y eventos requeridos. «Reto» prepara los presets; todavía se debe verificar el arranque secuencial temporizado, reportes oficiales y ejecución AWS. La ejecución ordinaria obtiene un estado aleatorio nuevo; al fijar semilla, versión, configuración y eventos se puede reproducir. Conservar esos datos y resultados suficientes para auditar. Prioridad: obligatoria. Vivos, evacuados y pendientes se reportan separados.
 
 ### PRD-08 — Entrega utilizable y defendible
 

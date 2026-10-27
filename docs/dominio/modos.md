@@ -1,6 +1,6 @@
 # Modos de uso
 
-Estado: los modos `simulador` y `juego` están modelados en dominio; el frontend permite cambiar la vista. CAM-050 permite operar solo una demo sintética local cuando el proceso lo habilita expresamente; esto no cambia el modo de una partida existente ni concede control al espectador. Arquitectura compartida: [ADR-002](../arquitectura/decisiones/0002-dos-modos.md).
+Estado: los modos de dominio `simulador` y `juego` se mantienen; la interfaz ofrece demo libre, flujo de reto y juego humano. «Reto» usa partidas automáticas de modo `simulador`; no crea un tercer modo de dominio. El control local continúa protegido por opt-in y loopback. Arquitectura compartida: [ADR-002](../arquitectura/decisiones/0002-dos-modos.md), [ADR-035](../arquitectura/decisiones/0035-flujo-evaluacion-reto.md).
 
 | Aspecto | Simulador | Juego |
 |---|---|---|
@@ -10,6 +10,8 @@ Estado: los modos `simulador` y `juego` están modelados en dominio; el frontend
 | Decisión | Motor | Calle elegida o espera; radio opcional. |
 | Resultado | Reporte de ronda | Evacuado, mordido o partida interrumpida. |
 | Medición | Métricas oficiales automáticas | Métricas de juego separadas. |
+
+La interfaz añade **Reto** con presets de Anochecer (20), Medianoche (80) y Apocalipsis (200). Se preparan partidas automáticas con el mismo motor, mapa y resolutor. La demo libre conserva sus controles y eventos. El selector inicia cada ronda individualmente; aún no automatiza la campaña consecutiva de 15 minutos. Densidad media, proporciones de tipos y turnos de evento son provisionales porque el enunciado no los especifica.
 
 ## Invariantes
 
@@ -21,7 +23,8 @@ En la demo del mapa Manta, ambos modos comparten el subgrafo urbano limitado por
 
 ## Pantalla inicial prevista
 
-- «Simulador»: observar partida; iniciar o configurar requiere rol operador.
+- «Simulador»: demo libre; observar/iniciar o configurar requiere el control local de operador.
+- «Reto»: presets de evaluación automática; los parámetros no definidos por el reto se muestran como provisionales.
 - «Jugar»: entrar en partida habilitada; si no existe, mostrar estado y acción permitida, sin dar permisos administrativos anónimos.
 - Durante una prueba oficial, mostrar observación y explicar que el juego está temporalmente ocupado.
 

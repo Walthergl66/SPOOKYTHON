@@ -12,6 +12,7 @@ Estado: referencias documentales; no representa funcionalidad implementada. Los 
 | [SPEC-006](especificaciones/SPEC-006-metodologia.md) | TRD-13 | Método documental; ver evidencia de la propia SPEC. |
 | [SPEC-007](especificaciones/SPEC-007-panel-operador-local.md) | PRD-06, TRD-06, TRD-07 | CAM-050/063/079/081/082 (T-26/T-37/T-41/T-43/T-44) prueban arranque, control, dificultad inicial, incidentes siempre activos, continuidad visual, alerta y punto de cierre; despliegue y control de operador productivo fuera de alcance. |
 | [SPEC-008](especificaciones/SPEC-008-mapa-cartografico-3d.md) | PRD-01, PRD-04, TRD-07, TRD-09, TRD-15 | CAM-051/052/053/054/055/056/073/074/075/076/077, P1-01/P4-04, T-27/T-38/T-39. La fuente OSM conserva su envolvente completa; partidas Manta y selector quedan dentro de la ventana urbana. La caja no es frontera municipal certificada; payload y cobertura OSM siguen pendientes. |
+| [SPEC-009](especificaciones/SPEC-009-modo-reto.md) | PRD-06, PRD-07, TRD-02, TRD-10, TRD-11 | CAM-088, P4-05/P5-01/P5-03, T-47 parcial: presets automáticos y eventos reproducibles por semilla; campaña 3×5 min, persistencia de reportes, T-11 completa y AWS pendientes. |
 
 ## Cadena de ejemplo
 

@@ -60,6 +60,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-43 | Incidentes siempre activos en la demo local | El menú no ofrece el selector y la configuración frontend no contiene `eventosCiudad`; inicio/reinicio envían siempre incidentes activos aunque un cliente legado mande `eventosCiudad: false`. La configuración explícita de generadores/evaluaciones directos se conserva. |
 | T-44 | Incidentes aleatorios con alerta, cierre y recálculo | Al inicio se selecciona reproduciblemente una cantidad de 1–10 segmentos distintos (acotada por la cantidad de segmentos del mapa), sin depender de intensidad; el calendario no aparece antes de aplicar. Al aplicar, el panel publica coordenadas válidas del punto cerrado, el segmento queda bloqueado y las rutas previstas no lo atraviesan. Frontend valida el punto y lo convierte en marcador amarillo visible; la alerta anuncia el turno y el recálculo. Movimiento reducido conserva marcador estático. |
 | T-45 | Selección de habitante y ruta vigente | Seleccionar un ID existente presenta su nodo/estado, siguiente paso y destino desde la ruta del snapshot actual; habitantes no activos no reciben una ruta activa y un ID inexistente no produce datos. La selección visual es local y no emite órdenes al backend. |
+| T-47 | Presets separados de Reto | R1 usa 20 sobrevivientes y caminantes solamente, sin eventos de reto; R2 usa 80 y caminantes/corredores/hordas, con un puente; R3 usa 200 y todos los tipos, con dos calles distintas. Misma semilla reproduce amenazas/eventos. Endpoint requiere opt-in local, conserva configuración libre y no reemplaza un run activo/pausado. No acredita campaña consecutiva de 3×5 min, T-11 ni AWS. |
 
 ## Medición de la prueba de fuego
 
@@ -96,6 +97,8 @@ Desde `frontend/`, `npm test -- --run` cubre `movementDurationMs` (2.000/1.000/5
 T-44 queda cubierto por `backend/tests/test_demo.py` (rango y repetición), `backend/tests/test_panel.py` (privacidad preaplicación, proyección geográfica, cierre y rutas que evitan segmentos cerrados), `frontend/src/domain/panel.test.ts` (validación de coordenadas) y `frontend/src/features/map/mapFeatures.test.ts` (punto GeoJSON). La alerta/animación se comprueba en compilación y revisión visual del mapa local.
 
 T-43 queda cubierto por `backend/tests/test_control_simulador_demo.py` (inicio/reinicio con el campo legado en `false`) y `frontend/src/infrastructure/http/simulator.test.ts` (el cuerpo actual no envía `eventosCiudad`). Ejecutar las mismas pruebas focalizadas de backend y `cd frontend && npm test -- --run && npm run build`. Esto comprueba el control local, no cambia la configuración de la CLI/evaluación directa.
+
+T-47 se cubre con `backend/tests/test_demo.py::test_presets_de_reto_respetan_tipos_y_eventos_reproducibles`, `backend/tests/test_control_simulador_demo.py::test_ruta_reto_inicia_preset_sin_alterar_preferencia_de_demo` y `test_reto_no_interrumpe_una_partida_activa`, más `cd frontend && npm test -- --run && npm run build`. Comprueba presets/contrato local, no campaña de cinco minutos por ronda, transición automática, carga sostenida, reporte persistido ni AWS.
 
 ### T-30 — Política de ruta con riesgo prioritario
 

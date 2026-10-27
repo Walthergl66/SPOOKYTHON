@@ -25,6 +25,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 13. Solicitud del usuario (2026-10-27): al iniciar la simulación sortear entre 1 y 10 incidentes viales; al aplicarse, alertar en el mapa con un punto amarillo parpadeante, cerrar esa zona para sobrevivientes y recalcular las recomendaciones de ruta.
 14. Solicitud del usuario (2026-10-27): reemplazar el selector «Ruta observada» por selección directa de habitantes en el mapa y desplegar información del habitante y su ruta vigente.
 15. Solicitud del usuario (2026-10-27): corregir habitantes que oscilan o dan vueltas; mantener su ruta estable y cambiarla cuando un zombie esté cerca.
+16. Solicitud del usuario (2026-10-27): agregar una experiencia específica para la prueba de fuego del reto y conservar «Simulador» como demo libre.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 
@@ -36,6 +37,7 @@ La versión mínima de juego contempla un personaje humano activo por partida, s
 - Turnos de dos segundos; zombies antes que sobrevivientes; cuatro tipos de zombie y cierres en vivo.
 - `POST /paso` con el contrato exacto, API key y respuesta en menos de 500 ms.
 - Simulador propio que publica estado y consulta al motor; mapa vivo y despliegue AWS.
+- Flujo de reto con las rondas automáticas de 20/80/200 sobrevivientes, separado de la demo libre y del juego humano.
 - AWS Budget con alerta desde el primer día, repositorio público e historial real de commits.
 - README, arquitectura exportada, costos, endpoint, ejecución/medición documentadas y pitch.
 

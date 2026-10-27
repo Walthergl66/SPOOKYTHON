@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-088 — Separar el flujo de reto de la demo libre
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: agregar una experiencia específica para cumplir la prueba de fuego del hackathon y conservar el simulador como demo libre. El usuario seleccionó densidad media provisional y eventos reproducibles.
+- Especificación/requisitos: PRD-06/07, TRD-02/10/11, SPEC-009 CA-009-01..05, P4-05, T-47 parcial; trazado también a P5-01/P5-03. No verifica T-11 ni la campaña de quince minutos.
+- Decisión: ADR-035 conserva solo dos modos de dominio. «Reto» es un flujo de interfaz con presets automáticos. Densidad media, mezcla proporcional de R2 y turnos 50/100 son supuestos; P-09/P-15 quedan abiertos.
+- Resultado: UI agrega selector Simulador/Reto/Jugar y una vista con presets R1/R2/R3. API local protegida `POST /reto/iniciar` crea la ronda elegida; R1 usa 20 caminantes, R2 80 sin dormidos y un puente, R3 200 con los cuatro tipos y dos calles. Semilla opcional controla la repetición; el frontend deja el sorteo aleatorio. El reloj del reto usa 1× sin alterar la velocidad persistente de la demo libre. Los eventos de demo no se modifican.
+- Archivos: `frontend/src/app/App.tsx`, `features/mode/ModeCard.tsx`, `domain/simulator.ts`, `infrastructure/http/simulator.ts`, `styles.css`; `backend/src/navira/api/{routes,schemas}.py`, `application/control_simulador_demo.py`, `demo.py`, `simulation/escenarios.py`; pruebas frontend/backend; SPEC-009, ADR-035 y sus índices; PRD/contexto/modos, contrato API, módulos, plan, pendientes, pruebas, trazabilidad, estado e historial.
+- Validación ejecutada: suite backend completa 218/218; frontend `npm test -- --run` 90/90 y `npm run build` correcto; `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py`, `python3 -m unittest discover -s backend/tests -p 'test_check_sdd.py'` y `git diff --check` pasan. Smoke HTTP `/salud` respondió 200 y `/demo/simulador` indicó control habilitado sin partida activa; la UI Reto se revisó en navegador. El build reporta chunk `mapArea` de 1,065.62 kB (>500 kB).
+- Límites: el selector inicia rondas individuales; no encadena 3×5 min, no sostiene el reloj después de la terminación de la población ni exporta reportes persistidos. Eventos programados pueden no aplicarse si la partida termina antes del turno objetivo. Es un control local en memoria, no una ejecución oficial/AWS. Los parámetros indefinidos no se presentan como oficiales.
+- Siguiente acción: construir el ejecutor de campaña oficial con secuencia y cronómetro de tres rondas de cinco minutos, espera terminal y reporte por ronda; primero confirmar los criterios que siguen abiertos en P-09/P-15. La implementación actual solo inicia rondas individuales.
+- Commits: implementación `ebb4f81`; documentación en un commit separado posterior.
+
 ## CAM-087 — Conservar la duración solicitada de la evaluación local
 
 - Fecha: 2026-10-27, Ecuador continental.

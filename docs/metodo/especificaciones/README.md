@@ -12,6 +12,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../../producto/PRD.m
 | [SPEC-006](SPEC-006-metodologia.md) | Incorporación PRD/TRD/ODDD/SDD | Ver estado y evidencia en su archivo. |
 | [SPEC-007](SPEC-007-panel-operador-local.md) | Panel de simulación con control local de demo | CAM-050/063/079/081/082 y T-26/37/41/43/44 verifican control local, velocidad, continuidad visual, incidentes siempre activos y alerta cartográfica; no habilita operaciones públicas ni despliegue. |
 | [SPEC-008](SPEC-008-mapa-cartografico-3d.md) | Mapa cartográfico real con vista 3D y actores animados | CAM-077 convierte la ventana urbana en límite jugable y restringe el selector (T-39). El fixture fuente OSM ampliado se conserva; cobertura, payload y fallback de proveedor mantienen sus límites documentados. |
+| [SPEC-009](SPEC-009-modo-reto.md) | Presets dedicados de la prueba de fuego | CAM-088 separa presets locales de la demo libre; campaña consecutiva, T-11 completa y AWS siguen pendientes. |
 
 ## Uso
 
