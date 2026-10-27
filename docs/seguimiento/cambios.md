@@ -13,7 +13,7 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Verificación: backend enfocado (34/34), frontend (87/87), build, `compileall`, comprobadores docs (113 Markdown/115 archivos) y SDD (8 SPEC + regresiones 8/8), y `git diff --check` correctos. Smoke navegador/API local: 20 iniciales, turno 13, cuatro cierres aplicados con ubicación, 19 rutas previstas, alerta accesible del turno 11; snapshot 19 activos/1 evacuado/0 mordidos. Evidencia y límites: [resultado CAM-082](../calidad/resultados/alerta-incidentes-cam082.md).
 - Límites: es un cierre vial sintético, no un choque real ni una amenaza natural. El marcador usa el punto medio del segmento OSM, no localización oficial de accidente. Mapas con menos de diez segmentos tienen un máximo menor. No se mide impacto causal agregado en mordidas/evacuados ni rendimiento prolongado.
 - Siguiente paso: registrar el commit individual en `master` y dejar el servidor local con la partida de smoke activa para revisión.
-- Commit: pendiente.
+- Commit individual en `master`: `beddc56 feat: alert on randomized road incidents`.
 
 ## CAM-081 — Incidentes viales siempre activos en la demo
 
