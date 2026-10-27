@@ -27,6 +27,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 15. Solicitud del usuario (2026-10-27): corregir habitantes que oscilan o dan vueltas; mantener su ruta estable y cambiarla cuando un zombie esté cerca.
 16. Solicitud del usuario (2026-10-27): agregar una experiencia específica para la prueba de fuego del reto y conservar «Simulador» como demo libre.
 17. Solicitud del usuario (2026-10-27): mostrar los modos al abrir la app en el orden Reto, Simulador y Jugar, con Reto seleccionado inicialmente.
+18. Solicitud del usuario (2026-10-27): mostrar un único contador fijo de mordidos en el panel, conservando el total acumulado de la partida.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 

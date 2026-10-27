@@ -2,6 +2,15 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-091 — Mostrar un único contador acumulado de mordidos
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: eliminar el contador duplicado visualmente y conservar una cifra fija para los mordidos.
+- Resultado: el panel conserva «Mordidos acumulados» y quita la tarjeta «Mordidos última resolución». El total siempre representa sobrevivientes terminales mordidos durante toda la partida; el dato de última resolución sigue en la respuesta técnica y no cambia la API ni el motor.
+- Archivos: `frontend/src/app/App.tsx`, contexto, módulo frontend, criterio T-42, estado e historial.
+- Validación: frontend `npm test -- --run` 90/90; `npm run build` correcto con advertencia existente del chunk `mapArea` >500 kB; `check_docs.py`, `check_sdd.py` y `git diff --check` pasan. Revisión estática confirma que `App` ya no renderiza la tarjeta por resolución.
+- Commits: código `ec4fcf1`; documentación en commit separado posterior.
+
 ## CAM-090 — Enrutar el endpoint de Reto desde Vite
 
 - Fecha: 2026-10-27, Ecuador continental.
