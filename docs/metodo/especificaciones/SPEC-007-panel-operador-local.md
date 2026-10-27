@@ -4,9 +4,9 @@ ID: SPEC-007
 Estado: verificada
 Requisitos: PRD-06, TRD-06, TRD-07
 Tareas: P4-03
-Pruebas: T-26, T-37, T-41
-Cambio: CAM-079
-Evidencia: ../../calidad/resultados/fluidez-turnos-cam079.md
+Pruebas: T-26, T-37, T-41, T-43
+Cambio: CAM-081
+Evidencia: ../../calidad/resultados/incidentes-siempre-activos-cam081.md
 
 ## Objetivo y alcance
 
@@ -24,13 +24,14 @@ Quedan fuera: control administrativo público, autenticación productiva de oper
 | CA-007-02 | Iniciar crea partida simulador con escenario, población y semilla solicitada; el panel HTTP/WebSocket y motor consultan la misma partida activa. | T-26 |
 | CA-007-03 | Pausa impide iniciar turnos adicionales; continuar y reiniciar tienen controles separados. El factor local puede acortar la cadencia nominal de dos segundos, pero las rondas siguen ejecutándose secuencialmente sin omisiones. | T-26, T-41 |
 | CA-007-04 | La UI permite operar la demo, adapta sus paneles al ancho de pantalla, representa datos reales y presenta errores de conexión/configuración con instrucciones. | T-26 |
-| CA-007-05 | La demo inicia en intensidad media si no se especifica dificultad; el operador conserva selección explícita de intensidad e incidentes. | T-37 |
+| CA-007-05 | La demo inicia en intensidad media si no se especifica dificultad; el operador puede elegir intensidad, mientras los incidentes viales permanecen siempre activos y no aparecen como control en el menú. | T-37, T-43 |
 | CA-007-06 | La demo local inicia en 4× (objetivo 0,5 s); la animación ocupa al menos esa cadencia y se adapta al turno local observado, conserva movimientos confirmados entre snapshots intermedios y respeta movimiento reducido. 1×/2×/4× solo ajusta reloj y presentación locales. | T-41 |
+| CA-007-07 | Inicio y reinicio crean incidentes viales aunque reciban el campo legado `eventosCiudad: false`; el cliente actual omite ese campo y el menú no permite desactivarlos. | T-43 |
 
 ## Plan, módulos y verificación
 
 Tarea nueva P4-03: ensamblar control local, runner de simulador, rutas same-origin, controles de configuración y tablero visual. CAM-050 cubre el panel y control inicial; CAM-063 fija intensidad media como valor inicial según comparación documentada, manteniendo los controles. Módulos propietarios: [backend](../../arquitectura/modulos/backend.md), [frontend](../../arquitectura/modulos/frontend.md), [API](../../arquitectura/contratos/api.md), [arquitectura](../../arquitectura/arquitectura.md) y [seguridad](../../operacion/seguridad.md). Ver también [evidencia original de CAM-050](../../calidad/resultados/panel-operador-local-cam050.md).
 
-T-26 cubre rutas locales, opt-in, creación de partida, snapshots, pausa y validación de entrada. T-41 cubre duración/interpolación y valor inicial; `frontend/npm run build` valida compilación/TypeScript. La suite no prueba despliegue, seguridad productiva, duración de cinco minutos o rendimiento de AWS. Si el cálculo de una ronda tarda más que el periodo objetivo, el reloj la completa y continúa sin descartar turnos; 4× es una cadencia objetivo, no una garantía de rendimiento.
+T-26 cubre rutas locales, opt-in, creación de partida, snapshots, pausa y validación de entrada. T-41 cubre duración/interpolación y valor inicial. T-43 verifica el campo legado falso en inicio/reinicio y que la solicitud frontend no envíe una opción de incidentes. `frontend/npm run build` valida compilación/TypeScript. La suite no prueba despliegue, seguridad productiva, duración de cinco minutos o rendimiento de AWS. Si el cálculo de una ronda tarda más que el periodo objetivo, el reloj la completa y continúa sin descartar turnos; 4× es una cadencia objetivo, no una garantía de rendimiento.
 
 Límite operativo: el mundo, el reloj y el administrador local viven en memoria del proceso. Al reiniciarlo la partida se pierde. No definir `NAVIRA_LOCAL_DEMO_CONTROL=1` en un despliegue.

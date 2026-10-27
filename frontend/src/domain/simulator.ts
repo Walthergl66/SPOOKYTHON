@@ -19,7 +19,6 @@ export type SimulatorSetup = {
   escenario: 'libre' | 'caminantes' | 'mixto' | 'horda'
   sobrevivientes: number
   intensidad: 'baja' | 'media' | 'alta'
-  eventosCiudad: boolean
   semilla?: number
 }
 

@@ -6,11 +6,13 @@ CAM-050 añade un tablero local de demo sintética con inicio, pausa, continuaci
 
 CAM-079 fija 4× como velocidad inicial de esta demo local, con controles para 1×/2×/4×. El factor solo cambia el periodo objetivo local, sin alterar las acciones por turno ni saltar rondas; ver [flujo del simulador](simulador.md).
 
+CAM-081 elimina del menú el control de incidentes viales aleatorios y los deja siempre activos al iniciar o reiniciar la demo. El endpoint ignora el campo legado `eventosCiudad`; los eventos continúan siendo genéricos, aleatorios y visibles en el panel solo después de aplicarse. Ver [ADR-032](../../arquitectura/decisiones/0032-incidentes-viales-siempre-activos-en-demo.md).
+
 ## Preparar e iniciar
 
 1. Autenticarse con credencial administrativa independiente.
 2. Comprobar salud, versión del mapa, recursos y que no haya otra partida activa.
-3. Elegir modo, escenario, semilla y eventos; dejar registrados esos parámetros.
+3. Elegir escenario, población, intensidad y refugios; los incidentes viales sintéticos permanecen activos por defecto en la demo local.
 4. Crear `runId` y estado inicial. En prueba oficial, fijar modo simulador y cantidades del reto.
 5. Iniciar reloj y habilitar observación. En juego, habilitar la incorporación de un humano.
 

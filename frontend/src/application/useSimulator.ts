@@ -13,7 +13,7 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
   const [unavailable, setUnavailable] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [setup, setSetup] = useState<SimulatorSetup>({ escenario: 'mixto', sobrevivientes: 20, intensidad: 'media', eventosCiudad: true })
+  const [setup, setSetup] = useState<SimulatorSetup>({ escenario: 'mixto', sobrevivientes: 20, intensidad: 'media' })
 
   const [candidates, setCandidates] = useState<SimulatorCandidatos | null>(null)
   const [slots, setSlots] = useState<Slots>(emptySlots)

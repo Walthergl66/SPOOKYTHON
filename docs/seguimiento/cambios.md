@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-081 — Incidentes viales siempre activos en la demo
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de ocultar la opción de accidentes viales aleatorios y mantenerla activada siempre.
+- Especificación/requisitos: PRD-06, TRD-06/07, SPEC-007 CA-007-05/07, SPEC-001 CA-001-11, P4-03, T-43 y ADR-032.
+- Motivo: el menú y API local permitían desactivar cierres viales, contrario al comportamiento solicitado.
+- Resultado: se elimina el selector y `eventosCiudad` de `SimulatorSetup`; los inicios/reinicios del control local fuerzan `eventos_ciudad=True`. El esquema HTTP acepta el campo legado marcado obsoleto, pero las rutas lo ignoran, de forma que un cliente que mande `false` tampoco puede apagar incidentes. `crear_contexto_demo` y evaluaciones directas conservan su configuración explícita. La respuesta del control mantiene `eventosCiudad=true` como estado de la demo.
+- Archivos: `frontend/src/app/App.tsx`, `application/useSimulator.ts`, `domain/simulator.ts`, pruebas HTTP frontend; `backend/src/navira/application/control_simulador_demo.py`, `api/routes.py`, `api/schemas.py`, `tests/test_control_simulador_demo.py`; ADR-032, ADR-017/021, contrato API, flujos de operador/simulador, SPEC-001/007, T-43, plan, trazabilidad, índices, estado y reporte de evidencia.
+- Verificación: `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_control_simulador_demo -v` — 8 correctas; `cd frontend && npm test -- --run` — 85 correctas; `npm run build` correcto con advertencia de chunk cartográfico >500 kB; `python3 backend/scripts/check_docs.py` (111 Markdown/113 archivos), `check_sdd.py` (8 SPEC), regresiones SDD 8/8, compileall y `git diff --check` correctos. Inspección del navegador confirmó que no hay selector y que el run finalizado registró cierres en turnos 2 y 5.
+- Límites: el backend ya arrancado conserva el código anterior mientras mantiene el run finalizado en memoria; la interfaz se actualizó por HMR. El reinicio del backend para cargar la garantía frente a clientes legados queda pendiente para preservar ese resultado local.
+- Siguiente paso: recargar el backend en la próxima sesión nueva de simulación.
+- Commit individual local: `cf0e742 feat: keep demo road incidents always enabled` en `master`. `git push origin master` no pudo autenticar porque el entorno no dispone de credenciales interactivas; no está publicado.
+- Commit: pendiente.
+
 ## CAM-080 — Conteo confirmado de mordidos
 
 - Fecha: 2026-10-27, Ecuador continental.

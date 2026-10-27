@@ -4,8 +4,8 @@ ID: SPEC-001
 Estado: implementada
 Requisitos: PRD-01, PRD-02, PRD-11, TRD-03, TRD-04, TRD-05, TRD-09, TRD-11, TRD-12, TRD-16
 Tareas: P1-01, P1-02, P1-03, P1-04, P1-05
-Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18, T-24, T-28, T-29, T-40, T-42
-Cambio: CAM-080
+Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18, T-24, T-28, T-29, T-40, T-42, T-43
+Cambio: CAM-081
 Evidencia: parcial; ver reporte de generador espacial en resultados.
 
 ## Objetivo y alcance
@@ -26,7 +26,7 @@ Ejecutar un único mundo de Manta con reglas comunes para humano/automáticos, c
 | CA-001-08 | El generador demo crea exactamente la población solicitada (1–200), fuera de nodos refugio, con posiciones repetibles por semilla. | T-10 |
 | CA-001-09 | Las partidas nuevas usan estado aleatorio independiente; cambiar semilla/estado/eventos puede divergir en ubicaciones, movimiento zombie y rutas posteriores. Se respetan reglas y la misma instantánea conserva decisión HTTP estable. | Parcial: semilla nueva, posiciones/fase inicial aleatorias, divergencia de rutas entre semillas y decisión estable al repetir snapshot; composición/eventos oficiales y persistencia integral pendientes (T-10, T-24) |
 | CA-001-10 | La demo ofrece intensidades sintéticas baja/media/alta que escalan la cantidad inicial de zombies al grafo, distribuyen ubicaciones por sectores disponibles y componen caminantes/corredores/hordas/dormidos según el perfil. Misma semilla y configuración reproducen posiciones y tipos; dormidos siguen ocultos. | T-28 |
-| CA-001-11 | La demo puede programar incidentes viales aleatorios que cierran segmentos desde turnos definidos; el panel solo publica el incidente aplicado, y la planificación usa cierres confirmados. No se simulan ni atribuyen amenazas sísmicas/tsunami. | T-29 |
+| CA-001-11 | La demo local programa siempre incidentes viales aleatorios que cierran segmentos desde turnos definidos; el panel solo publica el incidente aplicado, y la planificación usa cierres confirmados. Los generadores/evaluaciones explícitos pueden configurarse independientemente. No se simulan ni atribuyen amenazas sísmicas/tsunami. | T-29, T-43 |
 | CA-001-12 | En partidas Manta ningún zombie aparece ni ejecuta un tramo hacia el nodo refugio o una intersección enlazada directamente; el conjunto no depende de dirección de calle ni cierres. Una entidad ya dentro solo puede permanecer o salir. Mapas sintéticos no se alteran. | T-40 |
 | CA-001-13 | Cada resolución conserva de forma única quién fue mordido; el panel separa el acumulado de estados terminales de las mordidas de la última resolución confirmada. | T-42 |
 

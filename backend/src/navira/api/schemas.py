@@ -95,7 +95,11 @@ class SolicitudIniciarDemoSchema(BaseModel):
     sobrevivientes: int = Field(default=20, ge=1, le=200)
     semilla: int | None = Field(default=None, ge=0)
     intensidad: Literal["baja", "media", "alta"] = "media"
-    eventosCiudad: bool = True
+    eventosCiudad: bool = Field(
+        default=True,
+        description="Campo legado ignorado; los incidentes viales aleatorios siempre están activos en la demo local.",
+        deprecated=True,
+    )
     refugios: list[RefugioDemoSchema] | None = None
 
 

@@ -48,14 +48,15 @@ describe('getSimulatorCandidates', () => {
 })
 
 describe('controlSimulator con refugios', () => {
-  const setup = { escenario: 'mixto', sobrevivientes: 20, intensidad: 'media', eventosCiudad: true } as const
+  const setup = { escenario: 'mixto', sobrevivientes: 20, intensidad: 'media' } as const
   const estado = { habilitado: true, estado: 'activa', runId: 'r', turno: 0, escenario: 'mixto', sobrevivientesIniciales: 20, intensidad: 'media', eventosCiudad: true, velocidad: 1, error: null }
-  it('incluye refugios en el body solo si se pasan', async () => {
+  it('envía refugios opcionales y no expone configuración para desactivar incidentes', async () => {
     const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify(estado))))
     vi.stubGlobal('fetch', fetchMock)
     await controlSimulator('iniciar', setup, [{ id: 'R-01', nodo: 'N-1' }])
     await controlSimulator('iniciar', setup)
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).refugios).toEqual([{ id: 'R-01', nodo: 'N-1' }])
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).refugios).toBeUndefined()
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty('eventosCiudad')
   })
 })

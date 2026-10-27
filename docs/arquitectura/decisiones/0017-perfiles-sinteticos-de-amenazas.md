@@ -12,9 +12,9 @@ La cantidad inicial de zombies estaba fija por nombre de escenario (`caminantes`
 
 La demo local ofrece intensidades sintéticas `baja`, `media` y `alta`, basadas en proporciones configurables del conjunto de nodos elegibles que no están ocupados al inicio. En `alta`, 25 % de nodos disponibles producen entidades zombie iniciales; `media` usa 14 % y `baja` 6 %. Los nodos se seleccionan con muestreo estratificado en una grilla geográfica para dispersar los focos y la semilla controla composición, posiciones y fases. Las proporciones por escenario preservan perfiles caminante, mixto y horda; `libre` no crea zombies.
 
-La demo puede programar cierres viales aleatorios, con un cierre de segmento por incidente en turnos 2, 5 y 8 según intensidad. Se utiliza el `EventoCierre` existente, el snapshot versionado y la proyección pública de cierres. El panel publica metadatos solo de incidentes ya aplicados; nunca su ubicación futura ni dormidos. Estos eventos son simulaciones de cierres viales genéricos, no terremotos, tsunamis ni información oficial.
+La decisión original permitía activar o desactivar cierres viales aleatorios desde el control local. CAM-081 sustituye esa parte: en la demo operada desde el tablero los cierres se generan siempre y el usuario ya no puede desactivarlos. Se conserva `EventoCierre`, el snapshot versionado y la proyección pública; el panel publica metadatos solo tras aplicar cada incidente, nunca ubicaciones futuras ni dormidos. Los cierres son simulaciones genéricas, no terremotos, tsunamis ni información oficial. Los generadores de escenarios y evaluaciones fuera de este control local conservan sus parámetros explícitos.
 
-Los porcentajes y eventos son controles de dificultad del prototipo. No se extrapolan a la población ni a condiciones reales de Manta y no congelan parámetros para las rondas oficiales.
+Los porcentajes son controles de dificultad del prototipo. La presencia de incidentes queda fija en la demo local, aunque su posición y turno siguen siendo aleatorios según semilla e intensidad. No se extrapola a la población ni a condiciones reales de Manta y no congela parámetros para las rondas oficiales.
 
 ## Alternativas
 
@@ -24,6 +24,8 @@ Los porcentajes y eventos son controles de dificultad del prototipo. No se extra
 
 ## Consecuencias y límites
 
-La UI permite ajustar intensidad y activar/desactivar cierres viales. Con la misma versión, mapa, perfil, intensidad, semilla y configuración de eventos se reproduce la inicialización. Cambios de algoritmo pueden alterar replay entre versiones. Las hordas siguen estáticas y pueden bloquear nodo/vecinos según la regla existente. El panel muestra únicamente los dormidos después de activarse.
+La UI permite ajustar intensidad; los incidentes viales de la demo están siempre activos. Con la misma versión, mapa, perfil, intensidad y semilla se reproduce la inicialización. Cambios de algoritmo pueden alterar replay entre versiones. Las hordas siguen estáticas y pueden bloquear nodo/vecinos según la regla existente. El panel muestra únicamente los dormidos después de activarse.
 
 Documentos propietarios: [SPEC-001](../../metodo/especificaciones/SPEC-001-mundo-simulacion.md), [reglas](../../dominio/reglas-juego.md), [demo](../../dominio/flujos/simulador.md), [contrato API](../contratos/api.md), [algoritmos](../algoritmos.md) y [pendientes](../../seguimiento/pendientes.md).
+
+Alcance actualizado: [ADR-032](0032-incidentes-viales-siempre-activos-en-demo.md) sustituye la configuración visible de incidentes del tablero local; el parámetro legado del endpoint se ignora.

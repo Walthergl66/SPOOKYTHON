@@ -52,13 +52,15 @@ class ControlSimuladorDemoTests(unittest.TestCase):
             response = client.post(
                 "/demo/simulador/iniciar",
                 headers={"Origin": "http://localhost:5180"},
-                json={"escenario": "mixto", "sobrevivientes": 20},
+                json={"escenario": "mixto", "sobrevivientes": 20, "eventosCiudad": False},
             )
+            snapshot = control._contexto.snapshots.obtener(response.json()["runId"])
             control.cerrar()
 
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()["intensidad"], "media")
         self.assertTrue(response.json()["eventosCiudad"])
+        self.assertTrue(snapshot.eventos_programados)
 
     def test_panel_y_runner_comparten_el_planificador_del_mismo_run(self) -> None:
         control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
@@ -66,7 +68,6 @@ class ControlSimuladorDemoTests(unittest.TestCase):
             escenario="libre",
             cantidad_sobrevivientes=1,
             intensidad="baja",
-            eventos_ciudad=False,
             semilla=31,
         )
         control.pausar()
@@ -100,14 +101,17 @@ class ControlSimuladorDemoTests(unittest.TestCase):
             started = client.post(
                 "/demo/simulador/iniciar",
                 headers=headers,
-                json={"escenario": "mixto", "sobrevivientes": 20, "semilla": 31, "intensidad": "alta", "eventosCiudad": True},
+                json={"escenario": "mixto", "sobrevivientes": 20, "semilla": 31, "intensidad": "alta", "eventosCiudad": False},
             )
             paused = client.post("/demo/simulador/pausar", headers=headers)
             resumed = client.post("/demo/simulador/reanudar", headers=headers)
             restarted = client.post(
                 "/demo/simulador/reiniciar",
                 headers=headers,
-                json={"escenario": "caminantes", "sobrevivientes": 20},
+                json={"escenario": "caminantes", "sobrevivientes": 20, "eventosCiudad": False},
+            )
+            restarted_snapshot = app.state.control_simulador_demo._contexto.snapshots.obtener(
+                restarted.json()["runId"]
             )
             status_response = client.get("/demo/simulador")
             panel = client.get("/panel/estado")
@@ -126,6 +130,8 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertNotEqual(restarted.json()["runId"], started.json()["runId"])
         self.assertEqual(restarted.json()["escenario"], "caminantes")
         self.assertEqual(restarted.json()["intensidad"], "media")
+        self.assertTrue(restarted.json()["eventosCiudad"])
+        self.assertTrue(restarted_snapshot.eventos_programados)
         self.assertEqual(status_response.json()["runId"], restarted.json()["runId"])
         self.assertEqual(panel.json()["runId"], restarted.json()["runId"])
         self.assertEqual(panel.json()["modo"], "simulador")

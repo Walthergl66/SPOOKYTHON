@@ -100,7 +100,6 @@ class ControlSimuladorDemoLocal:
         escenario: str,
         cantidad_sobrevivientes: int,
         intensidad: str = "media",
-        eventos_ciudad: bool = True,
         semilla: int | None = None,
         refugios: tuple[Refugio, ...] | None = None,
     ) -> dict[str, object]:
@@ -111,7 +110,7 @@ class ControlSimuladorDemoLocal:
                 escenario=escenario,
                 cantidad_sobrevivientes=cantidad_sobrevivientes,
                 intensidad=intensidad,
-                eventos_ciudad=eventos_ciudad,
+                eventos_ciudad=True,
                 refugios=refugios,
             )
             ejecutar = EjecutarRondaAutomatica(
@@ -131,7 +130,7 @@ class ControlSimuladorDemoLocal:
                 "escenario": escenario,
                 "cantidad_sobrevivientes": cantidad_sobrevivientes,
                 "intensidad": intensidad,
-                "eventos_ciudad": eventos_ciudad,
+                "eventos_ciudad": True,
             }
             self._estado = "activa"
             reloj.iniciar()
@@ -166,7 +165,6 @@ class ControlSimuladorDemoLocal:
         escenario: str | None = None,
         cantidad_sobrevivientes: int | None = None,
         intensidad: str | None = None,
-        eventos_ciudad: bool | None = None,
         refugios: tuple[Refugio, ...] | None = None,
     ) -> dict[str, object]:
         return self.iniciar(
@@ -175,11 +173,6 @@ class ControlSimuladorDemoLocal:
                 self._configuracion.get("cantidad_sobrevivientes", 20)
             ),
             intensidad=intensidad or str(self._configuracion.get("intensidad", "media")),
-            eventos_ciudad=(
-                eventos_ciudad
-                if eventos_ciudad is not None
-                else bool(self._configuracion.get("eventos_ciudad", True))
-            ),
             refugios=refugios,
         )
 

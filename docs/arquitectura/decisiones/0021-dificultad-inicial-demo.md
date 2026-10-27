@@ -6,17 +6,17 @@ Origen: reporte del usuario de bajo total evacuado; CAM-063 aporta comparación 
 
 ## Contexto
 
-La pantalla iniciaba cada demo en intensidad alta (25 % de nodos elegibles con amenazas) con incidentes viales activos. El escenario `mixto` de 20 habitantes produjo pocas evacuaciones en pruebas locales. Las intensidades baja/media/alta y la opción de incidentes siguen disponibles; el cambio se limita a la selección inicial y defaults cuando la petición omite intensidad.
+La pantalla iniciaba cada demo en intensidad alta (25 % de nodos elegibles con amenazas) con incidentes viales activos. El escenario `mixto` de 20 habitantes produjo pocas evacuaciones en pruebas locales. Las intensidades baja/media/alta siguen disponibles; el cambio se limita a la selección inicial y defaults cuando la petición omite intensidad. La configuración de incidentes que se menciona en la decisión original fue sustituida por ADR-032.
 
 ## Decisión
 
-La interfaz, el esquema HTTP local y `ControlSimuladorDemoLocal` usan intensidad `media` (14 %) por defecto. Los incidentes viales permanecen activados por defecto y la persona operadora puede ajustar escenario, población, intensidad y eventos antes de iniciar. No se modifica la distribución aleatoria, el generador ni las reglas de resolución.
+La interfaz, el esquema HTTP local y `ControlSimuladorDemoLocal` usan intensidad `media` (14 %) por defecto. Los incidentes viales permanecen activados siempre; la persona operadora puede ajustar escenario, población e intensidad antes de iniciar. No se modifica la distribución aleatoria, el generador ni las reglas de resolución.
 
 ## Alternativas
 
 - Mantener alta: descartada como valor inicial porque con las mismas tres semillas e incidentes produjo muchas menos evacuaciones y más mordidas que media.
 - Usar baja: descartada como valor inicial porque reduce mucho la presión y puede ocultar el comportamiento de rutas frente a amenazas.
-- Desactivar incidentes: descartada para conservar el comportamiento aleatorio actual de eventos; sigue siendo configurable.
+- Desactivar incidentes: se permitía en la decisión original y fue descartado posteriormente para el tablero local por ADR-032; herramientas directas de evaluación mantienen configuración explícita.
 
 ## Evidencia y límites
 

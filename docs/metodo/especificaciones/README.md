@@ -10,7 +10,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../../producto/PRD.m
 | [SPEC-004](SPEC-004-juego-humano.md) | Control humano | CAM-036/037 implementan parcialmente sesión/aparición y órdenes locales; CAM-038 inicia controles frontend; CAM-039/040 integran ciclo demo; CAM-041/042 muestran timer y radio; CAM-043 recupera sesión tras recarga; CAM-045 mejora navegación/foco; CAM-046 implementa expiración local sin transferir personaje y CAM-047 verifica parte de navegación por teclado. Falta persistencia/reinicio, revocación productiva, TLS, resultado y T-14/T-15/T-19 integral. |
 | [SPEC-005](SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Lista con dependencias externas pendientes. |
 | [SPEC-006](SPEC-006-metodologia.md) | Incorporación PRD/TRD/ODDD/SDD | Ver estado y evidencia en su archivo. |
-| [SPEC-007](SPEC-007-panel-operador-local.md) | Panel de simulación con control local de demo | Verificado localmente con CAM-050/063/079 y T-26/37/41; velocidad 4× e interpolación local no habilitan operaciones públicas ni despliegue. |
+| [SPEC-007](SPEC-007-panel-operador-local.md) | Panel de simulación con control local de demo | CAM-050/063/079/081 y T-26/37/41/43 verifican control local, velocidad, continuidad visual e incidentes siempre activos; no habilita operaciones públicas ni despliegue. |
 | [SPEC-008](SPEC-008-mapa-cartografico-3d.md) | Mapa cartográfico real con vista 3D y actores animados | CAM-077 convierte la ventana urbana en límite jugable y restringe el selector (T-39). El fixture fuente OSM ampliado se conserva; cobertura, payload y fallback de proveedor mantienen sus límites documentados. |
 
 ## Uso

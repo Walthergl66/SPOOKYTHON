@@ -114,7 +114,6 @@ async def iniciar_demo_simulador(
             escenario=solicitud.escenario,
             cantidad_sobrevivientes=solicitud.sobrevivientes,
             intensidad=solicitud.intensidad,
-            eventos_ciudad=solicitud.eventosCiudad,
             semilla=solicitud.semilla,
             refugios=_refugios(solicitud),
         )
@@ -164,7 +163,6 @@ async def reiniciar_demo_simulador(
             escenario=solicitud.escenario,
             cantidad_sobrevivientes=solicitud.sobrevivientes,
             intensidad=solicitud.intensidad,
-            eventos_ciudad=solicitud.eventosCiudad,
             refugios=_refugios(solicitud),
         )
     except (OSError, ValueError) as error:

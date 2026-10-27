@@ -113,12 +113,6 @@ export function App() {
               <option value="baja">Baja · 0,2% de nodos elegibles</option><option value="media">Media · 0,5% de nodos elegibles</option><option value="alta">Alta · 0,9% de nodos elegibles</option>
             </select>
           </label>
-          <label className="setup-field">Incidentes viales aleatorios
-            <select value={setup.eventosCiudad ? 'si' : 'no'} onChange={(event) => setSetup({ ...setup, eventosCiudad: event.target.value === 'si' })} disabled={simulatorIsRunning || simulatorBusy}>
-              <option value="si">Activados</option><option value="no">Desactivados</option>
-            </select>
-          </label>
-
           {showPicker ? <div className="refuge-summary"><span role="status">Refugios: {placedRefuges}/{REFUGE_SLOTS.length}</span><button className="sim-action" type="button" onClick={() => setRefugeDialogOpen(true)}>Elegir en el mapa</button></div> : null}
 
           {simulatorUnavailable ? <div className="control-notice" role="status"><strong>Control local deshabilitado</strong><span>Inicia el backend con <code>NAVIRA_LOCAL_DEMO_CONTROL=1</code> para operar una demo desde esta pantalla.</span></div> : null}

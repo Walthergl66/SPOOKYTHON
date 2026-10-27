@@ -56,6 +56,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-40 | Perímetro de refugios ante zombies | Para mapa Manta, generación y movimiento no colocan ni mueven zombies hacia refugios o nodos conectados a una cuadra, aun con vías unidireccionales o cierres; un actor ya dentro solo permanece o sale. Fixtures sintéticos no se modifican. |
 | T-41 | Continuidad y velocidad visual del turno local | Demo local inicia en 4× (objetivo 500 ms); 1×/2×/4× escalan el reloj y la interpolación, que también se prolonga a la cadencia observada del turno (sin usar pausas mayores a 5 s). Snapshots sin movimiento nuevo preservan la animación confirmada; actores que dejan de estar visibles se eliminan; `prefers-reduced-motion` evita interpolar. El runner completa rondas en serie y jamás omite pasos por superar su periodo objetivo. No acredita que el hardware sostenga 4×. |
 | T-42 | Conteo de mordidas en el panel | Una resolución con dos zombies que muerden al mismo sobreviviente registra una sola persona mordida; el estado persistido, el resultado del resolutor y el acumulado del panel coinciden. El panel muestra aparte las mordidas de la última resolución confirmada. No demuestra mejora de supervivencia. |
+| T-43 | Incidentes siempre activos en la demo local | El menú no ofrece el selector y la configuración frontend no contiene `eventosCiudad`; inicio/reinicio envían siempre incidentes activos aunque un cliente legado mande `eventosCiudad: false`. La configuración explícita de generadores/evaluaciones directos se conserva. |
 
 ## Medición de la prueba de fuego
 
@@ -88,6 +89,8 @@ Desde `frontend/`, `npm test -- --run` cubre `movementDurationMs` (2.000/1.000/5
 ### T-28/T-29 — Intensidad e incidentes sintéticos
 
 `cd backend && PYTHONPATH=src .venv/bin/python -m unittest tests.test_demo tests.test_panel tests.test_control_simulador_demo -v` cubre densidad y reparto por sectores en el fixture de Manta, composición/semilla reproducible, ocultamiento de dormidos, inicio del control con intensidad y publicación de incidentes solo tras aplicar el cierre. `cd frontend && npm run build` comprueba los campos de configuración y la proyección del panel. Los perfiles son dificultad sintética; no representan densidades, eventos ni rutas oficiales.
+
+T-43 queda cubierto por `backend/tests/test_control_simulador_demo.py` (inicio/reinicio con el campo legado en `false`) y `frontend/src/infrastructure/http/simulator.test.ts` (el cuerpo actual no envía `eventosCiudad`). Ejecutar las mismas pruebas focalizadas de backend y `cd frontend && npm test -- --run && npm run build`. Esto comprueba el control local, no cambia la configuración de la CLI/evaluación directa.
 
 ### T-30 — Política de ruta con riesgo prioritario
 
