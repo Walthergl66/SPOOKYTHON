@@ -15,6 +15,7 @@ Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conser
 | Orden humana | Partida, turno, personaje, acción, secuencia, destino | Propiedad, idempotencia y cierre. |
 | Sesión de jugador | Partida, ID de personaje, estado de aparición, nodo | Un propietario por partida; token opaco entregado solo en cookie; token almacenado como hash. El adaptador actual es volátil. |
 | Snapshot | Partida, turno, fase, versión, datos, IDs mordidos en la última resolución | Inmutable una vez confirmado; IDs por resolución únicos. El panel calcula el acumulado desde estados terminales y el indicador reciente desde esos IDs. |
+| Compromiso de ruta | Sobreviviente automático, refugio y sufijo dirigido restante | Vive dentro del snapshot privado; solo se recorta al confirmar el movimiento, se elimina en estado terminal y nunca se escribe desde una consulta del panel. |
 | Evento de ciudad | ID, segmento, turno objetivo, causa | Aplicación única y trazable. |
 | Resultado | Modo, versiones, decisiones, métricas y final | Separar pruebas automáticas de juego. |
 

@@ -58,7 +58,7 @@ Aplicar [SDD](../metodo/SDD.md), leer `docs/` antes de editar y enlazar requisit
 
 ### TRD-14 — Prioridad de supervivencia en rutas
 
-En cada decisión, la política temporal minimiza primero la exposición estimada en la ventana observable; turnos, costo de calle y desempates solo se consideran después. Comparar resultados reales en orden lexicográfico `(mordidos ascendente, evacuados descendente)`. La predicción usa solo amenazas observables, respeta el presupuesto configurado y recurre a Dijkstra si no obtiene una ruta completa; `/paso` conserva su contrato. Reportar puntaje estimado y conteo real como conceptos separados. Detalle: [algoritmos](../arquitectura/algoritmos.md), [ADR-018](../arquitectura/decisiones/0018-politica-riesgo-prioritario.md).
+En cada decisión, la política temporal minimiza primero la exposición estimada en la ventana observable; turnos, costo de calle y desempates solo se consideran después. Mantener el sufijo de ruta confirmado entre snapshots; recalcular por amenaza visible dentro del radio topológico configurado o si un cierre/posición invalida el siguiente trayecto. No usar congestión como causa autónoma de desvío. Comparar resultados reales en orden lexicográfico `(mordidos ascendente, evacuados descendente)`. La predicción usa solo amenazas observables, respeta el presupuesto configurado y recurre a Dijkstra si no obtiene una ruta completa; `/paso` conserva su contrato. Reportar puntaje estimado y conteo real como conceptos separados. Detalle: [algoritmos](../arquitectura/algoritmos.md), [ADR-018](../arquitectura/decisiones/0018-politica-riesgo-prioritario.md) y [ADR-034](../arquitectura/decisiones/0034-rutas-estables-y-replanificacion-cercana.md).
 
 ### TRD-15 — Límite geográfico jugable
 

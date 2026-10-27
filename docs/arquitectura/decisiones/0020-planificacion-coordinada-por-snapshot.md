@@ -1,7 +1,7 @@
 # ADR-020 — Planificación coordinada por snapshot
 
 Fecha: 2026-10-26
-Estado: implementada localmente; impacto en mordidas pendiente
+Estado: parcialmente sustituida por ADR-034; impacto en mordidas pendiente
 Origen: solicitud del usuario de buscar rutas de evacuación priorizando la menor cantidad de personas mordidas.
 
 ## Contexto
@@ -10,9 +10,9 @@ ADR-018/019 planifican una ruta individual por sobreviviente. En grupos, decisio
 
 ## Decisión
 
-`DecidirPaso` prepara una asignación de rutas de todos los sobrevivientes activos para la versión vigente `(runId, snapshot, mapa)`. Panel, simulador automático y solicitudes `/paso` consultan esa misma asignación. Al cambiar el snapshot se descarta el plan y se calcula otro.
+`DecidirPaso` prepara una asignación de rutas de todos los sobrevivientes activos para la versión vigente `(runId, snapshot, mapa)`. Panel, simulador automático y solicitudes `/paso` consultan esa misma asignación. La selección por snapshot ahora respeta los compromisos entre turnos de ADR-034.
 
-La selección ordena primero a quienes tienen mayor exposición observable en su nodo actual. Para cada uno compara alternativas legales de primer paso por exposición acumulada del pronóstico disponible, luego por ocupación ya asignada a ese destino, costo de ruta y desempate estable. Congestión es una penalización suave que solo desempata entre rutas de exposición equivalente; no representa capacidad ni modifica reglas de colisión.
+La selección ordena primero a quienes tienen mayor exposición observable en su nodo actual. Para cada uno compara alternativas legales de primer paso por exposición acumulada del pronóstico disponible y luego costo de ruta/desempate estable. La ocupación de destinos ya no provoca desvíos autónomos; el compromiso y umbral de replanteamiento se especifican en [ADR-034](0034-rutas-estables-y-replanificacion-cercana.md).
 
 ## Alternativas
 

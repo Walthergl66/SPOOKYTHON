@@ -10,7 +10,7 @@ La política activa anterior, Dijkstra, evitaba bloqueos y zombies visibles en e
 
 ## Decisión
 
-Conectar la búsqueda temporal a `DecidirPaso`, compartido por `/paso`, el simulador automático y la vista previa del panel. La prioridad de una ruta es, en orden: validez topológica y bloqueos confirmados; menor suma de exposición futura estimada; menos turnos; costo ponderado de calles; secuencia determinista. El planificador vuelve a calcular desde el snapshot de cada turno. El pronóstico inmutable se comparte una vez por versión entre recomendaciones del mismo snapshot.
+Conectar la búsqueda temporal a `DecidirPaso`, compartido por `/paso`, el simulador automático y la vista previa del panel. La prioridad de una ruta es, en orden: validez topológica y bloqueos confirmados; menor suma de exposición futura estimada; menos turnos; costo ponderado de calles; secuencia determinista. Esta decisión se complementa con el compromiso entre snapshots de ADR-034: se vuelve a calcular ante amenaza visible cercana o invalidez del trayecto; el pronóstico inmutable se comparte una vez por versión entre recomendaciones del mismo snapshot.
 
 La proyección solo usa zombies activos visibles, sobrevivientes observables, calles y cierres confirmados. No lee dormidos ni estado RNG privado. Si no produce una ruta completa dentro del horizonte/presupuesto, conserva Dijkstra como respaldo. El contrato HTTP permanece igual.
 

@@ -4,9 +4,9 @@ ID: SPEC-002
 Estado: implementada
 Requisitos: PRD-03, PRD-09, PRD-10, TRD-01, TRD-02, TRD-05, TRD-06, TRD-09, TRD-12, TRD-14
 Tareas: P0-01, P0-02, P2-01, P2-02, P2-03, P3-01, P3-02, P3-03
-Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30, T-31, T-32, T-33, T-34, T-35, T-36
-Cambio: CAM-062
-Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044, CAM-058, CAM-059, CAM-060, CAM-061 y CAM-062 en [cambios](../../seguimiento/cambios.md) y sus reportes locales.
+Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30, T-31, T-32, T-33, T-34, T-35, T-36, T-46
+Cambio: CAM-084
+Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044, CAM-058, CAM-059, CAM-060, CAM-061, CAM-062 y CAM-084 en [cambios](../../seguimiento/cambios.md) y sus reportes locales.
 
 ## Objetivo y alcance
 
@@ -28,6 +28,7 @@ Dar un siguiente paso válido y oportuno hacia un refugio, priorizando menor exp
 | CA-002-10 | Solo un sobreviviente activo puede recibir mordida; una llegada confirmada al refugio permanece terminal en turnos siguientes. | T-34 |
 | CA-002-11 | Las rutas de sobrevivientes activos se asignan conjuntamente por snapshot; la exposición prevista precede a congestión y costo, y la ruta mostrada coincide con la acción automática. El resolutor conserva autoridad sobre colisiones y mordidas. | T-35, T-31 |
 | CA-002-12 | La política solo suma exposición en turnos cubiertos por el pronóstico; no repite el último turno conocido como si describiera el futuro restante. | T-36 |
+| CA-002-13 | El compromiso de ruta automática sobrevive snapshots sucesivos y se recorta con movimiento confirmado; solo se reemplaza ante zombie visible dentro del radio configurado, cierre que invalida el trayecto o desviación. No genera ciclos ni desvíos por congestión sola; consultas antiguas no mutan el compromiso vigente. | T-46 |
 
 ## Plan y módulos
 
@@ -38,3 +39,5 @@ P0 fija API/esquemas; P2 entrega una ronda con Dijkstra; P3 añade horizonte lim
 Sin ruta, origen peligroso, refugio inaccesible, timeout, fase incompatible y calles paralelas. P-01/P-05 condicionan unidades y eficiencia; registrar supuestos en vez de atribuirlos al reto. La referencia base puede verificarse parcialmente por tarea; toda la SPEC solo se verifica al completar los criterios, incluida evaluación de mejora.
 
 La implementación inicial de P0-01/P0-02 cubre el proceso FastAPI, esquemas, API key, `/salud`, `/paso` y fixtures. CAM-012 verifica arranque y contrato HTTP. CAM-013 incorpora Dijkstra genérico; CAM-014 integra el caso de uso con snapshots/mapas inyectados y mapea errores 404/409/503. CAM-020 agrega configuración local de cohortes al ensamblaje demo y un cliente de carga concurrente con resumen de latencias/errores sobre snapshot fijo. CAM-028 añade un evaluador HTTP loopback que mantiene snapshot común por turno, resuelve las intenciones recibidas y vuelve a abrir la decisión para el siguiente turno; CAM-029 alinea los inicios a una cadencia monotónica configurable, mide duración/retraso y registra tres turnos por cohorte 20/80/200 con período objetivo de dos segundos. CAM-044 solicita hasta 150 turnos por cohorte; el mundo sintético finaliza a los 12/15/13 turnos, con p95 por solicitud de 18,860/58,097/92,060 ms y cero errores en una pasada local. El reporte confirma el límite de duración, no satisface cinco minutos ni T-11. CAM-033 implementa y mide el núcleo temporal acotado; CAM-034 añade un pronóstico por escenarios observables y supuestos explícitos; CAM-035 compara ambas políticas en mundos sintéticos emparejados de tres turnos. CAM-058 conecta la política temporal a `/paso` y al simulador automático, con Dijkstra como respaldo; introduce el orden real de evaluación mordidos primero y evacuados después. CAM-059 agrega exposición por cruces opuestos futuros, salida inmediata si todas las rutas completas están bloqueadas y reutilización del mismo trayecto para vista previa y decisión del snapshot. CAM-060 hace respetar R-11: solo sobrevivientes activos pueden ser mordidos y la evacuación confirmada es terminal. En una comparación preliminar emparejada (tres semillas, mixto, 20, intensidad alta, incidentes, 12 turnos), la política temporal de CAM-059 tuvo 6 mordidos menos agregados y fue igual o mejor en los tres pares. La muestra es pequeña, local y no cambia la garantía: riesgo estimado no es mordida real ni supervivencia. T-22 ampliada, latencia HTTP/carga y reglas oficiales siguen pendientes; CA-002-04/05 y la SPEC permanecen parciales.
+
+CAM-084 agrega CA-002-13: el snapshot conserva rutas completas automáticas entre turnos y el coordinador guarda el sufijo solo tras resolver el movimiento. Se mantienen hasta amenaza visible dentro del radio topológico configurado, cierre invalidante o desviación; un zombie lejano no fuerza por sí solo el cambio. El radio inicial de tres saltos es provisional. T-46 queda pendiente de automatización/evidencia; esta tarea no verifica cohortes, reducción de mordidas ni cumplimiento integral de la SPEC.

@@ -24,6 +24,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 12. Solicitud del usuario (2026-10-27): impedir que los zombies se acerquen a las zonas seguras en una cuadra alrededor; la regla se representa como un salto topológico alrededor de los refugios en partidas Manta.
 13. Solicitud del usuario (2026-10-27): al iniciar la simulación sortear entre 1 y 10 incidentes viales; al aplicarse, alertar en el mapa con un punto amarillo parpadeante, cerrar esa zona para sobrevivientes y recalcular las recomendaciones de ruta.
 14. Solicitud del usuario (2026-10-27): reemplazar el selector «Ruta observada» por selección directa de habitantes en el mapa y desplegar información del habitante y su ruta vigente.
+15. Solicitud del usuario (2026-10-27): corregir habitantes que oscilan o dan vueltas; mantener su ruta estable y cambiarla cuando un zombie esté cerca.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 

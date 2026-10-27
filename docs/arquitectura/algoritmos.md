@@ -22,7 +22,13 @@ Si se optimizan turnos, la heurística debe ser una cota inferior en saltos; si 
 
 ## Coordinación de cohortes
 
-CAM-061/ADR-020 calculan una asignación común de rutas para sobrevivientes activos del snapshot. Primero ordenan a quienes tienen mayor exposición observable actual; luego evalúan opciones legales del primer paso por exposición pronosticada dentro de los turnos para los que existe pronóstico, ocupación de destino ya asignada como desempate suave, costo restante y un desempate estable. No se prolonga el último riesgo conocido a turnos sin modelo: el pronóstico está acotado y la cola de la ruta se desempata por costo. Un sobreviviente solitario conserva la búsqueda temporal; en cohortes, las alternativas del primer paso usan continuaciones estáticas para acotar el cálculo. La elección se recalcula al cambiar el snapshot, y la ruta del panel, `/paso` y el runner reutilizan la misma asignación. Es coordinación heurística de horizonte móvil, no un óptimo global; no se reserva capacidad física. T-35 de grafo mínimo no demuestra reducción de mordidas; validar cohortes con semillas emparejadas y medir coste total por ronda.
+CAM-061/ADR-020 calculan rutas comunes para sobrevivientes activos que requieren reaccionar a peligro cercano. El orden por exposición actual y futura sigue aplicando; congestión no es un motivo autónomo para desviar. T-35 de grafo mínimo no demuestra reducción de mordidas; validar cohortes con semillas emparejadas y medir coste total por ronda.
+
+## Estabilidad y replanteamiento de ruta
+
+CAM-084 conserva el sufijo de una ruta automática completa en `SnapshotMundo`, y el coordinador lo recorta solo cuando la resolución confirma su primer movimiento. Un snapshot nuevo ya no implica por sí solo un camino nuevo. `DecidirPaso` mantiene el compromiso mientras el siguiente paso sea transitable y no haya un zombie visible a tres saltos topológicos o menos del habitante. Un cierre que afecte a cualquier arista restante invalida el compromiso; un zombie que ocupa el siguiente nodo o un cruce opuesto actual también impide seguirlo. Después se evalúa una alternativa con el pronóstico observable. Los zombies remotos que no están en el radio no provocan un rodeo preventivo.
+
+Las rutas candidatas sin ciclos evitan avances de ida/vuelta que no acerquen al refugio. Las decisiones nuevas sin amenaza cercana usan la ruta dirigida más corta bajo cierres y peligros inmediatos. El radio es un parámetro de diseño, no una regla del reto ni una distancia métrica calibrada. Las consultas de panel y `/paso` son de lectura respecto al compromiso; solo la transición CAS guarda el residuo realmente ejecutado. Ver [ADR-034](decisiones/0034-rutas-estables-y-replanificacion-cercana.md).
 
 ## Predicciones por tipo
 

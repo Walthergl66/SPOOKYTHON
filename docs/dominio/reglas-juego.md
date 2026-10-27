@@ -35,6 +35,7 @@ Estado: implementación parcial del grafo, movimiento zombie, cierres programado
 - En la demo local, R-15 configura cierres viales sintéticos, no amenazas de desastre; ver [ADR-033](../arquitectura/decisiones/0033-alerta-y-cierres-aleatorios.md).
 - El mundo usa una secuencia aleatoria privada por partida para seleccionar estados iniciales y decisiones que las reglas dejan al azar. Una modificación pequeña de la entrada puede desviar el recorrido y alterar rutas, encuentros, mordidas y evacuaciones siguientes.
 - La aleatoriedad no reemplaza las reglas: el corredor sigue persiguiendo según la regla configurada; la horda sigue bloqueando nodo y vecinos; sus movimientos quedan sometidos a P-07. El motor conserva respuesta estable para solicitudes repetidas sobre la misma instantánea.
+- La ruta automática completa se conserva en el snapshot después de cada movimiento confirmado. El sistema replantea por zombie visible a tres saltos topológicos o menos (parámetro provisional), por cierre que vuelva inválida la ruta o si la posición deja de coincidir con ella. Los zombies más lejanos no cambian por sí solos el recorrido; un camino candidato con nodos repetidos se descarta. El radio topológico es una decisión configurable del prototipo, no una distancia oficial.
 
 ## Supuestos pendientes de confirmar
 

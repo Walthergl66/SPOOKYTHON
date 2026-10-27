@@ -18,7 +18,7 @@ Ejecutar zombies, turnos, bloqueos, mordidas y llegadas según las reglas del re
 
 ### PRD-03 — Evacuación automática
 
-Recomendar un siguiente paso válido hacia un refugio, priorizando menos mordidas estimadas a lo largo del recorrido y recalculando cuando cambia el mundo. Prioridad: obligatoria. Esperar es una acción válida, pero no garantiza seguridad; el criterio para comparar resultados reales está en PRD-10. Detalle: [motor](../arquitectura/algoritmos.md).
+Recomendar un siguiente paso válido hacia un refugio, priorizando menos mordidas estimadas a lo largo del recorrido y manteniendo el camino confirmado entre turnos. Replantear por amenazas visibles dentro del radio topológico configurado, por un cierre que invalide el trayecto o si el habitante ya no está en él; un zombie remoto por sí solo no debe causar desvíos. Prioridad: obligatoria. Esperar es una acción válida, pero no garantiza seguridad; el criterio para comparar resultados reales está en PRD-10. Detalle: [motor](../arquitectura/algoritmos.md).
 
 ### PRD-04 — Observación comprensible en vivo
 

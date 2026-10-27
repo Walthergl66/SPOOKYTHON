@@ -1,7 +1,7 @@
 # ADR-019 — Riesgo de cruce y ruta consistente por snapshot
 
 Fecha: 2026-10-26
-Estado: implementada localmente; evaluación de supervivencia preliminar
+Estado: implementada localmente; selección por snapshot complementada por ADR-034; evaluación de supervivencia preliminar
 Origen: reporte del usuario de 20/20 sobrevivientes mordidos y fallo del indicador de ruta.
 
 ## Contexto
@@ -12,7 +12,7 @@ El resolutor puede morder por contacto en el nodo final o por cruzar en sentidos
 
 1. El pronóstico por turno añade exposición en la arista dirigida del sobreviviente cuando un zombie observable tiene probabilidad de recorrer el sentido opuesto del mismo segmento. Nodos y cruces se consideran mecanismos de mordida distintos y se acota su puntuación combinada por paso.
 2. Un cruce zombie confirmado en la fase actual bloquea esa arista solo para la acción actual; no se convierte por error en cierre vial permanente ni se propaga a turnos futuros. Los cierres viales confirmados sí persisten.
-3. `DecidirPaso` conserva la ruta completa por `(runId, versión de snapshot, versión de mapa, sobreviviente)`. El panel y el movimiento automático reutilizan la misma primera acción. Al cambiar snapshot, reemplaza la caché anterior; los cálculos de sobrevivientes diferentes no se serializan entre sí.
+3. `DecidirPaso` conserva la recomendación por `(runId, versión de snapshot, versión de mapa, sobreviviente)` para alinear panel y acción. Al cambiar snapshot reemplaza esa caché; el compromiso que sobrevive snapshots posteriores se define en [ADR-034](0034-rutas-estables-y-replanificacion-cercana.md).
 4. Si el pronóstico temporal y Dijkstra no encuentran un camino completo, el sistema elige una calle vecina legal y despejada por menor exposición observable del próximo turno, luego por costo estático restante al refugio. Espera solo cuando no hay salida segura conocida.
 
 El pronóstico sigue siendo una aproximación con caminantes aleatorios, sobrevivientes de corredor congelados y hordas estáticas. No lee dormidos ni RNG privado, y no promete supervivencia.

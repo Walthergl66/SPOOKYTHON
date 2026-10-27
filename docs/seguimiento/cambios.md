@@ -2,6 +2,20 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-084 — Conservar rutas y replantear ante amenaza cercana
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario para corregir habitantes que dan vueltas sin amenazas cercanas y permitir cambios de ruta cuando un zombie está próximo.
+- Especificación/requisitos: PRD-03/10, TRD-14, SPEC-002 CA-002-13, P3-03 y T-46; ADR-034. T-46 queda pendiente de ejecución.
+- Motivo: la asignación coordinada se recalculaba en cada snapshot y podía variar por el orden/congestión del grupo, aunque el trayecto seguía legal y no hubiese peligro cercano.
+- Resultado: `SnapshotMundo` conserva compromisos de rutas automáticas; el coordinador persiste solo el sufijo que coincide con un movimiento confirmado. El planificador mantiene el trayecto entre snapshots y lo reemplaza cuando encuentra amenaza visible en un radio topológico configurable (inicialmente tres saltos), un cierre que invalida cualquier tramo restante, peligro en el siguiente tramo o desviación. La ocupación/congestión de otros habitantes ya no provoca por sí sola un desvío; rutas con ciclos se descartan. El radio inicial es una decisión de demo, no distancia calibrada ni regla oficial.
+- Archivos: modelo de snapshot, planificador, coordinadores automático y humano-NPC, resolución CAS y evaluadores locales/rutas; PRD, TRD, ODDD, reglas, datos, algoritmos, SPEC-002, trazabilidad, ADR-018/019/020/034, pruebas, módulos, plan, índices, estado e historial.
+- Verificación: `python3 backend/scripts/check_docs.py` correcto (114 Markdown/116 archivos); `python3 backend/scripts/check_sdd.py` correcto (ocho SPEC estructuralmente válidas); `python3 -m compileall -q backend/src/navira` y `git diff --check` correctos. Las pruebas de comportamiento T-46 no se ejecutaron en esta sesión; no se afirma prevención demostrada de ciclos ni mejora de mordidas.
+- Límites: la distancia de amenaza se mide en saltos no dirigidos sobre el grafo, no metros; el umbral 3 requiere calibración. Un zombie remoto no causa desvío por sí mismo, aunque un cierre confirmado que afecte cualquier tramo sí invalida de inmediato el compromiso. Persistencia es la del snapshot/repositorio local existente, no persistencia durable entre reinicios.
+- Siguiente paso: correr `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py`, compilación Python y `git diff --check`; luego ejecutar pruebas conductuales T-46 y revisar una ronda local antes de dar el cambio por verificado.
+- Commit de implementación: `437a84e` (`fix: keep evacuation routes stable between turns`).
+- La documentación quedó en un commit individual separado en `master`.
+
 ## CAM-083 — Seleccionar habitantes desde el mapa
 
 - Fecha: 2026-10-27, Ecuador continental.
