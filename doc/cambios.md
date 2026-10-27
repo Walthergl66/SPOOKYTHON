@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-062 — Limitar la exposición sumada al horizonte pronosticado
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario reportó que el total evacuado seguía bajo y pidió continuar mejorando la ruta de evacuación.
+- Especificación/tareas: PRD-03/10, TRD-14, SPEC-002 CA-002-12; P3-03/T-36 parcial. No completa T-22, T-11 ni SPEC-002.
+- Problema: la coordinación repetía el último valor del pronóstico en cada nodo posterior al horizonte y podía penalizar rutas largas con un riesgo que no había sido modelado.
+- Resultado: la política acumula solo exposición explícita por turno pronosticado. Los turnos posteriores quedan sin puntaje de exposición y el costo de ruta determina el desempate disponible; no se consideran seguros por ello.
+- Archivos: `src/navira/application/decidir_paso.py`, `tests/test_decidir_paso.py`; SPEC-002, algoritmos, pruebas, trazabilidad, plan, estado y [reporte](resultados/horizonte-riesgo-cam062.md).
+- Verificación: 13 pruebas focalizadas y suite backend completa (177 pruebas) correctas; `python3 scripts/check_docs.py` (89 Markdown/91 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), ocho regresiones SDD, `compileall` y `git diff --check` correctos. Evaluación local exploratoria con seis pares (semillas 101/202/303, mixto/horda, 20 habitantes, intensidad alta, eventos, hasta 30 turnos): temporal 24 evacuados/74 mordidos/22 activos, Dijkstra 20/77/23. Temporal tuvo mejor prioridad de producto en cuatro pares y peor en dos. La muestra no aísla el cambio causal ni garantiza mejora por semilla; evidencia, comando y límites en [reporte](resultados/horizonte-riesgo-cam062.md).
+- Límites: el pronóstico sigue siendo aproximado y sintético; no se mide HTTP/p95 ni se valida el futuro sin pronóstico. P3-03 y SPEC-002 permanecen parciales.
+- Siguiente paso: ajustar la configuración inicial de dificultad de la demo con base en la evidencia emparejada de evacuación/mordidas, conservando la selección manual de intensidad.
+- Commit individual local en `master`: `fix: bound route exposure to forecast horizon`.
+
 ## CAM-061 — Coordinar las rutas del grupo por snapshot
 
 - Fecha: 2026-10-26, Ecuador continental.

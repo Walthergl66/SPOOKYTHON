@@ -12,6 +12,7 @@ from navira.application.decidir_paso import (
     PartidaNoDisponible,
     PasoIncompatible,
     SolicitudPaso,
+    _exposicion_pronosticada,
 )
 from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle, cargar_mapa
 from navira.domain.modelo import (
@@ -167,6 +168,14 @@ class DecidirPasoTests(unittest.TestCase):
         self.assertEqual(decision.siguiente_nodo, "N-3")
         self.assertEqual(trayecto, ("N-1", "N-3", "N-6", "N-4"))
         self.assertEqual(pronosticar.call_count, 1)
+
+    def test_no_extiende_el_ultimo_riesgo_pronosticado_mas_alla_del_horizonte(self) -> None:
+        futuro = (CondicionTurno(exposicion_nodo={"C": 0.8, "D": 1.0}),)
+
+        exposicion = _exposicion_pronosticada(("A", "B", "C", "D", "E"), futuro)
+
+        # Solo el primer paso está modelado; riesgos de turnos C/D/E no se copian.
+        self.assertEqual(exposicion, 0.0)
 
     def test_indicador_y_accion_reutilizan_la_misma_ruta_del_snapshot(self) -> None:
         servicio = self.servicio()

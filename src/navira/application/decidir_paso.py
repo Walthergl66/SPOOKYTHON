@@ -26,6 +26,20 @@ from navira.routing.temporal import CondicionTurno, buscar_ruta_temporal
 from navira.simulation.coordinador import SnapshotMundo
 
 
+def _exposicion_pronosticada(ruta: tuple[str, ...], futuras: tuple[CondicionTurno, ...]) -> float:
+    """Sum exposure only for steps with an explicit forecast.
+
+    The forecast is a bounded scenario, not a steady-state hazard field. Reusing
+    its last turn for every later route node invents risk and can make a valid
+    refuge path look arbitrarily worse merely because it is longer.
+    """
+
+    return sum(
+        futuras[paso].exposicion_nodo.get(nodo, 0.0)
+        for paso, nodo in enumerate(ruta[1 : len(futuras) + 1])
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class SolicitudPaso:
     """Datos del sobreviviente recibidos para una decisión."""
@@ -214,11 +228,7 @@ class DecidirPaso:
         riesgo_actual = actual.exposicion_nodo
 
         def exposicion_ruta(ruta: tuple[str, ...]) -> float:
-            """Compare candidate paths on the same observable forecast horizon."""
-            return sum(
-                futuras[min(paso, len(futuras) - 1)].exposicion_nodo.get(nodo, 0.0)
-                for paso, nodo in enumerate(ruta[1:])
-            ) if futuras else 0.0
+            return _exposicion_pronosticada(ruta, futuras)
 
         # Resolve the most exposed residents first; stable IDs make ties replayable.
         orden = sorted(activos, key=lambda s: (-riesgo_actual.get(s.nodo, 0.0), s.id))
