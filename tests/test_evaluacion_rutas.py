@@ -5,6 +5,7 @@ from __future__ import annotations
 import unittest
 
 from navira.evaluacion_rutas import comparar_politicas
+from navira.evaluacion_rutas import _comparar_prioridad
 from navira.demo import MAPA_DEMO_POR_DEFECTO
 
 
@@ -34,6 +35,31 @@ class EvaluacionRutasTests(unittest.TestCase):
             comparar_politicas(semillas=(1,), escenarios=("oficial",), turnos=1)
         with self.assertRaises(ValueError):
             comparar_politicas(semillas=(1,), poblaciones=(201,), turnos=1)
+
+    def test_prioriza_menos_mordidos_aunque_haya_menos_evacuados(self) -> None:
+        self.assertEqual(
+            _comparar_prioridad(
+                {"mordidos": 1, "evacuados": 4},
+                {"mordidos": 2, "evacuados": 9},
+            ),
+            "mejor",
+        )
+
+    def test_compara_evacuados_solo_si_empata_el_numero_de_mordidos(self) -> None:
+        self.assertEqual(
+            _comparar_prioridad(
+                {"mordidos": 2, "evacuados": 5},
+                {"mordidos": 2, "evacuados": 4},
+            ),
+            "mejor",
+        )
+        self.assertEqual(
+            _comparar_prioridad(
+                {"mordidos": 2, "evacuados": 4},
+                {"mordidos": 2, "evacuados": 4},
+            ),
+            "igual",
+        )
 
 
 if __name__ == "__main__":

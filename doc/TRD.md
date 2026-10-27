@@ -56,6 +56,10 @@ Validar horda y vecinos, cierres, nodos finales y tramos opuestos de ambos pasos
 
 Aplicar [SDD](SDD.md), leer `doc/` antes de editar y enlazar requisitos, criterios, tareas, pruebas y cambios. Usar comandos reales de validación y conservar incertidumbres. La validación estructural no prueba rendimiento ni semántica de negocio. Detalle: [continuidad](continuidad.md), [trazabilidad](trazabilidad.md).
 
+### TRD-14 — Prioridad de supervivencia en rutas
+
+En cada decisión, la política temporal minimiza primero la exposición estimada en la ventana observable; turnos, costo de calle y desempates solo se consideran después. Comparar resultados reales en orden lexicográfico `(mordidos ascendente, evacuados descendente)`. La predicción usa solo amenazas observables, respeta el presupuesto configurado y recurre a Dijkstra si no obtiene una ruta completa; `/paso` conserva su contrato. Reportar puntaje estimado y conteo real como conceptos separados. Detalle: [algoritmos](algoritmos.md), [ADR-018](decisiones/0018-politica-riesgo-prioritario.md).
+
 ## Riesgos y aceptación
 
 Reglas ambiguas, región, TLS y sesiones siguen en [pendientes](pendientes.md); ningún documento nuevo las cierra por inferencia. Verificar con las especificaciones y pruebas correspondientes antes de marcar implementado/verificado. Una discrepancia con código se investiga, no se resuelve adaptando silenciosamente los requisitos al fallo.

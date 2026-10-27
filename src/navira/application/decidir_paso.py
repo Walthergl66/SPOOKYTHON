@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from threading import Lock
 from typing import Protocol
 
 from navira.domain.mapa import Grafo
@@ -15,7 +16,13 @@ from navira.domain.modelo import (
     Sobreviviente,
     TipoZombie,
 )
-from navira.routing.dijkstra import PerfilCostos, Ruta, seleccionar_refugio
+from navira.routing.dijkstra import PerfilCostos, seleccionar_refugio
+from navira.routing.prediccion import (
+    SobrevivienteObservable,
+    ZombieObservable,
+    pronosticar_zombies_visibles,
+)
+from navira.routing.temporal import CondicionTurno, buscar_ruta_temporal
 from navira.simulation.coordinador import SnapshotMundo
 
 
@@ -58,11 +65,13 @@ class ProveedorMapas(Protocol):
 
 
 class DecidirPaso:
-    """Calcula una recomendación determinista sobre el estado server-side.
+    """Calcula un paso server-side con prioridad por exposición observable.
 
-    Solo usa zombies activos, bloqueos y cruces observables en la fase actual.
-    Dormidos no intervienen en la proyección de riesgo. Si no hay ruta segura
-    conocida, devuelve espera; esto no equivale a una garantía de supervivencia.
+    La búsqueda temporal estima amenazas futuras a partir de observaciones
+    públicas y las minimiza antes que duración/distancia. Si el pronóstico no
+    alcanza el refugio o agota su presupuesto, usa Dijkstra como respaldo.
+    Dormidos y RNG privado quedan fuera; menor exposición estimada no garantiza
+    menos mordidas reales.
     """
 
     def __init__(
@@ -71,16 +80,22 @@ class DecidirPaso:
         mapas: ProveedorMapas,
         *,
         perfil: PerfilCostos = PerfilCostos(),
+        horizonte_turnos: int = 12,
+        presupuesto_temporal_ms: float = 25.0,
     ) -> None:
         self._snapshots = snapshots
         self._mapas = mapas
         self._perfil = perfil
+        self._horizonte_turnos = horizonte_turnos
+        self._presupuesto_temporal_ms = presupuesto_temporal_ms
+        self._cache_pronostico_lock = Lock()
+        self._cache_pronostico_clave: tuple[str, int, str] | None = None
+        self._cache_pronostico_valor: tuple[CondicionTurno, tuple[CondicionTurno, ...]] | None = None
 
     def ejecutar(self, solicitud: SolicitudPaso) -> DecisionPaso:
         snapshot, sobreviviente, grafo = self._obtener_contexto(solicitud)
-        ruta = self._seleccionar_ruta(snapshot, grafo, sobreviviente)
-        destino = ruta.siguiente_nodo if ruta is not None else None
-        return DecisionPaso(destino or sobreviviente.nodo)
+        trayecto = self._seleccionar_trayecto(snapshot, grafo, sobreviviente)
+        return DecisionPaso(trayecto[1] if len(trayecto) > 1 else sobreviviente.nodo)
 
     def prever_ruta(self, solicitud: SolicitudPaso) -> tuple[str, ...]:
         """Devuelve ruta dirigida desde el mismo snapshot y filtro que `/paso`.
@@ -91,10 +106,26 @@ class DecidirPaso:
         """
 
         snapshot, sobreviviente, grafo = self._obtener_contexto(solicitud)
-        ruta = self._seleccionar_ruta(snapshot, grafo, sobreviviente)
-        if ruta is None:
-            return (sobreviviente.nodo,)
-        return (ruta.origen, *(calle.destino for calle in ruta.calles))
+        return self._seleccionar_trayecto(snapshot, grafo, sobreviviente)
+
+    def prever_ruta_en_snapshot(
+        self, snapshot: SnapshotMundo, sobreviviente_id: str, grafo: Grafo
+    ) -> tuple[str, ...]:
+        """Calcula la ruta de la versión ya leída por el panel.
+
+        Evita volver a consultar el snapshot activo mientras el panel proyecta
+        otro: el reloj puede avanzar entre ambas lecturas y mezclar turnos.
+        """
+
+        if snapshot.partida.map_version != grafo.mapa.version:
+            raise PartidaNoDisponible("El pronóstico y el snapshot usan versiones de mapa distintas.")
+        sobreviviente = next(
+            (item for item in snapshot.partida.sobrevivientes if item.id == sobreviviente_id),
+            None,
+        )
+        if sobreviviente is None or sobreviviente.estado is not EstadoSobreviviente.ACTIVO:
+            raise EntidadNoEncontrada("El sobreviviente activo no existe en el snapshot consultado.")
+        return self._seleccionar_trayecto(snapshot, grafo, sobreviviente)
 
     def _obtener_contexto(self, solicitud: SolicitudPaso) -> tuple[SnapshotMundo, Sobreviviente, Grafo]:
         """Valida identidad temporal y carga el grafo antes de planificar."""
@@ -125,21 +156,96 @@ class DecidirPaso:
 
         return snapshot, sobreviviente, grafo
 
-    def _seleccionar_ruta(
+    def _seleccionar_trayecto(
         self, snapshot: SnapshotMundo, grafo: Grafo, sobreviviente: Sobreviviente
-    ) -> Ruta | None:
-        """Usa exactamente los peligros observables de la recomendación HTTP."""
-
+    ) -> tuple[str, ...]:
+        """Intenta exposición futura observable y conserva Dijkstra como respaldo."""
         nodos_bloqueados, aristas_peligrosas = peligros_visibles(snapshot, grafo)
-        return seleccionar_refugio(
+        aristas_cerradas = snapshot.aristas_cerradas | aristas_peligrosas
+        refugios = (
+            frozenset({sobreviviente.refugio_objetivo})
+            if sobreviviente.refugio_objetivo is not None
+            else frozenset(refugio.id for refugio in grafo.mapa.refugios)
+        )
+        condicion_actual = CondicionTurno(
+            nodos_bloqueados=frozenset(nodos_bloqueados),
+            aristas_cerradas=aristas_cerradas,
+            segmentos_cerrados=snapshot.segmentos_cerrados,
+        )
+        zombies = tuple(
+            ZombieObservable(zombie.id, zombie.tipo, zombie.nodo)
+            for zombie in snapshot.partida.zombies
+            if zombie.estado is EstadoZombie.ACTIVO and zombie.tipo is not TipoZombie.DORMIDO
+        )
+        observables = tuple(
+            SobrevivienteObservable(item.id, item.nodo)
+            for item in snapshot.partida.sobrevivientes
+            if item.estado is EstadoSobreviviente.ACTIVO
+        )
+        condicion_actual, condiciones_futuras = self._pronostico_compartido(
+            snapshot,
+            grafo,
+            condicion_actual,
+            zombies,
+            observables,
+        )
+        temporal = buscar_ruta_temporal(
+            grafo,
+            sobreviviente.nodo,
+            refugios,
+            peligros_actuales=condicion_actual,
+            pronostico=condiciones_futuras,
+            horizonte_turnos=self._horizonte_turnos,
+            presupuesto_ms=self._presupuesto_temporal_ms,
+            perfil=self._perfil,
+        )
+        if temporal.estado in {"ruta_encontrada", "en_refugio"} and temporal.trayecto:
+            return temporal.trayecto
+
+        ruta = seleccionar_refugio(
             grafo,
             sobreviviente.nodo,
             refugio_objetivo=sobreviviente.refugio_objetivo,
-            aristas_cerradas=snapshot.aristas_cerradas | aristas_peligrosas,
+            aristas_cerradas=aristas_cerradas,
             segmentos_cerrados=snapshot.segmentos_cerrados,
             nodos_bloqueados=frozenset(nodos_bloqueados),
             perfil=self._perfil,
         )
+        if ruta is None:
+            return (sobreviviente.nodo,)
+        return (ruta.origen, *(calle.destino for calle in ruta.calles))
+
+    def _pronostico_compartido(
+        self,
+        snapshot: SnapshotMundo,
+        grafo: Grafo,
+        condicion_actual: CondicionTurno,
+        zombies: tuple[ZombieObservable, ...],
+        sobrevivientes: tuple[SobrevivienteObservable, ...],
+    ) -> tuple[CondicionTurno, tuple[CondicionTurno, ...]]:
+        """Calcula amenazas una vez por snapshot y comparte el valor inmutable.
+
+        La versión de snapshot incluye turno, cierres y posiciones confirmadas;
+        una nueva fase/turno invalida la caché. El lock evita repetir el costo
+        de pronóstico si varias recomendaciones llegan a la vez.
+        """
+
+        clave = (snapshot.partida.run_id, snapshot.version, grafo.mapa.version)
+        with self._cache_pronostico_lock:
+            if clave == self._cache_pronostico_clave and self._cache_pronostico_valor is not None:
+                return self._cache_pronostico_valor
+            resultado = pronosticar_zombies_visibles(
+                grafo,
+                zombies,
+                sobrevivientes,
+                turno_actual=snapshot.partida.turno,
+                horizonte_turnos=self._horizonte_turnos,
+                aristas_cerradas=condicion_actual.aristas_cerradas,
+                segmentos_cerrados=condicion_actual.segmentos_cerrados,
+            )
+            self._cache_pronostico_clave = clave
+            self._cache_pronostico_valor = (condicion_actual, resultado.turnos)
+            return self._cache_pronostico_valor
 
     @staticmethod
     def _validar_turno(partida: Partida, solicitud: SolicitudPaso) -> None:

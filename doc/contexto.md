@@ -18,6 +18,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 6. Establecer **Navira** como nombre de la app.
 7. Al incorporar lugares seguros en Manta, Ecuador, considerar amenazas de tsunami y terremoto.
 8. El simulador debe tener variación aleatoria de mundo y decisiones permitidas; cambios pequeños en semilla, estado o eventos pueden desviar la evolución posterior.
+9. Aclaración del usuario (2026-10-26): el objetivo de la evacuación es encontrar rutas que minimicen las personas mordidas durante la simulación; las evacuaciones se consideran después de ese objetivo primario.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](ODDD.md), [SDD](SDD.md). Criterios por funcionalidad: [especificaciones](especificaciones/README.md).
 

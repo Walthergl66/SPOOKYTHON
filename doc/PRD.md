@@ -1,6 +1,6 @@
 # PRD — Requisitos del producto Navira
 
-Versión: 1. Fecha: 2026-10-26. Estado: base de producto documentada, sin aplicación implementada. Origen: [reto](referencias/reto-original.md), solicitudes del usuario en [contexto](contexto.md) y modos ya acordados. Este documento identifica necesidades y prioridades; las [especificaciones](especificaciones/README.md) concretan su aceptación sin duplicar los contratos.
+Versión: 1. Fecha: 2026-10-26. Estado: requisitos documentados; aplicación implementada parcialmente. Origen: [reto](referencias/reto-original.md), solicitudes del usuario en [contexto](contexto.md) y modos ya acordados. Este documento identifica necesidades y prioridades; las [especificaciones](especificaciones/README.md) concretan su aceptación sin duplicar los contratos.
 
 ## Problema, público y valor
 
@@ -18,7 +18,7 @@ Ejecutar zombies, turnos, bloqueos, mordidas y llegadas según las reglas del re
 
 ### PRD-03 — Evacuación automática
 
-Recomendar un siguiente paso válido hacia un refugio con costos de calle y peligros visibles, recalculando cuando cambia el mundo. Prioridad: obligatoria. Esperar es una acción válida, pero no garantiza seguridad. Detalle: [motor](algoritmos.md).
+Recomendar un siguiente paso válido hacia un refugio, priorizando menos mordidas estimadas a lo largo del recorrido y recalculando cuando cambia el mundo. Prioridad: obligatoria. Esperar es una acción válida, pero no garantiza seguridad; el criterio para comparar resultados reales está en PRD-10. Detalle: [motor](algoritmos.md).
 
 ### PRD-04 — Observación comprensible en vivo
 
@@ -43,6 +43,10 @@ Aplicación en AWS, repositorio público con historial real, Budget con alerta, 
 ### PRD-09 — Mejora de rutas demostrable
 
 Comparar política base con predicción de corredores y búsqueda temporal. Conservar la política mejor medida si una mejora no compensa sus costos o riesgo. Prioridad: mejora posterior a una ronda base funcional; no es garantía de supervivencia ni requisito de obtener puntos extra.
+
+### PRD-10 — Minimizar mordidas durante la evacuación
+
+La política de ruta debe priorizar la reducción del número de sobrevivientes mordidos como objetivo primario; entre políticas con igual cantidad de mordidos, favorecer más evacuados. El planificador usa exposición futura estimada a partir de amenazas visibles y debe recalcular cuando cambie el snapshot. Las mordidas reales se miden al resolver el mundo y prevalecen para comparar resultados; una estimación no es garantía de supervivencia. Prioridad: obligatoria para la política del simulador. Detalle: [algoritmos](algoritmos.md), [SPEC-002](especificaciones/SPEC-002-motor-paso.md).
 
 ## Alcance y exclusiones
 

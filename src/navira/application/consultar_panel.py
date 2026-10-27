@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from navira.application.decidir_paso import DecidirPaso, SolicitudPaso, nodos_horda_visibles
+from navira.application.decidir_paso import DecidirPaso, nodos_horda_visibles
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.domain.mapa import Grafo
 from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, FaseTurno, TipoZombie
@@ -107,8 +107,8 @@ class ConsultarPanel:
             {
                 "sobrevivienteId": personaje.id,
                 "trayecto": list(
-                    self.planificador.prever_ruta(
-                        SolicitudPaso(personaje.id, personaje.nodo, partida.turno)
+                    self.planificador.prever_ruta_en_snapshot(
+                        snapshot, personaje.id, grafo
                     )
                 ),
             }

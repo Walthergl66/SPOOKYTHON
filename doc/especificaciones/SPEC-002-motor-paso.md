@@ -2,15 +2,15 @@
 
 ID: SPEC-002
 Estado: implementada
-Requisitos: PRD-03, PRD-09, TRD-01, TRD-02, TRD-05, TRD-06, TRD-09, TRD-12
+Requisitos: PRD-03, PRD-09, PRD-10, TRD-01, TRD-02, TRD-05, TRD-06, TRD-09, TRD-12, TRD-14
 Tareas: P0-01, P0-02, P2-01, P2-02, P2-03, P3-01, P3-02, P3-03
-Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22
-Cambio: CAM-044
-Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035 y CAM-044 en [cambios](../cambios.md) y sus reportes locales.
+Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30
+Cambio: CAM-058
+Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044 y CAM-058 en [cambios](../cambios.md) y sus reportes locales.
 
 ## Objetivo y alcance
 
-Dar un siguiente paso válido y oportuno hacia un refugio considerando costos y peligros. Primero Dijkstra integrado por HTTP; después búsqueda temporal/predicción si mejora resultados. Fuentes canónicas: [API](../contratos/api.md), [algoritmos](../algoritmos.md), [TRD](../TRD.md). No cambiar método/cuerpo de `/paso` ni usar información oculta.
+Dar un siguiente paso válido y oportuno hacia un refugio, priorizando menor exposición futura observable y comparando el resultado real por mordidos antes que evacuados. La búsqueda temporal está integrada con fallback Dijkstra. Fuentes canónicas: [API](../contratos/api.md), [algoritmos](../algoritmos.md), [TRD](../TRD.md). No cambiar método/cuerpo de `/paso` ni usar información oculta.
 
 ## Criterios de aceptación
 
@@ -21,6 +21,7 @@ Dar un siguiente paso válido y oportuno hacia un refugio considerando costos y 
 | CA-002-03 | Repetir solicitud sobre misma instantánea conserva decisión y ninguna respuesta usa otra partida/turno silenciosamente. | T-10 |
 | CA-002-04 | Bajo ráfagas conserva límite contractual y se mide p95/errores desde el cliente, con carga y origen declarados. | T-11 |
 | CA-002-05 | Una política mejorada se compara con base en escenarios/semillas declarados; no usa dormidos o aleatoriedad privada ni inventa mejora. | T-04, T-22 |
+| CA-002-06 | El planificador prioriza exposición estimada observable antes que distancia/tiempo, usa Dijkstra como respaldo ante salida temporal incompleta, y el evaluador ordena resultados reales por menos mordidos y luego más evacuados. | T-30 |
 
 ## Plan y módulos
 
@@ -30,4 +31,4 @@ P0 fija API/esquemas; P2 entrega una ronda con Dijkstra; P3 añade horizonte lim
 
 Sin ruta, origen peligroso, refugio inaccesible, timeout, fase incompatible y calles paralelas. P-01/P-05 condicionan unidades y eficiencia; registrar supuestos en vez de atribuirlos al reto. La referencia base puede verificarse parcialmente por tarea; toda la SPEC solo se verifica al completar los criterios, incluida evaluación de mejora.
 
-La implementación inicial de P0-01/P0-02 cubre el proceso FastAPI, esquemas, API key, `/salud`, `/paso` y fixtures. CAM-012 verifica arranque y contrato HTTP. CAM-013 incorpora Dijkstra genérico; CAM-014 integra el caso de uso con snapshots/mapas inyectados y mapea errores 404/409/503. CAM-020 agrega configuración local de cohortes al ensamblaje demo y un cliente de carga concurrente con resumen de latencias/errores sobre snapshot fijo. CAM-028 añade un evaluador HTTP loopback que mantiene snapshot común por turno, resuelve las intenciones recibidas y vuelve a abrir la decisión para el siguiente turno; CAM-029 alinea los inicios a una cadencia monotónica configurable, mide duración/retraso y registra tres turnos por cohorte 20/80/200 con período objetivo de dos segundos. CAM-044 solicita hasta 150 turnos por cohorte; el mundo sintético finaliza a los 12/15/13 turnos, con p95 por solicitud de 18,860/58,097/92,060 ms y cero errores en una pasada local. El reporte confirma el límite de duración, no satisface cinco minutos ni T-11. CAM-033 implementa y mide el núcleo temporal acotado; CAM-034 añade un pronóstico por escenarios observables y supuestos explícitos; CAM-035 compara ambas políticas en mundos sintéticos emparejados de tres turnos. Temporal tuvo más evacuados en 15 de 27 pares y no empeoró mordidas en esa muestra; aun así, no se integra en `/paso` hasta contar con reglas modeladas aceptadas y cobertura de rondas más largas. Dijkstra sigue activa. CA-002-02 sigue parcial; la comparación no completa T-22 ni T-11 y no verifica toda la SPEC.
+La implementación inicial de P0-01/P0-02 cubre el proceso FastAPI, esquemas, API key, `/salud`, `/paso` y fixtures. CAM-012 verifica arranque y contrato HTTP. CAM-013 incorpora Dijkstra genérico; CAM-014 integra el caso de uso con snapshots/mapas inyectados y mapea errores 404/409/503. CAM-020 agrega configuración local de cohortes al ensamblaje demo y un cliente de carga concurrente con resumen de latencias/errores sobre snapshot fijo. CAM-028 añade un evaluador HTTP loopback que mantiene snapshot común por turno, resuelve las intenciones recibidas y vuelve a abrir la decisión para el siguiente turno; CAM-029 alinea los inicios a una cadencia monotónica configurable, mide duración/retraso y registra tres turnos por cohorte 20/80/200 con período objetivo de dos segundos. CAM-044 solicita hasta 150 turnos por cohorte; el mundo sintético finaliza a los 12/15/13 turnos, con p95 por solicitud de 18,860/58,097/92,060 ms y cero errores en una pasada local. El reporte confirma el límite de duración, no satisface cinco minutos ni T-11. CAM-033 implementa y mide el núcleo temporal acotado; CAM-034 añade un pronóstico por escenarios observables y supuestos explícitos; CAM-035 compara ambas políticas en mundos sintéticos emparejados de tres turnos. CAM-058 conecta la política temporal a `/paso` y al simulador automático, con Dijkstra como respaldo; introduce el orden real de evaluación mordidos primero y evacuados después. La política reduce la exposición estimada, no garantiza menor conteo real de mordidos. La evaluación extendida, T-22 integral, latencia HTTP/carga y reglas oficiales siguen pendientes; CA-002-04/05 y la SPEC permanecen parciales.

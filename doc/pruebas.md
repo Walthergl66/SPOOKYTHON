@@ -43,6 +43,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-27 | Mapa cartográfico 3D y movimiento de actores | Compilación frontend, carga visual del estilo de Manta, atribución, controles 2D/3D, cámara que encuadra la ventana cartográfica ~15 km por lado alrededor del recorte OSM, fichas visibles en la zona central, animación entre snapshots, actualización WebSocket tras iniciar otro run, edificios con altura y verificación visual de que pan/zoom no muestra cartografía exterior a la ventana; los límites del proveedor y rutas rectas quedan declarados. La expansión es solo del basemap, no del grafo. |
 | T-28 | Perfil sintético de amenazas por intensidad | En el fixture Manta, cada intensidad crea un conteo escalado al grafo, distribuye posiciones por varios sectores, conserva la composición del perfil y mantiene dormidos ocultos. La misma semilla/perfil/mapa reproduce composición, ubicaciones y fases. No valida densidad oficial. |
 | T-29 | Incidentes viales en demo local | Los cierres aleatorios respetan semilla e intensidad, se aplican en el turno configurado y el panel publica metadatos solo luego de aplicarlos, sin revelar segmentos futuros. |
+| T-30 | Prioridad de mordidas y ruta temporal | Una exposición futura mayor se evita aunque la ruta alternativa sea más larga; el comparador considera mejor cualquier resultado con menos mordidos aunque tenga menos evacuados y usa evacuados solo para desempatar. Verificación funcional; no acredita mejora universal ni seguridad real. |
 
 ## Medición de la prueba de fuego
 
@@ -71,6 +72,10 @@ Ejecutar Dijkstra y política mejorada sobre los mismos escenarios, versiones y 
 ### T-28/T-29 — Intensidad e incidentes sintéticos
 
 `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_demo tests.test_panel tests.test_control_simulador_demo -v` cubre densidad y reparto por sectores en el fixture de Manta, composición/semilla reproducible, ocultamiento de dormidos, inicio del control con intensidad y publicación de incidentes solo tras aplicar el cierre. `cd frontend && npm run build` comprueba los campos de configuración y la proyección del panel. Los perfiles son dificultad sintética; no representan densidades, eventos ni rutas oficiales.
+
+### T-30 — Política de ruta con riesgo prioritario
+
+`PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_decidir_paso tests.test_evaluacion_rutas -v` comprueba que una exposición futura observable prevalece sobre distancia, que el pronóstico se comparte por versión de snapshot y que la comparación ordena por mordidos ascendentes y evacuados descendentes. La integración usa horizonte máximo de 12 turnos, presupuesto por búsqueda y Dijkstra si la ruta temporal no termina. Para resultado emparejado, ejecutar `PYTHONPATH=src /tmp/navira-env/bin/python -m navira.evaluacion_rutas --semillas 101 202 303 --escenarios caminantes mixto horda --poblaciones 20 80 200 --turnos 6 --horizonte 12`; es una prueba sintética local, no T-11 ni una garantía de menor mordida para cada semilla.
 
 P0-04: desde `frontend/`, `npm ci && npm run build` verifica lockfile, TypeScript estricto y bundle de producción. La pantalla inicial soporta selección de modos con teclado mediante botones semánticos, estados `aria-pressed`, foco visible y movimiento reducido; revisar visualmente en anchos móvil y escritorio al cambiar el layout. `.github/workflows/ci.yml` ejecuta además la suite unittest y validadores documentales en GitHub Actions. La compilación local no demuestra que el workflow haya corrido en remoto.
 

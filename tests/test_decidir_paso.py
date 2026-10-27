@@ -2,6 +2,8 @@
 
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from navira.adapters.mapas_memoria import CatalogoMapasMemoria
 from navira.application.decidir_paso import (
@@ -11,7 +13,7 @@ from navira.application.decidir_paso import (
     PasoIncompatible,
     SolicitudPaso,
 )
-from navira.domain.mapa import Grafo, cargar_mapa
+from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle, cargar_mapa
 from navira.domain.modelo import (
     EstadoPartida,
     EstadoZombie,
@@ -23,6 +25,7 @@ from navira.domain.modelo import (
     Zombie,
 )
 from navira.simulation.coordinador import MovimientoZombie, SnapshotMundo
+from navira.routing.temporal import CondicionTurno
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "mapa-minimo.json"
@@ -120,6 +123,50 @@ class DecidirPasoTests(unittest.TestCase):
         )
         with self.assertRaises(PartidaNoDisponible):
             sin_mapa.ejecutar(self.solicitud())
+
+    def test_ruta_temporal_prefiere_menos_exposicion_antes_que_distancia(self) -> None:
+        grafo = Grafo(
+            Mapa(
+                version="riesgo-observable-v1",
+                nodos=tuple(Nodo(f"N-{indice}", 0, indice) for indice in range(1, 7)),
+                calles=(
+                    Calle("E-12", "S-12", "N-1", "N-2", 1, TipoCalle.CALLE, 30),
+                    Calle("E-25", "S-25", "N-2", "N-5", 1, TipoCalle.CALLE, 30),
+                    Calle("E-54", "S-54", "N-5", "N-4", 1, TipoCalle.CALLE, 30),
+                    Calle("E-13", "S-13", "N-1", "N-3", 10, TipoCalle.CALLE, 30),
+                    Calle("E-36", "S-36", "N-3", "N-6", 10, TipoCalle.CALLE, 30),
+                    Calle("E-64", "S-64", "N-6", "N-4", 10, TipoCalle.CALLE, 30),
+                ),
+                refugios=(Refugio("R-4", "N-4"),),
+            )
+        )
+        partida = Partida(
+            run_id="run-risk-first",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(Sobreviviente("S-1", "N-1", refugio_objetivo="R-4"),),
+            estado=EstadoPartida.ACTIVA,
+            turno=1,
+            fase=FaseTurno.DECISIONES,
+        )
+        snapshots = SnapshotStub(SnapshotMundo(partida, version=1))
+        servicio = DecidirPaso(snapshots, CatalogoMapasMemoria((grafo,)))
+        escenario = SimpleNamespace(
+            turnos=(CondicionTurno(exposicion_nodo={"N-5": 1.0}), CondicionTurno()),
+            supuestos=("riesgo_sintetico_de_prueba",),
+        )
+
+        with patch(
+            "navira.application.decidir_paso.pronosticar_zombies_visibles",
+            return_value=escenario,
+        ) as pronosticar:
+            decision = servicio.ejecutar(SolicitudPaso("S-1", "N-1", 1))
+            trayecto = servicio.prever_ruta(SolicitudPaso("S-1", "N-1", 1))
+
+        self.assertEqual(decision.siguiente_nodo, "N-3")
+        self.assertEqual(trayecto, ("N-1", "N-3", "N-6", "N-4"))
+        self.assertEqual(pronosticar.call_count, 1)
 
 
 if __name__ == "__main__":

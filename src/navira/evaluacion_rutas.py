@@ -75,6 +75,7 @@ def comparar_politicas(
                         "deltaEvacuados": temporal["evacuados"] - base["evacuados"],
                         "deltaMordidos": temporal["mordidos"] - base["mordidos"],
                         "deltaActivos": temporal["activos"] - base["activos"],
+                        "resultadoPrioridad": _comparar_prioridad(temporal, base),
                     }
                 )
     deltas_evac = [int(item["deltaEvacuados"]) for item in resultados]
@@ -89,6 +90,18 @@ def comparar_politicas(
         "comparaciones": resultados,
         "resumen": {
             "pares": len(resultados),
+            "paresTemporalMejorPrioridad": sum(
+                item["resultadoPrioridad"] == "mejor" for item in resultados
+            ),
+            "paresTemporalIgualPrioridad": sum(
+                item["resultadoPrioridad"] == "igual" for item in resultados
+            ),
+            "paresTemporalPeorPrioridad": sum(
+                item["resultadoPrioridad"] == "peor" for item in resultados
+            ),
+            "paresMenosMordidosTemporal": sum(valor < 0 for valor in deltas_mordidos),
+            "paresIgualMordidasTemporal": sum(valor == 0 for valor in deltas_mordidos),
+            "paresMasMordidosTemporal": sum(valor > 0 for valor in deltas_mordidos),
             "paresTemporalMejorEvacuados": sum(valor > 0 for valor in deltas_evac),
             "paresTemporalIgualEvacuados": sum(valor == 0 for valor in deltas_evac),
             "paresTemporalPeorEvacuados": sum(valor < 0 for valor in deltas_evac),
@@ -96,6 +109,18 @@ def comparar_politicas(
             "sumaDeltaMordidos": sum(deltas_mordidos),
         },
     }
+
+
+def _comparar_prioridad(candidata: dict[str, object], base: dict[str, object]) -> str:
+    """Ordena resultados por menos mordidos y, en empate, más evacuados."""
+
+    clave_candidata = (int(candidata["mordidos"]), -int(candidata["evacuados"]))
+    clave_base = (int(base["mordidos"]), -int(base["evacuados"]))
+    if clave_candidata < clave_base:
+        return "mejor"
+    if clave_candidata > clave_base:
+        return "peor"
+    return "igual"
 
 
 def _ejecutar_corrida(

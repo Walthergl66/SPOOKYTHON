@@ -738,12 +738,26 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 
 ## Próximas entradas
 
+## CAM-058 — Priorizar la reducción de mordidas en las rutas
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: aclaración del usuario: la aplicación debe buscar durante la simulación la mejor ruta de evacuación y la prioridad es tener la menor cantidad de personas mordidas.
+- Especificación/tareas: PRD-03/09/10, TRD-14, SPEC-002 CA-002-06, P3-03/T-30. No cierra T-22 integral, T-11 ni SPEC-002.
+- Rama: `master`; commit individual creado al cerrar validación.
+- Motivo: Dijkstra solo evita peligros actuales; el predictor/buscador temporal ya disponible no participaba en las decisiones reales. La evaluación anterior daba visibilidad a evacuados, pero no codificaba explícitamente la prioridad lexicográfica del usuario.
+- Archivos: `src/navira/application/decidir_paso.py`, `src/navira/evaluacion_rutas.py`, `tests/test_decidir_paso.py`, `tests/test_evaluacion_rutas.py`; PRD, TRD, SPEC-002, trazabilidad, algoritmos, flujo de simulador, backend, plan, pruebas, ADR-012/018, índices, estado y resultado.
+- Resultado: `/paso`, simulador automático y ruta prevista del panel usan búsqueda temporal por exposición observable, horizonte de hasta 12 turnos y presupuesto interno de 25 ms por búsqueda; Dijkstra responde cuando no hay trayecto temporal completo o se agota presupuesto. El pronóstico se calcula una vez por snapshot y se comparte entre recomendaciones de ese turno. El contrato HTTP se mantiene. El comparador ordena resultados reales por menos mordidos primero y más evacuados solo como desempate. Exposición pronosticada no equivale a mordida real ni a probabilidad calibrada.
+- Verificación: suite completa (165 pruebas OK); pruebas dirigidas de decisión/API/ronda/evaluador; `python3 scripts/check_docs.py` (84 Markdown/86 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), ocho regresiones `test_check_sdd.py`, compilación Python, `git diff --check` y build frontend correctos (advertencia conocida de bundle MapLibre). Ensayo emparejado de 27 pares sintéticos (3 semillas, 3 perfiles, poblaciones 20/80/200, 6 turnos, horizonte 12): −32 mordidos y +131 evacuados agregados; mordidos mejor/igual/peor en 13/8/6 pares; peor p95 local por recomendación temporal 25,194 ms. Smoke con Uvicorn/Vite: control inició una partida Manta y el panel publicó 64 zombies y 20 rutas previstas; al turno 2 el mundo tenía 7 mordidos, 2 evacuados y 11 activos. Ver método y límites en [reporte CAM-058](resultados/politica-riesgo-cam058.md).
+- Límites: solo tres semillas y reglas provisionales de movimiento; un mayor número agregado de supervivientes no prueba mejora por partida. En una comparación adicional de 12 turnos con semilla `582026`, Dijkstra dio 8 mordidos/5 evacuados y temporal 9 mordidos/8 evacuados; la corrida viva de 20 personas llegó al turno 33 con 19 mordidos y 0 evacuados. El predictor no reduce mordidas consistentemente por ejecución. Sin HTTP/concurrencia, no confirma presupuesto p95, T-11 ni ronda de cinco minutos. No es un sistema real de seguridad.
+- Siguiente paso: medir el endpoint HTTP y el ciclo de dos segundos con la política nueva bajo cohortes, y comparar mordidas reales durante rondas más largas con nuevas semillas. El smoke local está activo, pero su corrida única no demuestra mejora frente a Dijkstra.
+- Commit: individual en `master`; no implica publicación remota.
+
 ## CAM-057 — Intensidad sintética distribuida y cierres viales
 
 - Fecha: 2026-10-26, Ecuador continental.
 - Origen: el usuario pidió recapitulación de los roles y amenazas; señaló que solo se veían uno o dos focos y que la ciudad debía estar ampliamente amenazada para comparar evacuaciones.
 - Especificación/tareas: PRD-02, SPEC-001 CA-001-10/11, P1-05; T-28/T-29 escritos, pendientes de ejecución. No se verifica SPEC-001.
-- Rama: `master`; commit individual `303e4fb` (`feat: expand synthetic city threat scenarios`).
+- Rama: `master`; commit individual `350871d` (`feat: expand synthetic city threat scenarios`). Corrección de registro: el hash anterior `303e4fb` era incorrecto.
 - Motivo: reemplazar la cantidad fija de zombies de demo por un perfil ajustable y espacialmente distribuido, y hacer que cierres viales afecten las rutas durante la partida.
 - Archivos: `src/navira/demo.py`, control local/API, `ConsultarPanel`, esquemas HTTP, `frontend/src/app/App.tsx`, contratos de panel, ADR-017, pruebas demo/panel/control, y documentos propietarios/índices.
 - Resultado implementado: intensidad sintética 6/14/25 % sobre nodos elegibles; perfiles `mixto` y `horda` distribuyen caminantes, corredores, hordas y dormidos; muestreo estratificado por sectores y semilla reproducible. El control local programa cierres de segmentos con `EventoCierre` en turnos 2/5/8 según intensidad. El panel agrega metadatos de incidentes solo desde `eventos_aplicados`, sin revelar los cierres futuros. La UI ofrece intensidad/incidentes y el registro los muestra al aplicarse.
