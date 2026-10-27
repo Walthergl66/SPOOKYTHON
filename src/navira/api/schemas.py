@@ -87,7 +87,7 @@ class SolicitudIniciarDemoSchema(BaseModel):
     escenario: Literal["libre", "caminantes", "mixto", "horda"] = "mixto"
     sobrevivientes: int = Field(default=20, ge=1, le=200)
     semilla: int | None = Field(default=None, ge=0)
-    intensidad: Literal["baja", "media", "alta"] = "alta"
+    intensidad: Literal["baja", "media", "alta"] = "media"
     eventosCiudad: bool = True
 
 

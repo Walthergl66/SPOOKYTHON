@@ -50,6 +50,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-34 | Evacuación terminal | Una persona evacuada en un nodo que luego ocupa una horda no vuelve a ser elegible para mordida; su estado permanece evacuado. |
 | T-35 | Plan compartido y descongestión suave | En el mismo snapshot los pasos se asignan conjuntamente; con exposición equivalente se distribuyen por salidas alternativas legales, una nueva versión invalida el plan y la vista previa/action comparten la asignación. No se infieren capacidades ni seguridad garantizada. |
 | T-36 | Límite del pronóstico | En una ruta más larga que el pronóstico, la exposición de turnos no modelados aporta cero al puntaje; no se repite la última condición conocida. |
+| T-37 | Dificultad inicial de la demo | Sin intensidad en el control HTTP local, la demo usa intensidad media; eventos y selector siguen configurables. |
 
 ## Medición de la prueba de fuego
 
@@ -94,6 +95,8 @@ T-34 queda cubierto por `test_sobreviviente_ya_evacuado_no_puede_ser_mordido_en_
 T-35 queda cubierto parcialmente por `test_plan_compartido_reparte_un_embudo_sin_cambiar_reglas_de_riesgo` en `tests/test_decidir_paso.py`. Confirma asignaciones distintas en un grafo mínimo y coincidencia con la recomendación. No mide mejora de mordidas en cohortes ni reglas de colisión del resolutor.
 
 T-36 queda cubierto por `test_no_extiende_el_ultimo_riesgo_pronosticado_mas_alla_del_horizonte` en `tests/test_decidir_paso.py`. Confirma que el planificador no interpreta como amenaza persistente un último turno pronosticado cuando ya no existe información para la cola de la ruta. No afirma que esos turnos desconocidos sean seguros; para esa cola solo decide el costo topológico disponible.
+
+T-37 queda cubierto por `test_inicio_usa_dificultad_media_si_no_se_envia_configuracion` en `tests/test_control_simulador_demo.py`. Comprueba el default en la petición de inicio local; `frontend/npm run build` valida el cambio de valor inicial de la UI. La compilación no sustituye una inspección visual interactiva de todos los selectores.
 
 P0-04: desde `frontend/`, `npm ci && npm run build` verifica lockfile, TypeScript estricto y bundle de producción. La pantalla inicial soporta selección de modos con teclado mediante botones semánticos, estados `aria-pressed`, foco visible y movimiento reducido; revisar visualmente en anchos móvil y escritorio al cambiar el layout. `.github/workflows/ci.yml` ejecuta además la suite unittest y validadores documentales en GitHub Actions. La compilación local no demuestra que el workflow haya corrido en remoto.
 

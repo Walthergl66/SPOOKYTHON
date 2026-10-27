@@ -25,4 +25,6 @@ Un ADR documenta una elección duradera y su motivo. «Aceptada para diseño» n
 | [ADR-019](0019-cruces-y-ruta-consistente.md) | Exposición de cruces opuestos, escape inmediato y coincidencia de ruta preview/acción por snapshot | Implementada localmente; evidencia de tres pares exploratoria | CAM-059; amplía ADR-018 sin cambiar el contrato ni consultar estado privado. |
 | [ADR-020](0020-planificacion-coordinada-por-snapshot.md) | Asignación conjunta y penalización suave de congestión | Implementada localmente; impacto en mordidas pendiente | CAM-061/T-35; replanifica por snapshot sin inventar capacidad vial/refugio. |
 
+| [ADR-021](0021-dificultad-inicial-demo.md) | Intensidad media inicial y dificultad configurable en la demo | Aceptada e implementada localmente | CAM-063/T-37; comparación de tres semillas, exploratoria. |
+
 Usar [plantilla](../plantillas/decision.md). Numeración correlativa, fecha, contexto, decisión, alternativas, consecuencias, pendientes y enlaces. No renumerar IDs ya citados. Para cambiar una decisión relevante, añadir ADR nuevo y marcar el anterior sustituido con enlace recíproco. Correcciones menores pueden aclararse sin fingir que la decisión original ya decía otra cosa.

@@ -4,9 +4,9 @@ ID: SPEC-007
 Estado: verificada
 Requisitos: PRD-06, TRD-06, TRD-07
 Tareas: P4-03
-Pruebas: T-26
-Cambio: CAM-050
-Evidencia: ../resultados/panel-operador-local-cam050.md
+Pruebas: T-26, T-37
+Cambio: CAM-063
+Evidencia: ../resultados/default-media-cam063.md
 
 ## Objetivo y alcance
 
@@ -24,10 +24,11 @@ Quedan fuera: control administrativo público, autenticación productiva de oper
 | CA-007-02 | Iniciar crea partida simulador con escenario, población y semilla solicitada; el panel HTTP/WebSocket y motor consultan la misma partida activa. | T-26 |
 | CA-007-03 | Pausa impide iniciar turnos adicionales; continuar y reiniciar tienen controles separados y el reloj conserva cadencia monotónica nominal de dos segundos. | T-26 |
 | CA-007-04 | La UI permite operar la demo, adapta sus paneles al ancho de pantalla, representa datos reales y presenta errores de conexión/configuración con instrucciones. | T-26 |
+| CA-007-05 | La demo inicia en intensidad media si no se especifica dificultad; el operador conserva selección explícita de intensidad e incidentes. | T-37 |
 
 ## Plan, módulos y verificación
 
-Tarea nueva P4-03: ensamblar control local, runner de simulador, rutas same-origin, controles de configuración y tablero visual. Módulos propietarios: [backend](../modulos/backend.md), [frontend](../modulos/frontend.md), [API](../contratos/api.md), [arquitectura](../arquitectura.md) y [seguridad](../seguridad.md).
+Tarea nueva P4-03: ensamblar control local, runner de simulador, rutas same-origin, controles de configuración y tablero visual. CAM-050 cubre el panel y control inicial; CAM-063 fija intensidad media como valor inicial según comparación documentada, manteniendo los controles. Módulos propietarios: [backend](../modulos/backend.md), [frontend](../modulos/frontend.md), [API](../contratos/api.md), [arquitectura](../arquitectura.md) y [seguridad](../seguridad.md). Ver también [evidencia original de CAM-050](../resultados/panel-operador-local-cam050.md).
 
 T-26 cubre rutas locales, opt-in, creación de partida, snapshots, pausa y validación de entrada. `frontend/npm run build` valida compilación/TypeScript; el flujo de control se comprueba con pruebas API. La suite no prueba despliegue, seguridad productiva, duración de cinco minutos o rendimiento de AWS.
 

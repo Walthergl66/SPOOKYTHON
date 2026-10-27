@@ -26,7 +26,7 @@ export function App() {
   const [simulatorBusy, setSimulatorBusy] = useState(false)
   const [scenario, setScenario] = useState<SimulatorSetup['escenario']>('mixto')
   const [population, setPopulation] = useState(20)
-  const [intensity, setIntensity] = useState<SimulatorSetup['intensidad']>('alta')
+  const [intensity, setIntensity] = useState<SimulatorSetup['intensidad']>('media')
   const [cityEvents, setCityEvents] = useState(true)
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const [eventLog, setEventLog] = useState<PanelLog[]>([])

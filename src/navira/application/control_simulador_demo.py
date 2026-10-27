@@ -62,7 +62,7 @@ class ControlSimuladorDemoLocal:
         *,
         escenario: str,
         cantidad_sobrevivientes: int,
-        intensidad: str = "alta",
+        intensidad: str = "media",
         eventos_ciudad: bool = True,
         semilla: int | None = None,
     ) -> dict[str, object]:
@@ -128,7 +128,7 @@ class ControlSimuladorDemoLocal:
             cantidad_sobrevivientes=cantidad_sobrevivientes or int(
                 self._configuracion.get("cantidad_sobrevivientes", 20)
             ),
-            intensidad=intensidad or str(self._configuracion.get("intensidad", "alta")),
+            intensidad=intensidad or str(self._configuracion.get("intensidad", "media")),
             eventos_ciudad=(
                 eventos_ciudad
                 if eventos_ciudad is not None

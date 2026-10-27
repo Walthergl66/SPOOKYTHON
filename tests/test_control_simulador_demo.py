@@ -16,6 +16,28 @@ RAIZ = Path(__file__).resolve().parents[1]
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
+    def test_inicio_usa_dificultad_media_si_no_se_envia_configuracion(self) -> None:
+        control = ControlSimuladorDemoLocal(
+            str(RAIZ / "data/maps/manta-hackathon-v1.json")
+        )
+        app = crear_app(control_simulador_demo=control)
+        with patch.dict(os.environ, {"NAVIRA_LOCAL_DEMO_CONTROL": "1"}, clear=True):
+            with TestClient(
+                app,
+                base_url="http://localhost",
+                client=("127.0.0.1", 43121),
+            ) as client:
+                response = client.post(
+                    "/demo/simulador/iniciar",
+                    headers={"Origin": "http://localhost:5180"},
+                    json={"escenario": "mixto", "sobrevivientes": 20},
+                )
+                control.cerrar()
+
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["intensidad"], "media")
+        self.assertTrue(response.json()["eventosCiudad"])
+
     def test_panel_y_runner_comparten_el_planificador_del_mismo_run(self) -> None:
         control = ControlSimuladorDemoLocal(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         estado = control.iniciar(
@@ -83,7 +105,7 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertEqual(restarted.status_code, 200, restarted.text)
         self.assertNotEqual(restarted.json()["runId"], started.json()["runId"])
         self.assertEqual(restarted.json()["escenario"], "caminantes")
-        self.assertEqual(restarted.json()["intensidad"], "alta")
+        self.assertEqual(restarted.json()["intensidad"], "media")
         self.assertEqual(status_response.json()["runId"], restarted.json()["runId"])
         self.assertEqual(panel.json()["runId"], restarted.json()["runId"])
         self.assertEqual(panel.json()["modo"], "simulador")

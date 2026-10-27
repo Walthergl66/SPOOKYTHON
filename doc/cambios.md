@@ -2,6 +2,17 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-063 — Iniciar la demo en intensidad media
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario indicó que el total evacuado seguía muy bajo. La UI iniciaba en alta, es decir 25 % de nodos elegibles con amenazas, y mantenía incidentes aleatorios activos.
+- Especificación/tareas: PRD-06, SPEC-007 CA-007-05, P4-03/T-37; ADR-021. Mantiene escenarios, controles y reglas existentes.
+- Resultado: frontend, esquema de inicio y control local omiten el valor alto y comienzan en intensidad media (14 %); eventos siguen activos por defecto y todos los selectores explícitos permanecen disponibles.
+- Archivos: `frontend/src/app/App.tsx`, `src/navira/api/schemas.py`, `src/navira/application/control_simulador_demo.py`, `tests/test_control_simulador_demo.py`; ADR-021, SPEC-007, pruebas, plan, estado, índices y [reporte](resultados/default-media-cam063.md).
+- Verificación: comparación emparejada local en mixto, 20 habitantes, eventos, semillas 101/202/303 y hasta 30 turnos: media 29 evacuados/27 mordidos/4 activos; alta 13/45/2. La diferencia favorece media en los tres pares, pero la muestra de un escenario no predice otras semillas/densidades. T-37 pasa en siete pruebas focalizadas; suite backend completa (178 pruebas), `frontend/npm run build`, validadores docs/SDD, ocho regresiones SDD, `compileall` y `git diff --check` pasan. El build conserva el aviso conocido de bundle MapLibre >500 kB.
+- Límites: no cambia la densidad generada ni reglas; métricas son sintéticas y no orientan una evacuación real. El cambio afecta partidas nuevas; se debe iniciar una nueva simulación para aplicar sus defaults. No acredita una mejora universal.
+- Commit individual local en `master`: `fix: start demo at balanced threat intensity`.
+
 ## CAM-062 — Limitar la exposición sumada al horizonte pronosticado
 
 - Fecha: 2026-10-26, Ecuador continental.
@@ -12,7 +23,7 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Archivos: `src/navira/application/decidir_paso.py`, `tests/test_decidir_paso.py`; SPEC-002, algoritmos, pruebas, trazabilidad, plan, estado y [reporte](resultados/horizonte-riesgo-cam062.md).
 - Verificación: 13 pruebas focalizadas y suite backend completa (177 pruebas) correctas; `python3 scripts/check_docs.py` (89 Markdown/91 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), ocho regresiones SDD, `compileall` y `git diff --check` correctos. Evaluación local exploratoria con seis pares (semillas 101/202/303, mixto/horda, 20 habitantes, intensidad alta, eventos, hasta 30 turnos): temporal 24 evacuados/74 mordidos/22 activos, Dijkstra 20/77/23. Temporal tuvo mejor prioridad de producto en cuatro pares y peor en dos. La muestra no aísla el cambio causal ni garantiza mejora por semilla; evidencia, comando y límites en [reporte](resultados/horizonte-riesgo-cam062.md).
 - Límites: el pronóstico sigue siendo aproximado y sintético; no se mide HTTP/p95 ni se valida el futuro sin pronóstico. P3-03 y SPEC-002 permanecen parciales.
-- Siguiente paso: ajustar la configuración inicial de dificultad de la demo con base en la evidencia emparejada de evacuación/mordidas, conservando la selección manual de intensidad.
+- Siguiente paso: CAM-063 baja el valor inicial de la demo a media y conserva los controles manuales de dificultad.
 - Commit individual local en `master`: `fix: bound route exposure to forecast horizon`.
 
 ## CAM-061 — Coordinar las rutas del grupo por snapshot
