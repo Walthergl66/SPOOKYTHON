@@ -10,7 +10,7 @@ import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
 import { useGameSession } from '../application/useGameSession'
 import { joinGame, restoreGameSession, sendGameOrder } from '../infrastructure/http/game'
 import { loadPanelMap, loadPanelSnapshot } from '../infrastructure/http/panel'
-import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, setSimulatorSpeed } from '../infrastructure/http/simulator'
+import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, setSimulatorSpeed, startChallengeRound } from '../infrastructure/http/simulator'
 import { subscribePanel } from '../infrastructure/realtime/panel'
 import { checkHealth } from '../infrastructure/http/health'
 import { BrandMark } from '../shared/ui/BrandMark'
@@ -27,6 +27,9 @@ const SurvivorRoutePanel = lazy(() => import('../features/map/SurvivorRoutePanel
 export function App() {
   const [mode, setMode] = useState<NaviraMode>('simulator')
   const [selectedSurvivorId, setSelectedSurvivorId] = useState<string | undefined>()
+  const [challengeRound, setChallengeRound] = useState<1 | 2 | 3>(1)
+  const [challengeBusy, setChallengeBusy] = useState(false)
+  const [challengeError, setChallengeError] = useState<string | null>(null)
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
@@ -38,10 +41,15 @@ export function App() {
   // El selector se ofrece al cargar la página, salvo con una partida activa en curso.
   const openedOnLoad = useRef(false)
   useEffect(() => {
+    if (mode === 'challenge') {
+      openedOnLoad.current = true
+      setRefugeDialogOpen(false)
+      return
+    }
     if (openedOnLoad.current || candidates === null || simulator === null) return
     openedOnLoad.current = true
     if (simulator.estado !== 'activa') setRefugeDialogOpen(true)
-  }, [candidates, simulator])
+  }, [candidates, simulator, mode])
 
   useEffect(() => {
     const refreshHealth = () => checkHealth().then((ok) => setHealth(ok ? 'online' : 'offline'))
@@ -66,6 +74,18 @@ export function App() {
     if (!simulatorIsRunning) await runControl(simulator?.runId ? 'reiniciar' : 'iniciar')
     setRefugeDialogOpen(false)
   }
+  const startChallenge = async () => {
+    setChallengeBusy(true)
+    setChallengeError(null)
+    try {
+      await startChallengeRound(challengeRound)
+      await refreshPanel()
+    } catch (error) {
+      setChallengeError(error instanceof Error ? error.message : 'No se pudo iniciar la ronda del reto.')
+    } finally {
+      setChallengeBusy(false)
+    }
+  }
 
   return (
     <main className="app-shell dashboard-shell">
@@ -75,6 +95,7 @@ export function App() {
         <div className="topbar-context"><span className={`context-pulse${simulatorIsRunning ? '' : ' is-idle'}`} aria-hidden="true" /><strong>{simulatorIsRunning ? 'SIMULACIÓN EN VIVO' : 'CENTRO DE SIMULACIÓN'}</strong><span className="context-divider" aria-hidden="true" /><span>{cityName}</span></div>
         <nav className="mode-tabs" aria-label="Modo de Navira" role="group">
           <ModeCard mode="simulator" selected={mode === 'simulator'} onSelect={setMode} />
+          <ModeCard mode="challenge" selected={mode === 'challenge'} onSelect={setMode} />
           <ModeCard mode="game" selected={mode === 'game'} onSelect={setMode} />
         </nav>
       </header>
@@ -84,6 +105,23 @@ export function App() {
           <div className="panel-section-heading"><span className="panel-overline">OPERACIÓN LOCAL</span><h1 id="simulation-control-title">Control de simulación</h1></div>
           <div className="control-status" role="status"><span className={`context-pulse${simulatorIsRunning ? '' : ' is-idle'}`} aria-hidden="true" /><span>{simulator?.estado === 'activa' ? 'En curso' : simulator?.estado === 'pausada' ? 'Pausada' : simulator?.estado === 'finalizada' ? 'Finalizada' : simulator?.estado === 'error' ? 'Detenida por error' : 'Lista para iniciar'}</span></div>
 
+          {mode === 'challenge' ? <section className="challenge-setup" aria-labelledby="challenge-title">
+            <div className="panel-section-heading"><span className="panel-overline">PRUEBA DE FUEGO · TRACK A</span><h2 id="challenge-title">Selecciona una ronda</h2></div>
+            <div className="challenge-rounds" role="group" aria-label="Rondas del reto">
+              {([
+                { id: 1 as const, name: 'Anochecer', details: '20 sobrevivientes · solo caminantes' },
+                { id: 2 as const, name: 'Medianoche', details: '80 sobrevivientes · caminantes, corredores y hordas · 1 puente' },
+                { id: 3 as const, name: 'Apocalipsis', details: '200 sobrevivientes · todos los tipos · 2 calles bloqueadas' },
+              ]).map((round) => <button key={round.id} type="button" className={`challenge-round${challengeRound === round.id ? ' is-selected' : ''}`} aria-pressed={challengeRound === round.id} onClick={() => setChallengeRound(round.id)} disabled={simulatorIsRunning || challengeBusy}>
+                <strong>R{round.id} · {round.name}</strong><span>{round.details}</span>
+              </button>)}
+            </div>
+            <p className="challenge-note">Densidad media provisional. Puente, calles y turnos de evento se sortearán de forma reproducible; el reto no define esos parámetros. Cada ronda se inicia por separado.</p>
+            <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorIsRunning || simulator?.estado === 'pausada' || simulatorUnavailable}>
+              {challengeBusy ? 'Preparando…' : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
+            </button>
+            {challengeError ? <div className="control-notice is-error" role="alert">{challengeError}</div> : null}
+          </section> : <>
           <div className="sim-action-row">
             {simulatorIsRunning ? <button className="sim-action sim-pause" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy}>Pausar</button>
               : simulator?.estado === 'pausada' ? <button className="sim-action sim-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy}>Continuar</button>
@@ -113,13 +151,14 @@ export function App() {
               <option value="baja">Baja · 0,2% de nodos elegibles</option><option value="media">Media · 0,5% de nodos elegibles</option><option value="alta">Alta · 0,9% de nodos elegibles</option>
             </select>
           </label>
-          {showPicker ? <div className="refuge-summary"><span role="status">Refugios: {placedRefuges}/{REFUGE_SLOTS.length}</span><button className="sim-action" type="button" onClick={() => setRefugeDialogOpen(true)}>Elegir en el mapa</button></div> : null}
+          </>}
+          {mode !== 'challenge' && showPicker ? <div className="refuge-summary"><span role="status">Refugios: {placedRefuges}/{REFUGE_SLOTS.length}</span><button className="sim-action" type="button" onClick={() => setRefugeDialogOpen(true)}>Elegir en el mapa</button></div> : null}
 
           {simulatorUnavailable ? <div className="control-notice" role="status"><strong>Control local deshabilitado</strong><span>Inicia el backend con <code>NAVIRA_LOCAL_DEMO_CONTROL=1</code> para operar una demo desde esta pantalla.</span></div> : null}
           {simulatorMessage ? <div className="control-notice is-error" role="alert"><strong>No se pudo completar la acción</strong><span>{simulatorMessage}</span></div> : null}
           {simulator?.error ? <div className="control-notice is-error" role="alert"><strong>El reloj se detuvo</strong><span>{simulator.error}</span></div> : null}
 
-          <div className="run-details"><span>Modo de vista</span><strong>{mode === 'simulator' ? 'Simulador automático' : 'Juego humano'}</strong><span>Turno observado</span><strong>{state?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
+          <div className="run-details"><span>Modo de vista</span><strong>{mode === 'challenge' ? `Reto · ronda ${challengeRound}` : mode === 'simulator' ? 'Simulador · demo libre' : 'Juego humano'}</strong><span>Turno observado</span><strong>{state?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
           {mode === 'game' ? <GameControls modeSelected connection={connection} game={game} /> : null}
           {active && allSurvivors.length > 0 && map ? <Suspense fallback={<div className="survivor-route-loading" role="status">Cargando información del habitante…</div>}><SurvivorRoutePanel state={state} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} /></Suspense> : null}
         </aside>

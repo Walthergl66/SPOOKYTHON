@@ -41,6 +41,7 @@ from navira.simulation.escenarios import (
     FRACCION_NODOS_POR_INTENSIDAD,
     IntensidadEscenario,
     crear_eventos_ciudad,
+    crear_eventos_reto,
     crear_zombies,
 )
 
@@ -75,6 +76,7 @@ def crear_contexto_demo(
     modo: ModoPartida = ModoPartida.SIMULADOR,
     preparar_inicial: bool = True,
     refugios: tuple[Refugio, ...] | None = None,
+    ronda_reto: int | None = None,
 ) -> ContextoDemo:
     """Crea una partida con estado inicial aleatorio y expone dependencias.
 
@@ -100,6 +102,13 @@ def crear_contexto_demo(
     if refugios is not None:
         mapa = mapa_con_refugios(mapa, tuple(refugios))
     grafo = Grafo(mapa)
+    if ronda_reto is not None:
+        if ronda_reto not in (1, 2, 3):
+            raise ValueError("La ronda del reto debe ser 1, 2 o 3.")
+        escenario = {1: "caminantes", 2: "reto_medianoche", 3: "mixto"}[ronda_reto]
+        cantidad_sobrevivientes = {1: 20, 2: 80, 3: 200}[ronda_reto]
+        intensidad = "media"
+        eventos_ciudad = False
     if escenario not in ESCENARIOS_DEMO:
         opciones = ", ".join(sorted(ESCENARIOS_DEMO))
         raise ValueError(f"Escenario demo desconocido: {escenario}. Opciones: {opciones}.")
@@ -132,12 +141,16 @@ def crear_contexto_demo(
         intensidad,
         rng,
     )
-    eventos = crear_eventos_ciudad(grafo, intensidad, rng) if eventos_ciudad else ()
+    eventos = (
+        crear_eventos_reto(grafo, ronda_reto, rng)
+        if ronda_reto is not None
+        else crear_eventos_ciudad(grafo, intensidad, rng) if eventos_ciudad else ()
+    )
     run_id = f"navira-demo-{uuid.uuid4().hex}"
     partida = Partida(
         run_id=run_id,
         modo=modo,
-        escenario=f"demo-sintetico-{escenario}",
+        escenario=(f"reto-ronda-{ronda_reto}-{escenario}" if ronda_reto is not None else f"demo-sintetico-{escenario}"),
         map_version=grafo.mapa.version,
         sobrevivientes=tuple(
             Sobreviviente(f"S-DEMO-{indice:03d}", nodo)

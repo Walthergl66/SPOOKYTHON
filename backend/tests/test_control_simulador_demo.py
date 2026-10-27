@@ -15,6 +15,39 @@ LOCAL = ConfiguracionSeguridad(control_demo_local=True)
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
+    def test_ruta_reto_inicia_preset_sin_alterar_preferencia_de_demo(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43119)) as client:
+            respuesta = client.post(
+                "/reto/iniciar",
+                headers={"Origin": "http://localhost:5173"},
+                json={"ronda": 2, "semilla": 44},
+            )
+            control.pausar()
+            snapshot = control._snapshot()
+            control.cerrar()
+
+        self.assertEqual(respuesta.status_code, 200, respuesta.text)
+        self.assertEqual(respuesta.json()["sobrevivientesIniciales"], 80)
+        self.assertEqual(respuesta.json()["intensidad"], "media")
+        self.assertEqual(respuesta.json()["rondaReto"], 2)
+        self.assertEqual(respuesta.json()["velocidad"], 1.0)
+        self.assertFalse(respuesta.json()["eventosCiudad"])
+        self.assertEqual(len(snapshot.eventos_programados), 1)
+
+    def test_reto_no_interrumpe_una_partida_activa(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43118)) as client:
+            headers = {"Origin": "http://localhost:5173"}
+            libre = client.post("/demo/simulador/iniciar", headers=headers, json={"escenario": "libre", "sobrevivientes": 1})
+            client.post("/demo/simulador/pausar", headers=headers)
+            reto = client.post("/reto/iniciar", headers=headers, json={"ronda": 1})
+            control.cerrar()
+        self.assertEqual(libre.status_code, 200)
+        self.assertEqual(reto.status_code, 409)
+
     def test_selector_publica_limites_y_rechaza_refugio_fuera_del_recorte(self) -> None:
         mapa_path = RAIZ / "data/maps/manta-hackathon-v1.json"
         control = crear_control_simulador_demo(str(mapa_path))

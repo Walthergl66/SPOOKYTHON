@@ -41,6 +41,7 @@ class FabricaContextoSimulacion(Protocol):
         intensidad: str,
         eventos_ciudad: bool,
         refugios: tuple[Refugio, ...] | None = None,
+        ronda_reto: int | None = None,
     ) -> ContextoSimulacion: ...
 
 
@@ -90,7 +91,8 @@ class ControlSimuladorDemoLocal:
                 "sobrevivientesIniciales": self._configuracion.get("cantidad_sobrevivientes"),
                 "intensidad": self._configuracion.get("intensidad"),
                 "eventosCiudad": self._configuracion.get("eventos_ciudad"),
-                "velocidad": self._velocidad,
+                "rondaReto": self._configuracion.get("ronda_reto"),
+                "velocidad": 1.0 if self._configuracion.get("ronda_reto") is not None else self._velocidad,
                 "error": self._reloj.error if self._reloj is not None else None,
             }
 
@@ -102,23 +104,34 @@ class ControlSimuladorDemoLocal:
         intensidad: str = "media",
         semilla: int | None = None,
         refugios: tuple[Refugio, ...] | None = None,
+        ronda_reto: int | None = None,
     ) -> dict[str, object]:
         with self._lock:
             self._detener_reloj()
-            contexto = self._crear_contexto(
+            argumentos_contexto = dict(
                 semilla=semilla,
                 escenario=escenario,
                 cantidad_sobrevivientes=cantidad_sobrevivientes,
                 intensidad=intensidad,
-                eventos_ciudad=True,
+                eventos_ciudad=ronda_reto is None,
                 refugios=refugios,
             )
+            if ronda_reto is not None:
+                argumentos_contexto["ronda_reto"] = ronda_reto
+            contexto = self._crear_contexto(**argumentos_contexto)
             ejecutar = EjecutarRondaAutomatica(
                 contexto.snapshots,
                 contexto.mapas,
                 decidir=contexto.servicio_decision,
             )
-            reloj = RelojSimuladorLocal(contexto.run_id, contexto.snapshots, ejecutar, velocidad=self._velocidad)
+            # El flujo del reto usa la cadencia nominal; la preferencia de velocidad
+            # de la demo libre se conserva y no se modifica.
+            reloj = RelojSimuladorLocal(
+                contexto.run_id,
+                contexto.snapshots,
+                ejecutar,
+                velocidad=1.0 if ronda_reto is not None else self._velocidad,
+            )
             self._contexto = contexto
             self._reloj = reloj
             self._panel = ConsultarPanel(
@@ -130,11 +143,27 @@ class ControlSimuladorDemoLocal:
                 "escenario": escenario,
                 "cantidad_sobrevivientes": cantidad_sobrevivientes,
                 "intensidad": intensidad,
-                "eventos_ciudad": True,
+                "eventos_ciudad": ronda_reto is None,
+                "ronda_reto": ronda_reto,
             }
             self._estado = "activa"
             reloj.iniciar()
             return self.estado()
+
+    def iniciar_ronda_reto(self, ronda: int, semilla: int | None = None) -> dict[str, object]:
+        """Inicia un preset automático de evaluación sin cambiar la configuración libre."""
+
+        if ronda not in (1, 2, 3):
+            raise ValueError("La ronda del reto debe ser 1, 2 o 3.")
+        if self.estado()["estado"] in ("activa", "pausada"):
+            raise RuntimeError("Finaliza la partida actual antes de iniciar una ronda del reto.")
+        return self.iniciar(
+            escenario={1: "caminantes", 2: "reto_medianoche", 3: "mixto"}[ronda],
+            cantidad_sobrevivientes={1: 20, 2: 80, 3: 200}[ronda],
+            intensidad="media",
+            semilla=semilla,
+            ronda_reto=ronda,
+        )
 
     def pausar(self) -> dict[str, object]:
         with self._lock:

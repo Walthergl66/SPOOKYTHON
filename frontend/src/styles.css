@@ -265,6 +265,7 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .dashboard-topbar .context-pulse.is-idle { background: #ffb36b; box-shadow: 0 0 10px rgba(255,179,107,.5); }
 .mode-tabs { display: flex; gap: 6px; }
 .mode-tabs .mode-card { width: auto; min-height: 38px; gap: 8px; padding: 5px 10px; border-radius: 5px; background: transparent; }
+.mode-tabs .mode-card { flex-shrink: 0; }
 .mode-tabs .mode-card:hover { transform: none; }
 .mode-tabs .mode-card.is-selected { background: rgba(73, 209, 223, .12); border-color: rgba(73, 209, 223, .56); }
 .mode-tabs .mode-index { width: 22px; height: 22px; border: 0; font-size: 12px; }
@@ -392,6 +393,16 @@ h1 em { color: var(--sea-bright); font-style: normal; }
   .system-strip { margin: 0 12px; padding: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
   .system-disclaimer { grid-column: 1 / -1; margin: 0; text-align: left; }
 }
+
+.challenge-setup { display: grid; gap: 10px; margin: 4px 0 14px; }
+.challenge-setup .panel-section-heading { margin: 0; }
+.challenge-rounds { display: grid; gap: 7px; }
+.challenge-round { display: grid; gap: 4px; padding: 10px; text-align: left; border: 1px solid var(--line); border-radius: 5px; background: rgba(12,20,33,.5); color: var(--ink); cursor: pointer; }
+.challenge-round span { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.challenge-round.is-selected { border-color: var(--sea); background: rgba(73,209,223,.1); }
+.challenge-round:disabled { opacity: .55; cursor: not-allowed; }
+.challenge-note { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.challenge-start { width: 100%; }
 @media (max-width: 420px) {
   .dashboard-topbar .brand-name { font-size: 19px; }
   .mode-tabs .mode-card { gap: 3px; }

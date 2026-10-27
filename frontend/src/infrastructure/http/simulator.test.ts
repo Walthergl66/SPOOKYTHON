@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SimulatorUnavailableError } from '../../domain/simulator'
-import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, SimulatorApiError } from './simulator'
+import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, SimulatorApiError, startChallengeRound } from './simulator'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -58,5 +58,19 @@ describe('controlSimulator con refugios', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).refugios).toEqual([{ id: 'R-01', nodo: 'N-1' }])
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).refugios).toBeUndefined()
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty('eventosCiudad')
+  })
+})
+
+describe('startChallengeRound', () => {
+  it('llama al endpoint separado con la ronda seleccionada', async () => {
+    const estado = { habilitado: true, estado: 'activa', runId: 'r', turno: 0, escenario: 'reto_medianoche', sobrevivientesIniciales: 80, intensidad: 'media', eventosCiudad: false, velocidad: 1, error: null, rondaReto: 2 }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(estado)))
+    vi.stubGlobal('fetch', fetchMock)
+    const response = await startChallengeRound(2)
+    expect(response.rondaReto).toBe(2)
+    expect(fetchMock).toHaveBeenCalledWith('/reto/iniciar', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ ronda: 2 }),
+    }))
   })
 })

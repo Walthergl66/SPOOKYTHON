@@ -10,7 +10,7 @@ from __future__ import annotations
 import random
 from typing import Literal
 
-from navira.domain.mapa import Grafo
+from navira.domain.mapa import Grafo, TipoCalle
 from navira.domain.modelo import EstadoZombie, TipoZombie, Zombie
 from navira.domain.snapshot import EventoCierre
 
@@ -28,6 +28,13 @@ ESCENARIOS: dict[str, tuple[tuple[TipoZombie, float], ...]] = {
         (TipoZombie.CORREDOR, 0.25),
         (TipoZombie.HORDA, 0.10),
         (TipoZombie.DORMIDO, 0.10),
+    ),
+    # Porcentajes de amenaza provisionales: el enunciado fija los tipos, no su
+    # proporción. La composición de cada run se reproduce con su semilla.
+    "reto_medianoche": (
+        (TipoZombie.CAMINANTE, 0.60),
+        (TipoZombie.CORREDOR, 0.25),
+        (TipoZombie.HORDA, 0.15),
     ),
     "horda": (
         (TipoZombie.CAMINANTE, 0.10),
@@ -185,3 +192,47 @@ def crear_eventos_ciudad(
         )
         for indice, segmento in enumerate(seleccionados, start=1)
     )
+
+
+def crear_eventos_reto(grafo: Grafo, ronda: int, rng: random.Random) -> tuple[EventoCierre, ...]:
+    """Genera el evento exigido por ronda; selección reproducible y turnos provisionales.
+
+    El reto no especifica ubicación ni turno. Se usa turno 50 (100 s) para el
+    evento de ronda 2 y turnos 50/100 para ronda 3. En Manta se exige que el
+    puente exista en el grafo; no se sustituye silenciosamente por otra calle.
+    """
+
+    if ronda == 1:
+        return ()
+    segmentos_por_id = {calle.segmento_id: calle for calle in grafo.mapa.calles}
+    if ronda == 2:
+        puentes = sorted(
+            segmento_id
+            for segmento_id, calle in segmentos_por_id.items()
+            if calle.tipo is TipoCalle.PUENTE
+        )
+        if not puentes:
+            raise ValueError("El mapa de la ronda 2 no contiene un segmento etiquetado como puente.")
+        return (
+            EventoCierre(
+                id="EV-RETO-R2-PUENTE",
+                turno_objetivo=50,
+                segmentos=frozenset((rng.choice(puentes),)),
+                causa="Colapso de puente del reto",
+            ),
+        )
+    if ronda == 3:
+        segmentos = sorted(segmentos_por_id)
+        if len(segmentos) < 2:
+            raise ValueError("El mapa de la ronda 3 requiere dos segmentos distintos para bloquear.")
+        elegidos = rng.sample(segmentos, 2)
+        return tuple(
+            EventoCierre(
+                id=f"EV-RETO-R3-CALLE-{indice}",
+                turno_objetivo=50 * indice,
+                segmentos=frozenset((segmento_id,)),
+                causa="Calle bloqueada del reto",
+            )
+            for indice, segmento_id in enumerate(elegidos, start=1)
+        )
+    raise ValueError("La ronda del reto debe ser 1, 2 o 3.")

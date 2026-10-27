@@ -19,6 +19,7 @@ from navira.api.schemas import (
     SolicitudPasoSchema,
     SolicitudIniciarDemoSchema,
     SolicitudVelocidadDemoSchema,
+    SolicitudIniciarRetoSchema,
 )
 from navira.api.seguridad import (
     COOKIE_SESION_JUGADOR,
@@ -100,6 +101,23 @@ def _refugios(solicitud: SolicitudIniciarDemoSchema) -> tuple[Refugio, ...] | No
     if solicitud.refugios is None:
         return None
     return tuple(Refugio(r.id, r.nodo) for r in solicitud.refugios)
+
+
+@router.post("/reto/iniciar", tags=["reto local"])
+async def iniciar_ronda_reto(
+    solicitud: SolicitudIniciarRetoSchema,
+    request: Request,
+) -> dict[str, object]:
+    """Inicia un preset de la prueba de fuego en el control local opt-in."""
+
+    gestor = _control_demo_local(request)
+    exigir_operador_local(request)
+    try:
+        return gestor.iniciar_ronda_reto(solicitud.ronda, solicitud.semilla)
+    except RuntimeError as error:
+        raise _error(409, error) from error
+    except (OSError, ValueError) as error:
+        raise _error(422, error) from error
 
 
 @router.post("/demo/simulador/iniciar", tags=["demo local"])

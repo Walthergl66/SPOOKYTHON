@@ -102,6 +102,32 @@ class DemoBootstrapTests(unittest.TestCase):
         }
         self.assertGreater(len(cantidades), 1)
 
+    def test_presets_de_reto_respetan_tipos_y_eventos_reproducibles(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        uno = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=1, preparar_inicial=False)
+        dos_a = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=2, preparar_inicial=False)
+        dos_b = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=2, preparar_inicial=False)
+        tres_a = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=3, preparar_inicial=False)
+        tres_b = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=3, preparar_inicial=False)
+        s1 = uno.snapshots.obtener(uno.run_id)
+        s2a, s2b = dos_a.snapshots.obtener(dos_a.run_id), dos_b.snapshots.obtener(dos_b.run_id)
+        s3a, s3b = tres_a.snapshots.obtener(tres_a.run_id), tres_b.snapshots.obtener(tres_b.run_id)
+
+        self.assertEqual(len(s1.partida.sobrevivientes), 20)
+        self.assertEqual({z.tipo.value for z in s1.partida.zombies}, {"caminante"})
+        self.assertEqual(s1.eventos_programados, ())
+        self.assertEqual(len(s2a.partida.sobrevivientes), 80)
+        self.assertEqual({z.tipo.value for z in s2a.partida.zombies}, {"caminante", "corredor", "horda"})
+        self.assertEqual(s2a.eventos_programados, s2b.eventos_programados)
+        self.assertEqual(len(s2a.eventos_programados), 1)
+        puente_id = next(iter(s2a.eventos_programados[0].segmentos))
+        self.assertTrue(any(c.segmento_id == puente_id and c.tipo.value == "puente" for c in dos_a.grafo.mapa.calles))
+        self.assertEqual(len(s3a.partida.sobrevivientes), 200)
+        self.assertEqual({z.tipo.value for z in s3a.partida.zombies}, {"caminante", "corredor", "horda", "dormido"})
+        self.assertEqual(s3a.eventos_programados, s3b.eventos_programados)
+        self.assertEqual(len(s3a.eventos_programados), 2)
+        self.assertEqual({e.turno_objetivo for e in s3a.eventos_programados}, {50, 100})
+
     def test_nueva_partida_obtiene_semilla_y_run_id_independientes(self) -> None:
         with patch("navira.demo.secrets.randbits", side_effect=(101, 202)):
             primera = crear_contexto_demo()

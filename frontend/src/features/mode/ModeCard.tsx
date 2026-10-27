@@ -1,4 +1,4 @@
-export type NaviraMode = 'simulator' | 'game'
+export type NaviraMode = 'simulator' | 'challenge' | 'game'
 
 interface ModeCardProps {
   mode: NaviraMode
@@ -8,7 +8,8 @@ interface ModeCardProps {
 
 const details: Record<NaviraMode, { number: string; title: string; subtitle: string; icon: string }> = {
   simulator: { number: 'A', title: 'Simulador', subtitle: 'Observa la ciudad en movimiento', icon: '◉' },
-  game: { number: 'B', title: 'Jugar', subtitle: 'Toma el control de un personaje', icon: '↗' },
+  challenge: { number: 'B', title: 'Reto', subtitle: 'Prueba de fuego del hackathon', icon: '◈' },
+  game: { number: 'C', title: 'Jugar', subtitle: 'Toma el control de un personaje', icon: '↗' },
 }
 
 export function ModeCard({ mode, selected, onSelect }: ModeCardProps) {

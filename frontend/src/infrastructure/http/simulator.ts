@@ -40,6 +40,16 @@ export async function setSimulatorSpeed(velocidad: SimulatorSpeed): Promise<Simu
   return parseStatus(await readJson(response), response.status)
 }
 
+/** Inicia un preset de una ronda del reto, separado de la configuración de demo libre. */
+export async function startChallengeRound(ronda: 1 | 2 | 3): Promise<SimulatorStatus> {
+  const response = await fetch('/reto/iniciar', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ronda }),
+  })
+  return parseStatus(await readJson(response), response.status)
+}
+
 /** El dominio lanza Error; aquí se conserva el mensaje y se añade el status HTTP. */
 function parseStatus(value: unknown, status: number): SimulatorStatus {
   try {

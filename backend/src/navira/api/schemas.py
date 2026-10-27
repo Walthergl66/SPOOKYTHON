@@ -111,6 +111,15 @@ class SolicitudVelocidadDemoSchema(BaseModel):
     velocidad: Literal[1, 2, 4]
 
 
+class SolicitudIniciarRetoSchema(BaseModel):
+    """Reproducible seed for a fixed local challenge round preset."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    ronda: Literal[1, 2, 3]
+    semilla: int | None = Field(default=None, ge=0)
+
+
 class NodoPanelSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -13,6 +13,7 @@ export type SimulatorStatus = {
   eventosCiudad: boolean | null
   velocidad: SimulatorSpeed
   error: string | null
+  rondaReto?: 1 | 2 | 3 | null
 }
 
 export type SimulatorSetup = {
@@ -63,6 +64,7 @@ export function parseSimulatorStatus(value: unknown): SimulatorStatus {
     eventosCiudad: value.eventosCiudad,
     velocidad: value.velocidad,
     error: value.error,
+    ...(Object.hasOwn(value, 'rondaReto') ? { rondaReto: value.rondaReto === 1 || value.rondaReto === 2 || value.rondaReto === 3 ? value.rondaReto : null } : {}),
   }
 }
 
