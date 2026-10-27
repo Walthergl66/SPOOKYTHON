@@ -738,4 +738,17 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 
 ## Próximas entradas
 
+## CAM-057 — Intensidad sintética distribuida y cierres viales
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario pidió recapitulación de los roles y amenazas; señaló que solo se veían uno o dos focos y que la ciudad debía estar ampliamente amenazada para comparar evacuaciones.
+- Especificación/tareas: PRD-02, SPEC-001 CA-001-10/11, P1-05; T-28/T-29 escritos, pendientes de ejecución. No se verifica SPEC-001.
+- Rama: `master`; commit individual `303e4fb` (`feat: expand synthetic city threat scenarios`).
+- Motivo: reemplazar la cantidad fija de zombies de demo por un perfil ajustable y espacialmente distribuido, y hacer que cierres viales afecten las rutas durante la partida.
+- Archivos: `src/navira/demo.py`, control local/API, `ConsultarPanel`, esquemas HTTP, `frontend/src/app/App.tsx`, contratos de panel, ADR-017, pruebas demo/panel/control, y documentos propietarios/índices.
+- Resultado implementado: intensidad sintética 6/14/25 % sobre nodos elegibles; perfiles `mixto` y `horda` distribuyen caminantes, corredores, hordas y dormidos; muestreo estratificado por sectores y semilla reproducible. El control local programa cierres de segmentos con `EventoCierre` en turnos 2/5/8 según intensidad. El panel agrega metadatos de incidentes solo desde `eventos_aplicados`, sin revelar los cierres futuros. La UI ofrece intensidad/incidentes y el registro los muestra al aplicarse.
+- Verificación: `cd frontend && npm run build` correcto con advertencia de tamaño de bundle MapLibre; 28 pruebas focalizadas y suite completa (162 pruebas) con `/tmp/navira-env`; `compileall`, `check_docs.py` (82 Markdown/84 archivos), `check_sdd.py` (ocho SPEC estructuralmente válidas), ocho regresiones `test_check_sdd.py` y `git diff --check` correctos. Smoke con Vite/Uvicorn locales confirmó 65 amenazas al inicio, 67 al turno 4 y cierres aplicados en turnos 2/5/8; en turno 9, 6 activos, 5 evacuados y 9 mordidos.
+- Límites: dificultad sintética no oficial; el fixture sigue conteniendo 300 nodos/599 aristas, dormidos ocultos, hordas estáticas y eventos viales genéricos. La política de rutas permanece Dijkstra; no hay claim de ruta óptima/segura. Consultar [reporte de verificación](resultados/generador-amenazas-cam057.md).
+- Siguiente paso: ejecutar pruebas/validadores en un Python con dependencias, corregir fallos y luego cerrar commit individual. No publicar a remoto en esta unidad.
+
 Usar [plantilla de cambio](plantillas/cambio.md). Cada entrada significativa explica qué disparó el cambio, por qué, qué áreas toca, qué se comprobó y cómo continuar. Conservar entradas anteriores; corregir datos erróneos dejando constancia, no reescribiendo la historia silenciosamente.

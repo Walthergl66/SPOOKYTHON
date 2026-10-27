@@ -5,12 +5,16 @@ export type SimulatorStatus = {
   turno: number | null
   escenario: string | null
   sobrevivientesIniciales: number | null
+  intensidad: 'baja' | 'media' | 'alta' | null
+  eventosCiudad: boolean | null
   error: string | null
 }
 
 export type SimulatorSetup = {
   escenario: 'libre' | 'caminantes' | 'mixto' | 'horda'
   sobrevivientes: number
+  intensidad: 'baja' | 'media' | 'alta'
+  eventosCiudad: boolean
   semilla?: number
 }
 
@@ -54,6 +58,8 @@ function parseStatus(value: unknown, status: number): SimulatorStatus {
     !(typeof value.turno === 'number' || value.turno === null) ||
     !(typeof value.escenario === 'string' || value.escenario === null) ||
     !(typeof value.sobrevivientesIniciales === 'number' || value.sobrevivientesIniciales === null) ||
+    !(value.intensidad === 'baja' || value.intensidad === 'media' || value.intensidad === 'alta' || value.intensidad === null) ||
+    !(typeof value.eventosCiudad === 'boolean' || value.eventosCiudad === null) ||
     !(typeof value.error === 'string' || value.error === null)) {
     throw new SimulatorApiError('El backend devolvió un estado de simulador incompleto.', status)
   }
@@ -64,6 +70,8 @@ function parseStatus(value: unknown, status: number): SimulatorStatus {
     turno: value.turno,
     escenario: value.escenario,
     sobrevivientesIniciales: value.sobrevivientesIniciales,
+    intensidad: value.intensidad,
+    eventosCiudad: value.eventosCiudad,
     error: value.error,
   }
 }

@@ -41,7 +41,7 @@ class ControlSimuladorDemoTests(unittest.TestCase):
                 started = client.post(
                     "/demo/simulador/iniciar",
                     headers=headers,
-                    json={"escenario": "mixto", "sobrevivientes": 20, "semilla": 31},
+                    json={"escenario": "mixto", "sobrevivientes": 20, "semilla": 31, "intensidad": "alta", "eventosCiudad": True},
                 )
                 paused = client.post("/demo/simulador/pausar", headers=headers)
                 resumed = client.post("/demo/simulador/reanudar", headers=headers)
@@ -57,6 +57,8 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertEqual(started.status_code, 200, started.text)
         self.assertEqual(started.json()["escenario"], "mixto")
         self.assertEqual(started.json()["sobrevivientesIniciales"], 20)
+        self.assertEqual(started.json()["intensidad"], "alta")
+        self.assertTrue(started.json()["eventosCiudad"])
         self.assertEqual(paused.status_code, 200, paused.text)
         self.assertEqual(paused.json()["estado"], "pausada")
         self.assertEqual(resumed.status_code, 200, resumed.text)
@@ -64,6 +66,7 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertEqual(restarted.status_code, 200, restarted.text)
         self.assertNotEqual(restarted.json()["runId"], started.json()["runId"])
         self.assertEqual(restarted.json()["escenario"], "caminantes")
+        self.assertEqual(restarted.json()["intensidad"], "alta")
         self.assertEqual(status_response.json()["runId"], restarted.json()["runId"])
         self.assertEqual(panel.json()["runId"], restarted.json()["runId"])
         self.assertEqual(panel.json()["modo"], "simulador")

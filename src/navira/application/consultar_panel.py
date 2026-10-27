@@ -139,6 +139,17 @@ class ConsultarPanel:
             "aristasBloqueadas": tuple(sorted(aristas_cerradas)),
             "segmentosBloqueados": tuple(sorted(snapshot.segmentos_cerrados)),
             "nodosHorda": tuple(sorted(nodos_horda)),
+            # Solo se publica el evento después de quedar confirmado como aplicado;
+            # el panel no puede anticipar el segmento que cerrará en el futuro.
+            "eventosCiudad": tuple(
+                {
+                    "id": evento.id,
+                    "turno": evento.turno_objetivo,
+                    "causa": evento.causa,
+                }
+                for evento in snapshot.eventos_programados
+                if evento.id in snapshot.eventos_aplicados
+            ),
             "metricas": {
                 "sobrevivientesActivos": sum(
                     personaje.estado is EstadoSobreviviente.ACTIVO

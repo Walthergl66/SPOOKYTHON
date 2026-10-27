@@ -14,7 +14,7 @@ Disponer de un grafo de Manta de unas 300 intersecciones, calles con distancia/t
 
 ### PRD-02 — Simulación dinámica y reglas comunes
 
-Ejecutar zombies, turnos, bloqueos, mordidas y llegadas según las reglas del reto. El escenario debe variar de forma estocástica entre ejecuciones; pequeñas diferencias de semilla, estado o eventos pueden cambiar rutas y resultados posteriores. Humano y automáticos usan un mismo mundo y resolutor. Prioridad: obligatoria. No convertir ambigüedades pendientes en reglas oficiales; ver [pendientes](pendientes.md).
+Ejecutar zombies, turnos, bloqueos, mordidas y llegadas según las reglas del reto. El escenario debe variar de forma estocástica entre ejecuciones; pequeñas diferencias de semilla, estado o eventos pueden cambiar rutas y resultados posteriores. La demo debe permitir intensidades sintéticas de amenazas distribuidas por el grafo para observar rutas bajo presión; no representar esos presets como densidades oficiales de Manta. Humano y automáticos usan un mismo mundo y resolutor. Prioridad: obligatoria. No convertir ambigüedades pendientes en reglas oficiales; ver [pendientes](pendientes.md).
 
 ### PRD-03 — Evacuación automática
 

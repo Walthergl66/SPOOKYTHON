@@ -47,6 +47,8 @@ El endpoint `WS /ws/panel` es de solo lectura y valida `Origin` contra el host d
 
 Cada dos segundos sin cambios el servidor publica `panel.latido` con `schemaVersion`, `runId`, `secuencia` y `emitidoEn`; no incluye estado adicional. El cliente descarta secuencias repetidas o antiguas de la misma partida. Las secuencias mayores se aceptan porque cada `panel.snapshot` reemplaza el estado completo, no es un delta. Un cambio de `runId` reemplaza toda la partida anterior. Después de reconectar siempre llega primero el snapshot vigente, por lo que no existe hueco de suscripción que requiera replay de deltas. El cliente muestra reconexión/desactualización y reintenta con backoff exponencial.
 
+CAM-057 añade `datos.eventosCiudad`: lista de cierres viales aleatorios que el coordinador ya aplicó, con ID, turno y causa genérica. Los eventos programados para turnos posteriores permanecen en el snapshot interno y nunca se filtran al panel antes de su aplicación.
+
 En un snapshot de juego, `datos.decisionRestanteMs` es el restante estimado al proyectar el estado. Solo alimenta el contador visual; el reloj del navegador no es autoridad. La acción vuelve a validar el deadline monotónico bajo la puerta compartida y puede rechazarse si vence durante el envío.
 
 Esta proyección no implementa el catálogo de eventos de partida/jugador de arriba, ni historial, replay durable, límites de conexión o coordinación multi-proceso. La estrategia es válida para el repositorio de una tarea local; una futura publicación durable requiere ordenar la confirmación del evento con la persistencia del snapshot.

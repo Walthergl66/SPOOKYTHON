@@ -4,9 +4,9 @@ ID: SPEC-001
 Estado: implementada
 Requisitos: PRD-01, PRD-02, TRD-03, TRD-04, TRD-05, TRD-09, TRD-11, TRD-12
 Tareas: P1-01, P1-02, P1-03, P1-04, P1-05
-Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18, T-24
-Cambio: CAM-023
-Evidencia: pendiente; implementación parcial por tareas, SPEC no verificada integralmente.
+Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18, T-24, T-28, T-29
+Cambio: CAM-057
+Evidencia: parcial; ver reporte de generador espacial en resultados.
 
 ## Objetivo y alcance
 
@@ -25,10 +25,12 @@ Ejecutar un único mundo de Manta con reglas comunes para humano/automáticos, c
 | CA-001-07 | Escenario, semilla, versiones, configuración y entradas externas idénticos reproducen el reporte dentro de la misma versión; el reporte omite zombies dormidos. | Parcial: T-24 reproduce cinco turnos locales y oculta dormidos; T-10 durable y recuperación/reporte integral pendientes |
 | CA-001-08 | El generador demo crea exactamente la población solicitada (1–200), fuera de nodos refugio, con posiciones repetibles por semilla. | T-10 |
 | CA-001-09 | Las partidas nuevas usan estado aleatorio independiente; cambiar semilla/estado/eventos puede divergir en ubicaciones, movimiento zombie y rutas posteriores. Se respetan reglas y la misma instantánea conserva decisión HTTP estable. | Parcial: semilla nueva, posiciones/fase inicial aleatorias, divergencia de rutas entre semillas y decisión estable al repetir snapshot; composición/eventos oficiales y persistencia integral pendientes (T-10, T-24) |
+| CA-001-10 | La demo ofrece intensidades sintéticas baja/media/alta que escalan la cantidad inicial de zombies al grafo, distribuyen ubicaciones por sectores disponibles y componen caminantes/corredores/hordas/dormidos según el perfil. Misma semilla y configuración reproducen posiciones y tipos; dormidos siguen ocultos. | T-28 |
+| CA-001-11 | La demo puede programar incidentes viales aleatorios que cierran segmentos desde turnos definidos; el panel solo publica el incidente aplicado, y la planificación usa cierres confirmados. No se simulan ni atribuyen amenazas sísmicas/tsunami. | T-29 |
 
 ## Plan y módulos
 
-P1-01 valida mapa/fixture; P1-02 define entidades e intenciones; P1-03 implementa reglas puras; P1-04 integra reloj/snapshots; P1-05 fija escenarios. Áreas previstas: dominio, simulación, aplicación y adaptadores. No consultar HTTP dentro del dominio ni publicar mundo privado.
+P1-01 valida mapa/fixture; P1-02 define entidades e intenciones; P1-03 implementa reglas puras; P1-04 integra reloj/snapshots; P1-05 fija escenarios. La demo local configura densidad sintética y distribución estratificada por sectores; usa `EventoCierre` existente para incidentes viales y los proyecta cuando ya se aplicaron. Las cantidades oficiales, movimiento de horda, incidentes sísmicos y tsunami permanecen pendientes. Áreas previstas: dominio, simulación, aplicación y adaptadores. No consultar HTTP dentro del dominio ni publicar mundo privado.
 
 ## Casos límite, dudas y verificación
 

@@ -26,6 +26,8 @@ export function App() {
   const [simulatorBusy, setSimulatorBusy] = useState(false)
   const [scenario, setScenario] = useState<SimulatorSetup['escenario']>('mixto')
   const [population, setPopulation] = useState(20)
+  const [intensity, setIntensity] = useState<SimulatorSetup['intensidad']>('alta')
+  const [cityEvents, setCityEvents] = useState(true)
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const [eventLog, setEventLog] = useState<PanelLog[]>([])
   const cursorRef = useRef<PanelCursor | null>(null)
@@ -60,10 +62,18 @@ export function App() {
       setSnapshot({ map: matchingMap, state: nextState })
       const logId = `${nextState.runId}:${nextState.snapshotVersion}`
       const phase = (nextState.fase ?? 'fase desconocida').replaceAll('_', ' ')
-      setEventLog((current) => [
-        { id: logId, label: `Turno ${nextState.turno} · ${phase}`, detail: `${nextState.metricas?.sobrevivientesActivos ?? 0} personas activas · ${nextState.zombies?.length ?? 0} amenazas visibles` },
-        ...current.filter((item) => item.id !== logId),
-      ].slice(0, 5))
+      setEventLog((current) => {
+        const incidentes = (nextState.eventosCiudad ?? []).map((evento) => ({
+          id: `${nextState.runId}:${evento.id}`,
+          label: `Incidente vial · Turno ${evento.turno}`,
+          detail: `${evento.causa}; el cierre ya fue aplicado.`,
+        }))
+        return [
+          ...incidentes,
+          { id: logId, label: `Turno ${nextState.turno} · ${phase}`, detail: `${nextState.metricas?.sobrevivientesActivos ?? 0} personas activas · ${nextState.zombies?.length ?? 0} amenazas visibles` },
+          ...current.filter((item) => item.id !== logId && !incidentes.some((evento) => evento.id === item.id)),
+        ].slice(0, 5)
+      })
       if (!matchingMap) {
         const mapVersion = nextState.mapVersion
         const runId = nextState.runId
@@ -142,7 +152,7 @@ export function App() {
     setSimulatorBusy(true)
     setSimulatorMessage(null)
     try {
-      const status = await controlSimulator(action, action === 'iniciar' || action === 'reiniciar' ? { escenario: scenario, sobrevivientes: population } : undefined)
+      const status = await controlSimulator(action, action === 'iniciar' || action === 'reiniciar' ? { escenario: scenario, sobrevivientes: population, intensidad: intensity, eventosCiudad: cityEvents } : undefined)
       setSimulator(status)
       setSimulatorUnavailable(false)
       refreshPanel()
@@ -195,6 +205,16 @@ export function App() {
           <label className="setup-field">Sobrevivientes iniciales
             <select value={population} onChange={(event) => setPopulation(Number(event.target.value))} disabled={simulatorIsRunning || simulatorBusy}>
               <option value={20}>20</option><option value={80}>80</option><option value={200}>200</option>
+            </select>
+          </label>
+          <label className="setup-field">Intensidad sintética de amenazas
+            <select value={intensity} onChange={(event) => setIntensity(event.target.value as SimulatorSetup['intensidad'])} disabled={simulatorIsRunning || simulatorBusy}>
+              <option value="baja">Baja · 6% de nodos elegibles</option><option value="media">Media · 14% de nodos elegibles</option><option value="alta">Alta · 25% de nodos elegibles</option>
+            </select>
+          </label>
+          <label className="setup-field">Incidentes viales aleatorios
+            <select value={cityEvents ? 'si' : 'no'} onChange={(event) => setCityEvents(event.target.value === 'si')} disabled={simulatorIsRunning || simulatorBusy}>
+              <option value="si">Activados</option><option value="no">Desactivados</option>
             </select>
           </label>
 

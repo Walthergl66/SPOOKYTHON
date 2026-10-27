@@ -21,6 +21,7 @@ export interface PanelState {
   aristasBloqueadas?: string[]
   segmentosBloqueados?: string[]
   nodosHorda?: string[]
+  eventosCiudad?: Array<{ id: string; turno: number; causa: string }>
   metricas?: { sobrevivientesActivos: number; mordidos: number; evacuados: number; zombiesVisibles: number }
 }
 
@@ -119,6 +120,10 @@ export function parsePanelState(value: unknown): PanelState {
     const ids = value[key]
     if (!Array.isArray(ids) || !ids.every((id: unknown) => typeof id === 'string')) throw new Error(`El servicio devolvió ${key} con un formato no válido.`)
   }
+  if (!Array.isArray(value.eventosCiudad) || !value.eventosCiudad.every((item) =>
+    isRecord(item) && typeof item.id === 'string' && Number.isInteger(item.turno) && typeof item.causa === 'string')) {
+    throw new Error('El servicio devolvió eventos de ciudad con un formato no válido.')
+  }
   return {
     estado: 'activa',
     runId: value.runId,
@@ -135,6 +140,7 @@ export function parsePanelState(value: unknown): PanelState {
     aristasBloqueadas: value.aristasBloqueadas as string[],
     segmentosBloqueados: value.segmentosBloqueados as string[],
     nodosHorda: value.nodosHorda as string[],
+    eventosCiudad: value.eventosCiudad as Array<{ id: string; turno: number; causa: string }>,
     metricas: {
       sobrevivientesActivos: metricas.sobrevivientesActivos,
       mordidos: metricas.mordidos,

@@ -72,6 +72,8 @@ async def iniciar_demo_simulador(
         return gestor.iniciar(
             escenario=solicitud.escenario,
             cantidad_sobrevivientes=solicitud.sobrevivientes,
+            intensidad=solicitud.intensidad,
+            eventos_ciudad=solicitud.eventosCiudad,
             semilla=solicitud.semilla,
         )
     except (OSError, ValueError) as error:
@@ -109,6 +111,8 @@ async def reiniciar_demo_simulador(
         return gestor.reiniciar(
             escenario=solicitud.escenario,
             cantidad_sobrevivientes=solicitud.sobrevivientes,
+            intensidad=solicitud.intensidad,
+            eventos_ciudad=solicitud.eventosCiudad,
         )
     except (OSError, ValueError) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error

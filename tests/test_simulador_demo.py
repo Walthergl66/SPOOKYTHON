@@ -6,6 +6,7 @@ import io
 import json
 import unittest
 
+from navira.demo import MAPA_MANTA_POR_DEFECTO
 from navira.simulador_demo import ejecutar_demo, main
 
 
@@ -29,9 +30,10 @@ class EjecutorDemoTests(unittest.TestCase):
         self.assertEqual([json.loads(linea)["turno"] for linea in lineas], [0, 1])
 
     def test_misma_escena_y_semilla_reproducen_resultado_y_cambiar_semilla_puede_variarlo(self) -> None:
-        primero = ejecutar_demo(turnos=1, semilla=0, escenario="caminantes")
-        repetido = ejecutar_demo(turnos=1, semilla=0, escenario="caminantes")
-        otra_semilla = ejecutar_demo(turnos=1, semilla=1, escenario="caminantes")
+        argumentos = {"turnos": 1, "escenario": "caminantes", "ruta_mapa": MAPA_MANTA_POR_DEFECTO}
+        primero = ejecutar_demo(semilla=0, **argumentos)
+        repetido = ejecutar_demo(semilla=0, **argumentos)
+        otra_semilla = ejecutar_demo(semilla=1, **argumentos)
 
         self.assertEqual(primero, repetido)
         self.assertNotEqual(

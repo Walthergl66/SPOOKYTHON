@@ -10,9 +10,14 @@ from starlette.websockets import WebSocketDisconnect
 
 from navira.application.decidir_paso import SolicitudPaso
 from navira.application.consultar_panel import ConsultarPanel
-from navira.demo import crear_contexto_demo
+from navira.domain.modelo import EstadoZombie
+from navira.demo import MAPA_MANTA_POR_DEFECTO, crear_contexto_demo
 from navira.main import crear_app, crear_app_demo
-from navira.simulation.coordinador import abrir_siguiente_turno, resolver_turno_versionado
+from navira.simulation.coordinador import (
+    abrir_siguiente_turno,
+    preparar_turno_versionado,
+    resolver_turno_versionado,
+)
 
 
 class PanelPublicoTests(unittest.TestCase):
@@ -23,7 +28,13 @@ class PanelPublicoTests(unittest.TestCase):
         self.assertEqual(respuesta.json(), {"estado": "sin_partida"})
 
     def test_estado_activo_omite_zombies_dormidos_y_semilla(self) -> None:
-        respuesta = TestClient(crear_app_demo(semilla=0, escenario="mixto")).get("/panel/estado")
+        app = crear_app_demo(
+            ruta_mapa=MAPA_MANTA_POR_DEFECTO,
+            semilla=0,
+            escenario="mixto",
+            intensidad="alta",
+        )
+        respuesta = TestClient(app).get("/panel/estado")
 
         self.assertEqual(respuesta.status_code, 200)
         estado = respuesta.json()
@@ -32,10 +43,55 @@ class PanelPublicoTests(unittest.TestCase):
         self.assertEqual(estado["modo"], "simulador")
         self.assertEqual(estado["snapshotVersion"], 1)
         self.assertIn("Z-COR-001", {zombie["id"] for zombie in estado["zombies"]})
-        self.assertNotIn("Z-DOR-001", serializado)
+        snapshot = app.state.consultar_panel.snapshots.obtener_activa()
+        assert snapshot is not None
+        for zombie in snapshot.partida.zombies:
+            if zombie.estado is EstadoZombie.DORMIDO:
+                self.assertNotIn(zombie.id, serializado)
         self.assertNotIn("semilla", serializado.lower())
         self.assertNotIn("estado_rng", serializado.lower())
-        self.assertEqual(estado["metricas"]["zombiesVisibles"], 1)
+        self.assertGreater(estado["metricas"]["zombiesVisibles"], 50)
+        self.assertEqual(estado["eventosCiudad"], [])
+
+    def test_panel_publica_incidente_solo_despues_de_aplicarlo(self) -> None:
+        from pathlib import Path
+
+        ruta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        contexto = crear_contexto_demo(
+            ruta,
+            semilla=42,
+            escenario="libre",
+            eventos_ciudad=True,
+            preparar_inicial=False,
+        )
+        panel = ConsultarPanel(contexto.snapshots, contexto.mapas, contexto.servicio_decision)
+        actual = contexto.snapshots.obtener(contexto.run_id)
+        assert actual is not None
+        inicial = panel.consultar_estado()
+        self.assertEqual(inicial["eventosCiudad"], ())
+        self.assertNotIn("EV-CIUDAD-001", str(inicial))
+
+        for _ in range(2):
+            decisiones, _ = preparar_turno_versionado(
+                actual, contexto.grafo, version_esperada=actual.version
+            )
+            self.assertTrue(contexto.snapshots.guardar_si_version(contexto.run_id, actual.version, decisiones))
+            resuelto, _ = resolver_turno_versionado(
+                decisiones, contexto.grafo, version_esperada=decisiones.version
+            )
+            self.assertTrue(contexto.snapshots.guardar_si_version(contexto.run_id, decisiones.version, resuelto))
+            siguiente = abrir_siguiente_turno(resuelto, version_esperada=resuelto.version)
+            self.assertTrue(contexto.snapshots.guardar_si_version(contexto.run_id, resuelto.version, siguiente))
+            actual = siguiente
+        decisiones, eventos = preparar_turno_versionado(
+            actual, contexto.grafo, version_esperada=actual.version
+        )
+        self.assertEqual(eventos, ("EV-CIUDAD-001",))
+        self.assertTrue(contexto.snapshots.guardar_si_version(contexto.run_id, actual.version, decisiones))
+
+        estado = panel.consultar_estado()
+        self.assertEqual(estado["eventosCiudad"][0]["id"], "EV-CIUDAD-001")
+        self.assertEqual(estado["eventosCiudad"][0]["turno"], 2)
 
     def test_mapa_corresponde_a_la_version_activa_y_no_incluye_estado(self) -> None:
         contexto = crear_contexto_demo(semilla=9)
@@ -72,13 +128,18 @@ class PanelPublicoTests(unittest.TestCase):
         self.assertEqual(respuesta.status_code, 503)
 
     def test_horda_activa_se_proyecta_como_area_visible(self) -> None:
-        estado = TestClient(crear_app_demo(semilla=0, escenario="horda")).get(
-            "/panel/estado"
-        ).json()
+        app = crear_app_demo(
+            ruta_mapa=MAPA_MANTA_POR_DEFECTO,
+            semilla=0,
+            escenario="horda",
+            intensidad="alta",
+        )
+        cliente = TestClient(app)
+        estado = cliente.get("/panel/estado").json()
 
         zombie_horda = next(zombie for zombie in estado["zombies"] if zombie["tipo"] == "horda")
         self.assertIn(zombie_horda["nodo"], estado["nodosHorda"])
-        mapa = TestClient(crear_app_demo(semilla=0, escenario="horda")).get("/panel/mapa").json()
+        mapa = cliente.get("/panel/mapa").json()
         vecinos = {
             node
             for calle in mapa["calles"]
@@ -86,7 +147,12 @@ class PanelPublicoTests(unittest.TestCase):
             if zombie_horda["nodo"] in (calle["origen"], calle["destino"])
         }
         self.assertTrue(vecinos <= set(estado["nodosHorda"]))
-        self.assertNotIn("Z-DOR-002", {zombie["id"] for zombie in estado["zombies"]})
+        snapshot = app.state.consultar_panel.snapshots.obtener_activa()
+        assert snapshot is not None
+        ids_visibles = {zombie["id"] for zombie in estado["zombies"]}
+        for zombie in snapshot.partida.zombies:
+            if zombie.estado is EstadoZombie.DORMIDO:
+                self.assertNotIn(zombie.id, ids_visibles)
 
 
 class PanelTiempoRealTests(unittest.TestCase):

@@ -87,6 +87,8 @@ class SolicitudIniciarDemoSchema(BaseModel):
     escenario: Literal["libre", "caminantes", "mixto", "horda"] = "mixto"
     sobrevivientes: int = Field(default=20, ge=1, le=200)
     semilla: int | None = Field(default=None, ge=0)
+    intensidad: Literal["baja", "media", "alta"] = "alta"
+    eventosCiudad: bool = True
 
 
 class NodoPanelSchema(BaseModel):
@@ -130,6 +132,14 @@ class ZombiePanelSchema(BaseModel):
     id: str
     tipo: str
     nodo: str
+
+
+class EventoCiudadPanelSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    turno: int = Field(ge=0)
+    causa: str
 
 
 class MovimientoZombiePanelSchema(BaseModel):
@@ -188,6 +198,7 @@ class PanelPartidaActivaSchema(BaseModel):
     aristasBloqueadas: list[str]
     segmentosBloqueados: list[str]
     nodosHorda: list[str]
+    eventosCiudad: list[EventoCiudadPanelSchema]
     metricas: MetricasPanelSchema
 
 

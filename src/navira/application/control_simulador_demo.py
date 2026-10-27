@@ -52,6 +52,8 @@ class ControlSimuladorDemoLocal:
                 "turno": snapshot.partida.turno if snapshot is not None else None,
                 "escenario": self._configuracion.get("escenario"),
                 "sobrevivientesIniciales": self._configuracion.get("cantidad_sobrevivientes"),
+                "intensidad": self._configuracion.get("intensidad"),
+                "eventosCiudad": self._configuracion.get("eventos_ciudad"),
                 "error": self._reloj.error if self._reloj is not None else None,
             }
 
@@ -60,6 +62,8 @@ class ControlSimuladorDemoLocal:
         *,
         escenario: str,
         cantidad_sobrevivientes: int,
+        intensidad: str = "alta",
+        eventos_ciudad: bool = True,
         semilla: int | None = None,
     ) -> dict[str, object]:
         with self._lock:
@@ -69,6 +73,8 @@ class ControlSimuladorDemoLocal:
                 semilla=semilla,
                 escenario=escenario,
                 cantidad_sobrevivientes=cantidad_sobrevivientes,
+                intensidad=intensidad,  # type: ignore[arg-type]
+                eventos_ciudad=eventos_ciudad,
             )
             ejecutar = EjecutarRondaAutomatica(contexto.snapshots, contexto.mapas)
             reloj = RelojSimuladorLocal(contexto.run_id, contexto.snapshots, ejecutar)
@@ -82,6 +88,8 @@ class ControlSimuladorDemoLocal:
             self._configuracion = {
                 "escenario": escenario,
                 "cantidad_sobrevivientes": cantidad_sobrevivientes,
+                "intensidad": intensidad,
+                "eventos_ciudad": eventos_ciudad,
             }
             self._estado = "activa"
             reloj.iniciar()
@@ -108,11 +116,19 @@ class ControlSimuladorDemoLocal:
         *,
         escenario: str | None = None,
         cantidad_sobrevivientes: int | None = None,
+        intensidad: str | None = None,
+        eventos_ciudad: bool | None = None,
     ) -> dict[str, object]:
         return self.iniciar(
             escenario=escenario or str(self._configuracion.get("escenario", "libre")),
             cantidad_sobrevivientes=cantidad_sobrevivientes or int(
                 self._configuracion.get("cantidad_sobrevivientes", 20)
+            ),
+            intensidad=intensidad or str(self._configuracion.get("intensidad", "alta")),
+            eventos_ciudad=(
+                eventos_ciudad
+                if eventos_ciudad is not None
+                else bool(self._configuracion.get("eventos_ciudad", True))
             ),
         )
 

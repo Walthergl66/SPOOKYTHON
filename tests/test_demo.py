@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -12,9 +13,53 @@ from fastapi.testclient import TestClient
 from navira.application.decidir_paso import SolicitudPaso
 from navira.demo import crear_contexto_demo
 from navira.main import _crear_app_configurada, crear_app, crear_app_demo
+from navira.domain.modelo import EstadoZombie
 
 
 class DemoBootstrapTests(unittest.TestCase):
+    def test_intensidad_alta_distribuye_composicion_sintetica_por_la_ciudad(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        contexto = crear_contexto_demo(
+            ruta_manta,
+            semilla=812,
+            escenario="mixto",
+            cantidad_sobrevivientes=20,
+            intensidad="alta",
+            preparar_inicial=False,
+        )
+        partida = contexto.snapshots.obtener(contexto.run_id).partida
+        nodos = [zombie.nodo for zombie in partida.zombies]
+        celdas = {
+            (round(contexto.grafo.mapa.nodos_por_id[nodo].lat, 3), round(contexto.grafo.mapa.nodos_por_id[nodo].lng, 3))
+            for nodo in nodos
+        }
+
+        self.assertGreaterEqual(len(nodos), 65)
+        self.assertEqual(len(nodos), len(set(nodos)))
+        self.assertGreaterEqual(len(celdas), 10)
+        self.assertEqual({z.tipo.value for z in partida.zombies}, {"caminante", "corredor", "horda", "dormido"})
+        self.assertTrue(all(z.estado is EstadoZombie.DORMIDO for z in partida.zombies if z.tipo.value == "dormido"))
+
+    def test_misma_semilla_reproduce_amenazas_y_eventos_ciudad(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        argumentos = dict(
+            semilla=77,
+            escenario="mixto",
+            cantidad_sobrevivientes=20,
+            intensidad="alta",
+            eventos_ciudad=True,
+        )
+        primero = crear_contexto_demo(ruta_manta, **argumentos)
+        repetido = crear_contexto_demo(ruta_manta, **argumentos)
+        inicial = primero.snapshots.obtener(primero.run_id)
+        repetido_inicial = repetido.snapshots.obtener(repetido.run_id)
+
+        self.assertEqual(
+            tuple((z.tipo, z.nodo, z.fase_movimiento) for z in inicial.partida.zombies),
+            tuple((z.tipo, z.nodo, z.fase_movimiento) for z in repetido_inicial.partida.zombies),
+        )
+        self.assertEqual(inicial.eventos_programados, repetido_inicial.eventos_programados)
+
     def test_nueva_partida_obtiene_semilla_y_run_id_independientes(self) -> None:
         with patch("navira.demo.secrets.randbits", side_effect=(101, 202)):
             primera = crear_contexto_demo()

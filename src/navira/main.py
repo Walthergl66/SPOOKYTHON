@@ -15,7 +15,13 @@ from navira.application.juego import ConsultarSesionJuego, RepositorioSesionesMe
 from navira.application.ordenes import RegistrarOrdenHumana
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.application.reloj_juego import RelojJuegoLocal
-from navira.demo import MAPA_DEMO_POR_DEFECTO, MAPA_MANTA_POR_DEFECTO, crear_contexto_demo, crear_contexto_juego_demo
+from navira.demo import (
+    MAPA_DEMO_POR_DEFECTO,
+    MAPA_MANTA_POR_DEFECTO,
+    IntensidadDemo,
+    crear_contexto_demo,
+    crear_contexto_juego_demo,
+)
 
 
 def crear_app(
@@ -63,6 +69,8 @@ def crear_app_demo(
     semilla: int | None = None,
     escenario: str = "libre",
     cantidad_sobrevivientes: int = 1,
+    intensidad: IntensidadDemo = "media",
+    eventos_ciudad: bool = False,
 ) -> FastAPI:
     """Arranca explícitamente el mundo sintético local para desarrollo."""
 
@@ -71,6 +79,8 @@ def crear_app_demo(
         semilla=semilla,
         escenario=escenario,
         cantidad_sobrevivientes=cantidad_sobrevivientes,
+        intensidad=intensidad,
+        eventos_ciudad=eventos_ciudad,
     )
     return crear_app(
         contexto.servicio_decision,
@@ -84,6 +94,7 @@ def crear_app_juego_demo(
     semilla: int | None = None,
     escenario: str = "libre",
     cantidad_sobrevivientes: int = 1,
+    intensidad: IntensidadDemo = "media",
 ) -> FastAPI:
     """Ensamblaje explícito de juego local sintético, con reloj del servidor."""
 
@@ -92,6 +103,7 @@ def crear_app_juego_demo(
         semilla=semilla,
         escenario=escenario,
         cantidad_sobrevivientes=cantidad_sobrevivientes,
+        intensidad=intensidad,
     )
     sesiones = RepositorioSesionesMemoria(
         inactividad_segundos=float(os.environ.get("NAVIRA_GAME_SESSION_IDLE_SECONDS", "1800"))
