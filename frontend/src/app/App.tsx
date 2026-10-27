@@ -121,6 +121,7 @@ export function App() {
 
           <div className="run-details"><span>Modo de vista</span><strong>{mode === 'simulator' ? 'Simulador automático' : 'Juego humano'}</strong><span>Turno observado</span><strong>{state?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
           {mode === 'game' ? <GameControls modeSelected connection={connection} game={game} /> : null}
+          {active && allSurvivors.length > 0 && map ? <Suspense fallback={<div className="survivor-route-loading" role="status">Cargando información del habitante…</div>}><SurvivorRoutePanel state={state} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} /></Suspense> : null}
         </aside>
 
         <section className="city-panel dashboard-map-panel" aria-label="Mapa y estado de Manta">
@@ -130,7 +131,6 @@ export function App() {
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
             {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} /></Suspense> : <MapPlaceholder />}
-            {active && allSurvivors.length > 0 && map ? <div className="map-detail-overlay"><Suspense fallback={null}><SurvivorRoutePanel state={state} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} /></Suspense></div> : null}
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{map?.version ?? (simulatorUnavailable ? 'BACKEND SIN CONTROL LOCAL' : 'AÚN SIN SNAPSHOT')}</div>
           </div>

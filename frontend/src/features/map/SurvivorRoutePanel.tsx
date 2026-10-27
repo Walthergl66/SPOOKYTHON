@@ -16,7 +16,7 @@ export function SurvivorRoutePanel({ state, map, selectedSurvivorId, onSelectSur
   const path = details?.path ?? []
 
   return (
-    <section className="survivor-route-panel" aria-label="Información del habitante y su ruta" aria-live="polite">
+    <section className="survivor-route-panel" aria-label="Información del habitante seleccionado y su ruta" aria-live="polite">
       {survivor ? <>
         <div className="survivor-route-heading">
           <div><span className="panel-overline">HABITANTE SELECCIONADO</span><h3>{survivor.id}</h3></div>
