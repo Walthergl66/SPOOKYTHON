@@ -25,7 +25,7 @@ const CityMap = lazy(() => import('../features/map/CityMap').then(({ CityMap: Co
 const SurvivorRoutePanel = lazy(() => import('../features/map/SurvivorRoutePanel').then(({ SurvivorRoutePanel: Component }) => ({ default: Component })))
 
 export function App() {
-  const [mode, setMode] = useState<NaviraMode>('simulator')
+  const [mode, setMode] = useState<NaviraMode>('challenge')
   const [selectedSurvivorId, setSelectedSurvivorId] = useState<string | undefined>()
   const [challengeRound, setChallengeRound] = useState<1 | 2 | 3>(1)
   const [challengeBusy, setChallengeBusy] = useState(false)
@@ -94,8 +94,8 @@ export function App() {
         <a className="brand" href="#main-content" aria-label="Navira, inicio"><BrandMark /><span className="brand-name">navira</span></a>
         <div className="topbar-context"><span className={`context-pulse${simulatorIsRunning ? '' : ' is-idle'}`} aria-hidden="true" /><strong>{simulatorIsRunning ? 'SIMULACIÓN EN VIVO' : 'CENTRO DE SIMULACIÓN'}</strong><span className="context-divider" aria-hidden="true" /><span>{cityName}</span></div>
         <nav className="mode-tabs" aria-label="Modo de Navira" role="group">
-          <ModeCard mode="simulator" selected={mode === 'simulator'} onSelect={setMode} />
           <ModeCard mode="challenge" selected={mode === 'challenge'} onSelect={setMode} />
+          <ModeCard mode="simulator" selected={mode === 'simulator'} onSelect={setMode} />
           <ModeCard mode="game" selected={mode === 'game'} onSelect={setMode} />
         </nav>
       </header>

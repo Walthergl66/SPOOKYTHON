@@ -7,8 +7,8 @@ interface ModeCardProps {
 }
 
 const details: Record<NaviraMode, { number: string; title: string; subtitle: string; icon: string }> = {
-  simulator: { number: 'A', title: 'Simulador', subtitle: 'Observa la ciudad en movimiento', icon: '◉' },
-  challenge: { number: 'B', title: 'Reto', subtitle: 'Prueba de fuego del hackathon', icon: '◈' },
+  simulator: { number: 'B', title: 'Simulador', subtitle: 'Observa la ciudad en movimiento', icon: '◉' },
+  challenge: { number: 'A', title: 'Reto', subtitle: 'Prueba de fuego del hackathon', icon: '◈' },
   game: { number: 'C', title: 'Jugar', subtitle: 'Toma el control de un personaje', icon: '↗' },
 }
 
