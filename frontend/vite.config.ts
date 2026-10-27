@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
         '/panel': backend,
         '/juego': backend,
         '/demo': backend,
+        '/reto': backend,
         '/ws': { target: backend.replace(/^http/, 'ws'), ws: true },
       },
     },
