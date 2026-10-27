@@ -17,7 +17,7 @@ from navira.domain.modelo import (
     FaseTurno,
     IntencionMovimiento,
 )
-from navira.domain.snapshot import SnapshotMundo
+from navira.domain.snapshot import CompromisoRuta, SnapshotMundo
 from navira.routing.dijkstra import seleccionar_refugio
 from navira.simulation.coordinador import (
     abrir_siguiente_turno,
@@ -162,10 +162,12 @@ def _ejecutar_corrida(
         if politica == "dijkstra":
             llamadas_ms.extend(tiempos_base.values())
         intenciones: list[IntencionMovimiento] = []
+        rutas_propuestas: dict[str, CompromisoRuta | None] = {}
         for sobreviviente in snapshot.partida.sobrevivientes:
             if sobreviviente.estado is not EstadoSobreviviente.ACTIVO:
                 continue
             ruta_base = ruta_base_por_id[sobreviviente.id]
+            rutas_propuestas[sobreviviente.id] = None
             destino = ruta_base.siguiente_nodo if ruta_base is not None else sobreviviente.nodo
             if politica == "temporal":
                 inicio_busqueda = perf_counter()
@@ -175,6 +177,16 @@ def _ejecutar_corrida(
                 )
                 llamadas_ms.append((perf_counter() - inicio_busqueda) * 1000)
                 destino = trayecto[1] if len(trayecto) > 1 else sobreviviente.nodo
+                compromiso = planificador.proponer_compromiso_en_snapshot(
+                    snapshot, sobreviviente.id, contexto.grafo
+                )
+                rutas_propuestas[sobreviviente.id] = compromiso
+            elif ruta_base is not None and ruta_base.refugio_id is not None and ruta_base.calles:
+                rutas_propuestas[sobreviviente.id] = CompromisoRuta(
+                    sobreviviente.id,
+                    ruta_base.refugio_id,
+                    (ruta_base.origen, *(calle.destino for calle in ruta_base.calles)),
+                )
 
             intenciones.append(
                 IntencionMovimiento(
@@ -191,6 +203,7 @@ def _ejecutar_corrida(
             contexto.grafo,
             version_esperada=snapshot.version,
             intenciones=tuple(intenciones),
+            rutas_propuestas=rutas_propuestas,
         )
         turnos_ejecutados += 1
 

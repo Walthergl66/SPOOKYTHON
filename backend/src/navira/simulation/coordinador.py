@@ -8,11 +8,19 @@ from __future__ import annotations
 
 import copy
 import random
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 
 from navira.domain.mapa import Grafo
-from navira.domain.modelo import EstadoPartida, FaseTurno, IntencionMovimiento, Partida
-from navira.domain.snapshot import EstadoAleatorio, EventoCierre, MovimientoZombie, SnapshotMundo  # noqa: F401  (reexport)
+from navira.domain.modelo import (
+    ControlSobreviviente,
+    EstadoPartida,
+    EstadoSobreviviente,
+    FaseTurno,
+    IntencionMovimiento,
+    Partida,
+)
+from navira.domain.snapshot import CompromisoRuta, EstadoAleatorio, EventoCierre, MovimientoZombie, SnapshotMundo  # noqa: F401  (reexport)
 from navira.simulation.resolver import (
     ConfiguracionReglas,
     PreparacionTurno,
@@ -144,6 +152,7 @@ def preparar_turno_versionado(
         eventos_programados=snapshot.eventos_programados,
         eventos_aplicados=aplicados,
         movimientos_zombies=preparacion.movimientos_zombies,
+        rutas_comprometidas=snapshot.rutas_comprometidas,
         _estado_rng=copy.deepcopy(rng.getstate()),
     )
     return decisiones, tuple(evento.id for evento in ahora)
@@ -155,6 +164,7 @@ def resolver_turno_versionado(
     *,
     version_esperada: int,
     intenciones: tuple[IntencionMovimiento, ...] = (),
+    rutas_propuestas: Mapping[str, CompromisoRuta | None] | None = None,
 ) -> tuple[SnapshotMundo, ResultadoTurno]:
     """Resuelve las órdenes sobre el snapshot zombie sin volver a moverlos."""
 
@@ -172,6 +182,7 @@ def resolver_turno_versionado(
         aristas_cerradas=snapshot.aristas_cerradas,
         segmentos_cerrados=snapshot.segmentos_cerrados,
     )
+    compromisos = _confirmar_rutas_restantes(snapshot, resultado, rutas_propuestas or {})
     resuelto = SnapshotMundo(
         partida=resultado.partida,
         version=snapshot.version + 1,
@@ -181,9 +192,50 @@ def resolver_turno_versionado(
         eventos_aplicados=snapshot.eventos_aplicados,
         movimientos_zombies=snapshot.movimientos_zombies,
         mordidos_ultimo_turno=resultado.mordidos,
+        rutas_comprometidas=compromisos,
         _estado_rng=copy.deepcopy(snapshot._estado_rng),
     )
     return resuelto, resultado
+
+
+def _confirmar_rutas_restantes(
+    snapshot: SnapshotMundo,
+    resultado: ResultadoTurno,
+    propuestas: Mapping[str, CompromisoRuta | None],
+) -> tuple[CompromisoRuta, ...]:
+    """Guarda solo el sufijo cuya primera arista se ejecutó de verdad."""
+
+    por_id = {item.id: item for item in snapshot.partida.sobrevivientes}
+    resultado_por_id = {item.id: item for item in resultado.partida.sobrevivientes}
+    anteriores = {item.sobreviviente_id: item for item in snapshot.rutas_comprometidas}
+    rutas: list[CompromisoRuta] = []
+    for movimiento in resultado.movimientos_sobrevivientes:
+        sobreviviente = por_id.get(movimiento.sobreviviente_id)
+        resultado_sobreviviente = resultado_por_id.get(movimiento.sobreviviente_id)
+        if (
+            sobreviviente is None
+            or sobreviviente.control is not ControlSobreviviente.AUTOMATICO
+            or resultado_sobreviviente is None
+            or resultado_sobreviviente.estado is not EstadoSobreviviente.ACTIVO
+        ):
+            continue
+        tiene_propuesta = movimiento.sobreviviente_id in propuestas
+        propuesta = propuestas.get(movimiento.sobreviviente_id)
+        anterior = anteriores.get(movimiento.sobreviviente_id)
+        if tiene_propuesta and propuesta is None:
+            continue
+        ruta = propuesta.nodos if propuesta is not None else (anterior.nodos if anterior else ())
+        refugio_id = propuesta.refugio_id if propuesta is not None else (anterior.refugio_id if anterior else "")
+        if movimiento.destino == movimiento.origen or not ruta or len(ruta) < 2:
+            continue
+        if ruta[0] != movimiento.origen or ruta[1] != movimiento.destino:
+            continue
+        if not refugio_id:
+            continue
+        restante = ruta[1:]
+        if len(restante) >= 2:
+            rutas.append(CompromisoRuta(movimiento.sobreviviente_id, refugio_id, restante))
+    return tuple(rutas)
 
 
 def abrir_siguiente_turno(snapshot: SnapshotMundo, *, version_esperada: int) -> SnapshotMundo:

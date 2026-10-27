@@ -211,6 +211,7 @@ def ejecutar_evaluacion_local(
                 break
 
             solicitudes: list[SolicitudCarga] = []
+            rutas_propuestas = {}
             for persona in activos:
                 decision = contexto.servicio_decision.ejecutar(
                     SolicitudPaso(persona.id, persona.nodo, partida.turno)
@@ -226,6 +227,10 @@ def ejecutar_evaluacion_local(
                         decision.siguiente_nodo,
                     )
                 )
+                compromiso = contexto.servicio_decision.proponer_compromiso_en_snapshot(
+                    snapshot, persona.id, contexto.grafo
+                )
+                rutas_propuestas[persona.id] = compromiso
 
             concurrencia_turno = min(concurrencia, len(solicitudes))
             with ThreadPoolExecutor(max_workers=concurrencia_turno) as pool:
@@ -274,6 +279,7 @@ def ejecutar_evaluacion_local(
                 contexto.run_id,
                 version_esperada=snapshot.version,
                 intenciones=tuple(intenciones),
+                rutas_propuestas=rutas_propuestas,
             )
             final = resuelto.partida
             duracion_turno_ms = (time.perf_counter() - inicio_turno) * 1000

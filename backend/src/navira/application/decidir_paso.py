@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from threading import Lock
 
@@ -22,7 +23,7 @@ from navira.routing.prediccion import (
     pronosticar_zombies_visibles,
 )
 from navira.routing.temporal import CondicionTurno, buscar_ruta_temporal
-from navira.domain.snapshot import SnapshotMundo
+from navira.domain.snapshot import CompromisoRuta, SnapshotMundo
 from navira.application.puertos_paso import (  # noqa: F401
     EntidadNoEncontrada,
     PartidaNoDisponible,
@@ -81,12 +82,16 @@ class DecidirPaso:
         perfil: PerfilCostos = PerfilCostos(),
         horizonte_turnos: int = 12,
         presupuesto_temporal_ms: float = 25.0,
+        radio_replanificacion_saltos: int = 3,
     ) -> None:
         self._snapshots = snapshots
         self._mapas = mapas
         self._perfil = perfil
         self._horizonte_turnos = horizonte_turnos
         self._presupuesto_temporal_ms = presupuesto_temporal_ms
+        if radio_replanificacion_saltos < 0:
+            raise ValueError("El radio de replanteamiento no puede ser negativo.")
+        self._radio_replanificacion_saltos = radio_replanificacion_saltos
         self._cache_pronostico_lock = Lock()
         self._cache_pronostico_clave: tuple[str, int, str] | None = None
         self._cache_pronostico_valor: tuple[CondicionTurno, tuple[CondicionTurno, ...]] | None = None
@@ -132,6 +137,17 @@ class DecidirPaso:
         if sobreviviente is None or sobreviviente.estado is not EstadoSobreviviente.ACTIVO:
             raise EntidadNoEncontrada("El sobreviviente activo no existe en el snapshot consultado.")
         return self._trayecto_cacheado(snapshot, grafo, sobreviviente)
+
+    def proponer_compromiso_en_snapshot(
+        self, snapshot: SnapshotMundo, sobreviviente_id: str, grafo: Grafo
+    ) -> CompromisoRuta | None:
+        """Crea la ruta completa que se guardará solo si su primer paso se resuelve."""
+
+        ruta = self.prever_ruta_en_snapshot(snapshot, sobreviviente_id, grafo)
+        refugio = next((item for item in grafo.mapa.refugios if item.nodo == ruta[-1]), None)
+        if refugio is None or len(ruta) < 2:
+            return None
+        return CompromisoRuta(sobreviviente_id, refugio.id, ruta)
 
     def _trayecto_cacheado(
         self, snapshot: SnapshotMundo, grafo: Grafo, sobreviviente: Sobreviviente
@@ -181,9 +197,8 @@ class DecidirPaso:
         For a group, each shortest legal route is a baseline. When predicted
         exposure or a contested first step warrants it, the planner considers
         legal outgoing alternatives with static tails and a shared forecast.
-        It applies a soft per-turn congestion penalty only after exposure.
-        Threat exposure always ranks before congestion and route length; this
-        does not invent node capacity or alter resolver collision rules.
+        A shared snapshot may use soft congestion as an initial/replan tie-break,
+        but it cannot invalidate an already committed route by itself.
         """
         activos = tuple(
             s for s in snapshot.partida.sobrevivientes
@@ -191,12 +206,28 @@ class DecidirPaso:
         )
         if not activos:
             return {}
+        compromisos = {ruta.sobreviviente_id: ruta for ruta in snapshot.rutas_comprometidas}
+        asignados: dict[str, tuple[str, ...]] = {}
+        pendientes: list[Sobreviviente] = []
+        for survivor in activos:
+            compromiso = compromisos.get(survivor.id)
+            retenida = self._ruta_comprometida_vigente(snapshot, grafo, survivor, compromiso)
+            if retenida is not None:
+                asignados[survivor.id] = retenida
+            elif compromiso is None or self._hay_zombie_cerca(snapshot, grafo, survivor.nodo):
+                pendientes.append(survivor)
+            else:
+                asignados[survivor.id] = self._ruta_estatica(snapshot, grafo, survivor)
+        activos = tuple(pendientes)
+        if not activos:
+            return asignados
         # Preserve the full bounded temporal search for a lone evacuee; group
         # planning below uses one shared observable forecast plus static tails
         # so a single /paso request does not fan out hundreds of 25 ms searches.
         if len(activos) == 1:
             survivor = activos[0]
-            return {survivor.id: self._seleccionar_trayecto(snapshot, grafo, survivor)}
+            asignados[survivor.id] = self._seleccionar_trayecto(snapshot, grafo, survivor)
+            return asignados
         nodos, cruces = peligros_visibles(snapshot, grafo)
         zombies = tuple(
             ZombieObservable(z.id, z.tipo, z.nodo)
@@ -217,7 +248,6 @@ class DecidirPaso:
 
         # Resolve the most exposed residents first; stable IDs make ties replayable.
         orden = sorted(activos, key=lambda s: (-riesgo_actual.get(s.nodo, 0.0), s.id))
-        asignados: dict[str, tuple[str, ...]] = {}
         ocupacion: dict[str, int] = {}
         # At most one reverse search per target/filter set, shared by this
         # cohort only. Current crossings must not contaminate future tails.
@@ -263,13 +293,7 @@ class DecidirPaso:
                 camino = (survivor.nodo, calle.destino, *(c.destino for c in ruta.calles))
                 # Collapse a duplicate destination when it is itself the shelter.
                 camino = tuple(dict.fromkeys(camino)) if ruta.destino == calle.destino else camino
-                # Guard A: "go and come back" only wins by pushing the base route
-                # past the forecast horizon; skip it when the base step is safe.
-                if (
-                    destino_base is not None and futuras and len(camino) > 2
-                    and camino[2] == survivor.nodo
-                    and futuras[0].exposicion_nodo.get(destino_base, 0.0) == 0
-                ):
+                if len(camino) != len(set(camino)):
                     continue
                 riesgo = exposicion_ruta(camino)
                 costo = self._perfil.costo(calle) + ruta.costo_ponderado_m
@@ -309,7 +333,8 @@ class DecidirPaso:
                     asignados[survivor.id] = (
                         (survivor.nodo,) if destino == survivor.nodo else (survivor.nodo, destino)
                     )
-                    ocupacion[destino] = ocupacion.get(destino, 0) + 1
+                    if destino != survivor.nodo:
+                        ocupacion[destino] = ocupacion.get(destino, 0) + 1
                 else:
                     asignados[survivor.id] = (survivor.nodo,)
                 continue
@@ -325,6 +350,85 @@ class DecidirPaso:
             asignados[survivor.id] = candidatos[destino][2]
             ocupacion[destino] = ocupacion.get(destino, 0) + 1
         return asignados
+
+    def _ruta_comprometida_vigente(
+        self,
+        snapshot: SnapshotMundo,
+        grafo: Grafo,
+        survivor: Sobreviviente,
+        compromiso: CompromisoRuta | None,
+    ) -> tuple[str, ...] | None:
+        """Retains the route until nearby danger or a confirmed closure invalidates it."""
+
+        if compromiso is None or self._hay_zombie_cerca(snapshot, grafo, survivor.nodo):
+            return None
+        refugio = next((r for r in grafo.mapa.refugios if r.id == compromiso.refugio_id), None)
+        if (
+            refugio is None
+            or compromiso.nodos[0] != survivor.nodo
+            or compromiso.nodos[-1] != refugio.nodo
+            or (survivor.refugio_objetivo is not None and survivor.refugio_objetivo != refugio.id)
+        ):
+            return None
+        bloqueados, cruces = peligros_visibles(snapshot, grafo)
+        if compromiso.nodos[1] in bloqueados:
+            return None
+        for indice, (origen, destino) in enumerate(zip(compromiso.nodos, compromiso.nodos[1:])):
+            cierres = snapshot.aristas_cerradas | (cruces if indice == 0 else frozenset())
+            if not any(
+                calle.destino == destino
+                for calle in grafo.calles_desde(
+                    origen, aristas_cerradas=cierres, segmentos_cerrados=snapshot.segmentos_cerrados
+                )
+            ):
+                return None
+        return compromiso.nodos
+
+    def _hay_zombie_cerca(self, snapshot: SnapshotMundo, grafo: Grafo, origen: str) -> bool:
+        """Uses visible active zombies and undirected street hops, never hidden state."""
+
+        zombies = {
+            zombie.nodo
+            for zombie in snapshot.partida.zombies
+            if zombie.estado is EstadoZombie.ACTIVO and zombie.tipo is not TipoZombie.DORMIDO
+        }
+        if not zombies:
+            return False
+        distancias = {origen: 0}
+        pendientes = deque([origen])
+        entrantes = grafo.entrantes_habilitadas(frozenset(), frozenset())
+        while pendientes:
+            nodo = pendientes.popleft()
+            distancia = distancias[nodo]
+            if nodo in zombies:
+                return True
+            if distancia >= self._radio_replanificacion_saltos:
+                continue
+            vecinos = {calle.destino for calle in grafo.salientes(nodo)} | set(entrantes[nodo])
+            for vecino in vecinos:
+                if vecino not in distancias:
+                    distancias[vecino] = distancia + 1
+                    pendientes.append(vecino)
+        return False
+
+    def _ruta_estatica(
+        self, snapshot: SnapshotMundo, grafo: Grafo, survivor: Sobreviviente
+    ) -> tuple[str, ...]:
+        """Keeps residents on a legal shortest path until a zombie is nearby."""
+
+        bloqueados, cruces = peligros_visibles(snapshot, grafo)
+        ruta = seleccionar_refugio(
+            grafo,
+            survivor.nodo,
+            refugio_objetivo=survivor.refugio_objetivo,
+            aristas_cerradas=snapshot.aristas_cerradas | cruces,
+            segmentos_cerrados=snapshot.segmentos_cerrados,
+            nodos_bloqueados=frozenset(bloqueados),
+            perfil=self._perfil,
+        )
+        if ruta is not None:
+            return (ruta.origen, *(calle.destino for calle in ruta.calles))
+        return (survivor.nodo,)
 
     def _obtener_contexto(self, solicitud: SolicitudPaso) -> tuple[SnapshotMundo, Sobreviviente, Grafo]:
         """Valida identidad temporal y carga el grafo antes de planificar."""

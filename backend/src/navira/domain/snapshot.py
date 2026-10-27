@@ -19,6 +19,24 @@ class MovimientoZombie:
 
 
 @dataclass(frozen=True, slots=True)
+class CompromisoRuta:
+    """Ruta automática restante tras el movimiento confirmado del habitante."""
+
+    sobreviviente_id: str
+    refugio_id: str
+    nodos: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "nodos", tuple(self.nodos))
+        if not self.sobreviviente_id.strip() or not self.refugio_id.strip():
+            raise ValueError("El compromiso requiere sobreviviente y refugio.")
+        if len(self.nodos) < 2 or any(not nodo.strip() for nodo in self.nodos):
+            raise ValueError("El compromiso debe contener una ruta restante no vacía.")
+        if len(self.nodos) != len(set(self.nodos)):
+            raise ValueError("Una ruta comprometida no puede contener ciclos.")
+
+
+@dataclass(frozen=True, slots=True)
 class EventoCierre:
     """Cierre de una arista dirigida o de un segmento desde un turno dado."""
 
@@ -55,6 +73,7 @@ class SnapshotMundo:
     eventos_aplicados: tuple[str, ...] = ()
     movimientos_zombies: tuple[MovimientoZombie, ...] = ()
     mordidos_ultimo_turno: tuple[str, ...] = ()
+    rutas_comprometidas: tuple[CompromisoRuta, ...] = ()
     _estado_rng: EstadoAleatorio | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
@@ -66,6 +85,7 @@ class SnapshotMundo:
         object.__setattr__(self, "eventos_aplicados", tuple(self.eventos_aplicados))
         object.__setattr__(self, "movimientos_zombies", tuple(self.movimientos_zombies))
         object.__setattr__(self, "mordidos_ultimo_turno", tuple(self.mordidos_ultimo_turno))
+        object.__setattr__(self, "rutas_comprometidas", tuple(self.rutas_comprometidas))
         if len(self.eventos_aplicados) != len(set(self.eventos_aplicados)):
             raise ValueError("Un evento no puede figurar aplicado dos veces.")
         ids = [evento.id for evento in self.eventos_programados]
@@ -75,7 +95,12 @@ class SnapshotMundo:
             raise ValueError("El snapshot referencia un evento aplicado que no está programado.")
         if len(self.mordidos_ultimo_turno) != len(set(self.mordidos_ultimo_turno)):
             raise ValueError("Un sobreviviente no puede contarse dos veces en la misma resolución.")
+        ids_ruta = tuple(ruta.sobreviviente_id for ruta in self.rutas_comprometidas)
+        if len(ids_ruta) != len(set(ids_ruta)):
+            raise ValueError("Un sobreviviente solo puede tener un compromiso de ruta.")
         sobrevivientes = {item.id for item in self.partida.sobrevivientes}
+        if not set(ids_ruta) <= sobrevivientes:
+            raise ValueError("El snapshot conserva una ruta para un sobreviviente desconocido.")
         if not set(self.mordidos_ultimo_turno) <= sobrevivientes:
             raise ValueError("El snapshot registra una mordida para un sobreviviente desconocido.")
         estados_sobrevivientes = {

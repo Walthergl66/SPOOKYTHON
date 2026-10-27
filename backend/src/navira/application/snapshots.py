@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Mapping, Protocol
 
 from navira.domain.mapa import Grafo
 from navira.domain.modelo import IntencionMovimiento
 from navira.domain.snapshot import SnapshotMundo
+from navira.domain.snapshot import CompromisoRuta
 from navira.simulation.coordinador import (
     abrir_siguiente_turno,
     preparar_turno_versionado,
@@ -65,6 +66,7 @@ def resolver_turno_persistido(
     *,
     version_esperada: int,
     intenciones: tuple[IntencionMovimiento, ...] = (),
+    rutas_propuestas: Mapping[str, CompromisoRuta | None] | None = None,
 ) -> tuple[SnapshotMundo, ResultadoTurno]:
     """Confirma conjuntamente el resultado sobre el snapshot de decisiones."""
 
@@ -74,6 +76,7 @@ def resolver_turno_persistido(
         grafo,
         version_esperada=version_esperada,
         intenciones=intenciones,
+        rutas_propuestas=rutas_propuestas,
     )
     _confirmar(repositorio, run_id, version_esperada, resuelto)
     return resuelto, resultado

@@ -125,12 +125,22 @@ class CoordinadorJuego:
                 for sobreviviente in snapshot.partida.sobrevivientes
                 if sobreviviente.estado is EstadoSobreviviente.ACTIVO
             )
+            rutas_propuestas = {
+                survivor.id: compromiso
+                for survivor in snapshot.partida.sobrevivientes
+                if survivor.estado is EstadoSobreviviente.ACTIVO
+                and survivor.control is ControlSobreviviente.AUTOMATICO
+                for compromiso in (
+                    self.decidir.proponer_compromiso_en_snapshot(snapshot, survivor.id, grafo),
+                )
+            }
             resuelto, resultado = resolver_turno_persistido(
                 self.snapshots,
                 grafo,
                 run_id,
                 version_esperada=snapshot.version,
                 intenciones=intenciones,
+                rutas_propuestas=rutas_propuestas,
             )
             return resuelto, resultado
 

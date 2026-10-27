@@ -90,20 +90,29 @@ class EjecutarRondaAutomatica:
         if partida.fase is not FaseTurno.DECISIONES:
             raise SimulacionIncompatible("La partida no está abierta a decisiones automáticas.")
 
+        grafo = self._mapas.obtener(partida.map_version)
+        if grafo is None:
+            raise SimulacionIncompatible("No está disponible el mapa versionado de la partida.")
         intenciones = tuple(
             self._intencion_automatica(sobreviviente, partida.run_id, partida.turno)
             for sobreviviente in partida.sobrevivientes
             if sobreviviente.estado is EstadoSobreviviente.ACTIVO
         )
-        grafo = self._mapas.obtener(partida.map_version)
-        if grafo is None:
-            raise SimulacionIncompatible("No está disponible el mapa versionado de la partida.")
+        rutas_propuestas = {
+            survivor.id: compromiso
+            for survivor in partida.sobrevivientes
+            if survivor.estado is EstadoSobreviviente.ACTIVO
+            for compromiso in (
+                self._decidir.proponer_compromiso_en_snapshot(snapshot, survivor.id, grafo),
+            )
+        }
         _, resultado = resolver_turno_persistido(
             self._snapshots,
             grafo,
             run_id,
             version_esperada=snapshot.version,
             intenciones=intenciones,
+            rutas_propuestas=rutas_propuestas,
         )
         return resultado
 
