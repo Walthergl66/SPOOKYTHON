@@ -150,7 +150,8 @@ export function App() {
             <div className="stats-grid">
               <Metric label="Activos" value={state?.metricas?.sobrevivientesActivos} />
               <Metric label="Evacuados" value={state?.metricas?.evacuados} />
-              <Metric label="Mordidos" value={state?.metricas?.mordidos} />
+              <Metric label="Mordidos acumulados" value={state?.metricas?.mordidos} />
+              <Metric label="Mordidos última resolución" value={state?.metricas?.mordidosUltimoTurno} />
               <Metric label="Amenazas visibles" value={state?.metricas?.zombiesVisibles} />
               <Metric label="Rutas previstas" value={state?.rutasPrevistas?.length} />
               <Metric label="Turno" value={state?.turno} />
@@ -190,7 +191,7 @@ export function App() {
   )
 }
 
-function Metric({ label, value }: { label: string; value?: number }) {
+function Metric({ label, value }: { label: string; value?: number | null }) {
   return <div className="metric"><span>{label}</span><strong>{value ?? '—'}</strong></div>
 }
 

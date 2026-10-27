@@ -180,6 +180,7 @@ def resolver_turno_versionado(
         eventos_programados=snapshot.eventos_programados,
         eventos_aplicados=snapshot.eventos_aplicados,
         movimientos_zombies=snapshot.movimientos_zombies,
+        mordidos_ultimo_turno=resultado.mordidos,
         _estado_rng=copy.deepcopy(snapshot._estado_rng),
     )
     return resuelto, resultado

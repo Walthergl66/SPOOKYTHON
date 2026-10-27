@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from navira.domain.mapa import Calle
-from navira.domain.modelo import FaseTurno, Partida
+from navira.domain.modelo import EstadoSobreviviente, FaseTurno, Partida
 
 EstadoAleatorio = tuple[int, tuple[int, ...], float | None]
 
@@ -41,7 +41,11 @@ class EventoCierre:
 
 @dataclass(frozen=True, slots=True)
 class SnapshotMundo:
-    """Estado privado, íntegro e identificado por partida/fase/versión."""
+    """Estado privado, íntegro e identificado por partida/fase/versión.
+
+    `mordidos_ultimo_turno` conserva las personas mordidas por la resolución
+    más reciente; el acumulado se obtiene de los estados terminales de partida.
+    """
 
     partida: Partida
     version: int
@@ -50,6 +54,7 @@ class SnapshotMundo:
     eventos_programados: tuple[EventoCierre, ...] = ()
     eventos_aplicados: tuple[str, ...] = ()
     movimientos_zombies: tuple[MovimientoZombie, ...] = ()
+    mordidos_ultimo_turno: tuple[str, ...] = ()
     _estado_rng: EstadoAleatorio | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
@@ -60,6 +65,7 @@ class SnapshotMundo:
         object.__setattr__(self, "eventos_programados", tuple(self.eventos_programados))
         object.__setattr__(self, "eventos_aplicados", tuple(self.eventos_aplicados))
         object.__setattr__(self, "movimientos_zombies", tuple(self.movimientos_zombies))
+        object.__setattr__(self, "mordidos_ultimo_turno", tuple(self.mordidos_ultimo_turno))
         if len(self.eventos_aplicados) != len(set(self.eventos_aplicados)):
             raise ValueError("Un evento no puede figurar aplicado dos veces.")
         ids = [evento.id for evento in self.eventos_programados]
@@ -67,6 +73,19 @@ class SnapshotMundo:
             raise ValueError("Los eventos programados deben tener IDs únicos.")
         if not set(self.eventos_aplicados) <= set(ids):
             raise ValueError("El snapshot referencia un evento aplicado que no está programado.")
+        if len(self.mordidos_ultimo_turno) != len(set(self.mordidos_ultimo_turno)):
+            raise ValueError("Un sobreviviente no puede contarse dos veces en la misma resolución.")
+        sobrevivientes = {item.id for item in self.partida.sobrevivientes}
+        if not set(self.mordidos_ultimo_turno) <= sobrevivientes:
+            raise ValueError("El snapshot registra una mordida para un sobreviviente desconocido.")
+        estados_sobrevivientes = {
+            item.id: item.estado for item in self.partida.sobrevivientes
+        }
+        if any(
+            estados_sobrevivientes[item] is not EstadoSobreviviente.MORDIDO
+            for item in self.mordidos_ultimo_turno
+        ):
+            raise ValueError("La última resolución solo puede registrar sobrevivientes mordidos.")
 
     @property
     def identidad(self) -> tuple[str, int, FaseTurno, str, int]:

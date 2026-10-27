@@ -57,3 +57,5 @@ Los paneles consumen solo la proyección observable. No incluir API keys de serv
 
 
 CAM-073: `features/map/mapArea.ts` calcula caja del mapa desde nodos; `CityMap` indexa coordenadas una vez por versión. CAM-074/075 establecieron una vista completa con margen de 5 km y resaltado de agua. CAM-076 añade la ventana urbana estimada. CAM-077 comparte `limitesJugables` desde el contrato de candidatos: el selector encuadra esa caja, dibuja solo nodos/calles interiores y bloquea clics externos; el backend aplica la misma caja al grafo de cada partida. El fixture fuente ampliado permanece disponible. T-27 cubre cartografía y T-39 selector/límite. Los tiles siguen siendo dependencia externa.
+
+CAM-080: el panel presenta por separado el total acumulado de sobrevivientes mordidos y las personas mordidas en la resolución confirmada más reciente. Ambos campos llegan desde el snapshot del servidor; el cliente no infiere colisiones ni vuelve a contar actores. `test_panel.test.ts` comprueba el parseo de ambas métricas.

@@ -14,11 +14,11 @@ Lenguaje común y límites de consistencia: [ODDD](ODDD.md). Este archivo conser
 | Sobreviviente | ID, nodo, control, estado, refugio objetivo | Control humano/automático; activo/mordido/evacuado. |
 | Orden humana | Partida, turno, personaje, acción, secuencia, destino | Propiedad, idempotencia y cierre. |
 | Sesión de jugador | Partida, ID de personaje, estado de aparición, nodo | Un propietario por partida; token opaco entregado solo en cookie; token almacenado como hash. El adaptador actual es volátil. |
-| Snapshot | Partida, turno, fase, versión, datos | Inmutable una vez confirmado. |
+| Snapshot | Partida, turno, fase, versión, datos, IDs mordidos en la última resolución | Inmutable una vez confirmado; IDs por resolución únicos. El panel calcula el acumulado desde estados terminales y el indicador reciente desde esos IDs. |
 | Evento de ciudad | ID, segmento, turno objetivo, causa | Aplicación única y trazable. |
 | Resultado | Modo, versiones, decisiones, métricas y final | Separar pruebas automáticas de juego. |
 
-`Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` ya existen como dataclasses inmutables en `backend/src/navira/domain/modelo.py`. La partida fija modo, versión de mapa, estado, turno y fase; `validar_mapa()` comprueba referencias. `SnapshotMundo` conserva en memoria el estado completo, cierres, eventos programados/aplicados y estado aleatorio privado. La aplicación de movimientos y transición versionada entre fases están implementadas en memoria. El snapshot durable y la escritura condicional siguen pendientes.
+`Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimiento` ya existen como dataclasses inmutables en `backend/src/navira/domain/modelo.py`. La partida fija modo, versión de mapa, estado, turno y fase; `validar_mapa()` comprueba referencias. `SnapshotMundo` conserva en memoria el estado completo, cierres, eventos programados/aplicados, IDs de mordidos en su resolución más reciente y estado aleatorio privado. La aplicación de movimientos y transición versionada entre fases están implementadas en memoria. El snapshot durable y la escritura condicional siguen pendientes.
 
 CAM-036 añade `SesionJugador` como valor de aplicación y `RepositorioSesionesMemoria`. La sesión contiene solo propiedad/estado; la identidad del browser se localiza por SHA-256 de un token aleatorio, nunca por un ID enviado desde el cliente. La sesión y el snapshot no comparten una transacción durable; el CAS protege la aparición de mundo en el adaptador local, pero la recuperación multi-proceso y expiración siguen pendientes.
 

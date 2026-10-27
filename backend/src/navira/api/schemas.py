@@ -185,7 +185,8 @@ class MetricasPanelSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     sobrevivientesActivos: int
-    mordidos: int
+    mordidos: int = Field(ge=0)
+    mordidosUltimoTurno: int = Field(ge=0)
     evacuados: int
     zombiesVisibles: int
 

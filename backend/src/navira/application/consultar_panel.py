@@ -159,6 +159,9 @@ class ConsultarPanel:
                     personaje.estado is EstadoSobreviviente.MORDIDO
                     for personaje in partida.sobrevivientes
                 ),
+                # Total terminal del mundo y mordidas de la resolución más reciente
+                # son medidas distintas; conservar ambas evita inferir del turno.
+                "mordidosUltimoTurno": len(snapshot.mordidos_ultimo_turno),
                 "evacuados": sum(
                     personaje.estado is EstadoSobreviviente.EVACUADO
                     for personaje in partida.sobrevivientes

@@ -22,7 +22,7 @@ export interface PanelState {
   segmentosBloqueados?: string[]
   nodosHorda?: string[]
   eventosCiudad?: Array<{ id: string; turno: number; causa: string }>
-  metricas?: { sobrevivientesActivos: number; mordidos: number; evacuados: number; zombiesVisibles: number }
+  metricas?: { sobrevivientesActivos: number; mordidos: number; mordidosUltimoTurno: number | null; evacuados: number; zombiesVisibles: number }
 }
 
 export interface PanelSnapshot {
@@ -102,7 +102,11 @@ export function parsePanelState(value: unknown): PanelState {
     throw new Error('El servicio devolvió el plazo de decisiones con un formato no válido.')
   }
   const { metricas } = value
-  if (typeof metricas.sobrevivientesActivos !== 'number' || typeof metricas.mordidos !== 'number' || typeof metricas.evacuados !== 'number' || typeof metricas.zombiesVisibles !== 'number') {
+  const conteos = [metricas.sobrevivientesActivos, metricas.mordidos, metricas.evacuados, metricas.zombiesVisibles]
+  const mordidosUltimoTurno = metricas.mordidosUltimoTurno
+  if (!conteos.every((count) => typeof count === 'number' && Number.isInteger(count) && count >= 0)
+    || (mordidosUltimoTurno !== undefined && mordidosUltimoTurno !== null
+      && (typeof mordidosUltimoTurno !== 'number' || !Number.isInteger(mordidosUltimoTurno) || mordidosUltimoTurno < 0))) {
     throw new Error('El servicio devolvió métricas con un formato no válido.')
   }
   const zombies = value.zombies.map((item) => {
@@ -147,10 +151,11 @@ export function parsePanelState(value: unknown): PanelState {
     nodosHorda: value.nodosHorda as string[],
     eventosCiudad: value.eventosCiudad as Array<{ id: string; turno: number; causa: string }>,
     metricas: {
-      sobrevivientesActivos: metricas.sobrevivientesActivos,
-      mordidos: metricas.mordidos,
-      evacuados: metricas.evacuados,
-      zombiesVisibles: metricas.zombiesVisibles,
+      sobrevivientesActivos: metricas.sobrevivientesActivos as number,
+      mordidos: metricas.mordidos as number,
+      mordidosUltimoTurno: typeof mordidosUltimoTurno === 'number' ? mordidosUltimoTurno : null,
+      evacuados: metricas.evacuados as number,
+      zombiesVisibles: metricas.zombiesVisibles as number,
     },
   }
 }

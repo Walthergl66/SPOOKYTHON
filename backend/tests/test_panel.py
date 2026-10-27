@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -10,7 +11,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from navira.application.decidir_paso import SolicitudPaso
 from navira.application.consultar_panel import ConsultarPanel
-from navira.domain.modelo import EstadoZombie
+from navira.domain.modelo import EstadoSobreviviente, EstadoZombie, FaseTurno, TipoZombie, Zombie
 from navira.demo import MAPA_MANTA_POR_DEFECTO, crear_contexto_demo
 from navira.main import crear_app, crear_app_demo
 from navira.simulation.coordinador import (
@@ -51,7 +52,42 @@ class PanelPublicoTests(unittest.TestCase):
         self.assertNotIn("semilla", serializado.lower())
         self.assertNotIn("estado_rng", serializado.lower())
         self.assertGreater(estado["metricas"]["zombiesVisibles"], 50)
+        self.assertEqual(estado["metricas"]["mordidos"], 0)
+        self.assertEqual(estado["metricas"]["mordidosUltimoTurno"], 0)
         self.assertEqual(estado["eventosCiudad"], [])
+
+    def test_panel_cuenta_una_vez_a_cada_sobreviviente_mordido_en_la_resolucion(self) -> None:
+        contexto = crear_contexto_demo(semilla=9, escenario="libre")
+        snapshot = contexto.snapshots.obtener(contexto.run_id)
+        assert snapshot is not None
+        sobreviviente = snapshot.partida.sobrevivientes[0]
+        partida_decisiones = replace(
+            snapshot.partida,
+            zombies=(
+                Zombie("Z-HORDA-1", TipoZombie.HORDA, sobreviviente.nodo),
+                Zombie("Z-HORDA-2", TipoZombie.HORDA, sobreviviente.nodo),
+            ),
+            fase=FaseTurno.DECISIONES,
+        )
+        decisiones = replace(snapshot, partida=partida_decisiones, version=snapshot.version + 1)
+        self.assertTrue(contexto.snapshots.guardar_si_version(contexto.run_id, snapshot.version, decisiones))
+
+        resuelto, resultado = resolver_turno_versionado(
+            decisiones,
+            contexto.grafo,
+            version_esperada=decisiones.version,
+        )
+        self.assertEqual(resultado.mordidos, (sobreviviente.id,))
+        self.assertTrue(contexto.snapshots.guardar_si_version(contexto.run_id, decisiones.version, resuelto))
+
+        panel = ConsultarPanel(contexto.snapshots, contexto.mapas, contexto.servicio_decision)
+        metricas = panel.consultar_estado()["metricas"]
+        self.assertEqual(metricas["mordidos"], 1)
+        self.assertEqual(metricas["mordidosUltimoTurno"], 1)
+        self.assertEqual(
+            sum(item.estado is EstadoSobreviviente.MORDIDO for item in resuelto.partida.sobrevivientes),
+            metricas["mordidos"],
+        )
 
     def test_panel_publica_incidente_solo_despues_de_aplicarlo(self) -> None:
         from pathlib import Path

@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-080 — Conteo confirmado de mordidos
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: reporte del usuario de que el total de mordidos no se reflejaba correctamente y necesitaba un resultado preciso.
+- Especificación/trazabilidad: PRD-03/09/10, TRD-14, SPEC-001 CA-001-03/13, T-05/T-06/T-42. No verifica la SPEC completa ni demuestra menor mortalidad.
+- Diagnóstico: el total existente del panel ya se derivaba de sobrevivientes en estado `mordido`. La corrida local observada en turno 945 mostró 5 activos, 15 evacuados y 0 mordidos; los estados coinciden con el contador y suman los 20 iniciales. Sin embargo, el contrato no mostraba el número de mordidas de la última resolución, por lo que no permitía distinguir «ninguna mordida nueva» de «total acumulado».
+- Cambio: cada snapshot resuelto conserva los IDs mordidos en esa resolución con unicidad validada. El panel publica tanto `mordidos` acumulado desde los estados como `mordidosUltimoTurno`; la UI les da etiquetas distintas. No se cambian las reglas de mordida ni el planificador.
+- Archivos: `backend/src/navira/domain/snapshot.py`, `simulation/coordinador.py`, `application/consultar_panel.py`, `api/schemas.py`, pruebas de panel, `frontend/src/domain/panel.ts`, `frontend/src/app/App.tsx`, contrato API, datos, SPEC-001, T-42, trazabilidad y estado.
+- Verificación: prueba de integración fuerza dos hordas sobre un sobreviviente, confirma que se muerde una sola vez y contrasta el resultado del resolutor, los estados persistidos y ambas métricas. Backend completo 213/213; `test_panel.py` 14/14; frontend 85/85; `npm run build` correcto con advertencia conocida de bundle cartográfico >500 kB; `check_docs.py` (109 Markdown/111 archivos), `check_sdd.py` (ocho SPEC), regresiones SDD 8/8, `compileall` y `git diff --check` correctos. El parser trata como desconocido (—) el campo por turno cuando conecta con una API previa, sin falsear el valor.
+- Límites: la corrida activa observada no tuvo mordidas en su estado actual, por lo que cero es el conteo correcto para esa ejecución. No se reinició el backend para conservar el snapshot volátil activo; por eso el campo nuevo por turno no aparece hasta el próximo reinicio controlado del servidor. La persistencia solo vive en memoria y no conserva resultados al reiniciar.
+- Siguiente paso: mantener la partida local actual; reiniciar la API cuando se pueda descartar su estado volátil y verificar que el panel reciba el campo por turno.
+- Commit individual local de CAM-080 en `master`. `git push origin master` no pudo autenticar porque el proceso no dispone de credenciales interactivas; no está publicado.
+
 ## CAM-079 — Fluidez de turnos y movimientos confirmados
 
 - Fecha: 2026-10-27, Ecuador continental.

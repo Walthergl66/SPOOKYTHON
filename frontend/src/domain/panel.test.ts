@@ -17,7 +17,7 @@ const estadoActivo = {
   rutasPrevistas: [{ sobrevivienteId: 's', trayecto: ['a', 'b'] }],
   aristasBloqueadas: ['c1'], segmentosBloqueados: ['s1'], nodosHorda: ['a'],
   eventosCiudad: [{ id: 'e', turno: 1, causa: 'x' }],
-  metricas: { sobrevivientesActivos: 1, mordidos: 0, evacuados: 0, zombiesVisibles: 1 },
+  metricas: { sobrevivientesActivos: 1, mordidos: 0, mordidosUltimoTurno: 0, evacuados: 0, zombiesVisibles: 1 },
 }
 
 describe('parsePanelMap', () => {
@@ -43,6 +43,16 @@ describe('parsePanelState', () => {
   it('acepta un snapshot activo completo', () => {
     const r = parsePanelState(estadoActivo)
     expect(r).toEqual(estadoActivo)
+  })
+  it('conserva por separado el acumulado y las mordidas de la última resolución', () => {
+    const r = parsePanelState({ ...estadoActivo, metricas: { ...estadoActivo.metricas, mordidos: 4, mordidosUltimoTurno: 2 } })
+    expect(r.metricas?.mordidos).toBe(4)
+    expect(r.metricas?.mordidosUltimoTurno).toBe(2)
+  })
+  it('no inventa un conteo por turno con un backend anterior', () => {
+    const { mordidosUltimoTurno: _legacy, ...metricasAnteriores } = estadoActivo.metricas
+    const r = parsePanelState({ ...estadoActivo, metricas: metricasAnteriores })
+    expect(r.metricas?.mordidosUltimoTurno).toBeNull()
   })
   it('rechaza un estado desconocido', () => {
     expect(() => parsePanelState({ estado: 'x' })).toThrow('El servicio devolvió un estado del panel no válido.')
