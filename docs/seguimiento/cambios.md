@@ -2,6 +2,16 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-090 — Enrutar el endpoint de Reto desde Vite
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: corregir `POST http://localhost:5173/reto/iniciar` que respondía 404 desde el modo Reto.
+- Causa: el proxy de desarrollo no incluía el prefijo `/reto`; Vite contestaba el 404 sin enviar la petición a la API, aunque el backend tuviera la ruta.
+- Resultado: Vite reenvía `/reto` al mismo backend configurado para `/demo`; se conserva `Origin` para la validación local.
+- Archivos: `frontend/vite.config.ts`, `frontend/README.md`, módulo frontend, estado e historial.
+- Validación: `GET /salud` a través de Vite responde 200. `POST /reto/iniciar` a través de `localhost:5173` respondió 200 y configuró la ronda 1 con 20 sobrevivientes. El run de smoke se limpió reiniciando el backend; una ronda R1 volvió a aparecer en estado activo durante la comprobación final (turno observado 46). Frontend 90/90, build correcto con advertencia del chunk de mapa >500 kB, `check_docs.py`, `check_sdd.py`, 8 pruebas del validador SDD y `git diff --check` pasan.
+- Commits: código `0b70ac0`; documentación en commit separado posterior.
+
 ## CAM-089 — Priorizar Reto al abrir Navira
 
 - Fecha: 2026-10-27, Ecuador continental.

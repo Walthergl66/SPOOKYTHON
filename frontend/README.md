@@ -24,7 +24,7 @@ cd frontend
 npm run build
 ```
 
-En desarrollo, Vite reenvía `/salud`, `/panel`, `/demo`, `/juego` y `/ws` a `127.0.0.1:8000`, conservando el origen del navegador para validación same-host. Otro servicio local se puede elegir con `NAVIRA_API_TARGET=http://127.0.0.1:8002` al arrancar Vite.
+En desarrollo, Vite reenvía `/salud`, `/panel`, `/demo`, `/juego`, `/reto` y `/ws` al backend configurado (por defecto `127.0.0.1:8000`), conservando el origen del navegador para validación same-host. Otro servicio local se puede elegir con `NAVIRA_API_TARGET=http://127.0.0.1:8002` al arrancar Vite. Al modificar el proxy en `vite.config.ts`, Vite reinicia el servidor de desarrollo automáticamente.
 
 ### Backend para el tablero
 
