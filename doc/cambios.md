@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-061 — Coordinar las rutas del grupo por snapshot
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: continuación del usuario para implementar una detección de mejores rutas con prioridad en reducir sobrevivientes mordidos.
+- Especificación/tareas: PRD-03/10, TRD-14, SPEC-002 CA-002-11; P3-03/T-35 parcial. No completa T-11, T-22 ni SPEC-002.
+- Motivo: decisiones aisladas podían dirigir simultáneamente a varios sobrevivientes hacia una misma salida, sin evaluar la congestión de grupo.
+- Resultado: `DecidirPaso` cachea una asignación de rutas por `(runId, snapshot, mapa)` y la comparte entre `/paso`, runner y panel. Prioriza exposición visible acumulada; el uso de un destino ya asignado desempata suavemente rutas de riesgo igual. La exposición tiene prioridad sobre congestión y costo; el resolutor sigue decidiendo mordidas/colisiones con sus reglas vigentes. Un superviviente aislado conserva búsqueda temporal completa; para cohortes se usa pronóstico observable con continuación estática en candidatos para acotar fan-out.
+- Archivos: `src/navira/application/decidir_paso.py`, `tests/test_decidir_paso.py`; ADR-020, SPEC-002, algoritmos, pruebas, trazabilidad, plan, estado, índices y [reporte](resultados/coordinacion-rutas-cam061.md).
+- Verificación: 12 pruebas enfocadas `test_decidir_paso.py` pasan, incluido embudo compartido y prioridad de exposición ante congestión. Suite backend completa: 176 pruebas OK. Validadores docs/SDD, ocho regresiones SDD, `compileall` y `git diff --check` correctos. Evaluación fría local sobre Manta/mixto/alta/eventos (semilla 20261026), 20/80/200 tardó 28,73/34,36/92,52 ms de planificación interna. En tres pares de seis turnos (semillas 101/202/303, 20, alta/eventos), coordinación registró 26 mordidos/4 evacuados/30 activos frente a Dijkstra 39/6/15: menos mordidos en los tres pares, pero menos evacuados al turno seis; ver [reporte](resultados/coordinacion-rutas-cam061.md). Es muestra exploratoria, no p95 HTTP, ciclo ni efecto causal de la coordinación aislada.
+- Límites: el caso de prueba solo acredita descongestión en un embudo; la comparación emparejada reporta la política completa frente a Dijkstra, pero no aísla el aporte causal de coordinación frente a temporal individual. No se modelan capacidades de calles/refugios ni colisiones entre sobrevivientes. La composición es sintética y la predicción aproximada.
+- Siguiente acción: ampliar evaluación con más semillas, poblaciones 20/80/200 y horizonte mayor; aislar coordinación frente a política temporal individual y medir HTTP/ronda.
+- Commit individual local en `master` con mensaje `feat: coordinate evacuation routes per snapshot`. El push a `origin/master` falló porque Git no pudo solicitar usuario para HTTPS.
+
 ## CAM-059 — Alinear la ruta mostrada, la acción y el escape de peligro inmediato
 
 - Fecha: 2026-10-26, Ecuador continental.

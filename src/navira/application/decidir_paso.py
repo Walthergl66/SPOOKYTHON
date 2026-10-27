@@ -16,7 +16,7 @@ from navira.domain.modelo import (
     Sobreviviente,
     TipoZombie,
 )
-from navira.routing.dijkstra import PerfilCostos, seleccionar_refugio
+from navira.routing.dijkstra import PerfilCostos, Ruta, seleccionar_refugio
 from navira.routing.prediccion import (
     SobrevivienteObservable,
     ZombieObservable,
@@ -95,6 +95,9 @@ class DecidirPaso:
         self._cache_rutas_snapshot: tuple[str, int, str] | None = None
         self._cache_rutas: dict[str, tuple[str, ...]] = {}
         self._cache_rutas_por_personaje: dict[str, Lock] = {}
+        self._cache_plan_lock = Lock()
+        self._cache_plan_clave: tuple[str, int, str] | None = None
+        self._cache_plan: dict[str, tuple[str, ...]] = {}
 
     def ejecutar(self, solicitud: SolicitudPaso) -> DecisionPaso:
         snapshot, sobreviviente, grafo = self._obtener_contexto(solicitud)
@@ -143,6 +146,17 @@ class DecidirPaso:
         """
 
         clave = (snapshot.partida.run_id, snapshot.version, grafo.mapa.version)
+        # Plan all active residents together once per immutable world version.
+        # This makes batch simulation, concurrent /paso calls and panel previews
+        # consume the same coordinated first actions.
+        with self._cache_plan_lock:
+            if clave != self._cache_plan_clave:
+                self._cache_plan = self._planificar_conjunto(snapshot, grafo)
+                self._cache_plan_clave = clave
+            coordinated = self._cache_plan.get(sobreviviente.id)
+        if coordinated is not None:
+            return coordinated
+
         with self._cache_rutas_lock:
             if clave != self._cache_rutas_snapshot:
                 self._cache_rutas_snapshot = clave
@@ -159,6 +173,146 @@ class DecidirPaso:
                 if clave == self._cache_rutas_snapshot:
                     self._cache_rutas[sobreviviente.id] = trayecto
             return trayecto
+
+    def _planificar_conjunto(
+        self, snapshot: SnapshotMundo, grafo: Grafo
+    ) -> dict[str, tuple[str, ...]]:
+        """Assigns a risk-first next step to every active survivor in one turn.
+
+        For a group, each shortest legal route is a baseline. When predicted
+        exposure or a contested first step warrants it, the planner considers
+        legal outgoing alternatives with static tails and a shared forecast.
+        It applies a soft per-turn congestion penalty only after exposure.
+        Threat exposure always ranks before congestion and route length; this
+        does not invent node capacity or alter resolver collision rules.
+        """
+        activos = tuple(
+            s for s in snapshot.partida.sobrevivientes
+            if s.estado is EstadoSobreviviente.ACTIVO
+        )
+        if not activos:
+            return {}
+        # Preserve the full bounded temporal search for a lone evacuee; group
+        # planning below uses one shared observable forecast plus static tails
+        # so a single /paso request does not fan out hundreds of 25 ms searches.
+        if len(activos) == 1:
+            survivor = activos[0]
+            return {survivor.id: self._seleccionar_trayecto(snapshot, grafo, survivor)}
+        nodos, cruces = peligros_visibles(snapshot, grafo)
+        zombies = tuple(
+            ZombieObservable(z.id, z.tipo, z.nodo)
+            for z in snapshot.partida.zombies
+            if z.estado is EstadoZombie.ACTIVO and z.tipo is not TipoZombie.DORMIDO
+        )
+        observables = tuple(SobrevivienteObservable(s.id, s.nodo) for s in activos)
+        actual = CondicionTurno(
+            nodos_bloqueados=frozenset(nodos), aristas_cerradas=snapshot.aristas_cerradas,
+            segmentos_cerrados=snapshot.segmentos_cerrados,
+            aristas_cruce_peligroso=cruces,
+        )
+        actual, futuras = self._pronostico_compartido(snapshot, grafo, actual, zombies, observables)
+        riesgo_actual = actual.exposicion_nodo
+
+        def exposicion_ruta(ruta: tuple[str, ...]) -> float:
+            """Compare candidate paths on the same observable forecast horizon."""
+            return sum(
+                futuras[min(paso, len(futuras) - 1)].exposicion_nodo.get(nodo, 0.0)
+                for paso, nodo in enumerate(ruta[1:])
+            ) if futuras else 0.0
+
+        # Resolve the most exposed residents first; stable IDs make ties replayable.
+        orden = sorted(activos, key=lambda s: (-riesgo_actual.get(s.nodo, 0.0), s.id))
+        asignados: dict[str, tuple[str, ...]] = {}
+        ocupacion: dict[str, int] = {}
+        rutas_restantes: dict[tuple[str, str | None], Ruta | None] = {}
+        for survivor in orden:
+            candidatos: dict[str, tuple[float, float, tuple[str, ...]]] = {}
+            clave_base = (survivor.nodo, survivor.refugio_objetivo)
+            if clave_base not in rutas_restantes:
+                rutas_restantes[clave_base] = seleccionar_refugio(
+                    grafo, survivor.nodo, refugio_objetivo=survivor.refugio_objetivo,
+                    aristas_cerradas=actual.aristas_cerradas | actual.aristas_cruce_peligroso,
+                    segmentos_cerrados=actual.segmentos_cerrados,
+                    nodos_bloqueados=actual.nodos_bloqueados, perfil=self._perfil,
+                )
+            ruta_base = rutas_restantes[clave_base]
+            if ruta_base is not None and ruta_base.calles:
+                trayecto_base = (survivor.nodo, *(c.destino for c in ruta_base.calles))
+                destino_base = trayecto_base[1]
+                candidatos[destino_base] = (
+                    exposicion_ruta(trayecto_base), ruta_base.costo_ponderado_m, trayecto_base
+                )
+                # Common low-risk case: keep the shortest legal route without
+                # running alternatives for every resident in a large cohort.
+                if candidatos[destino_base][0] == 0 and ocupacion.get(destino_base, 0) == 0:
+                    asignados[survivor.id] = trayecto_base
+                    ocupacion[destino_base] = 1
+                    continue
+            for calle in grafo.calles_desde(
+                survivor.nodo,
+                aristas_cerradas=actual.aristas_cerradas | actual.aristas_cruce_peligroso,
+                segmentos_cerrados=actual.segmentos_cerrados,
+            ):
+                if calle.destino in actual.nodos_bloqueados:
+                    continue
+                clave_ruta = (calle.destino, survivor.refugio_objetivo)
+                if clave_ruta not in rutas_restantes:
+                    rutas_restantes[clave_ruta] = seleccionar_refugio(
+                        grafo, calle.destino, refugio_objetivo=survivor.refugio_objetivo,
+                        aristas_cerradas=actual.aristas_cerradas,
+                        segmentos_cerrados=actual.segmentos_cerrados,
+                        nodos_bloqueados=actual.nodos_bloqueados, perfil=self._perfil,
+                    )
+                ruta = rutas_restantes[clave_ruta]
+                if ruta is None:
+                    continue
+                camino = (survivor.nodo, calle.destino, *(c.destino for c in ruta.calles))
+                # Collapse a duplicate destination when it is itself the shelter.
+                camino = tuple(dict.fromkeys(camino)) if ruta.destino == calle.destino else camino
+                riesgo = exposicion_ruta(camino)
+                costo = self._perfil.costo(calle) + ruta.costo_ponderado_m
+                existente = candidatos.get(calle.destino)
+                if existente is None or (riesgo, costo) < (existente[0], existente[1]):
+                    candidatos[calle.destino] = (riesgo, costo, camino)
+            if not candidatos:
+                # A complete refuge path is unavailable. Take the cheapest
+                # immediate safe exit by next-turn exposure; do not launch a
+                # separate temporal search for every trapped resident.
+                salidas = tuple(
+                    calle for calle in grafo.calles_desde(
+                        survivor.nodo,
+                        aristas_cerradas=actual.aristas_cerradas | actual.aristas_cruce_peligroso,
+                        segmentos_cerrados=actual.segmentos_cerrados,
+                    )
+                    if calle.destino not in actual.nodos_bloqueados
+                )
+                if salidas:
+                    destino = min(
+                        salidas,
+                        key=lambda calle: (
+                            futuras[0].exposicion_nodo.get(calle.destino, 0.0) if futuras else 0.0,
+                            ocupacion.get(calle.destino, 0),
+                            self._perfil.costo(calle),
+                            calle.destino,
+                        ),
+                    ).destino
+                    asignados[survivor.id] = (survivor.nodo, destino)
+                    ocupacion[destino] = ocupacion.get(destino, 0) + 1
+                else:
+                    asignados[survivor.id] = (survivor.nodo,)
+                continue
+            destino = min(
+                candidatos,
+                key=lambda node: (
+                    candidatos[node][0],
+                    ocupacion.get(node, 0),
+                    candidatos[node][1],
+                    node,
+                ),
+            )
+            asignados[survivor.id] = candidatos[destino][2]
+            ocupacion[destino] = ocupacion.get(destino, 0) + 1
+        return asignados
 
     def _obtener_contexto(self, solicitud: SolicitudPaso) -> tuple[SnapshotMundo, Sobreviviente, Grafo]:
         """Valida identidad temporal y carga el grafo antes de planificar."""

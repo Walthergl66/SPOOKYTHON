@@ -20,6 +20,10 @@ Los límites iniciales por invocación son 20.000 expansiones y 25 ms. Estos no 
 
 Si se optimizan turnos, la heurística debe ser una cota inferior en saltos; si se usa tiempo ponderado, mantener unidades compatibles. No sumar metros, segundos y probabilidades sin normalización y justificación. Registrar fórmula, parámetros y escenario de ajuste.
 
+## Coordinación de cohortes
+
+CAM-061/ADR-020 calculan una asignación común de rutas para sobrevivientes activos del snapshot. Primero ordenan a quienes tienen mayor exposición observable actual; luego evalúan opciones legales del primer paso por exposición acumulada pronosticada, ocupación de destino ya asignada como desempate suave, costo restante y un desempate estable. La ruta individual temporal permanece como candidata. La elección se recalcula al cambiar el snapshot, y la ruta del panel, `/paso` y el runner reutilizan la misma asignación. Es coordinación heurística de receding horizon, no un óptimo global: las salidas alternativas usan continuación estática y no se reserva capacidad física. La T-35 de grafo mínimo no demuestra reducción de mordidas; validar cohortes con semillas emparejadas y medir coste total por ronda.
+
 ## Predicciones por tipo
 
 - Caminante: fase de movimiento y distribución sobre vecinos legales.

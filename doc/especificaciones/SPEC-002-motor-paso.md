@@ -4,9 +4,9 @@ ID: SPEC-002
 Estado: implementada
 Requisitos: PRD-03, PRD-09, PRD-10, TRD-01, TRD-02, TRD-05, TRD-06, TRD-09, TRD-12, TRD-14
 Tareas: P0-01, P0-02, P2-01, P2-02, P2-03, P3-01, P3-02, P3-03
-Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30, T-31, T-32, T-33, T-34
-Cambio: CAM-060
-Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044, CAM-058, CAM-059 y CAM-060 en [cambios](../cambios.md) y sus reportes locales.
+Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30, T-31, T-32, T-33, T-34, T-35
+Cambio: CAM-061
+Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044, CAM-058, CAM-059, CAM-060 y CAM-061 en [cambios](../cambios.md) y sus reportes locales.
 
 ## Objetivo y alcance
 
@@ -26,6 +26,7 @@ Dar un siguiente paso válido y oportuno hacia un refugio, priorizando menor exp
 | CA-002-08 | El cálculo de riesgo distingue contacto en nodo y cruce opuesto: bloquea los cruces confirmados solo para el turno actual y estima cruces futuros por arista dirigida, sin revelar fase privada ni RNG. | T-32 |
 | CA-002-09 | Si no existe una ruta completa a refugio pero hay un vecino libre y legal, el motor propone una salida inmediata priorizando riesgo próximo y luego continuidad topológica; solo espera si no existe salida segura conocida. | T-33 |
 | CA-002-10 | Solo un sobreviviente activo puede recibir mordida; una llegada confirmada al refugio permanece terminal en turnos siguientes. | T-34 |
+| CA-002-11 | Las rutas de sobrevivientes activos se asignan conjuntamente por snapshot; la exposición prevista precede a congestión y costo, y la ruta mostrada coincide con la acción automática. El resolutor conserva autoridad sobre colisiones y mordidas. | T-35, T-31 |
 
 ## Plan y módulos
 

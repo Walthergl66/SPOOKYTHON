@@ -30,7 +30,7 @@ El pronóstico sigue siendo una aproximación con caminantes aleatorios, sobrevi
 - T-32 comprueba riesgo estimado de cruce opuesto y vigencia temporal de cruces conocidos.
 - T-33 comprueba la salida inmediata cuando no existe una ruta completa.
 - El run observado por el usuario terminó con 20 mordidos, 0 evacuados y 0 activos en el turno 12, con 67 zombies visibles. En tres pares exploratorios (20, mixto, intensidad alta, cierres activos, 12 turnos), CAM-059 produjo seis mordidos menos agregados que Dijkstra, y no tuvo más mordidos en ningún par. La corrección no se puede presentar como mejora universal; hacen falta más semillas.
-- El límite temporal por recomendación sigue vigente y cada personaje conserva su cálculo independiente; no se implementa coordinación global de multitudes.
+- El límite temporal por recomendación sigue vigente. La asignación conjunta posterior se registra en [ADR-020](0020-planificacion-coordinada-por-snapshot.md); esta decisión conserva su alcance de cruces y coherencia de ruta.
 
 ## Documentos y módulos afectados
 

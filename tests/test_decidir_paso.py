@@ -177,6 +177,74 @@ class DecidirPasoTests(unittest.TestCase):
         self.assertEqual(decision.siguiente_nodo, ruta[1])
         self.assertEqual(seleccionar.call_count, 1)
 
+    def test_plan_compartido_reparte_un_embudo_sin_cambiar_reglas_de_riesgo(self) -> None:
+        grafo = Grafo(Mapa(
+            version="coordinacion-v1",
+            nodos=tuple(Nodo(n, 0, i) for i, n in enumerate(("A", "B", "C", "D"))),
+            calles=(
+                Calle("E-AB", "S-AB", "A", "B", 10, TipoCalle.CALLE, 20),
+                Calle("E-AC", "S-AC", "A", "C", 10, TipoCalle.CALLE, 20),
+                Calle("E-BD", "S-BD", "B", "D", 10, TipoCalle.CALLE, 20),
+                Calle("E-CD", "S-CD", "C", "D", 10, TipoCalle.CALLE, 20),
+            ),
+            refugios=(Refugio("R-D", "D"),),
+        ))
+        partida = Partida(
+            run_id="run-coordination", modo=ModoPartida.SIMULADOR, escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(Sobreviviente("S-1", "A"), Sobreviviente("S-2", "A")),
+            estado=EstadoPartida.ACTIVA, turno=1, fase=FaseTurno.DECISIONES,
+        )
+        servicio = DecidirPaso(
+            SnapshotStub(SnapshotMundo(partida, version=1)), CatalogoMapasMemoria((grafo,))
+        )
+
+        ruta_1 = servicio.prever_ruta(SolicitudPaso("S-1", "A", 1))
+        ruta_2 = servicio.prever_ruta(SolicitudPaso("S-2", "A", 1))
+
+        self.assertEqual({ruta_1[1], ruta_2[1]}, {"B", "C"})
+        self.assertEqual(
+            servicio.ejecutar(SolicitudPaso("S-1", "A", 1)).siguiente_nodo, ruta_1[1]
+        )
+        self.assertEqual(
+            servicio.ejecutar(SolicitudPaso("S-2", "A", 1)).siguiente_nodo, ruta_2[1]
+        )
+
+    def test_congestion_no_envia_a_una_salida_con_mayor_exposicion(self) -> None:
+        grafo = Grafo(Mapa(
+            version="coordinacion-riesgo-v1",
+            nodos=tuple(Nodo(n, 0, i) for i, n in enumerate(("A", "B", "C", "D"))),
+            calles=(
+                Calle("E-AB", "S-AB", "A", "B", 1, TipoCalle.CALLE, 20),
+                Calle("E-AC", "S-AC", "A", "C", 10, TipoCalle.CALLE, 20),
+                Calle("E-BD", "S-BD", "B", "D", 1, TipoCalle.CALLE, 20),
+                Calle("E-CD", "S-CD", "C", "D", 10, TipoCalle.CALLE, 20),
+            ),
+            refugios=(Refugio("R-D", "D"),),
+        ))
+        partida = Partida(
+            run_id="run-coordination-risk", modo=ModoPartida.SIMULADOR, escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(Sobreviviente("S-1", "A"), Sobreviviente("S-2", "A")),
+            estado=EstadoPartida.ACTIVA, turno=1, fase=FaseTurno.DECISIONES,
+        )
+        servicio = DecidirPaso(
+            SnapshotStub(SnapshotMundo(partida, version=1)), CatalogoMapasMemoria((grafo,))
+        )
+        pronostico = SimpleNamespace(
+            turnos=(CondicionTurno(exposicion_nodo={"B": 1.0}), CondicionTurno()),
+            supuestos=("riesgo_sintetico_de_prueba",),
+        )
+        with patch(
+            "navira.application.decidir_paso.pronosticar_zombies_visibles",
+            return_value=pronostico,
+        ):
+            ruta_1 = servicio.prever_ruta(SolicitudPaso("S-1", "A", 1))
+            ruta_2 = servicio.prever_ruta(SolicitudPaso("S-2", "A", 1))
+
+        self.assertEqual(ruta_1[1], "C")
+        self.assertEqual(ruta_2[1], "C")
+
     def test_snapshot_nuevo_invalida_el_trayecto_cacheado(self) -> None:
         servicio = self.servicio()
         stub = servicio._snapshots

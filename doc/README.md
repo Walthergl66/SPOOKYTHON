@@ -40,11 +40,12 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [decisiones/0016-mapa-maplibre-openfreemap.md](decisiones/0016-mapa-maplibre-openfreemap.md) | Renderer MapLibre, proveedor vectorial OpenFreeMap y límites 3D | Cambie el proveedor, estilo, credenciales o forma de renderizar geometría. |
 | [decisiones/0017-perfiles-sinteticos-de-amenazas.md](decisiones/0017-perfiles-sinteticos-de-amenazas.md) | Intensidad sintética distribuida por sectores e incidentes viales de demo | Cambien densidades configurables, composición o calendario de cierres de demo. |
 | [decisiones/0018-politica-riesgo-prioritario.md](decisiones/0018-politica-riesgo-prioritario.md) | Política temporal que prioriza exposición observable, respaldo Dijkstra y criterio mordidos/evacuados | Cambie orden de objetivos, horizonte, modelo de riesgo o respaldo de ruta. |
+| [decisiones/0020-planificacion-coordinada-por-snapshot.md](decisiones/0020-planificacion-coordinada-por-snapshot.md) | Asignación conjunta y penalización suave de congestión por snapshot | Cambie la política coordinada o su objetivo/costo. |
 | [contratos/api.md](contratos/api.md) | Contrato HTTP y autenticación | Cambien rutas, cuerpos o errores. Estado y ejemplos de las proyecciones del panel incluyen CAM-031. |
 | [contratos/eventos.md](contratos/eventos.md) | Contrato WebSocket y orden de mensajes | Cambien eventos o recuperación. El canal de snapshots del panel se implementa localmente en CAM-032. |
 | [datos.md](datos.md) | Entidades, estados e identidad de versiones | Cambie persistencia o proyección. |
 | [mapa-manta.md](mapa-manta.md) | Procedencia, alcance y límites del fixture geográfico de Manta | Cambien las fuentes, extensión o metodología del dataset. |
-| [algoritmos.md](algoritmos.md) | Planificación y predicción | Cambie la política de rutas. |
+| [algoritmos.md](algoritmos.md) | Planificación y predicción, incluida coordinación por snapshot CAM-061 | Cambie la política de rutas. |
 | [infraestructura.md](infraestructura.md) | Despliegue y operación AWS | Cambie un recurso o procedimiento. |
 | [seguridad.md](seguridad.md) | Autenticación y límites de confianza | Cambien accesos o secretos. |
 | [pruebas.md](pruebas.md) | Verificación y métricas | Cambie comportamiento o aceptación. |
@@ -63,6 +64,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](contexto.md),
 | [resultados/generador-amenazas-cam057.md](resultados/generador-amenazas-cam057.md) | Verificación del generador sintético de amenazas y cierres viales CAM-057 | Repetir pruebas de densidad espacial, semilla, privacidad de dormidos y aplicación de incidentes; no acredita parámetros oficiales. |
 | [resultados/politica-riesgo-cam058.md](resultados/politica-riesgo-cam058.md) | Integración local y comparación emparejada riesgo-primero CAM-058 | Cambien la política o se repita la evaluación; no acredita T-11 ni mejora por semilla o uso de emergencia. |
 | [resultados/ruta-cruces-cam059.md](resultados/ruta-cruces-cam059.md) | Diagnóstico 20/20 mordidos, exposición de cruces futuros y consistencia de ruta CAM-059 | Cambien el modelo de cruces o se repita evaluación; evidencia parcial no acredita menor mortalidad universal. |
+| [resultados/coordinacion-rutas-cam061.md](resultados/coordinacion-rutas-cam061.md) | Comparación exploratoria de la política coordinada contra Dijkstra en tres pares CAM-061 | Cambien la política, muestra o evaluación; no acredita efecto causal separado ni mejora universal. |
 | [resultados/busqueda-temporal-cam033.md](resultados/busqueda-temporal-cam033.md) | Tiempo de búsqueda temporal por llamada para cohortes sintéticas 20/80/200 | Nueva versión de algoritmo o ejecución comparativa; no es medición HTTP ni T-22. |
 | [resultados/comparacion-rutas-cam035.md](resultados/comparacion-rutas-cam035.md) | Comparación emparejada Dijkstra/temporal en tres turnos locales | Cambien política, semilla, mapa, perfiles o método comparativo. No reemplaza T-22/T-11. |
 | [costos.md](costos.md) | Estimación y gasto real | Cambie infraestructura o consumo. |

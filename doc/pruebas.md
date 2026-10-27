@@ -48,6 +48,7 @@ Estado: estrategia parcialmente implementada; hay suites para modelo, grafo, res
 | T-32 | Riesgo de cruces en rutas | El pronóstico visible estima la probabilidad de que un zombie use una arista opuesta del mismo segmento; un cruce confirmado afecta solo el turno actual y no se confunde con un cierre persistente. Dormidos y RNG privado permanecen fuera. |
 | T-33 | Escape cuando no hay ruta completa | Si un zombie ocupa la única ruta hasta el refugio y hay un vecino libre, el planificador recomienda moverse hacia una salida; la acción y ruta mostrada coinciden. Si todos los vecinos están ocupados/cerrados, la espera sigue siendo válida. |
 | T-34 | Evacuación terminal | Una persona evacuada en un nodo que luego ocupa una horda no vuelve a ser elegible para mordida; su estado permanece evacuado. |
+| T-35 | Plan compartido y descongestión suave | En el mismo snapshot los pasos se asignan conjuntamente; con exposición equivalente se distribuyen por salidas alternativas legales, una nueva versión invalida el plan y la vista previa/action comparten la asignación. No se infieren capacidades ni seguridad garantizada. |
 
 ## Medición de la prueba de fuego
 
@@ -88,6 +89,8 @@ Ejecutar Dijkstra y política mejorada sobre los mismos escenarios, versiones y 
 T-33 queda cubierto por `test_sin_ruta_completa_escapa_de_zombie_si_hay_vecino_libre` en `tests/test_decidir_paso.py`, dentro de la suite de planificación indicada arriba. El desempate prioriza riesgo observable para el siguiente turno y después costo estático hacia un refugio; no promete que el camino futuro permanezca abierto.
 
 T-34 queda cubierto por `test_sobreviviente_ya_evacuado_no_puede_ser_mordido_en_turnos_posteriores` en `tests/test_resolver.py`. La mordida se evalúa solo para sobrevivientes activos al comenzar las decisiones; evacuar después de una resolución válida conserva el estado terminal.
+
+T-35 queda cubierto parcialmente por `test_plan_compartido_reparte_un_embudo_sin_cambiar_reglas_de_riesgo` en `tests/test_decidir_paso.py`. Confirma asignaciones distintas en un grafo mínimo y coincidencia con la recomendación. No mide mejora de mordidas en cohortes ni reglas de colisión del resolutor.
 
 P0-04: desde `frontend/`, `npm ci && npm run build` verifica lockfile, TypeScript estricto y bundle de producción. La pantalla inicial soporta selección de modos con teclado mediante botones semánticos, estados `aria-pressed`, foco visible y movimiento reducido; revisar visualmente en anchos móvil y escritorio al cambiar el layout. `.github/workflows/ci.yml` ejecuta además la suite unittest y validadores documentales en GitHub Actions. La compilación local no demuestra que el workflow haya corrido en remoto.
 
