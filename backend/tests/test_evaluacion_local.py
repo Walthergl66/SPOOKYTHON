@@ -19,14 +19,14 @@ class EvaluacionLocalTests(unittest.TestCase):
         )
 
         self.assertEqual(reporte["medicion"], "exploratoria_local_http_loopback")
-        self.assertEqual(reporte["mapaVersion"], "manta-osm-090f92326450")
+        self.assertEqual(reporte["mapaVersion"], "manta-osm-9ad9f078e0a9")
         self.assertEqual(reporte["turnosEjecutados"], 2)
-        self.assertEqual(reporte["solicitudes"], 39)
+        self.assertEqual(reporte["solicitudes"], 40)
         self.assertEqual(reporte["fallidas"], 0)
-        self.assertEqual(reporte["estadosHttp"], {"200": 39})
+        self.assertEqual(reporte["estadosHttp"], {"200": 40})
         turnos = reporte["turnos"]
         self.assertEqual([turno["turno"] for turno in turnos], [0, 1])
-        self.assertEqual([turno["solicitudes"] for turno in turnos], [20, 19])
+        self.assertEqual([turno["solicitudes"] for turno in turnos], [20, 20])
         self.assertEqual([turno["versionResuelta"] for turno in turnos], [2, 5])
         self.assertTrue(reporte["menorA500ms"])
         self.assertIn("AWS", " ".join(reporte["limites"]))

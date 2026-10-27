@@ -3,7 +3,7 @@ import { Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl'
 import type { GeoJSONSource } from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { nodoMasCercano, type SimulatorCandidatos } from '../../domain/simulator'
+import { nodoMasCercano, type CandidatoNodo, type SimulatorCandidatos } from '../../domain/simulator'
 
 interface RefugePickerProps {
   candidates: SimulatorCandidatos
@@ -14,18 +14,24 @@ interface RefugePickerProps {
   onPlace: (index: number | null) => void
   onClear: (index: number) => void
   onReset: () => void
-  /** Texto del motivo si el selector está bloqueado (partida en curso o pausada); null si se puede editar. */
+  /** Texto del motivo si el selector está bloqueado (partida en curso); null si se puede editar. */
   lockedReason?: string | null
-  /** Aviso informativo que no bloquea la edición (p. ej. la selección se aplica al reiniciar). */
-  note?: string | null
 }
 
+// Mismo estilo base que el mapa de simulación (CityMap) para que las calles se vean igual.
 const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfreemap.org/styles/dark'
 
 setWorkerUrl(mapWorkerUrl)
 
-/** Selector de refugios previo a la partida: el mapa es decorativo; el estado accesible está en el texto y los chips. */
-export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, onPlace, onClear, onReset, lockedReason = null, note = null }: RefugePickerProps) {
+/** Caja [[oeste, sur], [este, norte]] que cubren los nodos; null si no hay nodos. */
+function limitesDeNodos(nodos: CandidatoNodo[]): [[number, number], [number, number]] | null {
+  if (nodos.length === 0) return null
+  const lngs = nodos.map((n) => n.lng), lats = nodos.map((n) => n.lat)
+  return [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]]
+}
+
+/** Selector de refugios: el mapa es decorativo; el estado accesible está en el texto y los chips. */
+export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, onPlace, onClear, onReset, lockedReason = null }: RefugePickerProps) {
   const disabled = lockedReason !== null
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
@@ -55,14 +61,13 @@ export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, on
       instance.addSource('picker-streets', { type: 'geojson', data: { type: 'FeatureCollection', features: lines } as never })
       instance.addSource('picker-nodes', { type: 'geojson', data: { type: 'FeatureCollection', features: points } as never })
       instance.addSource('picker-refuges', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
-      instance.addLayer({ id: 'picker-streets', source: 'picker-streets', type: 'line', paint: { 'line-color': '#85b9d2', 'line-opacity': 0.3, 'line-width': 1 } })
-      instance.addLayer({ id: 'picker-nodes', source: 'picker-nodes', type: 'circle', paint: { 'circle-radius': 2, 'circle-color': '#b0e2d2', 'circle-opacity': 0.8 } })
+      // Trazo igual al de CityMap: calles finas y tenues que se marcan al acercar el zoom.
+      instance.addLayer({ id: 'picker-streets', source: 'picker-streets', type: 'line', paint: { 'line-color': '#85b9d2', 'line-opacity': 0.28, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.2, 16, 3.2] } })
+      instance.addLayer({ id: 'picker-nodes', source: 'picker-nodes', type: 'circle', paint: { 'circle-radius': 2, 'circle-color': '#b0e2d2', 'circle-opacity': 0.6 } })
       instance.addLayer({ id: 'picker-refuges', source: 'picker-refuges', type: 'circle', paint: { 'circle-radius': 9, 'circle-color': '#47cf91', 'circle-stroke-color': '#f4f7fc', 'circle-stroke-width': 1.5 } })
       instance.addLayer({ id: 'picker-refuge-labels', source: 'picker-refuges', type: 'symbol', layout: { 'text-field': ['get', 'label'], 'text-size': 10, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true }, paint: { 'text-color': '#0b1a14' } })
-      if (nodos.length) {
-        const lngs = nodos.map((n) => n.lng), lats = nodos.map((n) => n.lat)
-        instance.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: 16, duration: 0 })
-      }
+      const bounds = limitesDeNodos(nodos)
+      if (bounds) instance.fitBounds(bounds, { padding: 16, duration: 0 })
       setReady(true)
     })
     instance.on('click', (event) => {
@@ -103,7 +108,6 @@ export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, on
         ))}
       </ul>
       <p className="refuge-picker-hint">{placing !== null ? `Colocando ${refugeIds[placing]}: haz clic en el mapa.` : placed === refugeIds.length ? 'Listo. Elige un chip para reemplazar un refugio.' : 'Haz clic en una intersección para colocar el siguiente refugio.'}{placed > 0 && placed < refugeIds.length ? ' Con menos de 4 se usan los refugios del mapa.' : ''}</p>
-      {note ? <p className="refuge-picker-hint">{note}</p> : null}
       {lockedReason ? <p className="refuge-picker-notice">{lockedReason}</p> : null}
       {notice ? <p className="refuge-picker-notice" role="status">{notice}</p> : null}
       <button type="button" className="refuge-reset" onClick={() => { onReset(); setNotice(null) }} disabled={disabled || placed === 0}>Restablecer</button>

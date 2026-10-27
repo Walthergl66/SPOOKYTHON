@@ -34,7 +34,6 @@ URL_GAD_MAPAS = "https://darf-manta.github.io/evacuacion-tsunami/"
 # Barbasquillo nombrados en el reto. Las cajas pequeñas respetan el límite de
 # nodos de la API de edición de OSM; si una excede el límite se subdivide.
 CAJA = (-0.967, -80.755, -0.935, -80.675)  # sur, oeste, norte, este
-OBJETIVO_NODOS = 1500
 TIPOS_VIALES = {
     "motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link",
     "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified",
@@ -208,7 +207,7 @@ def construir_grafo_completo(
     importantes = {ref for ref, ids_vias in formas.items() if len(ids_vias) != 2} | extremos | anclas_osm
     coordenadas = {ref: coord for ref, coord in nodos_osm.items() if ref in importantes and _dentro_caja(coord)}
     segmentos: list[dict[str, object]] = []
-    for via_id, referencias, etiquetas in vias:
+    for indice_tramo, (via_id, referencias, etiquetas) in enumerate(vias):
         posiciones_importantes = [indice for indice, ref in enumerate(referencias) if ref in coordenadas]
         for inicio, fin in zip(posiciones_importantes, posiciones_importantes[1:]):
             origen, destino = referencias[inicio], referencias[fin]
@@ -219,7 +218,7 @@ def construir_grafo_completo(
                 continue
             tipo, velocidad = _tipo_y_velocidad(etiquetas)
             segmentos.append({
-                "segmento": f"S-OSM-{via_id}-{inicio}-{fin}",
+                "segmento": f"S-OSM-{via_id}-{indice_tramo}-{inicio}-{fin}",
                 "way_id": via_id, "desde": origen, "hasta": destino,
                 "distancia": round(distancia, 2), "tipo": tipo, "velocidad": round(velocidad, 2),
                 "oneway": etiquetas.get("oneway", "").lower(),
@@ -300,20 +299,17 @@ def seleccionar_mapa(
     # Expandimos hacia atrás desde cada refugio. Así cada nodo incluido
     # conserva al menos un camino dirigido hasta una zona segura, incluso en
     # calles de un solo sentido.
+    # Sin tope de tamaño: la red incluye todo nodo con ruta dirigida a un refugio.
     elegidos = set(anclas.values())
-    if len(elegidos) > OBJETIVO_NODOS:
+    if len(elegidos) != len(ZONAS_SEGURAS):
         raise RuntimeError("Las cuatro zonas seguras no se anclaron a nodos distintos.")
     frontera = deque(sorted(elegidos, key=int))
-    while frontera and len(elegidos) < OBJETIVO_NODOS:
+    while frontera:
         actual = frontera.popleft()
         for precedente in sorted(predecesores[actual], key=int):
             if precedente not in elegidos:
                 elegidos.add(precedente)
                 frontera.append(precedente)
-                if len(elegidos) == OBJETIVO_NODOS:
-                    break
-    if len(elegidos) != OBJETIVO_NODOS:
-        raise RuntimeError(f"Solo {len(elegidos)} nodos tienen ruta dirigida a los refugios.")
 
     ids = sorted(elegidos, key=int)
     nodos_json = [

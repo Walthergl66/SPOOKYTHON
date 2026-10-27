@@ -16,10 +16,10 @@ from navira.domain.snapshot import EventoCierre
 
 
 IntensidadEscenario = Literal["baja", "media", "alta"]
-# Fracción de nodos elegibles con amenaza. El fixture de Manta pasó de 300 a
-# 1500 nodos: estas cifras son 1/5 de 6/14/25 % para mantener el mismo número
-# de amenazas por intensidad (42 en media) y no multiplicar los zombies.
-FRACCION_NODOS_POR_INTENSIDAD: dict[str, float] = {"baja": 0.012, "media": 0.028, "alta": 0.05}
+# Fracción de nodos elegibles con amenaza. Calibrada para el fixture de caja
+# completa (8366 nodos): 18, 42 y 75 amenazas, las mismas cifras que con 1500
+# nodos, para no multiplicar los zombies al crecer la red.
+FRACCION_NODOS_POR_INTENSIDAD: dict[str, float] = {"baja": 0.0022, "media": 0.0050, "alta": 0.0090}
 ESCENARIOS: dict[str, tuple[tuple[TipoZombie, float], ...]] = {
     "libre": (),
     "caminantes": ((TipoZombie.CAMINANTE, 1.0),),

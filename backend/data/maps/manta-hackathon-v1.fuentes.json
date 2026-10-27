@@ -5,7 +5,7 @@
     "licencia": "Open Database License (ODbL)",
     "url": "https://www.openstreetmap.org/copyright",
     "api": "https://api.openstreetmap.org/api/0.6/map",
-    "obtenido_utc": "2026-10-27T03:50:53+00:00",
+    "obtenido_utc": "2026-10-27T04:42:20+00:00",
     "caja_wgs84": {
       "sur": -0.967,
       "oeste": -80.755,
@@ -27,7 +27,8 @@
       "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
       "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
       "distancia_snap_m": 37.3,
-      "nodo_osm": "4135495376"
+      "nodo_osm": "4135495376",
+      "anclaje_origen": "automatica"
     },
     {
       "id": "R-02",
@@ -40,7 +41,8 @@
       "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
       "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
       "distancia_snap_m": 43.4,
-      "nodo_osm": "363670267"
+      "nodo_osm": "363670267",
+      "anclaje_origen": "automatica"
     },
     {
       "id": "R-03",
@@ -53,7 +55,8 @@
       "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
       "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
       "distancia_snap_m": 32.9,
-      "nodo_osm": "363657391"
+      "nodo_osm": "363657391",
+      "anclaje_origen": "automatica"
     },
     {
       "id": "R-04",
@@ -66,7 +69,8 @@
       "evidencia_tsunami": "zona segura señalada en el mapa de evacuación del GAD Manta",
       "evidencia_sismo": "no evaluada; requiere microzonificación y validación estructural",
       "distancia_snap_m": 42.5,
-      "nodo_osm": "4128106912"
+      "nodo_osm": "4128106912",
+      "anclaje_origen": "automatica"
     }
   ],
   "amenazas": {
