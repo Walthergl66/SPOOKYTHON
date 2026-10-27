@@ -2,122 +2,55 @@
 
 Proyecto para el Track A del hackathon: evacuación sobre un grafo de Manta con zombies móviles, rutas recalculadas y dos modos previstos: simulador automático y juego con un personaje humano.
 
-**Estado real al 26 de octubre de 2026:** `/salud`, `POST /paso`, panel HTTP y `WS /ws/panel` están implementados localmente. `NAVIRA_DEMO=1` inicia el simulador sintético. `NAVIRA_GAME_DEMO=1` inicia un juego sintético local con sesión humana, aparición aleatoria y reloj servidor de dos segundos. La demo incluye Radio Navira, recuperación de sesión en el mismo proceso y TTL deslizante configurable de 30 minutos; al vencer devuelve HTTP 410 y conserva el cupo del personaje para esa partida. Mundo, sesión y reserva se pierden al reiniciar; TLS/despliegue, persistencia durable, recuperación tras caída y política productiva de revocación siguen pendientes. El fixture OSM de Manta es parcial.
+**Estado real al 26 de octubre de 2026:** el backend y el tablero están implementados localmente. El estado detallado y lo pendiente está en [estado actual](docs/seguimiento/estado-actual.md). No hay despliegue en AWS ni persistencia durable todavía.
+
+## Estructura del repositorio
+
+| Ruta | Qué contiene | Dónde empezar |
+|---|---|---|
+| [`backend/`](backend/) | API FastAPI, dominio, rutas, simulación, datos del mapa, scripts y pruebas Python. | [backend/README.md](backend/README.md) |
+| [`frontend/`](frontend/) | Tablero web React + TypeScript + Vite. | [frontend/README.md](frontend/README.md) |
+| [`docs/`](docs/) | Producto, reglas, arquitectura, decisiones, especificaciones, pruebas y seguimiento. | [docs/README.md](docs/README.md) |
+| [`.agents/`](.agents/) | Guías por área para agentes de código. | [.agents/README.md](.agents/README.md) |
+| [`.claude/`](.claude/) | Reglas, skills y comandos para Claude Code. | — |
+| [`.github/`](.github/) | Integración continua (`ci.yml`): pruebas del backend, validadores y build del frontend. | — |
+| [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | Instrucciones para agentes y colaboradores. | — |
+| [`.gitignore`](.gitignore) | Archivos que no se versionan (entornos, cachés y dependencias). | — |
 
 ## Empezar
 
 1. Agentes y colaboradores: leer [AGENTS.md](AGENTS.md) y seguir el protocolo de lectura antes de editar.
-2. Documentación central: [doc/README.md](doc/README.md).
-3. Qué estamos construyendo: [contexto](doc/contexto.md).
-4. Qué existe y qué sigue: [estado actual](doc/estado-actual.md).
-5. Tareas y dependencias: [plan de implementación](doc/plan-implementacion.md).
+2. Documentación central: [docs/README.md](docs/README.md).
+3. Qué estamos construyendo: [contexto](docs/producto/contexto.md).
+4. Qué existe y qué sigue: [estado actual](docs/seguimiento/estado-actual.md).
+5. Tareas y dependencias: [plan de implementación](docs/seguimiento/plan-implementacion.md).
+
+## Arranque rápido
+
+Requisitos: Python 3.12 o posterior para el backend, Node.js 20.19 o posterior para el frontend.
+
+- Backend: `cd backend`, crear `.venv`, instalar con `python -m pip install -e '.[test]'` y arrancar con el modo que quieras. Pasos completos en [backend/README.md](backend/README.md).
+- Frontend: `cd frontend`, `npm ci` y `npm run dev`. Pasos completos y conexión con el backend en [frontend/README.md](frontend/README.md).
 
 ## Documentos principales
 
-- [Arquitectura](doc/arquitectura.md), [módulos backend](doc/modulos/backend.md) y [módulos frontend](doc/modulos/frontend.md).
-- [Reglas](doc/reglas-juego.md), [modos](doc/modos.md) y [flujos por rol](doc/flujos/roles.md).
-- [API](doc/contratos/api.md), [eventos](doc/contratos/eventos.md) y [datos](doc/datos.md).
-- [Pruebas](doc/pruebas.md), [infraestructura](doc/infraestructura.md), [seguridad](doc/seguridad.md) y [costos](doc/costos.md).
-- [Decisiones](doc/decisiones/README.md), [pendientes](doc/pendientes.md), [cambios](doc/cambios.md) y [continuidad entre agentes](doc/continuidad.md).
-- [PRD](doc/PRD.md), [TRD](doc/TRD.md), [ODDD: OO + DDD](doc/ODDD.md) y [SDD](doc/SDD.md).
-- [Especificaciones por funcionalidad](doc/especificaciones/README.md) y [trazabilidad](doc/trazabilidad.md).
+- [Arquitectura](docs/arquitectura/arquitectura.md), [módulos backend](docs/arquitectura/modulos/backend.md) y [módulos frontend](docs/arquitectura/modulos/frontend.md).
+- [Reglas](docs/dominio/reglas-juego.md), [modos](docs/dominio/modos.md) y [flujos por rol](docs/dominio/flujos/roles.md).
+- [API](docs/arquitectura/contratos/api.md), [eventos](docs/arquitectura/contratos/eventos.md) y [datos](docs/dominio/datos.md).
+- [Pruebas](docs/calidad/pruebas.md), [infraestructura](docs/operacion/infraestructura.md), [seguridad](docs/operacion/seguridad.md) y [costos](docs/operacion/costos.md).
+- [Decisiones](docs/arquitectura/decisiones/README.md), [pendientes](docs/seguimiento/pendientes.md), [cambios](docs/seguimiento/cambios.md) y [continuidad entre agentes](docs/metodo/continuidad.md).
+- [PRD](docs/producto/PRD.md), [TRD](docs/producto/TRD.md), [ODDD: OO + DDD](docs/dominio/ODDD.md) y [SDD](docs/metodo/SDD.md).
+- [Especificaciones por funcionalidad](docs/metodo/especificaciones/README.md) y [trazabilidad](docs/metodo/trazabilidad.md).
 
-## Backend local
+## Comprobaciones
 
-Requiere Python 3.12 o posterior:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e .
-export NAVIRA_API_KEY='local-navira-key-change-me'
-export NAVIRA_DEMO=1
-uvicorn navira.main:app --app-dir src --reload
-```
-
-La demo ubica sobrevivientes y zombies aleatoriamente en nodos elegibles con ruta dirigida al refugio sintético de `D-005`; la recomendación depende de la semilla y del estado inicial. Para usar otro mapa de desarrollo, configura `NAVIRA_DEMO_MAP`; `NAVIRA_DEMO_SEED` fija la semilla para repetir una partida. Si se omite, se genera una semilla nueva. `NAVIRA_DEMO=1` solo configura un simulador en memoria para desarrollo. Para jugar con una persona usa `NAVIRA_GAME_DEMO=1` en lugar de esa variable; el runner arranca con la aplicación y pierde su estado al reiniciar. Ambos modos usan el mapa demo sintético, no Manta ni una guía de evacuación.
-
-Para correr varias rondas automáticas localmente y guardar la salida JSONL:
+Validadores documentales (no prueban la aplicación) y pruebas del backend:
 
 ```bash
-PYTHONPATH=src python -m navira.simulador_demo --escenario mixto --sobrevivientes 20 --turnos 10 --semilla 31 > /tmp/navira-demo.jsonl
+python3 backend/scripts/check_docs.py
+python3 backend/scripts/check_sdd.py
+cd backend && python -m unittest discover -s tests -p 'test_*.py' -v
+cd frontend && npm run build
 ```
 
-Perfiles disponibles: `libre`, `caminantes`, `mixto` y `horda`; `--sobrevivientes` admite de 1 a 200 personajes con posiciones iniciales reproducibles al fijar semilla. `--mapa ruta/al/mapa.json` permite elegir otro mapa que contenga los nodos del perfil. En el mapa incluido las posiciones se reparten al azar entre cuatro nodos y pueden coincidir. El ejecutor termina al evacuar o perder a todos los sobrevivientes activos, o al llegar al límite de turnos. Cada línea reporta el resultado observable de un turno y excluye zombies que siguen dormidos. Esto es una simulación sintética del dominio; no es la prueba concurrente del endpoint ni sustituye las rondas oficiales. El comando no espera dos segundos entre turnos y usa snapshots volátiles.
-
-El fixture de Manta también se puede usar para recorridos sintéticos, por ejemplo con `--mapa data/maps/manta-hackathon-v1.json`. CAM-025 documenta una ejecución de tres turnos con semilla fija y cohortes de 20/80/200; no es una evaluación oficial ni una recomendación de evacuación real.
-
-Para evaluar decisiones HTTP mientras avanza el mundo, el ejecutor local inicia Uvicorn en loopback y consulta `/paso` por cada sobreviviente activo. Los inicios se alinean a una cadencia monotónica de dos segundos (configurable) y el reporte registra latencias y retrasos:
-
-```bash
-PYTHONPATH=src python -m navira.evaluacion_local --turnos 3 --poblaciones 20 80 200 --concurrencia 200 --semilla 20261026 --periodo-segundos 2
-```
-
-CAM-029 documenta esta prueba corta de tres turnos por cohorte. Es evidencia local exploratoria; no sustituye los 150 turnos de cada ronda oficial ni una medición desde AWS o el entorno del evaluador.
-
-Para medir localmente la respuesta HTTP de `/paso`, ejecuta el servidor con la misma configuración y luego corre el cliente desde otra terminal:
-
-```bash
-export NAVIRA_DEMO=1
-export NAVIRA_DEMO_SURVIVORS=20
-export NAVIRA_DEMO_SEED=31
-export NAVIRA_DEMO_SCENARIO=libre
-export NAVIRA_API_KEY='local-navira-key-change-me'
-uvicorn navira.main:app --app-dir src
-```
-
-```bash
-PYTHONPATH=src python -m navira.carga_http --sobrevivientes 20 --semilla 31 --escenario libre --rondas 1 --concurrencia 20
-```
-
-El cliente imprime solicitudes, estados HTTP, errores y p50/p95/p99/max desde el cliente. `--sobrevivientes` acepta 20, 80 o 200 y `--rondas 150` agenda ráfagas cada dos segundos. La configuración del proceso debe coincidir con la del cliente. Cada ráfaga repite el mismo snapshot, por lo que esto mide decisiones HTTP locales, no un turno completo ni la evaluación oficial. La clave debe permanecer en una variable de entorno.
-
-La salud local se consulta en `GET /salud`. El contrato inicial del motor:
-
-```bash
-curl -X POST http://127.0.0.1:8000/paso \
-  -H 'content-type: application/json' \\
-  -H 'x-api-key: local-navira-key-change-me' \\
-  -d '{"sobrevivienteId":"S-DEMO-001","nodoActual":"D-001","turno":0}'
-```
-
-Respuesta demo para `S-DEMO-001`, `D-001`, turno `0`: `{"siguienteNodo":"D-002"}`. El motor devuelve una recomendación del estado actual; no garantiza seguridad futura. Sin `NAVIRA_DEMO=1`, el respaldo responde con el nodo actual. La clave de ejemplo es solo local; reemplázala y no uses una clave real en el repositorio. El contrato documentado está en [API](doc/contratos/api.md); el plan sigue en [estado actual](doc/estado-actual.md).
-
-El fixture de simulación Manta contiene un grafo versionado derivado de OSM y puntos seguros de tsunami citados; es parcial y no es una guía de emergencia. El frontend superpone ese estado sobre cartografía vectorial real consultada en línea mediante MapLibre/OpenFreeMap. La capa base puede mostrar edificios extruidos donde los tiles aportan altura, pero no certifica cobertura, geometría de rutas ni seguridad de refugios. Véanse [mapa Manta](doc/mapa-manta.md) y [ADR-016](doc/decisiones/0016-mapa-maplibre-openfreemap.md).
-
-Comprobación documental disponible, sin dependencias externas:
-
-```bash
-python3 scripts/check_docs.py
-```
-
-Comprueba enlaces locales y que los Markdown de `doc/` sean accesibles desde su índice. No comprueba URLs externas, renderizado o comportamiento de la aplicación.
-
-Validación estructural SDD y regresiones del comprobador:
-
-```bash
-python3 scripts/check_sdd.py
-python3 -m unittest discover -s tests -p 'test_check_sdd.py'
-```
-
-Para ejecutar todas las pruebas de la aplicación y del SDD, instala la dependencia opcional HTTP de pruebas:
-
-```bash
-python -m pip install -e '.[test]'
-python -m unittest discover -s tests -p 'test_*.py' -v
-```
-
-El contrato base de `/paso` se verificó; planificación, idempotencia persistida, rendimiento y rondas completas todavía no están implementados/verificados.
-
-## Frontend local
-
-Requiere Node.js 20.19 o posterior (CI usa Node 24). Desde `frontend/`:
-
-```bash
-npm ci
-npm run dev
-```
-
-Para verificar el bundle: `npm run build`. El tablero muestra el modo real del servidor, controles de demo local, mapa, métricas del snapshot y una ruta Dijkstra seleccionable. Para iniciar el simulador desde los controles, ejecuta el backend con `NAVIRA_LOCAL_DEMO_CONTROL=1`; la superficie está limitada al proceso local, no es administración pública. Sin ese opt-in el panel funciona en modo observación y explica cómo activarlo. La ruta no es una garantía de seguridad. El detalle está en [frontend](doc/modulos/frontend.md).
-
-Para mostrar el panel de juego, inicia el backend con `NAVIRA_GAME_DEMO=1`; para operar una simulación desde el tablero, usa `NAVIRA_LOCAL_DEMO_CONTROL=1`. Sigue [guía frontend](frontend/README.md); Vite reenvía salud, panel, demo, juego y WebSocket al servicio local. El estado se actualiza al cambiar la versión confirmada. Las demos usan snapshots volátiles en un único proceso y no ofrecen replay durable ni recuperación de caída.
+El fixture OSM de Manta es parcial y no es una guía de emergencia. Las metas de latencia, supervivencia y costos son objetivos, no mediciones.
