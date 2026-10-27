@@ -159,6 +159,17 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(sin_zombies.evacuados, ("S-1",))
         self.assertEqual(sin_zombies.partida.sobrevivientes[0].estado, EstadoSobreviviente.EVACUADO)
 
+    def test_sobreviviente_ya_evacuado_no_puede_ser_mordido_en_turnos_posteriores(self) -> None:
+        evacuado = Sobreviviente(
+            "S-evacuado", "N-0004", estado=EstadoSobreviviente.EVACUADO, refugio_objetivo="R-0004"
+        )
+        horda = Zombie("Z-H", TipoZombie.HORDA, "N-0004")
+
+        resultado = self.resolver(iniciar(sobrevivientes=(evacuado,), zombies=(horda,)))
+
+        self.assertEqual(resultado.mordidos, ())
+        self.assertEqual(resultado.partida.sobrevivientes[0].estado, EstadoSobreviviente.EVACUADO)
+
     def test_resolucion_comparte_reglas_entre_modulos(self) -> None:
         intencion = orden(0, "S-1", "N-0002")
         resultados = []

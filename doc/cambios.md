@@ -2,6 +2,36 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-059 — Alinear la ruta mostrada, la acción y el escape de peligro inmediato
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: reporte del usuario: 20 de 20 sobrevivientes mordidos y el indicador de ruta fallando.
+- Especificación/tareas: PRD-03/10, TRD-12/14, SPEC-002 CA-002-07..09; P3-03/T-31/T-32/T-33. No completa T-11, T-22 ni SPEC-002.
+- Problema observado: el run local `navira-demo-aa0bd0cdb27f41b791e44f07c42983b4` terminó al turno 12 con 20 mordidos, 0 evacuados, 0 activos y 67 zombies visibles. El pronóstico ignoraba cruces futuros del resolutor; ante ausencia de ruta completa, fallback podía dejar quieto a un sobreviviente cuyo nodo ya estaba ocupado; panel y simulador creaban instancias diferentes del planificador.
+- Resultado: predicción de exposición a cruces opuestos por arista dirigida; cruce confirmado se limita al paso actual y no se convierte en cierre persistente. El caso sin ruta completa ahora selecciona un vecino legal despejado por riesgo observable próximo y continuidad topológica. El panel y runner comparten una sola instancia de planificador y caché por snapshot/actor, con locks separados por sobreviviente. El evaluador reutiliza el caso de uso de producción y permite configurar intensidad/eventos para reproducir el caso.
+- Archivos de código: `src/navira/routing/temporal.py`, `src/navira/routing/prediccion.py`, `src/navira/application/decidir_paso.py`, `src/navira/application/simulacion_automatica.py`, `src/navira/application/control_simulador_demo.py`, `src/navira/evaluacion_rutas.py` y pruebas de rutas, predicción, runner, control y evaluación.
+- Documentación: ADR-019, SPEC-002, algoritmos, API, pruebas, trazabilidad, plan, módulos backend, índices, estado actual y [reporte CAM-059](resultados/ruta-cruces-cam059.md).
+- Evaluación emparejada exploratoria: mixto, 20, intensidad alta, cierres activos, 12 turnos, semillas 101/202/303. Temporal produjo 42 mordidos, 8 evacuados, 10 activos; Dijkstra 48 mordidos, 5 evacuados, 7 activos. Diferencia agregada: −6 mordidos; temporal quedó igual o mejor por mordidos en los 3 pares. No prueba mejora universal. p95 local por recomendación temporal 90,986/90,105/106,752 ms; no es HTTP ni ciclo de 2 s. Métricas de fallback/preparación específicas ahora se informan no disponibles para el evaluador refactorizado.
+- Verificación: 43 pruebas enfocadas de ruta/predicción/planificación/runner/control/evaluación y suite backend completa (174 OK tras CAM-060); `cd frontend && npm run build` correcto con aviso conocido de chunk MapLibre >500 kB; `python3 scripts/check_docs.py` (86 Markdown/88 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), ocho regresiones de `test_check_sdd.py`, `compileall` y `git diff --check` correctos. La corrida inicial encontró una expectativa demasiado restrictiva sobre la ruta completa; se ajustó para comprobar el primer movimiento legal y luego pasó la suite completa. El smoke de ruta/mapa está en [reporte CAM-059](resultados/ruta-cruces-cam059.md); el defecto de estado terminal descubierto se corrigió en CAM-060.
+- Límites: la comparación tiene tres semillas, regla de zombies provisional y fixture parcial. El run inicial del usuario no se puede deshacer; hay que iniciar otra partida para comprobar el código actualizado. No usar como guía real de evacuación.
+- Siguiente paso: ampliar la comparación de semillas/duración con configuración alta y eventos, contra Dijkstra.
+- Commit individual en `master`: `b6dd754` (`fix: align evacuation route preview and action`).
+
+## CAM-060 — Mantener terminal el estado de evacuación
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: prueba manual de CAM-059 con la prioridad explícita del usuario de reducir mordidas; el panel mostró que el contador de evacuados bajaba en rondas posteriores.
+- Especificación/tareas: SPEC-002 CA-002-10, P3-03/T-34; corrige implementación de R-11 en `doc/reglas-juego.md`. No verifica toda la SPEC ni prueba mejora universal.
+- Diagnóstico: `_resolver_mordidas()` comparaba movimientos de todos los sobrevivientes con posiciones zombie, aunque la regla vigente dice que evacuados y mordidos dejan de participar. Una horda podía convertir un evacuado en mordido y el estado/estadística retrocedía.
+- Cambio: el resolutor limita mordidas a quienes estaban activos al inicio de la fase de decisiones; llegada al refugio permanece resuelta después de las mordidas del mismo turno.
+- Código/prueba: `src/navira/simulation/resolver.py`, `tests/test_resolver.py`; regresión verifica que un evacuado en el nodo de una horda siga evacuado en el turno posterior.
+- Documentación: reglas, SPEC-002, pruebas, trazabilidad, flujo del simulador, módulo backend, plan, estado e índice de especificaciones.
+- Verificación: 12 pruebas de `test_resolver.py`; suite completa 174 OK; build frontend correcto con aviso conocido de chunk MapLibre >500 kB; `python3 scripts/check_docs.py` (86 Markdown/88 archivos), `python3 scripts/check_sdd.py` (ocho SPEC), ocho regresiones del checker, `compileall` y `git diff --check` correctos. Smoke local con semilla 202: el mapa 3D cargó, el panel publicó 20 rutas al inicio y la partida concluyó en turno 18 con 15 mordidos, 5 evacuados y 0 activos. El contador de evacuados no retrocedió durante la observación.
+- Límites: no cambia la prioridad del planificador ni prueba por sí solo que se reduzcan las mordidas antes de evacuar. La partida demo observada bajo el resolutor anterior no se puede revertir; iniciar una nueva con el backend actualizado.
+- Límites de verificación: una semilla y un smoke local no prueban reducción general de mordidas, T-22 ampliada, latencia HTTP ni operación externa.
+- Siguiente paso: ampliar semillas antes de afirmar mejora general; mantener backend y frontend locales activos.
+- Commit individual en `master`: creado para CAM-060 (`fix: keep evacuated survivors safe from later bites`).
+
 ## CAM-056 — Reducir el encuadre cartográfico a 15 km por lado
 
 - Fecha: 2026-10-26, Ecuador continental.

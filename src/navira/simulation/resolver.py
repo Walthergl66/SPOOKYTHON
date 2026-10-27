@@ -205,6 +205,11 @@ def resolver_decisiones(
         movimientos_sobrevivientes,
         list(movimientos_zombies),
         zombies_actualizados,
+        sobrevivientes_activos=frozenset(
+            sobreviviente.id
+            for sobreviviente in partida_decisiones.sobrevivientes
+            if sobreviviente.estado is EstadoSobreviviente.ACTIVO
+        ),
     )
     refugios_por_nodo = {refugio.nodo: refugio.id for refugio in grafo.mapa.refugios}
     evacuados: list[str] = []
@@ -465,11 +470,17 @@ def _resolver_mordidas(
     movimientos_sobrevivientes: list[MovimientoSobreviviente],
     movimientos_zombies: list[MovimientoZombie],
     zombies: list[Zombie],
+    *,
+    sobrevivientes_activos: frozenset[str],
 ) -> set[str]:
+    """Only active survivors can be bitten during this turn's resolution."""
+
     posiciones_zombie = {zombie.nodo for zombie in zombies if zombie.estado is EstadoZombie.ACTIVO}
     mordidos: set[str] = set()
     tramos_zombie = [tramo for movimiento in movimientos_zombies for tramo in movimiento.tramos]
     for movimiento in movimientos_sobrevivientes:
+        if movimiento.sobreviviente_id not in sobrevivientes_activos:
+            continue
         if movimiento.destino in posiciones_zombie:
             mordidos.add(movimiento.sobreviviente_id)
             continue
