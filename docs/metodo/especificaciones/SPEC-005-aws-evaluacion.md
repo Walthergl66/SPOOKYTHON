@@ -5,8 +5,8 @@ Estado: lista
 Requisitos: PRD-06, PRD-07, PRD-08, TRD-02, TRD-06, TRD-08, TRD-10, TRD-11
 Tareas: P0-03, P0-05, P5-01, P5-02, P5-03, P6-01, P6-02, P6-03
 Pruebas: T-11, T-16, T-18, T-23
-Cambio: pendiente
-Evidencia: pendiente
+Cambio: CAM-087
+Evidencia: parcial; la ventana de duración del evaluador local se conserva tras cierre temprano, pero las rondas oficiales, carga continua, AWS y entregables siguen pendientes.
 
 ## Objetivo y alcance
 

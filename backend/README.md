@@ -69,7 +69,7 @@ cd backend
 PYTHONPATH=src python -m navira.evaluacion_local --turnos 3 --poblaciones 20 80 200 --concurrencia 200 --semilla 20261026 --periodo-segundos 2
 ```
 
-CAM-029 documenta esta prueba corta de tres turnos por cohorte. Es evidencia local exploratoria; no sustituye los 150 turnos de cada ronda oficial ni una medición desde AWS o el entorno del evaluador.
+CAM-029 documenta esta prueba corta de tres turnos por cohorte. CAM-087 mantiene la ventana solicitada aunque la partida termine antes y reporta por separado los turnos de juego y slots ociosos; el período ocioso no genera solicitudes ni cuenta como carga del motor. Es evidencia local exploratoria; no sustituye 150 turnos activos, escenarios oficiales ni mediciones desde AWS o el entorno del evaluador.
 
 Carga HTTP contra un servidor ya en marcha. Ejecuta el servidor con la misma configuración del cliente y luego el cliente desde otra terminal:
 

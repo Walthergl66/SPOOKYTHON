@@ -2,6 +2,17 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-087 — Conservar la duración solicitada de la evaluación local
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: brecha principal identificada al revisar la duración de rondas; el evaluador pedía 150 turnos, pero detenía la medición cuando la partida sintética terminaba a los 12/15/13 turnos.
+- Especificación/requisitos: PRD-06/07/08, TRD-02/06/08/10/11, SPEC-005, P5-01 y T-11. Evidencia parcial; no declara T-11 completa.
+- Resultado: el evaluador local completa la ventana `turnos × periodo` aunque la partida termine antes. Slots posteriores al estado terminal se registran explícitamente como ociosos y no envían solicitudes ni fabrican movimientos/rondas. El JSON separa slots solicitados, turnos efectivamente ejecutados, slots ociosos y cumplimiento de duración objetivo.
+- Archivos: `backend/src/navira/evaluacion_local.py`, `backend/tests/test_evaluacion_local.py`, `backend/README.md`, módulo backend, pruebas, SPEC-005, trazabilidad, plan, estado, índice e [informe CAM-087](../calidad/resultados/duracion-ronda-cam087.md).
+- Verificación: suite focalizada `test_evaluacion_local.py` — 6/6; suite backend completa — 215/215 en 64,291 s; prueba terminal cubre 3 slots ociosos, cero solicitudes y ventana completa. `check_docs.py` correcto (117 Markdown/119 archivos), `check_sdd.py` correcto (8 SPEC), regresiones del validador 8/8, `compileall` y `git diff --check` correctos.
+- Límites: completar el reloj no genera carga HTTP ni rondas activas tras el fin de partida. Faltan rondas con actividad suficiente, escenarios oficiales, repeticiones y entorno AWS/evaluación; no se atribuye mejora de latencia, mordidas ni supervivencia.
+- Siguiente paso: suite backend completa, validadores docs/SDD, revisar el diff y crear commits separados de implementación y documentación. Después, definir una evaluación que mantenga mundo activo sin alterar reglas terminales y ejecutar T-11 con escenarios/repeticiones oficiales.
+
 ## CAM-086 — Reducir trabajo redundante del pronóstico y suavizar turnos
 
 - Fecha: 2026-10-27, Ecuador continental.
