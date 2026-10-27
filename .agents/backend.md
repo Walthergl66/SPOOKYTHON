@@ -1,6 +1,6 @@
 # Backend Navira (`backend/src/navira`)
 
-Documentación de referencia: [arquitectura](../docs/arquitectura/arquitectura.md), [módulos backend](../docs/arquitectura/modulos/backend.md) (responsabilidades y pruebas por módulo), [ODDD](../docs/dominio/ODDD.md) (lenguaje e invariantes) y [contrato API](../docs/arquitectura/contratos/api.md).
+Documentación de referencia: [arquitectura](../docs/arquitectura/arquitectura.md), [guía de Clean Architecture](../docs/arquitectura/guia-clean-architecture.md), [módulos backend](../docs/arquitectura/modulos/backend.md) (responsabilidades y pruebas por módulo), [ODDD](../docs/dominio/ODDD.md) (lenguaje e invariantes) y [contrato API](../docs/arquitectura/contratos/api.md).
 
 ## Carpetas
 

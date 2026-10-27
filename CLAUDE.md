@@ -7,7 +7,8 @@ Empieza por `docs/seguimiento/estado-actual.md`. La documentación vive en `docs
 ## Reglas, procesos y comandos del proyecto
 
 - Reglas por zona: `.claude/rules/` (dominio-juego, backend-capas, frontend-panel, pruebas, docs-cambios).
-- Procesos: `.claude/skills/` (navira-cambio-sdd, navira-juego, navira-verificar).
+- Procesos: `.claude/skills/` (navira-cambio-sdd, navira-juego, navira-verificar, navira-clean-architecture).
+- Subagentes de proyecto: `.claude/agents/` (arquitecto-backend, arquitecto-frontend, revisor-arquitectura, documentador-sdd). Guía de capas: `docs/arquitectura/guia-clean-architecture.md`.
 - Comandos: `.claude/commands/` (navira-arrancar, navira-verificar, navira-cambio).
 - Guías por área: `.agents/README.md` (backend, frontend, pruebas y scripts).
 

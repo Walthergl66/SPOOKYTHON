@@ -12,3 +12,5 @@ Estas guías describen cada zona del código. Leer la guía del área antes de t
 | Scripts | [scripts.md](scripts.md) | `scripts/` | `pruebas` (cubre `backend/scripts/**`) |
 
 Las guías no duplican contratos ni reglas: enlazan a `docs/`, que es la fuente propietaria.
+
+Para diseñar o mover código entre capas, usar la [guía de Clean Architecture](../docs/arquitectura/guia-clean-architecture.md) y los subagentes `arquitecto-backend` y `arquitecto-frontend` de `.claude/agents/`.

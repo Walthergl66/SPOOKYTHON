@@ -77,6 +77,8 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-022](arquitectura/decisiones/0022-organizacion-documental-por-temas.md) | Organización de docs/ por temas con índice general | Cambie la estructura de carpetas o la ubicación de un documento. |
 | [ADR-023](arquitectura/decisiones/0023-configuracion-de-agentes.md) | Configuración de agentes en `.claude/` y guías por área en `.agents/` | Cambie reglas, skills, comandos o guías de agentes. |
 | [ADR-024](arquitectura/decisiones/0024-backend-y-frontend-por-carpeta.md) | Backend en `backend/`, frontend en `frontend/` y raíz general | Cambie la ubicación de backend, frontend o los README de cada área. |
+| [ADR-025](arquitectura/decisiones/0025-agentes-de-proyecto-y-clean-architecture.md) | Subagentes de proyecto y Clean Architecture como destino | Cambie la guía de capas o los subagentes de proyecto. |
+| [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
 

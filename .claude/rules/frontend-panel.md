@@ -4,7 +4,7 @@ paths:
 ---
 # Frontend y panel
 
-Fuentes: [módulos frontend](../../docs/arquitectura/modulos/frontend.md), [eventos](../../docs/arquitectura/contratos/eventos.md), [SPEC-003](../../docs/metodo/especificaciones/SPEC-003-panel-vivo.md), [SPEC-004](../../docs/metodo/especificaciones/SPEC-004-juego-humano.md), [SPEC-007](../../docs/metodo/especificaciones/SPEC-007-panel-operador-local.md).
+Fuentes: [módulos frontend](../../docs/arquitectura/modulos/frontend.md), [guía de Clean Architecture](../../docs/arquitectura/guia-clean-architecture.md), [eventos](../../docs/arquitectura/contratos/eventos.md), [SPEC-003](../../docs/metodo/especificaciones/SPEC-003-panel-vivo.md), [SPEC-004](../../docs/metodo/especificaciones/SPEC-004-juego-humano.md), [SPEC-007](../../docs/metodo/especificaciones/SPEC-007-panel-operador-local.md).
 
 - El navegador no modifica el mundo: envía órdenes y muestra estado. Posición, turno, mordida y propiedad los decide el servidor; una animación nunca confirma un movimiento.
 - Toda respuesta HTTP/WebSocket se parsea y valida en `shared/api` o `shared/realtime`; los componentes reciben tipos del producto, no JSON sin comprobar.

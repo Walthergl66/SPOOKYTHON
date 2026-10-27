@@ -4,7 +4,7 @@ paths:
 ---
 # Capas y contratos del backend
 
-Fuentes: [arquitectura](../../docs/arquitectura/arquitectura.md), [módulos backend](../../docs/arquitectura/modulos/backend.md), [contrato HTTP](../../docs/arquitectura/contratos/api.md).
+Fuentes: [arquitectura](../../docs/arquitectura/arquitectura.md), [guía de Clean Architecture](../../docs/arquitectura/guia-clean-architecture.md), [módulos backend](../../docs/arquitectura/modulos/backend.md), [contrato HTTP](../../docs/arquitectura/contratos/api.md).
 
 - Dirección de dependencias: `domain` no importa nada del proyecto; `routing` y `player` dependen de `domain`; `application` orquesta y define los puertos; `api` y `adapters` dependen de contratos internos; el núcleo nunca importa adaptadores.
 - Los puertos (p. ej. `RepositorioSnapshots`, `RepositorioOrdenes`) se definen en `application`; las implementaciones (memoria, futuro DynamoDB) viven en `adapters/`.

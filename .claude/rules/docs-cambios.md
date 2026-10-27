@@ -8,7 +8,7 @@ Fuentes: [SDD](../../docs/metodo/SDD.md), [continuidad](../../docs/metodo/contin
 
 - Ubicación canónica: `docs/`. No crear otra carpeta documental ni duplicar contratos: enlazar al documento propietario.
 - Todo `.md` nuevo se agrega al índice de `docs/README.md` (y al de su carpeta si existe, p. ej. ADR o especificaciones).
-- Cada tarea significativa agrega una entrada `CAM-NNN` en `docs/seguimiento/cambios.md` con la plantilla de cambio. Verificar el último ID real (hoy CAM-063; entradas recientes arriba) y usar el siguiente correlativo.
+- Cada tarea significativa agrega una entrada `CAM-NNN` en `docs/seguimiento/cambios.md` con la plantilla de cambio. Verificar el último ID real con `rg` sobre `docs/seguimiento/cambios.md`, porque el archivo no está en orden numérico, y usar el siguiente correlativo.
 - Actualizar `docs/seguimiento/estado-actual.md` con hechos reales y el siguiente paso exacto, también si la tarea queda interrumpida.
 - Conservar IDs (CAM, ADR, P-NN, T-NN, SPEC) e historial; las preguntas resueltas se marcan, no se borran.
 - No modificar `docs/referencias/reto-original.md`. `docs/referencias/plan-previo.md` no es el plan vigente (usar `docs/seguimiento/plan-implementacion.md`).

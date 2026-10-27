@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-066 — Subagentes de proyecto y guía de Clean Architecture
+
+- Fecha: 2026-10-26, Ecuador continental.
+- Origen: el usuario pidió subagentes de proyecto basados en la documentación para desarrollar más rápido, y una guía para armar backend y frontend en Clean Architecture. Pidió hacerlo primero en `.claude/` y no tocar código.
+- Especificación/tareas: sin SPEC nueva; procedimiento SDD. Decisión [ADR-025](../arquitectura/decisiones/0025-agentes-de-proyecto-y-clean-architecture.md), que completa [ADR-023](../arquitectura/decisiones/0023-configuracion-de-agentes.md).
+- Resultado: cuatro subagentes en `.claude/agents/` (`arquitecto-backend` y `arquitecto-frontend` en Opus, solo lectura; `revisor-arquitectura` y `documentador-sdd` en Sonnet); guía canónica en `docs/arquitectura/guia-clean-architecture.md` con regla de dependencia, capas objetivo, línea base de violaciones y pasos de migración B1–B6 y F1–F6; skill `navira-clean-architecture`.
+- Línea base registrada (2026-10-26): backend, `application/control_simulador_demo.py:11` importa `navira.demo` (violación dura); frontend, `App.tsx:143` hace `fetch('/salud')` desde un componente (violación dura). Violaciones menores en la guía.
+- Archivos: `.claude/agents/` (4 nuevos), `.claude/skills/navira-clean-architecture/SKILL.md`, `docs/arquitectura/guia-clean-architecture.md`, ADR-025, índices de `docs/`, enlace en `docs/metodo/SDD.md`, enlaces en `.claude/rules/backend-capas.md`, `.claude/rules/frontend-panel.md`, `.agents/` y `CLAUDE.md`.
+- Verificación: `python3 backend/scripts/check_docs.py` correcto (96 Markdown en `docs/`, 98 archivos comprobados); `python3 backend/scripts/check_sdd.py` correcto (8 especificaciones); `python3 -m unittest discover -s backend/tests -p 'test_check_sdd.py'` correcto; comprobación de enlaces relativos de todos los Markdown del repositorio: 0 rotos (122 archivos); frontmatter de los cuatro agentes y de la skill revisado con `sed`.
+- Validación no ejecutada: los subagentes no se han invocado en una sesión nueva; el código no cambió, así que las pruebas del backend y el build del frontend no se repiten.
+- Límites: los agentes de `.claude/agents/` se cargan al iniciar sesión y su carga real no está comprobada aquí. La guía describe un destino; el código actual no cumple todavía la regla de dependencia. Cambios sin commit.
+- Siguiente acción: abrir una sesión nueva, comprobar que aparecen los cuatro agentes y que `revisor-arquitectura` reproduce la línea base. Después, decidir el primer paso de migración (B1 o F1) con `arquitecto-backend` o `arquitecto-frontend`.
+
 ## CAM-065 — Separar backend y frontend en carpetas propias
 
 - Fecha: 2026-10-26, Ecuador continental.

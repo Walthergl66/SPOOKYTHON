@@ -1,6 +1,6 @@
 # Frontend Navira (`frontend/`)
 
-Referencia: [módulos frontend](../docs/arquitectura/modulos/frontend.md), [contrato de eventos](../docs/arquitectura/contratos/eventos.md) y [SPEC-008 mapa](../docs/metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md).
+Referencia: [módulos frontend](../docs/arquitectura/modulos/frontend.md), [guía de Clean Architecture](../docs/arquitectura/guia-clean-architecture.md), [contrato de eventos](../docs/arquitectura/contratos/eventos.md) y [SPEC-008 mapa](../docs/metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md).
 
 ## Stack (`package.json`)
 
