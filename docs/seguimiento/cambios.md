@@ -1,3 +1,14 @@
+## CAM-135 — Distinguir corredores en el mapa
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de mostrar los corredores con color morado y la letra C.
+- Relación: SPEC-008/CA-008-02, T-61.
+- Decisión: proyectar `tipo=corredor` como clase visual `runner`, glifo `C` y color morado `#a855f7`; conservar los caminantes rojos `Z` y hordas naranjas `H`. Actualizar también la leyenda. No se cambian reglas, ubicación ni datos del servidor.
+- Archivos: `frontend/src/features/map/mapFeatures.ts`, `frontend/src/features/map/CityMap.tsx`, `frontend/src/app/App.tsx`, `frontend/src/styles.css`, SPEC-008, módulo frontend, pruebas T-61 y estado actual.
+- Verificación: `cd frontend && npm run build` pasa (con la advertencia conocida de chunk MapLibre >500 kB); `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` y `git diff --check` pasan. No se ejecutaron pruebas ni revisión visual en navegador; T-61 queda pendiente.
+- Límites y siguiente paso: confirmar en navegador que todos los tipos visibles y la leyenda coinciden; el backend no requiere reinicio porque la proyección usa el campo `tipo` que ya publica. El cambio visual está en el frontend con HMR, pero no se verificó el resultado en pantalla.
+- Commit o PR: no creado.
+
 ## CAM-134 — Precargar el mapa y confirmar la pausa del simulador
 
 - Fecha: 2026-10-28, America/Guayaquil.

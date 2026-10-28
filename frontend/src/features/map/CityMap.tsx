@@ -412,16 +412,16 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
   })
   map.addLayer({
     id: 'navira-actor-markers', source: 'navira-actors', type: 'circle',
-    filter: ['in', ['get', 'kind'], ['literal', ['survivor', 'zombie', 'horde']]],
+    filter: ['in', ['get', 'kind'], ['literal', ['survivor', 'zombie', 'runner', 'horde']]],
     paint: {
       'circle-radius': ['match', ['get', 'kind'], 'survivor', 11, 'horde', 13, 12],
-      'circle-color': ['match', ['get', 'kind'], 'survivor', '#18c6e4', 'horde', '#ff8b43', '#ed4c58'],
+      'circle-color': ['match', ['get', 'kind'], 'survivor', '#18c6e4', 'horde', '#ff8b43', 'runner', '#a855f7', '#ed4c58'],
       'circle-stroke-color': '#f4f7fc', 'circle-stroke-width': 2,
     },
   })
   map.addLayer({
     id: 'navira-actor-glyphs', source: 'navira-actors', type: 'symbol',
-    filter: ['in', ['get', 'kind'], ['literal', ['survivor', 'zombie', 'horde']]],
+    filter: ['in', ['get', 'kind'], ['literal', ['survivor', 'zombie', 'runner', 'horde']]],
     layout: { 'text-field': ['get', 'glyph'], 'text-size': 10, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true, 'text-ignore-placement': true },
     paint: { 'text-color': '#ffffff', 'text-halo-color': '#152238', 'text-halo-width': 0.7 },
   })

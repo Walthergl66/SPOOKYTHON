@@ -128,7 +128,9 @@ export function createActorFeatures(map: PanelMap, state: PanelState, overrides 
   }
   for (const zombie of state.zombies ?? []) {
     const coordinates = overrides.get(zombie.id) ?? pointById.get(zombie.nodo)
-    if (coordinates) features.push({ type: 'Feature', id: zombie.id, geometry: { type: 'Point', coordinates }, properties: { kind: zombie.tipo === 'horda' ? 'horde' : 'zombie', glyph: zombie.tipo === 'horda' ? 'H' : 'Z' } })
+    const kind = zombie.tipo === 'horda' ? 'horde' : zombie.tipo === 'corredor' ? 'runner' : 'zombie'
+    const glyph = zombie.tipo === 'horda' ? 'H' : zombie.tipo === 'corredor' ? 'C' : 'Z'
+    if (coordinates) features.push({ type: 'Feature', id: zombie.id, geometry: { type: 'Point', coordinates }, properties: { kind, glyph } })
   }
   return { type: 'FeatureCollection', features }
 }

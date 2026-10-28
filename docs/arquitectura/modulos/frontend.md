@@ -21,6 +21,8 @@ CAM-101 convierte la tarjeta «Jugar» en modo operador local: `features/operato
 
 CAM-134 monta MapLibre al entrar a la app sobre el mapa vacío, para que la cartografía base cargue en paralelo con la configuración. El mapa de juego se retiene en caché de módulo por `mapVersion`, con máximo de dos versiones recientes; `usePanel` no descarta su geometría cuando recibe `sin_partida`, pero las capas dinámicas siguen condicionadas al snapshot/run vigente. La pausa presenta `pausando` mientras espera reconciliación con el servidor, consulta estado y solicita pausa mediante threadpool y hace polling secuencial acelerado hasta `pausada`; una pausa confirmada cancela interpolación y conserva el run. Build pasó, pero aún no se ejecutaron pruebas de comportamiento ni smoke visual o medición de tiempo (T-59/T-60 pendientes).
 
+CAM-135 proyecta el tipo visible del zombie como clase de marcador: corredor morado `C`, caminante rojo `Z` y horda naranja `H`. `features/map/mapFeatures.ts` asigna propiedades GeoJSON y `CityMap.tsx`/`styles.css` definen símbolos y leyenda. No cambia tipo, movimiento ni visibilidad del snapshot; T-61 requiere revisión visual y queda pendiente.
+
 ## Estructura implementada en P0-04
 
 - `frontend/src/app/`: composición de la pantalla inicial y selección local entre simulador y juego.

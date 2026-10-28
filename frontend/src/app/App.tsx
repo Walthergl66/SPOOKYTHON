@@ -289,7 +289,7 @@ export function App() {
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{modeRunMatches ? map?.version ?? 'AÚN SIN SNAPSHOT' : 'NUEVO MUNDO PENDIENTE DE INICIAR'}</div>
           </div>
-          <div className="map-legend" aria-label="Leyenda del mapa"><span><i className="legend-refuge" /> Refugio</span><span><i className="legend-survivor" /> Sobreviviente</span><span><i className="legend-zombie" /> Zombie visible</span><span><i className="legend-route" /> Ruta prevista</span><span><i className="legend-trail" /> Movimiento confirmado</span><span><i className="legend-closure" /> Calle cerrada</span></div>
+          <div className="map-legend" aria-label="Leyenda del mapa"><span><i className="legend-refuge" /> Refugio</span><span><i className="legend-survivor" /> Sobreviviente</span><span><i className="legend-zombie" /> Caminante · Z</span><span><i className="legend-runner" /> Corredor · C</span><span><i className="legend-horde" /> Horda · H</span><span><i className="legend-route" /> Ruta prevista</span><span><i className="legend-trail" /> Movimiento confirmado</span><span><i className="legend-closure" /> Calle cerrada</span></div>
         </section>
 
         <aside className="stats-column" aria-label="Estadísticas de la partida">
