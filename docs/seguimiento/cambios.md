@@ -1,3 +1,15 @@
+## CAM-113 — Alcance privado de staging y campaña AWS efímera
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario autorizó continuar las fases de despliegue y pidió avanzar a Fase 2.
+- Especificación/tareas: SPEC-005; P5-02/P5-03; CA-005-01..03; ADR-045.
+- Resultado: se eligió staging privado con restricción de red y API key en `/paso`, sin endpoints remotos de operador. La campaña completa se ejecutará como tarea ECS Fargate efímera desde el mismo SHA/digest, con ASGI loopback; la carga remota al staging será evidencia separada porque `/paso` no modifica ni avanza el mundo. El staging es volátil para smoke: reiniciar invalida el run. Un coordinador por proceso, `desiredCount=1`.
+- Archivos: ADR-045 e índices, SPEC-005, guía de despliegue, infraestructura, seguridad, pendientes, plan, estado e historial.
+- Validación: `python3 backend/scripts/check_docs.py` (136 Markdown), `python3 backend/scripts/check_sdd.py` (10 SPEC), `python3 -m unittest discover -s backend/tests -p 'test_check_sdd.py'` (8/8), backend `test_api_http.py` (7/7), `test_control_simulador_demo.py` (19/19) y `git diff --check` pasan. La consulta segura de disponibilidad de identidad AWS no se pudo ejecutar porque `aws` CLI no está instalado. AWS, red/TLS y campaña Fargate no se ejecutaron porque no hay recursos.
+- Límites: define la Fase 2 pero no crea staging, aplica red/TLS ni implementa recuperación. P-06, P-11, P-19 y persistencia durable siguen pendientes. La campaña loopback no mide ALB/CloudFront.
+- Siguiente paso: instalar/configurar AWS CLI mediante el proveedor de credenciales autorizado (sin compartir claves) y validar permisos/costos de `us-east-2`; iniciar Fase 3 después de cerrar ese gating de Fase 1.
+- Commit o PR: no creado; el usuario pidió preparar el despliegue sin publicar estos cambios.
+
 ## CAM-106 — Cambio limpio entre modos
 
 - Fecha: 2026-10-28, Ecuador continental.

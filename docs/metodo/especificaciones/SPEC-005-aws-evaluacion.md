@@ -25,6 +25,8 @@ Desplegar el sistema vigente, demostrar tres rondas y entregar evidencia defendi
 
 P0-03 Budget/permisos y P0-05 salud temprana; P5 mide, revisa seguridad y ejecuta rondas; P6 prepara evidencias y entrega. P-06/P-11 y acceso AWS son dependencias externas; el núcleo local puede avanzar. Mantener aplicación hasta pitch y registrar cualquier interrupción. Ninguna tarifa estimada se declara factura real.
 
+La estrategia privada adoptada para diseño en [ADR-045](../../arquitectura/decisiones/0045-evaluacion-aws-privada.md) usa una tarea efímera ECS Fargate desde el mismo SHA/digest para la campaña completa, sin endpoint administrativo remoto. El cliente HTTP inicia ASGI en loopback dentro de la tarea; sus métricas no miden ALB/CloudFront. La ráfaga HTTP remota de `/paso` es evidencia separada. Staging es volátil y cualquier reinicio invalida el run. Configuración de infraestructura, ejecución AWS, permisos y recuperación no tienen evidencia todavía.
+
 ## Verificación
 
 Identificar origen de medición, revisión de código, versión mapa y escenario en cada reporte. Verificar permisos y TLS, contar errores y limitar retención sin perder evidencia. No hay pruebas de AWS ejecutadas. Cualquier parte no comprobada queda pendiente aun si CloudFormation existe.

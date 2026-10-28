@@ -29,6 +29,7 @@ El mapa base de CAM-051 carga tiles externos de OpenFreeMap para la vista visibl
 - CAM-037: `POST /juego/accion` repite la comprobación de `Origin` y autoriza por token de cookie comparado con la sesión propietaria. El cuerpo no otorga identidad, control ni posición; el servidor valida fase/turno/mapa y el mismo destino solo expresa espera. La clave idempotente y su secuencia residen en memoria: no cubren varios workers ni una carrera atómica contra el cierre de turno (P-16).
 - Rol de ejecución y de aplicación separados según funciones; permisos limitados a tabla, logs y configuración necesarios.
 - CAM-050: el control de simulador solo se ensambla con `NAVIRA_LOCAL_DEMO_CONTROL=1`, exige conexión loopback y Host local; en POST, `Origin` y Host deben pertenecer al conjunto `localhost`, `127.0.0.1`, `::1` para que el proxy Vite local pueda usar cualquiera de los alias. Orígenes externos siguen rechazados. El flag no se configura en despliegue. Esto limita la demo local y no sustituye autenticación de operador productivo.
+- CAM-113/ADR-045: staging privado restringe el origen por red y `/paso` exige API key. Los controles locales permanecen apagados; la tarea efímera de evaluación no recibe permiso para modificar staging ni acepta tráfico entrante público. El diseño debe materializarse y probarse en CloudFormation/AWS.
 
 ## Comentarios y documentación
 

@@ -36,6 +36,8 @@ La configuración exacta de TLS del origen, certificados y dominio es P-11; reso
 6. Comprobar endpoint público, autenticación y WebSocket; ejecutar una ronda corta.
 7. Ejecutar tres rondas y guardar evidencia de versión, latencia y reloj.
 
+La campaña completa se ejecutará en una tarea efímera y privada desde el mismo artefacto, conforme a [ADR-045](../arquitectura/decisiones/0045-evaluacion-aws-privada.md). No tendrá listener ni permiso para modificar el servicio de staging. La prueba HTTP del endpoint a través del ALB será independiente; no confundirla con la campaña loopback. Mantener un coordinador por tarea y no desplegar el control local.
+
 ## Operación y recuperación
 
 Registrar salud, errores, p95, duración de turnos y retraso acumulado. Alertar por estado desactualizado y fallo del coordinador. Retención de logs limitada y exportación de resultados de evaluación. No configurar reinicios que creen dos coordinadores sobre la misma partida.

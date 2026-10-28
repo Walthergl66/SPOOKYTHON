@@ -96,6 +96,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-042](arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md) | «Jugar» como modo de operador que interviene un mundo automático vivo | Cambie la experiencia de Jugar o sus límites de intervención local. |
 | [ADR-043](arquitectura/decisiones/0043-filtros-de-riesgo-y-rutas-comprometidas.md) | Filtros compartidos para incidentes, hordas, zombies próximos y rutas comprometidas | Cambie las reglas de transitabilidad o la política de riesgo alrededor de amenazas. |
 | [ADR-044](arquitectura/decisiones/0044-reemplazo-explicito-al-cambiar-de-modo.md) | Inicio explícito desde el modo destino reemplaza el run local con un mundo nuevo | Cambie el ciclo de vida o transición de runs entre Reto, Simulador y Jugar. |
+| [ADR-045](arquitectura/decisiones/0045-evaluacion-aws-privada.md) | Staging privado y evaluación AWS efímera sin controles locales expuestos | Cambie la topología, permisos o método de evaluación en AWS. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
