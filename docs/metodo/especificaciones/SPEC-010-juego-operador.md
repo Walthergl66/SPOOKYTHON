@@ -5,9 +5,9 @@ Estado: en-revision
 Requisitos: PRD-06, PRD-12, TRD-06, TRD-07, TRD-12, TRD-18  
 Tareas: P4-06  
 Pruebas: T-52, T-53, T-54
-Cambio: CAM-102
+Cambio: CAM-103
 Decisión: [ADR-042](../../arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md)
-Evidencia: validación API y recorrido parcial del modo en [CAM-101](../../seguimiento/cambios.md#cam-101-juego-como-modo-de-operador-interactivo); inicio vacío cubierto por [CAM-102](../../seguimiento/cambios.md#cam-102-juego-inicia-con-el-mapa-vacío). T-53 requiere completar el incidente desde la interfaz.
+Evidencia: validación API y recorrido parcial del modo en [CAM-101](../../seguimiento/cambios.md#cam-101-juego-como-modo-de-operador-interactivo); inicio vacío cubierto por [CAM-102](../../seguimiento/cambios.md#cam-102-juego-inicia-con-el-mapa-vacío); cierre de calle por clic en mapa cubierto por [CAM-103](../../seguimiento/cambios.md#cam-103-identificador-estable-al-colocar-incidente). Faltan otros criterios de T-53.
 
 ## Objetivo y alcance
 
@@ -40,4 +40,4 @@ Límites iniciales: 200 habitantes, 200 zombies y 8 refugios por mundo local. Se
 
 ## Verificación y estado
 
-T-52 cubre API local, colocación de actores/refugio/cierre, mapa versionado, protección de Reto y objetivo inválido. T-54 prueba inicio vacío, avance del reloj y colocación posterior. T-53 cubre build e interacción cartográfica; requiere smoke visual para confirmar el mapa vacío al iniciar y completar la colocación visual de incidente. CA-010-06 tiene regresión del lock/CAS pendiente más allá de la integración local. Esta SPEC permanece `en-revision` hasta que todos los criterios y límites se prueben; una build sola no la verifica.
+T-52 cubre API local, colocación de actores/refugio/cierre, mapa versionado, protección de Reto y objetivo inválido. T-54 prueba inicio vacío, avance del reloj y colocación posterior. En T-53, CAM-103 confirma visualmente selección de calle e incidente aplicado en backend; siguen pendientes el recorrido de todas las herramientas y la comprobación de objetivos inválidos desde UI. CA-010-06 tiene regresión del lock/CAS pendiente más allá de la integración local. Esta SPEC permanece `en-revision` hasta que todos los criterios y límites se prueben; una build sola no la verifica.

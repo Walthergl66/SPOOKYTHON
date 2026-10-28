@@ -2,6 +2,18 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-103 — Identificador estable al colocar incidente
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: el usuario reportó que al seleccionar «Incidente» y hacer clic en una calle del mapa, el backend rechazaba la selección con «La calle seleccionada no pertenece al mapa de la partida».
+- Especificación/tarea/prueba: SPEC-010 CA-010-05; P4-06; T-53.
+- Resultado: cada feature GeoJSON de calle incluye el `segmentoId` explícito del mapa y MapLibre lo promueve como ID de feature. El hit-test de incidente envía ese `segmentoId` desde `properties` al backend; no depende de una conversión del ID renderizado.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `mapFeatures.ts`, `mapFeatures.test.ts`; módulo frontend, T-53, trazabilidad, SPEC-010, plan y estado.
+- Validación: prueba focal `mapFeatures` 13/13; suite frontend 97/97; `npm run build`; `check_docs.py`, `check_sdd.py` (10 SPEC), regresiones SDD 8/8 y `git diff --check` pasan. Smoke manual en `localhost:5173`: seleccionar Incidente y hacer clic en calle urbana produjo acuse `incidente agregado`; `GET /panel/estado` confirmó un evento aplicado y un segmento cerrado (`S-OSM-32308390-177-4-5`). El mundo permaneció activo. No se probó cada herramienta ni el rechazo visual de clics fuera de calle.
+- Límites: el smoke usa el mapa/juego local en memoria; no valida despliegue público ni otros proveedores. Al terminar se reinició el backend para recuperar el proceso local, así que el run de smoke se perdió; se inició un nuevo mundo operador vacío para dejar la app lista.
+- Commits: pendientes; separar código y documentación conforme a la instrucción previa del usuario.
+- Siguiente acción: la app local quedó activa en un nuevo mundo vacío; completar el resto del smoke T-53 y repetir el clic de incidente a otros niveles de zoom si aparece otra discrepancia.
+
 ## CAM-102 — Juego inicia con el mapa vacío
 
 - Fecha: 2026-10-27, Ecuador continental.
