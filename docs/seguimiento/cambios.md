@@ -12,7 +12,7 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Archivos: caso de uso y ruta/schema backend, pruebas de panel; parser/cliente/puerto, App y ficha frontend, pruebas; contrato API, flujo espectador, módulos, SPEC-003, T-45, contexto, estado, plan, trazabilidad, índice ADR e historial.
 - Verificación: backend completo `python3 -m unittest discover -s tests -p 'test_*.py'` 221/221 en 76,671 s; panel focalizado 17/17. Frontend `npm test -- --run` 94/94 y `npm run build` correcto (permanece advertencia conocida de chunk `mapArea` 1,065.62 kB); `compileall`, `check_docs.py` (120 Markdown/122 archivos), `check_sdd.py` (9 SPEC), regresiones SDD 8/8 y `git diff --check` pasan. Smoke integrado inició R1 por Vite, observó 20 sobrevivientes en turno 2/fase `resuelta` con 0 rutas masivas, y `GET /panel/ruta/S-DEMO-001` devolvió HTTP 200 con un trayecto de 17 nodos en turno 5/resuelta. La UI confirmó run activo y conexión del panel; no se automatizó el clic visual porque el mapa seguía mostrando “Cargando mapa de Manta…”.
 - Límites: la ruta sigue siendo recomendación observable y no garantiza seguridad; si el habitante ya no está activo, el endpoint devuelve 404. Esta corrección no mide cadencia global ni completa la evaluación oficial.
-- Commits: código y documentación se mantienen en commits separados según la preferencia vigente del usuario.
+- Commits: código `5956880`; documentación `57973f7`, separados según la preferencia vigente del usuario.
 
 ## CAM-092 — Mantener rutas recomendadas visibles durante Reto
 
