@@ -20,7 +20,7 @@ import statistics
 import sys
 import threading
 import time
-from typing import Iterator, TextIO
+from typing import Callable, Iterator, TextIO
 
 import uvicorn
 
@@ -134,6 +134,7 @@ def ejecutar_evaluacion_local(
     timeout_segundos: float = 1.0,
     periodo_segundos: float = 2.0,
     mapa: str | Path = MAPA_MANTA_POR_DEFECTO,
+    ronda_reto: int | None = None,
 ) -> dict[str, object]:
     """Consulta `/paso` por sobreviviente en cada turno y resuelve esas órdenes.
 
@@ -153,14 +154,31 @@ def ejecutar_evaluacion_local(
         raise ValueError("La cohorte debe ser 20, 80 o 200 sobrevivientes.")
     if escenario not in ESCENARIOS_DEMO:
         raise ValueError(f"Escenario desconocido: {escenario}.")
+    if ronda_reto is not None and (
+        isinstance(ronda_reto, bool) or ronda_reto not in (1, 2, 3)
+    ):
+        raise ValueError("La ronda del reto debe ser 1, 2 o 3.")
 
     contexto = crear_contexto_demo(
         mapa,
         semilla=semilla,
         escenario=escenario,
         cantidad_sobrevivientes=sobrevivientes,
+        ronda_reto=ronda_reto,
     )
     mapa_version = contexto.grafo.mapa.version
+    snapshot_inicial = contexto.snapshots.obtener(contexto.run_id)
+    if snapshot_inicial is None:
+        raise RuntimeError("El snapshot inicial no está disponible para evaluación.")
+    eventos_programados = [
+        {
+            "id": evento.id,
+            "turnoObjetivo": evento.turno_objetivo,
+            "segmentos": sorted(evento.segmentos),
+            "causa": evento.causa,
+        }
+        for evento in snapshot_inicial.eventos_programados
+    ]
     clave = secrets.token_urlsafe(32)
     aplicacion = crear_app(contexto.servicio_decision, seguridad=ConfiguracionSeguridad(api_key=clave))
     latencias: list[float] = []
@@ -367,8 +385,12 @@ def ejecutar_evaluacion_local(
     return {
         "medicion": "exploratoria_local_http_loopback",
         "mapaVersion": mapa_version,
-        "escenario": escenario,
+        "escenario": snapshot_final.partida.escenario,
+        "rondaReto": ronda_reto,
+        "runId": contexto.run_id,
         "semilla": contexto.semilla,
+        "eventosProgramados": eventos_programados,
+        "eventosAplicados": list(snapshot_final.eventos_aplicados),
         "sobrevivientesIniciales": sobrevivientes,
         "turnosSolicitados": turnos,
         "turnosEjecutados": len(turnos_reporte),
@@ -449,6 +471,69 @@ def ejecutar_matriz_local(
     }
 
 
+def ejecutar_campana_reto_local(
+    *,
+    turnos: int = 150,
+    semilla: int | None = 20261026,
+    concurrencia: int = 200,
+    timeout_segundos: float = 1.0,
+    periodo_segundos: float = 2.0,
+    mapa: str | Path = MAPA_MANTA_POR_DEFECTO,
+    al_completar_ronda: Callable[[dict[str, object]], None] | None = None,
+) -> dict[str, object]:
+    """Ejecuta R1, R2 y R3 en orden, con una ventana independiente por ronda.
+
+    Cada ronda crea un run nuevo con el preset Reto del servidor. La espera
+    terminal completa el tiempo de evaluación sin inventar solicitudes ni
+    movimientos. La semilla de cada ronda deriva de la semilla base para que
+    una campaña se pueda reproducir sin reutilizar el mismo estado aleatorio.
+    """
+
+    inicio_campana = time.perf_counter()
+    resultados: list[dict[str, object]] = []
+    for ronda in (1, 2, 3):
+        semilla_ronda = semilla + ronda - 1 if semilla is not None else None
+        resultado = ejecutar_evaluacion_local(
+            sobrevivientes={1: 20, 2: 80, 3: 200}[ronda],
+            turnos=turnos,
+            semilla=semilla_ronda,
+            escenario="mixto",
+            concurrencia=concurrencia,
+            timeout_segundos=timeout_segundos,
+            periodo_segundos=periodo_segundos,
+            mapa=mapa,
+            ronda_reto=ronda,
+        )
+        resultados.append(resultado)
+        if al_completar_ronda is not None:
+            al_completar_ronda(resultado)
+
+    duracion_objetivo = turnos * periodo_segundos * len(resultados)
+    duracion_total = time.perf_counter() - inicio_campana
+    total_solicitudes = sum(int(item["solicitudes"]) for item in resultados)
+    total_fallidas = sum(int(item["fallidas"]) for item in resultados)
+    return {
+        "schemaVersion": 1,
+        "medicion": "campana_reto_local_http_loopback",
+        "rondas": [item["rondaReto"] for item in resultados],
+        "semillaBaseSolicitada": semilla,
+        "turnosPorRonda": turnos,
+        "periodoObjetivoSegundos": periodo_segundos,
+        "duracionObjetivoSegundos": round(duracion_objetivo, 3),
+        "duracionTotalSegundos": round(duracion_total, 3),
+        "duracionObjetivoCumplida": all(
+            bool(item["duracionObjetivoCumplida"]) for item in resultados
+        ),
+        "solicitudes": total_solicitudes,
+        "fallidas": total_fallidas,
+        "tasaFallo": round(total_fallidas / total_solicitudes, 6)
+        if total_solicitudes
+        else 0.0,
+        "resultados": resultados,
+        "limite": "mide HTTP loopback en esta máquina; no es una prueba AWS ni confirma criterios oficiales no especificados",
+    }
+
+
 def _positivo(valor: str) -> int:
     try:
         numero = int(valor)
@@ -495,8 +580,13 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
     parser.add_argument(
         "--turnos",
         type=_positivo,
-        default=5,
-        help="slots de la ronda; la ventana completa se conserva aunque la partida termine antes",
+        default=None,
+        help="slots por ronda (5 en matriz libre; 150 en campaña Reto por defecto)",
+    )
+    parser.add_argument(
+        "--campana-reto",
+        action="store_true",
+        help="ejecuta R1, R2 y R3 consecutivamente; por defecto 150 turnos de 2 s por ronda",
     )
     parser.add_argument("--semilla", type=int, default=20261026)
     parser.add_argument("--escenario", choices=sorted(ESCENARIOS_DEMO), default="mixto")
@@ -519,16 +609,44 @@ def main(argv: list[str] | None = None, *, salida: TextIO | None = None) -> int:
     args = parser.parse_args(argv)
     destino = salida if salida is not None else sys.stdout
     try:
-        reporte = ejecutar_matriz_local(
-            poblaciones=tuple(args.poblaciones),
-            turnos=args.turnos,
-            semilla=args.semilla,
-            escenario=args.escenario,
-            concurrencia=args.concurrencia,
-            timeout_segundos=args.timeout_segundos,
-            periodo_segundos=args.periodo_segundos,
-            mapa=args.mapa,
-        )
+        if args.campana_reto:
+            if tuple(args.poblaciones) != POBLACIONES_EVALUACION:
+                parser.error("--campana-reto define por sí misma las poblaciones 20/80/200.")
+            reporte = ejecutar_campana_reto_local(
+                turnos=args.turnos if args.turnos is not None else 150,
+                semilla=args.semilla,
+                concurrencia=args.concurrencia,
+                timeout_segundos=args.timeout_segundos,
+                periodo_segundos=args.periodo_segundos,
+                mapa=args.mapa,
+                al_completar_ronda=lambda ronda: print(
+                    json.dumps(
+                        {
+                            "progreso": "ronda_completada",
+                            "rondaReto": ronda["rondaReto"],
+                            "duracionSegundos": ronda["duracionTotalSegundos"],
+                            "turnosEjecutados": ronda["turnosEjecutados"],
+                            "slotsSinActividad": ronda["slotsCadenciaSinActividad"],
+                            "solicitudes": ronda["solicitudes"],
+                            "fallidas": ronda["fallidas"],
+                        },
+                        ensure_ascii=False,
+                    ),
+                    file=sys.stderr,
+                    flush=True,
+                ),
+            )
+        else:
+            reporte = ejecutar_matriz_local(
+                poblaciones=tuple(args.poblaciones),
+                turnos=args.turnos if args.turnos is not None else 5,
+                semilla=args.semilla,
+                escenario=args.escenario,
+                concurrencia=args.concurrencia,
+                timeout_segundos=args.timeout_segundos,
+                periodo_segundos=args.periodo_segundos,
+                mapa=args.mapa,
+            )
     except (OSError, ValueError, RuntimeError, KeyError) as exc:
         parser.error(str(exc))
     print(json.dumps(reporte, ensure_ascii=False, sort_keys=True), file=destino)

@@ -9,7 +9,10 @@ from unittest.mock import patch
 
 from navira.demo import MAPA_MANTA_POR_DEFECTO
 from navira.domain.mapa import MANTA_PLAYABLE_BOUNDS, cargar_mapa, recortar_mapa
-from navira.evaluacion_local import ejecutar_evaluacion_local
+from navira.evaluacion_local import (
+    ejecutar_campana_reto_local,
+    ejecutar_evaluacion_local,
+)
 from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, FaseTurno, Sobreviviente
 
 
@@ -88,14 +91,68 @@ class EvaluacionLocalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "período"):
             ejecutar_evaluacion_local(sobrevivientes=20, periodo_segundos=0)
 
+    def test_ejecuta_un_preset_reto_y_registra_su_identidad(self) -> None:
+        reporte = ejecutar_evaluacion_local(
+            sobrevivientes=20,
+            turnos=1,
+            semilla=37,
+            concurrencia=20,
+            periodo_segundos=0.001,
+            ronda_reto=1,
+        )
+
+        self.assertEqual(reporte["rondaReto"], 1)
+        self.assertTrue(str(reporte["escenario"]).startswith("reto-ronda-1-"))
+        self.assertTrue(str(reporte["runId"]).startswith("navira-demo-"))
+        self.assertEqual(reporte["sobrevivientesIniciales"], 20)
+
+    def test_campana_reto_ejecuta_rondas_secuenciales_con_semillas_derivadas(self) -> None:
+        def resultado(*, sobrevivientes, ronda_reto, semilla, turnos, **_kwargs):
+            return {
+                "rondaReto": ronda_reto,
+                "sobrevivientesIniciales": sobrevivientes,
+                "semilla": semilla,
+                "duracionTotalSegundos": turnos * 2,
+                "duracionObjetivoCumplida": True,
+                "solicitudes": sobrevivientes,
+                "fallidas": 0,
+            }
+
+        with patch(
+            "navira.evaluacion_local.ejecutar_evaluacion_local",
+            side_effect=resultado,
+        ) as ejecutar:
+            reporte = ejecutar_campana_reto_local(
+                turnos=150,
+                semilla=100,
+                periodo_segundos=2,
+            )
+
+        self.assertEqual(
+            [(llamada.kwargs["ronda_reto"], llamada.kwargs["sobrevivientes"])
+             for llamada in ejecutar.call_args_list],
+            [(1, 20), (2, 80), (3, 200)],
+        )
+        self.assertEqual([llamada.kwargs["semilla"] for llamada in ejecutar.call_args_list], [100, 101, 102])
+        self.assertEqual(reporte["rondas"], [1, 2, 3])
+        self.assertEqual(reporte["duracionObjetivoSegundos"], 900.0)
+        self.assertEqual(reporte["solicitudes"], 300)
+        self.assertEqual(reporte["fallidas"], 0)
+
     def test_completa_duracion_con_slots_ociosos_sin_fabricar_turnos_ni_solicitudes(self) -> None:
         partida = SimpleNamespace(
             estado=EstadoPartida.FINALIZADA,
             fase=FaseTurno.RESUELTA,
             turno=11,
+            escenario="demo-terminal",
             sobrevivientes=(Sobreviviente("S-1", "N-1", estado=EstadoSobreviviente.EVACUADO),),
         )
-        snapshot = SimpleNamespace(partida=partida, version=42)
+        snapshot = SimpleNamespace(
+            partida=partida,
+            version=42,
+            eventos_programados=(),
+            eventos_aplicados=(),
+        )
         almacen = SimpleNamespace(obtener=lambda _run_id: snapshot)
         contexto = SimpleNamespace(
             grafo=SimpleNamespace(mapa=SimpleNamespace(version="mapa-test")),
