@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-125. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
+Actualizado: 2026-10-28, CAM-126. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
 
 ## Dónde está cada cosa
 
@@ -97,6 +97,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-043](arquitectura/decisiones/0043-filtros-de-riesgo-y-rutas-comprometidas.md) | Filtros compartidos para incidentes, hordas, zombies próximos y rutas comprometidas | Cambie las reglas de transitabilidad o la política de riesgo alrededor de amenazas. |
 | [ADR-044](arquitectura/decisiones/0044-reemplazo-explicito-al-cambiar-de-modo.md) | Inicio explícito desde el modo destino reemplaza el run local con un mundo nuevo | Cambie el ciclo de vida o transición de runs entre Reto, Simulador y Jugar. |
 | [ADR-045](arquitectura/decisiones/0045-evaluacion-aws-privada.md) | Staging privado y evaluación AWS efímera sin controles locales expuestos | Cambie la topología, permisos o método de evaluación en AWS. |
+| [ADR-046](arquitectura/decisiones/0046-demo-publica-multisesion.md) | Demo temporal abierta con mundos aislados por cookie anónima | Cambie el modo público, sus límites o topología temporal. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
@@ -117,6 +118,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [SPEC-008](metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial y vista 3D | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
 | [SPEC-009](metodo/especificaciones/SPEC-009-modo-reto.md) | Presets de la prueba de fuego, separados de demo libre y juego | Cambien las rondas, sus presets o la campaña de evaluación. |
 | [SPEC-010](metodo/especificaciones/SPEC-010-juego-operador.md) | Paleta de operador, nueva partida e intervención del mapa en un mundo vivo | Cambien herramientas, ciclo de partida, validaciones o colocación local de entidades/eventos. |
+| [SPEC-011](metodo/especificaciones/SPEC-011-demo-publica-multisesion.md) | Demo pública multisesión para Reto, Simulador y Jugar | Cambien aislamiento por navegador, límites, expiración o topología pública temporal. |
 | [plantillas/cambio.md](metodo/plantillas/cambio.md) | Formato de cambio | Se necesiten campos nuevos. |
 | [plantillas/decision.md](metodo/plantillas/decision.md) | Formato de ADR | Se necesiten campos nuevos. |
 | [plantillas/transferencia.md](metodo/plantillas/transferencia.md) | Formato de transferencia | Cambie el protocolo de continuidad. |

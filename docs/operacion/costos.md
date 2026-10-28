@@ -2,6 +2,8 @@
 
 Estado: estimación de diseño, no factura. CAM-117 verificó el Budget `Hackathon-Budget` de US$10 mensuales y tres alertas ACTUAL (50/80/100 %). La captura más reciente del usuario muestra destinatario `Inactive` y ninguna acción asociada; el usuario acepta continuar y monitorear manualmente, pero la entrega por correo no está verificada. El panel del Free Plan compartido por el usuario muestra US$120 en créditos, US$0 por pagar, 177 días y fin 2027-04-21; tratarlo como evidencia visual de esa fecha, no como saldo auditado por CLI. No hay gasto real comprobado.
 
+CAM-126/ADR-046 añade un Container Service Lightsail `medium-1` (2 GB/1 vCPU) para la demo pública de tres días. La tarifa de lista que devuelve AWS CLI en `us-east-2` es US$40/mes; prorrateo simple `40 × 72 / 730 = US$3,95` de cómputo del servicio por 72 horas. Es aproximación, no cotización ni costo final: excluye cualquier exceso de transferencia, almacenamiento de ECR/logs, impuestos y recursos auxiliares. El Budget US$10 solo alerta; revisar Billing y eliminar el servicio al terminar. No se crea un ALB separado, CloudFront, S3 ni base de datos para esta ruta.
+
 AWS describe el Free Plan como limitado a servicios/características seleccionados, con fin a los seis meses o al agotarse créditos, lo que ocurra primero. El acceso a una familia de servicio no confirma que cada operación/feature esté permitida ni que cada costo esté cubierto. Confirmar saldo elegible, funciones permitidas y fecha en Billing antes de provisionar; los créditos no deben descontarse automáticamente de la estimación bruta de uso. La documentación de AWS sobre el Free Plan y servicios admitidos se enlaza al final de este apartado.
 
 ## Referencia mensual inicial

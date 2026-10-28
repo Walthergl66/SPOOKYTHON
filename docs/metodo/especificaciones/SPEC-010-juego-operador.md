@@ -13,7 +13,7 @@ Evidencia: validación API y recorrido parcial del modo en [CAM-101](../../segui
 
 «Juego» es la experiencia de operador solicitada por el usuario. Un operador local arranca un mundo automático y, mientras este corre, selecciona una herramienta para agregar habitantes, caminantes, corredores, hordas, dormidos, refugios o incidentes. Simulador conserva su asistente de configuración; Reto conserva sus presets automáticos. El dominio sigue usando solo `simulador` y `juego`: Jugar operador opera un run de `simulador`, no constituye un modo de dominio adicional.
 
-La API local requiere `NAVIRA_LOCAL_DEMO_CONTROL=1`, conexión loopback y Origin same-host. No es apropiada para un despliegue público. No cambia `POST /paso`, no permite editar Reto y no modifica el mundo desde el navegador: las colocaciones se aplican con CAS en el backend.
+La superficie local requiere `NAVIRA_LOCAL_DEMO_CONTROL=1`, conexión loopback y Origin same-host. La demo pública temporal habilita Reto/Simulador/Jugar operador mediante el perfil separado y sesión aislada descritos en [SPEC-011](SPEC-011-demo-publica-multisesion.md); no es una consola administrativa productiva. No cambia `POST /paso`, no permite editar Reto y no modifica el mundo autoritativamente desde el navegador: las colocaciones se aplican con CAS en el backend.
 
 ## Criterios de aceptación
 

@@ -1,7 +1,7 @@
 # ADR-045 — Evaluación AWS privada sin exponer controles locales
 
 Fecha: 2026-10-28  
-Estado: aceptada para diseño  
+Estado: sustituida parcialmente por [ADR-046](0046-demo-publica-multisesion.md) para la demo pública solicitada; conserva la separación de campaña efímera  
 Origen: Fase 2 de la guía de despliegue de Navira.
 
 ## Contexto y restricciones

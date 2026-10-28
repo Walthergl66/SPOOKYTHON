@@ -20,6 +20,14 @@ Estado al 2026-10-28 (CAM-125): recursos AWS de evaluación creados en `us-east-
 | IAM/configuración segura | Roles y secretos fuera del repositorio | Pendiente. |
 | CloudFormation | Declaración parametrizada y repetible | Pendiente. |
 
+## Demo pública temporal en Lightsail (ADR-046)
+
+Esta topología sustituye solo la prohibición de exponer los controles locales para la demo solicitada; el runner Fargate de evaluación y su alcance loopback permanecen separados. Se usa un Container Service de una réplica `medium-1` (2 GB/1 vCPU), Nginx público en 8080 y backend privado en 8000 dentro del mismo servicio. El proxy sirve frontend y API same-origin, conserva el WebSocket y limita rutas públicas. Lightsail proporciona endpoint HTTPS administrado. `NAVIRA_PUBLIC_DEMO_CONTROL=1`, `NAVIRA_PUBLIC_MAX_SESSIONS=3`, `NAVIRA_PUBLIC_SESSION_IDLE_SECONDS=10800`, `NAVIRA_PUBLIC_SESSION_COOKIE_SECONDS=86400`, `NAVIRA_COOKIE_SECURE=1`, `NAVIRA_DEMO_MAP=/opt/navira/backend/data/maps/manta-hackathon-v1.json`; `NAVIRA_LOCAL_DEMO_CONTROL` permanece apagado. El backend corre con un worker.
+
+Imágenes buildadas localmente con Podman (Docker daemon no disponible), `amd64/linux`; ECR privado `navira-campaign` tiene tags inmutables y escaneo on-push. Lightsail debe activar su rol ECR image-puller para ese repo antes del deployment. Configurar solo frontend como puerto público 8080/HTTP detrás del endpoint administrado; backend sin puerto público. Los valores sensibles, si se añaden, deben pasarse al servicio fuera del repo.
+
+Límites probados localmente: máximo tres sesiones por navegador/instancia, mundos de Reto/Simulador/Juego operador distintos, expiración de tres horas sin actividad. Sin base de datos: reiniciar servicio elimina todo. Un solo servicio/proceso; no escalar réplicas. La instancia medium-1 está estimada para el evento de 72 h; se debe borrar Container Service al terminar para detener el cargo. Estado AWS y URL solo se anotan después de comprobación real.
+
 Primera tarea a medir: 1 vCPU/2 GB, una réplica. El tamaño no constituye una garantía de capacidad. Mantener servicio encendido y listo antes de evaluar; el arranque del contenedor no debe formar parte del camino normal por petición.
 
 ## Red propuesta para el evento
