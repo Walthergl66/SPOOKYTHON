@@ -245,7 +245,6 @@ export function App() {
                 <strong>R{round.id} · {round.name}</strong><span>{round.details}</span>
               </button>)}
             </div>
-            <p className="challenge-note">Densidad media provisional. Puente, calles y turnos de evento se sortearán de forma reproducible; el reto no define esos parámetros. Cada ronda se inicia por separado.</p>
             <button className={`sim-action ${challengeIsRunning ? 'sim-pause' : 'sim-start'} challenge-start`} type="button" onClick={() => challengeIsRunning ? void runControl('pausar') : challengeIsPaused ? void runControl('reanudar') : void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
               {challengeBusy ? 'Preparando…' : challengeIsRunning ? `Pausar R${simulator?.rondaReto}` : challengeIsPaused ? `Continuar R${simulator?.rondaReto}` : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
             </button>

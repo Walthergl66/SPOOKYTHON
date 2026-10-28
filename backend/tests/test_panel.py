@@ -22,6 +22,27 @@ from navira.simulation.coordinador import (
 
 
 class PanelPublicoTests(unittest.TestCase):
+    def test_reto_r2_publica_el_puente_cerrado_desde_la_primera_decision(self) -> None:
+        contexto = crear_contexto_demo(
+            MAPA_MANTA_POR_DEFECTO,
+            semilla=123,
+            ronda_reto=2,
+        )
+        panel = ConsultarPanel(contexto.snapshots, contexto.mapas, contexto.servicio_decision)
+        estado = panel.consultar_estado()
+
+        self.assertEqual(len(estado["eventosCiudad"]), 1)
+        evento = estado["eventosCiudad"][0]
+        self.assertEqual(evento["id"], "EV-RETO-R2-PUENTE")
+        self.assertEqual(evento["turno"], 0)
+        self.assertIn(evento["segmentoId"], estado["segmentosBloqueados"])
+        self.assertTrue(
+            any(
+                calle.segmento_id == evento["segmentoId"] and calle.tipo.value == "puente"
+                for calle in contexto.grafo.mapa.calles
+            )
+        )
+
     def test_estado_sin_partida_no_revela_detalles(self) -> None:
         respuesta = TestClient(crear_app()).get("/panel/estado")
 

@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-128. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
+Actualizado: 2026-10-28, CAM-130. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
 
 ## Dónde está cada cosa
 
@@ -99,6 +99,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-045](arquitectura/decisiones/0045-evaluacion-aws-privada.md) | Staging privado y evaluación AWS efímera sin controles locales expuestos | Cambie la topología, permisos o método de evaluación en AWS. |
 | [ADR-046](arquitectura/decisiones/0046-demo-publica-multisesion.md) | Demo temporal abierta con mundos aislados por cookie anónima | Cambie el modo público, sus límites o topología temporal. |
 | [ADR-047](arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) | Despliegue de `master` en Lightsail mediante GitHub Actions y SSH | Cambie la cadena de build, conectividad, rollback o destino. |
+| [ADR-048](arquitectura/decisiones/0048-puente-r2-como-condicion-inicial.md) | Aplicar el puente colapsado de R2 al inicio antes de la primera decisión | Cambie el calendario/semántica inicial del puente del Reto. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/

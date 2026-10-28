@@ -50,10 +50,10 @@ Valores provisionales del prototipo: dormido detecta supervivientes a dos saltos
 | Ronda | Duración | Sobrevivientes | Condiciones |
 |---|---|---:|---|
 | Anochecer | 5 minutos | 20 | Solo caminantes. |
-| Medianoche | 5 minutos | 80 | Caminantes, corredores y hordas; colapso de un puente. |
+| Medianoche | 5 minutos | 80 | Caminantes, corredores y hordas; puente colapsado desde el inicio de la ronda (turno 0 en la implementación). |
 | Apocalipsis | 5 minutos | 200 | Todos los tipos; dos calles bloqueadas en vivo. |
 
-Cantidad de zombies y distribución no están definidas en la fuente; parametrizarlas y confirmar criterios (P-09). Los perfiles `libre`, `caminantes`, `mixto` y `horda` y la generación de 1–200 sobrevivientes son fixtures sintéticos para desarrollo; no fijan distribución ni dificultad oficial. Conservar escenario, semilla, versión, eventos y órdenes para repetir una ejecución; no se promete que un cambio mínimo produzca siempre resultados distintos, sino que puede propagarse por las dependencias del mundo.
+Cantidad de zombies y distribución no están definidas en la fuente; parametrizarlas y confirmar criterios (P-09). El turno exacto del puente tampoco está prescrito: la implementación lo aplica en turno 0, como condición inicial necesaria para que la primera decisión y ruta ya consideren el cierre. R3 mantiene los dos cierres en vivo en turnos provisionales 50/100. Los perfiles `libre`, `caminantes`, `mixto` y `horda` y la generación de 1–200 sobrevivientes son fixtures sintéticos para desarrollo; no fijan distribución ni dificultad oficial. Conservar escenario, semilla, versión, eventos y órdenes para repetir una ejecución; no se promete que un cambio mínimo produzca siempre resultados distintos, sino que puede propagarse por las dependencias del mundo.
 
 ## Extras
 

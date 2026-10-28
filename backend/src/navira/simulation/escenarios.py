@@ -252,11 +252,13 @@ def crear_eventos_reto(
     *,
     segmentos_foco: tuple[str, ...] | None = None,
 ) -> tuple[EventoCierre, ...]:
-    """Genera el evento exigido por ronda; selección reproducible y turnos provisionales.
+    """Genera el evento exigido por ronda con segmentos reproducibles.
 
-    El reto no especifica ubicación ni turno. Se usa turno 50 (100 s) para el
-    evento de ronda 2 y turnos 50/100 para ronda 3. En Manta se exige que el
-    puente exista en el grafo; no se sustituye silenciosamente por otra calle.
+    El reto no especifica ubicación ni turno. R2 representa el puente como
+    condición inicial: se cierra en el turno cero, antes de la primera decisión.
+    R3 mantiene sus dos cierres en vivo en los turnos provisionales 50/100. En
+    Manta se exige que el puente exista en el grafo; no se sustituye
+    silenciosamente por otra calle.
     """
 
     if ronda == 1:
@@ -276,7 +278,7 @@ def crear_eventos_reto(
         return (
             EventoCierre(
                 id="EV-RETO-R2-PUENTE",
-                turno_objetivo=50,
+                turno_objetivo=0,
                 segmentos=frozenset((rng.choice(puentes),)),
                 causa="Colapso de puente del reto",
             ),
