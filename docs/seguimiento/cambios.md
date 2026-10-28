@@ -2,6 +2,21 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-097 — Unificar controles y permitir nueva simulación desde Reto pausado
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: el usuario pidió un único botón que cambie entre iniciar, pausar y continuar; mantener reinicio y permitir iniciar una partida nueva cuando Reto esté pausado.
+- Especificación: SPEC-009 CA-009-09/10, P4-05 parcial, T-48/49; ADR-040 define cuándo se sustituye una partida.
+- Motivo: la UI mostraba controles iniciar/continuar separados y deshabilitaba «Iniciar» en pausa; además el endpoint rechazaba iniciar cualquier ronda cuando existía una Reto pausada.
+- Resultado: un botón primario cambia por estado entre iniciar, pausar y continuar; al pausar Reto, aparece «Nueva simulación Rn» para reemplazar la ronda actual por el preset seleccionado y «Reiniciar Rn» permanece separado. El backend permite reemplazar solo un Reto pausado; una partida activa o una demo libre pausada siguen protegidas con 409.
+- Archivos: `frontend/src/app/App.tsx`, `backend/src/navira/application/control_simulador_demo.py`, pruebas backend/frontend; contrato API, ADR-040/índice, módulo frontend, SPEC-009/índice, T-49, plan, trazabilidad, README, este registro, estado y [evidencia](../calidad/resultados/reto-nueva-simulacion-pausada-cam097.md).
+- Decisión: ADR-040; se conserva `POST /reto/iniciar` como endpoint y se extiende solo su regla para un reto pausado, dentro del control local.
+- Validación: backend `tests.test_control_simulador_demo` 14/14; incluye reemplazo de Reto pausado por R3 con `runId` distinto/población 200, rechazo 409 mientras activa y protección de demo libre pausada. Frontend `npm test -- --run` 96/96 y `npm run build` correcto, con advertencia conocida de chunk `mapArea` 1.065,62 kB. `check_docs.py` 127 Markdown/129 archivos, `check_sdd.py` 9 SPEC, regresiones SDD 8/8 y `git diff --check` correctos. Smoke browser: botón unificado cambió Continuar→Pausar; «Nueva simulación R2» inició otro run con 80 personas; pausa regresó a «Continuar R2». API/UI HTTP 200.
+- Validación no ejecutada: suite backend completa no se repitió; se ejecutó la suite completa del módulo de control (14 pruebas) más el caso enfocado. No se probó el modo público/producción.
+- Límites: al iniciar una nueva ronda se reemplaza el mundo pausado, que es volátil; no hay historial/recuperación de ese mundo. No se permite reemplazar una partida activa.
+- Siguiente acción: crear commits separados de código y documentación; la API y Vite locales quedan activos con R2 pausada en turno 4.
+- Commits separados en `master`: código `f32e705` (`feat(reto): start new round from paused challenge`) y documentación en el commit posterior del historial local.
+
 ## CAM-096 — Pausar y continuar la ronda del modo Reto
 
 - Fecha: 2026-10-27, Ecuador continental.

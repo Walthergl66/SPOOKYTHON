@@ -92,6 +92,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-037](arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md) | Muestrear sobrevivientes del Reto en cuatro zonas sectoriales aproximadas y mantener libre el spawn del Simulador | Cambie el origen geográfico inicial del Reto o aparezca una geometría oficial. |
 | [ADR-038](arquitectura/decisiones/0038-foco-amenazas-reto.md) | Concentración provisional de amenazas/eventos del Reto en un núcleo urbano de Manta | Cambie la distribución espacial de amenazas del Reto o se confirme un modelo oficial. |
 | [ADR-039](arquitectura/decisiones/0039-reinicio-ronda-reto.md) | Reinicio de la ronda Reto actual con mundo nuevo | Cambie el ciclo de vida o el contrato de reinicio Reto. |
+| [ADR-040](arquitectura/decisiones/0040-reemplazo-reto-pausado.md) | Reemplazo de un run Reto pausado por otro preset | Cambie cuándo una partida local puede sustituirse por otro preset Reto. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
@@ -165,6 +166,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/default-media-cam063.md](calidad/resultados/default-media-cam063.md) | Comparación emparejada de intensidad media frente a alta que motiva el default de demo CAM-063 | Cambie generador/configuración o se repita evaluación; muestra de tres semillas y un escenario. |
 | [resultados/reto-foco-reinicio-cam095.md](calidad/resultados/reto-foco-reinicio-cam095.md) | Verificación local de la concentración central por tipo y reinicio del preset Reto | Cambie radio/cuota o ciclo de reinicio; no acredita densidad oficial, T-11 o AWS. |
 | [resultados/control-reto-pausa-cam096.md](calidad/resultados/control-reto-pausa-cam096.md) | Evidencia CAM-096: pausa y continuación de la ronda Reto | Cambien controles compartidos o se repita la verificación. |
+| [resultados/reto-nueva-simulacion-pausada-cam097.md](calidad/resultados/reto-nueva-simulacion-pausada-cam097.md) | Evidencia CAM-097: iniciar un preset nuevo desde Reto pausado | Cambie el comportamiento de sustitución o se repita su prueba. |
 | [resultados/verificacion-sdd.md](calidad/resultados/verificacion-sdd.md) | Evidencia de incorporación metodológica | Conservar resultados de CAM-004; nuevas ejecuciones se registran sin alterar resultados históricos. |
 
 ## operacion/
