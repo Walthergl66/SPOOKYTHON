@@ -342,6 +342,27 @@ class ControlSimuladorDemoLocal:
             self._estado = "activa"
             return self.estado()
 
+    def detener(self) -> dict[str, object]:
+        """Finaliza el run actual y limpia el estado del panel para volver al inicio."""
+
+        # Señalar antes de esperar el lock del resolutor impide que abra otro
+        # turno después del que ya está en curso.
+        reloj = self._reloj
+        if reloj is not None:
+            reloj.solicitar_detencion()
+        with self._lock:
+            if reloj is not self._reloj:
+                # Una operación concurrente reemplazó el run; no detener el nuevo.
+                return self.estado()
+            if reloj is not None:
+                reloj.detener(timeout_s=None)
+            self._reloj = None
+            self._contexto = None
+            self._panel = None
+            self._configuracion = {}
+            self._estado = "sin_partida"
+            return self._proyectar_estado(None)
+
     def reiniciar(
         self,
         *,

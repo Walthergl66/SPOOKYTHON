@@ -23,6 +23,8 @@ CAM-134 monta MapLibre al entrar a la app sobre el mapa vacío, para que la cart
 
 CAM-135 proyecta el tipo visible del zombie como clase de marcador: corredor morado `C`, caminante rojo `Z` y horda naranja `H`. `features/map/mapFeatures.ts` asigna propiedades GeoJSON y `CityMap.tsx`/`styles.css` definen símbolos y leyenda. No cambia tipo, movimiento ni visibilidad del snapshot; T-61 requiere revisión visual y queda pendiente.
 
+CAM-136 reemplaza los controles visibles de reinicio por «Detener simulación»/«Detener mundo». La acción espera la confirmación del backend, limpia selección/avisos y devuelve la navegación a Reto/R1; no fabrica un run vacío ni un snapshot local. Jugar conserva «Iniciar nueva partida» para su operación específica.
+
 ## Estructura implementada en P0-04
 
 - `frontend/src/app/`: composición de la pantalla inicial y selección local entre simulador y juego.

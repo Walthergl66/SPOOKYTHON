@@ -10,7 +10,7 @@ import { usePanel } from '../application/usePanel'
 import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
 import { placeOperatorElement, startOperatorWorld as startOperatorWorldRequest } from '../infrastructure/http/operator'
 import { loadPanelMap, loadPanelRoute, loadPanelSnapshot } from '../infrastructure/http/panel'
-import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, restartChallengeRound, setSimulatorSpeed, startChallengeRound } from '../infrastructure/http/simulator'
+import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, setSimulatorSpeed, startChallengeRound } from '../infrastructure/http/simulator'
 import { subscribePanel } from '../infrastructure/realtime/panel'
 import { checkHealth } from '../infrastructure/http/health'
 import { BrandMark } from '../shared/ui/BrandMark'
@@ -158,17 +158,23 @@ export function App() {
       setChallengeBusy(false)
     }
   }
-  const restartChallenge = async () => {
-    setChallengeBusy(true)
+  const stopCurrentSimulation = async () => {
+    if (!await runControl('detener')) return
+    setMode('challenge')
+    setChallengeRound(1)
+    setChallengeBusy(false)
     setChallengeError(null)
-    try {
-      acceptStatus(await restartChallengeRound())
-      await refreshPanel()
-    } catch (error) {
-      setChallengeError(error instanceof Error ? error.message : 'No se pudo reiniciar la ronda del reto.')
-    } finally {
-      setChallengeBusy(false)
-    }
+    setSelectedSurvivorId(undefined)
+    setSelectedRoute(null)
+    setSelectedRouteError(null)
+    setSelectedRouteLoading(false)
+    setOperatorTool('habitante')
+    setOperatorError(null)
+    setOperatorNotice(null)
+    setRefugeDialogOpen(false)
+    setSetupStage('refuges')
+    resetRefuges()
+    clearSimulatorMessage()
   }
   const placeOperatorItem = async (placement: { tipo: OperatorTool; nodo?: string; segmentoId?: string }) => {
     setOperatorBusy(true)
@@ -236,6 +242,7 @@ export function App() {
             onStart={startOperatorWorld}
             onPause={() => void runControl('pausar')}
             onContinue={() => void runControl('reanudar')}
+            onStop={() => void stopCurrentSimulation()}
             error={operatorError ?? (simulatorUnavailable ? 'El control requiere NAVIRA_LOCAL_DEMO_CONTROL=1 en el backend local.' : null)}
             notice={operatorNotice}
           /> : mode === 'challenge' ? <section className="challenge-setup" aria-labelledby="challenge-title">
@@ -255,8 +262,8 @@ export function App() {
             {!challengeBusy && challengeIsPaused ? <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
               {`Nueva simulación R${challengeRound}`}
             </button> : null}
-            {!challengeBusy && simulator?.rondaReto && simulator.runId ? <button className="sim-action sim-reset challenge-start" type="button" onClick={() => void restartChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
-              {`Reiniciar R${simulator.rondaReto}`}
+            {!challengeBusy && simulator?.rondaReto && simulator.runId ? <button className="sim-action sim-stop challenge-start" type="button" onClick={() => void stopCurrentSimulation()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
+              {simulatorBusy && pendingAction === 'detener' ? 'Deteniendo simulación…' : 'Detener simulación'}
             </button> : null}
             {challengeError ? <div className="control-notice is-error" role="alert">{challengeError}</div> : null}
           </section> : mode === 'simulator' ? <section className="simulator-start-panel" aria-label="Iniciar simulador">
@@ -265,7 +272,7 @@ export function App() {
                 : modeRunMatches && simulator?.estado === 'pausando' ? <button className="sim-action sim-pause" type="button" disabled>Pausando…</button>
                 : modeRunMatches && simulator?.estado === 'pausada' ? <button className="sim-action sim-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy}>Continuar</button>
                   : <button className="sim-action sim-start simulator-primary-start" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>{simulatorBusy ? 'Preparando…' : simulator?.runId ? 'Nueva simulación' : 'Iniciar simulación'}</button>}
-              {modeRunMatches && simulator?.runId && (simulatorIsRunning || simulator?.estado === 'pausada') ? <button className="sim-action sim-reset" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>Nueva simulación</button> : null}
+              {modeRunMatches && simulator?.runId ? <button className="sim-action sim-stop" type="button" onClick={() => void stopCurrentSimulation()} disabled={simulatorBusy || simulatorUnavailable}>{simulatorBusy && pendingAction === 'detener' ? 'Deteniendo simulación…' : 'Detener simulación'}</button> : null}
             </div>
             <p className="simulator-fixed-speed">Velocidad fija: <strong>4×</strong></p>
             {modeRunMatches && simulator?.runId ? <p className="simulator-run-population">Población de esta partida: {simulator.sobrevivientesIniciales ?? '—'} habitantes · {simulator.zombiesIniciales ?? '—'} zombies</p> : null}

@@ -289,6 +289,8 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .sim-pause:hover:not(:disabled) { background: #dc5b5b; }
 .sim-reset { border-color: rgba(188, 205, 227, .26); background: rgba(255,255,255,.04); color: #dce5f0; }
 .sim-reset:hover:not(:disabled) { border-color: var(--sea); }
+.sim-stop { border-color: rgba(237, 76, 88, .55); color: #ff9aa1; }
+.sim-stop:hover:not(:disabled) { border-color: #ed4c58; background: rgba(237, 76, 88, .12); }
 .setup-field { display: grid; gap: 7px; margin: 13px 0; color: #c5d0df; font-size: 13px; font-weight: 600; }
 .setup-field select { width: 100%; min-height: 37px; padding: 0 10px; border: 1px solid rgba(181, 200, 224, .2); border-radius: 5px; background: #172234; color: var(--ink); font: 13px 'DM Sans', sans-serif; }
 .setup-field input { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid rgba(181, 200, 224, .24); border-radius: 6px; background: #172234; color: var(--ink); font: 600 16px 'DM Sans', sans-serif; }

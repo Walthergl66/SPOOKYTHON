@@ -210,7 +210,7 @@ class _SesionDemoPublica:
 
     _OPERACIONES_SIMULADOR = frozenset({
         "iniciar", "reiniciar", "iniciar_mundo_operador", "colocar_elemento",
-        "iniciar_ronda_reto", "reiniciar_ronda_reto", "pausar", "reanudar",
+        "iniciar_ronda_reto", "reiniciar_ronda_reto", "pausar", "reanudar", "detener",
         "fijar_velocidad",
     })
 

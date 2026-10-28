@@ -47,10 +47,13 @@ Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema invál
 | `GET /demo/simulador` | Proceso local habilitado y loopback | Estado de una demo local. |
 | `GET /demo/sesion` | Cookie anónima same-origin | Prepara un mundo público independiente y devuelve solo estado, no token. |
 | `POST /demo/simulador/{iniciar,pausar,reanudar,reiniciar}` | Opt-in local/loopback o sesión pública + Origin same-host | Control del simulador sintético correspondiente únicamente a la sesión que presenta la cookie. |
+| `POST /demo/simulador/detener` | Opt-in local/loopback o sesión pública + Origin same-host | Termina ordenadamente el turno ya iniciado, apaga el reloj y devuelve esa sesión a `sin_partida`; no crea un run de reemplazo. |
 | `POST /demo/operador/iniciar` | Opt-in local/loopback o sesión pública + Origin same-host | Inicia un mundo de Jugar vacío y sustituye solo el run de esa sesión. |
 | `POST /demo/operador/elementos` | Opt-in local/loopback o sesión pública + Origin same-host | Agrega actor/refugio o cierra segmento en el mundo de esa sesión; CAS/validaciones siguen en backend. |
 | `POST /reto/iniciar` | Opt-in local/loopback o sesión pública + Origin same-host | Inicia preset Reto aislado en la sesión. |
 | `POST /reto/reiniciar` | Opt-in local/loopback o sesión pública + Origin same-host | Reinicia el Reto de la sesión actual con un run nuevo. |
+
+`POST /demo/simulador/detener` no recibe cuerpo y es idempotente: si no hay un run, devuelve estado `sin_partida` con `runId` nulo. Si hay un turno en curso, señaliza la detención antes de esperar el lock del resolutor; ese turno termina, no comienza uno adicional, y después se libera el contexto visible. `/panel/estado` y el siguiente evento WebSocket reportan `sin_partida`. El operador puede iniciar un run nuevo desde cualquiera de las tres experiencias.
 
 ### Control de demo local
 

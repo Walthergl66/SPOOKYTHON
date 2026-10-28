@@ -91,12 +91,19 @@ class RelojSimuladorLocal:
     def velocidad(self) -> float:
         return self._velocidad
 
-    def detener(self, timeout_s: float = 3.0) -> None:
-        """Solicita cierre ordenado y espera un intervalo acotado."""
-
+    def solicitar_detencion(self) -> None:
+        """Evita que comience otro turno y deja terminar el ya iniciado."""
         self._detener.set()
+
+    def detener(self, timeout_s: float | None = 3.0) -> None:
+        """Solicita cierre ordenado y espera hasta el límite indicado; None espera el cierre."""
+
+        self.solicitar_detencion()
         if self._hilo is not None:
-            self._hilo.join(timeout=max(0.0, timeout_s))
+            if timeout_s is None:
+                self._hilo.join()
+            else:
+                self._hilo.join(timeout=max(0.0, timeout_s))
 
     @property
     def pausado(self) -> bool:

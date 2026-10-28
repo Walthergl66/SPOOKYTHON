@@ -20,6 +20,8 @@ CAM-081 elimina del menú el control de incidentes viales aleatorios y los deja 
 
 En Jugar, el botón «Iniciar nueva partida» se mantiene disponible mientras el mundo operador está activo o pausado. Crea un `runId` distinto en el mismo mapa vacío y reemplaza el run anterior; Pausar/Continuar siguen controlando el run que se está observando. No se permite usarlo para sustituir una ronda Reto.
 
+«Detener mundo» termina el turno ya iniciado, detiene el reloj, limpia la partida publicada y devuelve la interfaz a su inicio en Reto. La acción es distinta de «Iniciar nueva partida»: esta última conserva su función de reemplazar el mundo operador por otro vacío.
+
 ## Durante la ejecución
 
 - Generar cierres con identificador, turno objetivo y segmento afectado; rechazar solicitudes ambiguas o pasadas.

@@ -47,7 +47,7 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
     return () => { controller.abort(); if (timer !== undefined) window.clearTimeout(timer) }
   }, [port, status?.estado])
 
-  const run = async (action: SimulatorAction, configuredSetup: SimulatorSetup = setup) => {
+  const run = async (action: SimulatorAction, configuredSetup: SimulatorSetup = setup): Promise<boolean> => {
     setBusy(true)
     setPendingAction(action)
     setMessage(null)
@@ -57,9 +57,11 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
       setStatus(next)
       setUnavailable(false)
       onChanged()
+      return true
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No se pudo controlar el simulador.')
       if (error instanceof SimulatorUnavailableError) setUnavailable(true)
+      return false
     } finally {
       setBusy(false)
       setPendingAction(null)

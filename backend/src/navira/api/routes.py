@@ -186,6 +186,17 @@ async def reanudar_demo_simulador(request: Request) -> dict[str, object]:
         raise _error(409, error) from error
 
 
+@router.post("/demo/simulador/detener", tags=["demo local"])
+async def detener_demo_simulador(request: Request) -> dict[str, object]:
+    """Detiene el mundo actual y devuelve el panel a sin partida."""
+    gestor = _control_demo_local(request)
+    exigir_control_demo(request)
+    try:
+        return await run_in_threadpool(gestor.detener)
+    except RuntimeError as error:
+        raise _error(409, error) from error
+
+
 @router.post("/demo/simulador/velocidad", tags=["demo local"])
 async def velocidad_demo_simulador(
     solicitud: SolicitudVelocidadDemoSchema,

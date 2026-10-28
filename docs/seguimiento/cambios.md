@@ -1,3 +1,15 @@
+## CAM-136 — Detener la partida y volver a la entrada inicial
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de sustituir el botón visible de reinicio por una acción que termine la simulación y deje la app como cuando se abre.
+- Relación: SPEC-007/CA-007-12/T-26; SPEC-009/CA-009-09/T-48; SPEC-010/CA-010-10/T-56; ADR-049.
+- Decisión: señalizar el reloj antes de esperar el lock, permitir concluir el turno actual pero impedir el siguiente, limpiar contexto/panel/configuración del run y publicar `sin_partida`. La interfaz vuelve a Reto/R1. El endpoint legado `/reto/reiniciar` permanece para compatibilidad, sin botón visible.
+- Archivos: control de simulador, reloj, rutas API, delegación por sesión pública, cliente y estados del simulador, panel Reto/Simulador/Juego; contexto, modos, flujos, contratos, módulos, SPEC-007/009/010, T-26/T-48/T-56, trazabilidad e índices.
+- Resultado implementado: botón Reto «Reiniciar Rn» sustituido por «Detener simulación»; Simulador sustituye «Nueva simulación» por «Detener simulación» mientras existe run; Jugar agrega «Detener mundo» conservando «Iniciar nueva partida». Un stop exitoso elimina los actores/métricas visibles, limpia selecciones y vuelve a la entrada Reto/R1. El endpoint es idempotente si ya no hay run.
+- Verificación: `cd frontend && npm run build` pasa (con advertencia conocida de chunk MapLibre >500 kB); `PYTHONPATH=src python3 -m compileall -q src/navira`, `python3 backend/scripts/check_docs.py` (144 Markdown/146 archivos), `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` pasan. No se ejecutaron pruebas ni smoke visual; T-26/T-48/T-56 quedan pendientes.
+- Límites y siguiente paso: la API espera el turno iniciado para no dejar un snapshot parcial; si el resolutor tarda, la acción tardará también. Verificar visualmente el control y que stop publique `sin_partida`, no abra otro turno y permita iniciar de nuevo. Reiniciar el backend elimina el estado volátil existente; se actualizará ahora según la instrucción previa del usuario de refrescar la app tras cada cambio.
+- Commit o PR: no creado.
+
 ## CAM-135 — Distinguir corredores en el mapa
 
 - Fecha: 2026-10-28, America/Guayaquil.

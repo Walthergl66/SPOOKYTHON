@@ -6,7 +6,7 @@
 
 - CAM-135: el frontend asigna `kind=runner`, glifo `C` y color morado a `tipo=corredor`; la leyenda separa caminantes, corredores y hordas. `npm run build` y validadores documentales pasan; el smoke visual no se ejecutó y T-61 queda pendiente.
 
-- CAM-134: la implementación de mapa/pausa está completa en el árbol local. `npm run build` pasa con advertencia de chunk >500 kB; `PYTHONPATH=src python3 -m compileall -q src/navira` y validadores docs/SDD pasan. Faltan pruebas de comportamiento, smoke visual y tiempos; CA-007-11/CA-008-11, T-59/T-60 y P4-08 se mantienen parciales. El servidor local activo sigue siendo previo a estos cambios y no se reinició para preservar la partida en memoria.
+- CAM-134: la implementación de mapa/pausa está completa en el árbol local. `npm run build` pasa con advertencia de chunk >500 kB; `PYTHONPATH=src python3 -m compileall -q src/navira` y validadores docs/SDD pasan. Faltan pruebas de comportamiento, smoke visual y tiempos; CA-007-11/CA-008-11, T-59/T-60 y P4-08 se mantienen parciales. El backend local fue reiniciado en CAM-136 y ahora carga el árbol actual; su run volátil previo se perdió.
 
 - CAM-133: `/paso` verifica la versión del mapa y las referencias del actor consultado, sin volver a recorrer a todos los habitantes/zombies; crear/preparar/resolver snapshots retiene la validación integral. `test_decidir_paso.py` pasa 21/21. Las muestras locales de 200 (3/10/20 turnos) dieron p95 216,299/129,513/151,720 ms y cero fallas. El mayor muestreo rebasa 150 ms y registra 5 ciclos lentos de 20; T-11/P-22 siguen parciales. Reporte: [CAM-133](../calidad/resultados/optimizacion-validacion-paso-cam133.md).
 

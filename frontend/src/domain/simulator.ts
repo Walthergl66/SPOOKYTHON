@@ -51,7 +51,7 @@ export type SimulatorCandidatos = { version: string; limitesJugables: LimitesJug
 /** El backend no expone el control local de demo (HTTP 404). */
 export class SimulatorUnavailableError extends Error {}
 
-export type SimulatorAction = 'iniciar' | 'pausar' | 'reanudar' | 'reiniciar'
+export type SimulatorAction = 'iniciar' | 'pausar' | 'reanudar' | 'reiniciar' | 'detener'
 
 export function parseSimulatorStatus(value: unknown): SimulatorStatus {
   if (!isRecord(value) || value.habilitado !== true ||
