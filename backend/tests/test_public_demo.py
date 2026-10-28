@@ -51,15 +51,21 @@ class RegistroSesionesDemoTests(unittest.TestCase):
             seguridad=ConfiguracionSeguridad(control_demo_publico=True, cookie_segura=False),
         )
         with TestClient(app, base_url="http://navira.test") as primero, TestClient(app, base_url="http://navira.test") as segundo:
+            inicio_primero = primero.post(
+                "/demo/operador/iniciar",
+                headers={"Origin": "http://navira.test"},
+            )
+            inicio_segundo = segundo.post(
+                "/demo/operador/iniciar",
+                headers={"Origin": "http://navira.test"},
+            )
             estado_primero = primero.get("/demo/simulador")
-            estado_segundo = segundo.get("/demo/simulador")
-            estado_primero_repetido = primero.get("/demo/simulador")
 
-            self.assertEqual(estado_primero.status_code, 200)
-            self.assertEqual(estado_segundo.status_code, 200)
+            self.assertEqual(inicio_primero.status_code, 200, inicio_primero.text)
+            self.assertEqual(inicio_segundo.status_code, 200, inicio_segundo.text)
+            self.assertEqual(inicio_primero.json()["runId"], "run-1")
+            self.assertEqual(inicio_segundo.json()["runId"], "run-2")
             self.assertEqual(estado_primero.json()["runId"], "run-1")
-            self.assertEqual(estado_segundo.json()["runId"], "run-2")
-            self.assertEqual(estado_primero_repetido.json()["runId"], "run-1")
             self.assertNotEqual(
                 primero.cookies["navira_demo_session"],
                 segundo.cookies["navira_demo_session"],
