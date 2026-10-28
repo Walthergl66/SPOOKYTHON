@@ -3,7 +3,7 @@ import { nodoMasCercano, puntoDentroLimites, refugiosParaEnviar, parseSimulatorC
 
 const estado = {
   habilitado: true, estado: 'activa', runId: 'run', turno: 5, escenario: 'mixto',
-  sobrevivientesIniciales: 10, intensidad: 'media', eventosCiudad: true, velocidad: 1, error: null,
+  sobrevivientesIniciales: 10, zombiesIniciales: 12, intensidad: 'media', eventosCiudad: true, velocidad: 1, error: null,
 }
 
 describe('parseSimulatorStatus', () => {
@@ -15,7 +15,7 @@ describe('parseSimulatorStatus', () => {
     expect(() => parseSimulatorStatus({ ...estado, velocidad: 3 })).toThrow()
   })
   it('acepta campos null', () => {
-    const vacio = { ...estado, estado: 'sin_partida', runId: null, turno: null, escenario: null, sobrevivientesIniciales: null, intensidad: null, eventosCiudad: null }
+    const vacio = { ...estado, estado: 'sin_partida', runId: null, turno: null, escenario: null, sobrevivientesIniciales: null, zombiesIniciales: null, intensidad: null, eventosCiudad: null }
     expect(parseSimulatorStatus(vacio)).toEqual(vacio)
   })
   it('rechaza un simulador no habilitado', () => {

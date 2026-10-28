@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { GameControls } from '../features/game/GameControls'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { RefugeDialog } from '../features/map/RefugeDialog'
 import type { PanelConnection, PanelRoute } from '../domain/panel'
-import { SIMULATOR_SPEEDS, type SimulatorSetup } from '../domain/simulator'
+import type { SimulatorSetup } from '../domain/simulator'
 import type { GamePort, PanelPort, SimulatorPort } from '../application/ports'
 import { usePanel } from '../application/usePanel'
 import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
@@ -36,7 +36,7 @@ export function App() {
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
-  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, changeSpeed, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
+  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
 
   useEffect(() => {
     if (simulator?.rondaReto) setChallengeRound(simulator.rondaReto)
@@ -45,18 +45,7 @@ export function App() {
   const game = useGameSession(gamePort, { modeSelected: mode === 'game', state: snapshot?.state ?? null, map: snapshot?.map ?? null, onJoined: setSelectedSurvivorId })
 
   const [refugeDialogOpen, setRefugeDialogOpen] = useState(false)
-  // El selector se ofrece al cargar la página, salvo con una partida activa en curso.
-  const openedOnLoad = useRef(false)
-  useEffect(() => {
-    if (mode === 'challenge') {
-      openedOnLoad.current = true
-      setRefugeDialogOpen(false)
-      return
-    }
-    if (openedOnLoad.current || candidates === null || simulator === null) return
-    openedOnLoad.current = true
-    if (simulator.estado !== 'activa') setRefugeDialogOpen(true)
-  }, [candidates, simulator, mode])
+  const [setupStage, setSetupStage] = useState<'refuges' | 'population'>('refuges')
 
   useEffect(() => {
     const refreshHealth = () => checkHealth().then((ok) => setHealth(ok ? 'online' : 'offline'))
@@ -117,12 +106,12 @@ export function App() {
     return { ...state, rutasPrevistas: [...(state.rutasPrevistas ?? []), { sobrevivienteId: selectedRoute.sobrevivienteId, trayecto: selectedRoute.trayecto }] }
   }, [state, selectedSnapshotRoute, selectedRoute, selectedRouteOwner, selectedSurvivor?.estado])
   const simulatorIsRunning = simulator?.estado === 'activa'
-  const showPicker = candidates !== null && !simulatorUnavailable
   const pickerLockedReason = simulatorBusy ? 'Se está actualizando la simulación. Espera un momento.' : null
   const placedRefuges = slots.filter((slot) => slot !== null).length
-  const confirmRefuges = async () => {
-    // Con la partida en curso no se reinicia desde el modal: la selección queda para la siguiente.
-    if (!simulatorIsRunning) await runControl(simulator?.runId ? 'reiniciar' : 'iniciar')
+  const confirmRefuges = () => setSetupStage('population')
+  const startConfiguredSimulation = async () => {
+    const configuredSetup: SimulatorSetup = { ...setup, zombies: setup.zombies ?? 42 }
+    await runControl(simulator?.runId ? 'reiniciar' : 'iniciar', configuredSetup)
     setRefugeDialogOpen(false)
   }
   const startChallenge = async () => {
@@ -190,38 +179,16 @@ export function App() {
               {`Reiniciar R${simulator.rondaReto}`}
             </button> : null}
             {challengeError ? <div className="control-notice is-error" role="alert">{challengeError}</div> : null}
-          </section> : <>
-          <div className="sim-action-row">
-            {simulatorIsRunning ? <button className="sim-action sim-pause" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy}>Pausar</button>
-              : simulator?.estado === 'pausada' ? <button className="sim-action sim-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy}>Continuar</button>
-                : <button className="sim-action sim-start" type="button" onClick={() => setRefugeDialogOpen(true)} disabled={simulatorBusy || simulatorUnavailable}>{simulatorBusy ? 'Iniciando…' : 'Iniciar simulación'}</button>}
-            <button className="sim-action sim-reset" type="button" onClick={() => simulatorIsRunning ? void runControl('reiniciar') : setRefugeDialogOpen(true)} disabled={simulatorBusy || simulatorUnavailable}>{simulator?.runId ? 'Reiniciar' : 'Nueva partida'}</button>
-          </div>
-
-          <div className="speed-row" role="group" aria-label="Velocidad de la simulación">
-            <span>Velocidad</span>
-            {SIMULATOR_SPEEDS.map((speed) => (
-              <button key={speed} className="speed-button" type="button" aria-pressed={simulator?.velocidad === speed} onClick={() => void changeSpeed(speed)} disabled={simulatorBusy || simulatorUnavailable}>{speed}×</button>
-            ))}
-          </div>
-
-          <label className="setup-field">Escenario
-            <select value={setup.escenario} onChange={(event) => setSetup({ ...setup, escenario: event.target.value as SimulatorSetup['escenario'] })} disabled={simulatorIsRunning || simulatorBusy}>
-              <option value="libre">Sin amenazas</option><option value="caminantes">Caminantes</option><option value="mixto">Mixto</option><option value="horda">Horda</option>
-            </select>
-          </label>
-          <label className="setup-field">Sobrevivientes iniciales
-            <select value={setup.sobrevivientes} onChange={(event) => setSetup({ ...setup, sobrevivientes: Number(event.target.value) })} disabled={simulatorIsRunning || simulatorBusy}>
-              <option value={20}>20</option><option value={80}>80</option><option value={200}>200</option>
-            </select>
-          </label>
-          <label className="setup-field">Intensidad sintética de amenazas
-            <select value={setup.intensidad} onChange={(event) => setSetup({ ...setup, intensidad: event.target.value as SimulatorSetup['intensidad'] })} disabled={simulatorIsRunning || simulatorBusy}>
-              <option value="baja">Baja · 0,2% de nodos elegibles</option><option value="media">Media · 0,5% de nodos elegibles</option><option value="alta">Alta · 0,9% de nodos elegibles</option>
-            </select>
-          </label>
-          </>}
-          {mode !== 'challenge' && showPicker ? <div className="refuge-summary"><span role="status">Refugios: {placedRefuges}/{REFUGE_SLOTS.length}</span><button className="sim-action" type="button" onClick={() => setRefugeDialogOpen(true)}>Elegir en el mapa</button></div> : null}
+          </section> : mode === 'simulator' ? <section className="simulator-start-panel" aria-label="Iniciar simulador">
+            <div className="sim-action-row">
+              {simulatorIsRunning ? <button className="sim-action sim-pause" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy}>Pausar</button>
+                : simulator?.estado === 'pausada' ? <button className="sim-action sim-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy}>Continuar</button>
+                  : <button className="sim-action sim-start simulator-primary-start" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>{simulatorBusy ? 'Preparando…' : simulator?.runId ? 'Nueva simulación' : 'Iniciar simulación'}</button>}
+              {simulator?.runId && (simulatorIsRunning || simulator?.estado === 'pausada') ? <button className="sim-action sim-reset" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>Nueva simulación</button> : null}
+            </div>
+            <p className="simulator-fixed-speed">Velocidad fija: <strong>4×</strong></p>
+            {simulator?.runId ? <p className="simulator-run-population">Población de esta partida: {simulator.sobrevivientesIniciales ?? '—'} habitantes · {simulator.zombiesIniciales ?? '—'} zombies</p> : null}
+          </section> : null}
 
           {simulatorUnavailable ? <div className="control-notice" role="status"><strong>Control local deshabilitado</strong><span>Inicia el backend con <code>NAVIRA_LOCAL_DEMO_CONTROL=1</code> para operar una demo desde esta pantalla.</span></div> : null}
           {simulatorMessage ? <div className="control-notice is-error" role="alert"><strong>No se pudo completar la acción</strong><span>{simulatorMessage}</span></div> : null}
@@ -270,15 +237,27 @@ export function App() {
 
       <RefugeDialog
         open={refugeDialogOpen}
-        title="Elige los refugios de la partida"
-        onClose={() => setRefugeDialogOpen(false)}
+        title={setupStage === 'refuges' ? 'Paso 1 de 2 · Elige los puntos seguros' : 'Paso 2 de 2 · Configura la población'}
+        onClose={() => { setRefugeDialogOpen(false); setSetupStage('refuges') }}
         footer={<>
-          <button className="sim-action sim-start" type="button" onClick={() => void confirmRefuges()} disabled={simulatorBusy || simulatorUnavailable}>{simulatorIsRunning ? 'Usar en la siguiente partida' : simulator?.runId ? 'Reiniciar con estos refugios' : 'Iniciar con estos refugios'}</button>
+          {setupStage === 'refuges' ? <button className="sim-action sim-start" type="button" onClick={confirmRefuges} disabled={!candidates || placedRefuges !== REFUGE_SLOTS.length || simulatorBusy || simulatorUnavailable}>Continuar · {placedRefuges}/{REFUGE_SLOTS.length} puntos seguros</button>
+            : <><button className="sim-action" type="button" onClick={() => setSetupStage('refuges')}>Volver a puntos seguros</button><button className="sim-action sim-start" type="button" onClick={() => void startConfiguredSimulation()} disabled={simulatorBusy || simulatorUnavailable || !Number.isInteger(setup.sobrevivientes) || setup.sobrevivientes < 1 || setup.sobrevivientes > 200 || !Number.isInteger(setup.zombies ?? 42) || (setup.zombies ?? 42) < 1 || (setup.zombies ?? 42) > 200}>{simulatorBusy ? 'Preparando…' : 'Iniciar simulación · 4×'}</button></>}
           <button className="sim-action" type="button" onClick={() => setRefugeDialogOpen(false)}>Cerrar</button>
         </>}
       >
-        {simulatorIsRunning ? <p className="refuge-dialog-hint">La partida en curso no cambia. Los refugios elegidos se usarán al reiniciar.</p> : null}
-        {candidates ? <Suspense fallback={null}><RefugePicker candidates={candidates} refugeIds={REFUGE_SLOTS} slots={slots} placing={placing} onPick={pickNode} onPlace={setPlacing} onClear={clearSlot} onReset={resetRefuges} lockedReason={pickerLockedReason} /></Suspense> : <p className="empty-note">No hay mapa de refugios disponible con este backend.</p>}
+        {setupStage === 'refuges' ? <>
+          {simulatorIsRunning ? <p className="refuge-dialog-hint">La partida en curso no cambia; esta configuración iniciará un mundo nuevo.</p> : null}
+          {candidates ? <Suspense fallback={null}><RefugePicker candidates={candidates} refugeIds={REFUGE_SLOTS} slots={slots} placing={placing} onPick={pickNode} onPlace={setPlacing} onClear={clearSlot} onReset={resetRefuges} lockedReason={pickerLockedReason} /></Suspense> : <p className="empty-note">No hay mapa de refugios disponible con este backend.</p>}
+        </> : <div className="simulator-population-step">
+          <p>Define cuántos personajes empiezan la partida. Los zombies se distribuyen por el mapa con composición mixta y posiciones aleatorias.</p>
+          <label className="setup-field">Cantidad de habitantes
+            <input type="number" min={1} max={200} step={1} value={setup.sobrevivientes} onChange={(event) => setSetup({ ...setup, sobrevivientes: Number(event.target.value) })} />
+          </label>
+          <label className="setup-field">Cantidad de zombies
+            <input type="number" min={1} max={200} step={1} value={setup.zombies ?? 42} onChange={(event) => setSetup({ ...setup, zombies: Number(event.target.value) })} />
+          </label>
+          <p className="simulator-fixed-speed">Velocidad fija de la partida: <strong>4×</strong></p>
+        </div>}
       </RefugeDialog>
 
       <footer className="system-strip" aria-label="Estado técnico">

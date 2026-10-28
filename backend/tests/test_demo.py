@@ -75,6 +75,20 @@ class DemoBootstrapTests(unittest.TestCase):
         self.assertEqual({z.tipo.value for z in partida.zombies}, {"caminante", "corredor", "horda", "dormido"})
         self.assertTrue(all(z.estado is EstadoZombie.DORMIDO for z in partida.zombies if z.tipo.value == "dormido"))
 
+    def test_cantidad_explicita_de_zombies_se_respeta_en_el_escenario(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        contexto = crear_contexto_demo(
+            ruta_manta,
+            semilla=321,
+            escenario="mixto",
+            cantidad_sobrevivientes=20,
+            cantidad_zombies=17,
+            preparar_inicial=False,
+        )
+        partida = contexto.snapshots.obtener(contexto.run_id).partida
+        self.assertEqual(len(partida.zombies), 17)
+        self.assertEqual({z.tipo.value for z in partida.zombies}, {"caminante", "corredor", "horda", "dormido"})
+
     def test_misma_semilla_reproduce_amenazas_y_eventos_ciudad(self) -> None:
         ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
         argumentos = dict(

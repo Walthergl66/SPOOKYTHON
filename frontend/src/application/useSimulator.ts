@@ -13,7 +13,7 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
   const [unavailable, setUnavailable] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [setup, setSetup] = useState<SimulatorSetup>({ escenario: 'mixto', sobrevivientes: 20, intensidad: 'media' })
+  const [setup, setSetup] = useState<SimulatorSetup>({ escenario: 'mixto', sobrevivientes: 20, zombies: 42, intensidad: 'media' })
 
   const [candidates, setCandidates] = useState<SimulatorCandidatos | null>(null)
   const [slots, setSlots] = useState<Slots>(emptySlots)
@@ -42,12 +42,12 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
     return () => { controller.abort(); window.clearInterval(timer) }
   }, [port])
 
-  const run = async (action: SimulatorAction) => {
+  const run = async (action: SimulatorAction, configuredSetup: SimulatorSetup = setup) => {
     setBusy(true)
     setMessage(null)
     try {
       const refugios = refugiosParaEnviar(action, slots, REFUGE_SLOTS)
-      const next = await port.control(action, action === 'iniciar' || action === 'reiniciar' ? setup : undefined, refugios)
+      const next = await port.control(action, action === 'iniciar' || action === 'reiniciar' ? configuredSetup : undefined, refugios)
       setStatus(next)
       setUnavailable(false)
       onChanged()

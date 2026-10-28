@@ -291,6 +291,16 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .sim-reset:hover:not(:disabled) { border-color: var(--sea); }
 .setup-field { display: grid; gap: 7px; margin: 13px 0; color: #c5d0df; font-size: 13px; font-weight: 600; }
 .setup-field select { width: 100%; min-height: 37px; padding: 0 10px; border: 1px solid rgba(181, 200, 224, .2); border-radius: 5px; background: #172234; color: var(--ink); font: 13px 'DM Sans', sans-serif; }
+.setup-field input { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid rgba(181, 200, 224, .24); border-radius: 6px; background: #172234; color: var(--ink); font: 600 16px 'DM Sans', sans-serif; }
+.setup-field input:focus-visible { outline: 2px solid var(--sea-bright); outline-offset: 2px; }
+.simulator-start-panel { display: grid; gap: 12px; }
+.simulator-primary-start { grid-column: 1 / -1; min-height: 48px; font-size: 15px; }
+.simulator-fixed-speed { margin: 0; color: #aebbd0; font-size: 12px; }
+.simulator-fixed-speed strong { color: #5fe0aa; }
+.simulator-run-population { margin: 0; color: #b8c5d7; font-size: 12px; }
+.simulator-population-step { max-width: 520px; margin: 0 auto; padding: 4px 0; }
+.simulator-population-step > p:first-child { margin: 0 0 18px; color: #bdc9d9; line-height: 1.5; }
+.simulator-population-step .setup-field { margin: 16px 0; }
 .control-notice { display: grid; gap: 5px; margin-top: 13px; padding: 11px; border-left: 3px solid #e1a452; background: rgba(225, 164, 82, .09); }
 .control-notice strong { color: #f0c37f; font-size: 13px; }
 .control-notice span { color: #c0cad8; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }

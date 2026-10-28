@@ -53,6 +53,7 @@ def crear_zombies(
     intensidad: IntensidadEscenario,
     rng: random.Random,
     *,
+    cantidad_total: int | None = None,
     nodos_foco: tuple[str, ...] | None = None,
     proporcion_foco: float = 0.8,
 ) -> tuple[Zombie, ...]:
@@ -76,9 +77,17 @@ def crear_zombies(
 
     if not 0 < proporcion_foco <= 1:
         raise ValueError("La proporción del foco debe estar entre 0 y 1.")
+    # La demo libre permite pedir un conteo exacto; los presets y herramientas
+    # existentes mantienen su escala porcentual cuando no se proporciona.
+    if cantidad_total is not None and (
+        isinstance(cantidad_total, bool) or not isinstance(cantidad_total, int) or cantidad_total < 1
+    ):
+        raise ValueError("La cantidad de zombies debe ser un entero positivo.")
     total = min(
         len(disponibles),
-        max(1, round(len(disponibles) * FRACCION_NODOS_POR_INTENSIDAD[intensidad])),
+        cantidad_total if cantidad_total is not None else max(
+            1, round(len(disponibles) * FRACCION_NODOS_POR_INTENSIDAD[intensidad])
+        ),
     )
     cantidad_por_tipo = _repartir_composicion(perfil, total)
     nodos_restantes = list(disponibles)

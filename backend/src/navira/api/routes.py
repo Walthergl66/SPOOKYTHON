@@ -146,6 +146,7 @@ async def iniciar_demo_simulador(
         return gestor.iniciar(
             escenario=solicitud.escenario,
             cantidad_sobrevivientes=solicitud.sobrevivientes,
+            cantidad_zombies=solicitud.zombies,
             intensidad=solicitud.intensidad,
             semilla=solicitud.semilla,
             refugios=_refugios(solicitud),
@@ -195,6 +196,7 @@ async def reiniciar_demo_simulador(
         return gestor.reiniciar(
             escenario=solicitud.escenario,
             cantidad_sobrevivientes=solicitud.sobrevivientes,
+            cantidad_zombies=solicitud.zombies,
             intensidad=solicitud.intensidad,
             refugios=_refugios(solicitud),
         )

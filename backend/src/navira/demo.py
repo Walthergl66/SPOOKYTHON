@@ -88,6 +88,7 @@ def crear_contexto_demo(
     semilla: int | None = None,
     escenario: str = "libre",
     cantidad_sobrevivientes: int = 1,
+    cantidad_zombies: int | None = None,
     intensidad: IntensidadDemo = "media",
     eventos_ciudad: bool = False,
     modo: ModoPartida = ModoPartida.SIMULADOR,
@@ -131,6 +132,12 @@ def crear_contexto_demo(
         raise ValueError(f"Escenario demo desconocido: {escenario}. Opciones: {opciones}.")
     if intensidad not in FRACCION_NODOS_POR_INTENSIDAD:
         raise ValueError("La intensidad demo debe ser baja, media o alta.")
+    if cantidad_zombies is not None and (
+        isinstance(cantidad_zombies, bool)
+        or not isinstance(cantidad_zombies, int)
+        or not 1 <= cantidad_zombies <= 200
+    ):
+        raise ValueError("La cantidad de zombies debe ser un entero entre 1 y 200.")
     if not isinstance(eventos_ciudad, bool):
         raise ValueError("La opción de incidentes de ciudad debe ser booleana.")
     semilla_real = secrets.randbits(64) if semilla is None else semilla
@@ -164,6 +171,7 @@ def crear_contexto_demo(
         coordenadas,
         intensidad,
         rng,
+        cantidad_total=cantidad_zombies,
         nodos_foco=(
             _nodos_en_foco_urbano(grafo, nodos_zombie_elegibles)
             if ronda_reto is not None and grafo.mapa.version.startswith("manta-osm-")

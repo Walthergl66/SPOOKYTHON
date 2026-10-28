@@ -38,6 +38,7 @@ class FabricaContextoSimulacion(Protocol):
         semilla: int | None,
         escenario: str,
         cantidad_sobrevivientes: int,
+        cantidad_zombies: int | None,
         intensidad: str,
         eventos_ciudad: bool,
         refugios: tuple[Refugio, ...] | None = None,
@@ -89,6 +90,7 @@ class ControlSimuladorDemoLocal:
                 "turno": snapshot.partida.turno if snapshot is not None else None,
                 "escenario": self._configuracion.get("escenario"),
                 "sobrevivientesIniciales": self._configuracion.get("cantidad_sobrevivientes"),
+                "zombiesIniciales": len(snapshot.partida.zombies) if snapshot is not None else None,
                 "intensidad": self._configuracion.get("intensidad"),
                 "eventosCiudad": self._configuracion.get("eventos_ciudad"),
                 "rondaReto": self._configuracion.get("ronda_reto"),
@@ -101,6 +103,7 @@ class ControlSimuladorDemoLocal:
         *,
         escenario: str,
         cantidad_sobrevivientes: int,
+        cantidad_zombies: int | None = None,
         intensidad: str = "media",
         semilla: int | None = None,
         refugios: tuple[Refugio, ...] | None = None,
@@ -112,6 +115,7 @@ class ControlSimuladorDemoLocal:
                 semilla=semilla,
                 escenario=escenario,
                 cantidad_sobrevivientes=cantidad_sobrevivientes,
+                cantidad_zombies=cantidad_zombies,
                 intensidad=intensidad,
                 eventos_ciudad=ronda_reto is None,
                 refugios=refugios,
@@ -142,6 +146,7 @@ class ControlSimuladorDemoLocal:
             self._configuracion = {
                 "escenario": escenario,
                 "cantidad_sobrevivientes": cantidad_sobrevivientes,
+                "cantidad_zombies": cantidad_zombies,
                 "intensidad": intensidad,
                 "eventos_ciudad": ronda_reto is None,
                 "ronda_reto": ronda_reto,
@@ -211,13 +216,22 @@ class ControlSimuladorDemoLocal:
         *,
         escenario: str | None = None,
         cantidad_sobrevivientes: int | None = None,
+        cantidad_zombies: int | None = None,
         intensidad: str | None = None,
         refugios: tuple[Refugio, ...] | None = None,
     ) -> dict[str, object]:
+        zombies_configurados = self._configuracion.get("cantidad_zombies")
+        if cantidad_zombies is None and not isinstance(zombies_configurados, int):
+            zombies_configurados = None
         return self.iniciar(
             escenario=escenario or str(self._configuracion.get("escenario", "libre")),
             cantidad_sobrevivientes=cantidad_sobrevivientes or int(
                 self._configuracion.get("cantidad_sobrevivientes", 20)
+            ),
+            cantidad_zombies=(
+                cantidad_zombies
+                if cantidad_zombies is not None
+                else zombies_configurados
             ),
             intensidad=intensidad or str(self._configuracion.get("intensidad", "media")),
             refugios=refugios,

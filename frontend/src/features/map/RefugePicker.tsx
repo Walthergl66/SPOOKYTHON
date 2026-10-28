@@ -106,7 +106,7 @@ export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, on
           </li>
         ))}
       </ul>
-      <p className="refuge-picker-hint">{placing !== null ? `Colocando ${refugeIds[placing]}: haz clic en el mapa.` : placed === refugeIds.length ? 'Listo. Elige un chip para reemplazar un refugio.' : 'Haz clic en una intersección para colocar el siguiente refugio.'}{placed > 0 && placed < refugeIds.length ? ' Con menos de 4 se usan los refugios del mapa.' : ''}</p>
+      <p className="refuge-picker-hint">{placing !== null ? `Colocando ${refugeIds[placing]}: haz clic en el mapa.` : placed === refugeIds.length ? 'Listo. Elige un chip para reemplazar un refugio.' : 'Haz clic en una intersección para colocar el siguiente refugio.'}{placed > 0 && placed < refugeIds.length ? ' Completa los cuatro puntos seguros para continuar.' : ''}</p>
       {lockedReason ? <p className="refuge-picker-notice">{lockedReason}</p> : null}
       {notice ? <p className="refuge-picker-notice" role="status">{notice}</p> : null}
       <button type="button" className="refuge-reset" onClick={() => { onReset(); setNotice(null) }} disabled={disabled || placed === 0}>Restablecer</button>

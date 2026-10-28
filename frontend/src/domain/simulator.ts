@@ -9,6 +9,7 @@ export type SimulatorStatus = {
   turno: number | null
   escenario: string | null
   sobrevivientesIniciales: number | null
+  zombiesIniciales: number | null
   intensidad: 'baja' | 'media' | 'alta' | null
   eventosCiudad: boolean | null
   velocidad: SimulatorSpeed
@@ -19,6 +20,7 @@ export type SimulatorStatus = {
 export type SimulatorSetup = {
   escenario: 'libre' | 'caminantes' | 'mixto' | 'horda'
   sobrevivientes: number
+  zombies: number
   intensidad: 'baja' | 'media' | 'alta'
   semilla?: number
 }
@@ -60,6 +62,7 @@ export function parseSimulatorStatus(value: unknown): SimulatorStatus {
     turno: value.turno,
     escenario: value.escenario,
     sobrevivientesIniciales: value.sobrevivientesIniciales,
+    zombiesIniciales: typeof value.zombiesIniciales === 'number' ? value.zombiesIniciales : null,
     intensidad: value.intensidad,
     eventosCiudad: value.eventosCiudad,
     velocidad: value.velocidad,
