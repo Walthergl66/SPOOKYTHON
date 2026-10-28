@@ -221,6 +221,19 @@ async def colocar_elemento_operador(
         raise _error(422, error) from error
 
 
+@router.post("/demo/operador/iniciar", tags=["demo local"])
+async def iniciar_mundo_operador(request: Request) -> dict[str, object]:
+    """Crea un mundo de Manta vacío para que el operador lo pueble."""
+    gestor = _control_demo_local(request)
+    exigir_operador_local(request)
+    try:
+        return gestor.iniciar_mundo_operador()
+    except RuntimeError as error:
+        raise _error(409, error) from error
+    except ValueError as error:
+        raise _error(422, error) from error
+
+
 @router.get("/", tags=["operación"])
 async def inicio() -> dict[str, str]:
     """Respuesta de comprobación al abrir el backend en el navegador."""

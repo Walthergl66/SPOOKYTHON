@@ -47,6 +47,7 @@ class FabricaContextoSimulacion(Protocol):
         eventos_ciudad: bool,
         refugios: tuple[Refugio, ...] | None = None,
         ronda_reto: int | None = None,
+        mundo_vacio: bool = False,
     ) -> ContextoSimulacion: ...
 
 
@@ -80,7 +81,10 @@ class ControlSimuladorDemoLocal:
                 self._estado = "error"
             elif snapshot is not None and (
                 snapshot.partida.estado.value != "activa"
-                or not any(item.estado.value == "activo" for item in snapshot.partida.sobrevivientes)
+                or (
+                    not self._configuracion.get("mundo_vacio", False)
+                    and not any(item.estado.value == "activo" for item in snapshot.partida.sobrevivientes)
+                )
             ):
                 self._estado = "finalizada"
             elif self._reloj is not None and self._reloj.pausado:
@@ -112,18 +116,23 @@ class ControlSimuladorDemoLocal:
         semilla: int | None = None,
         refugios: tuple[Refugio, ...] | None = None,
         ronda_reto: int | None = None,
+        mundo_vacio: bool = False,
     ) -> dict[str, object]:
         with self._lock:
             self._detener_reloj()
+            if mundo_vacio and ronda_reto is not None:
+                raise ValueError("Un mundo vacío de operador no puede iniciar como Reto.")
             argumentos_contexto = dict(
                 semilla=semilla,
                 escenario=escenario,
                 cantidad_sobrevivientes=cantidad_sobrevivientes,
                 cantidad_zombies=cantidad_zombies,
                 intensidad=intensidad,
-                eventos_ciudad=ronda_reto is None,
+                eventos_ciudad=ronda_reto is None and not mundo_vacio,
                 refugios=refugios,
             )
+            if mundo_vacio:
+                argumentos_contexto["mundo_vacio"] = True
             if ronda_reto is not None:
                 argumentos_contexto["ronda_reto"] = ronda_reto
             contexto = self._crear_contexto(**argumentos_contexto)
@@ -141,6 +150,7 @@ class ControlSimuladorDemoLocal:
                 ejecutar,
                 velocidad=1.0 if ronda_reto is not None else self._velocidad,
                 bloqueo_estado=self._lock,
+                continuar_sin_sobrevivientes=mundo_vacio,
             )
             self._contexto = contexto
             self._reloj = reloj
@@ -154,12 +164,28 @@ class ControlSimuladorDemoLocal:
                 "cantidad_sobrevivientes": cantidad_sobrevivientes,
                 "cantidad_zombies": len(contexto.snapshots.obtener(contexto.run_id).partida.zombies),
                 "intensidad": intensidad,
-                "eventos_ciudad": ronda_reto is None,
+                "eventos_ciudad": ronda_reto is None and not mundo_vacio,
                 "ronda_reto": ronda_reto,
+                "mundo_vacio": mundo_vacio,
             }
             self._estado = "activa"
             reloj.iniciar()
             return self.estado()
+
+    def iniciar_mundo_operador(self) -> dict[str, object]:
+        """Inicia una partida sobre el mapa de Manta sin piezas ni eventos.
+
+        El operador coloca refugios, habitantes, zombies e incidentes después
+        del inicio; el reloj vacío permanece vivo hasta que cierre la partida.
+        """
+        return self.iniciar(
+            escenario="mixto",
+            cantidad_sobrevivientes=0,
+            cantidad_zombies=0,
+            intensidad="media",
+            refugios=(),
+            mundo_vacio=True,
+        )
 
     def colocar_elemento(self, *, tipo: str, nodo: str | None = None, segmento_id: str | None = None) -> dict[str, object]:
         """Aplica una intervención de operador al mundo activo mediante CAS.

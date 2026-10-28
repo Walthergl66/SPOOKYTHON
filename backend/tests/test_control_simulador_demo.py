@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -16,6 +17,46 @@ LOCAL = ConfiguracionSeguridad(control_demo_local=True)
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
+    def test_operador_inicia_mapa_vacio_y_puede_colocar_piezas(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        headers = {"Origin": "http://localhost:5173"}
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43129)) as client:
+            started = client.post("/demo/operador/iniciar", headers=headers)
+            snapshot_inicial = control._snapshot()
+            mapa_inicial = client.get("/panel/mapa", headers=headers)
+
+            # Un mundo sin habitantes sigue avanzando para que el operador pueda
+            # colocar sus primeras piezas cuando quiera.
+            limite = time.monotonic() + 1.5
+            while control._snapshot().partida.turno == 0 and time.monotonic() < limite:
+                time.sleep(0.02)
+            snapshot_avanzado = control._snapshot()
+
+            grafo = control._contexto.mapas.obtener(snapshot_avanzado.partida.map_version)
+            nodo_refugio = next(n.id for n in grafo.mapa.nodos if grafo.calles_desde(n.id))
+            nodo_habitante = next(n.id for n in grafo.mapa.nodos if n.id != nodo_refugio and grafo.calles_desde(n.id))
+            refuge = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "refugio", "nodo": nodo_refugio})
+            resident = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "habitante", "nodo": nodo_habitante})
+            status = client.get("/panel/estado", headers=headers)
+            control.cerrar()
+
+        self.assertEqual(started.status_code, 200, started.text)
+        self.assertEqual(started.json()["sobrevivientesIniciales"], 0)
+        self.assertEqual(started.json()["zombiesIniciales"], 0)
+        self.assertTrue(control._configuracion.get("mundo_vacio"))
+        self.assertEqual(snapshot_inicial.partida.sobrevivientes, ())
+        self.assertEqual(snapshot_inicial.partida.zombies, ())
+        self.assertEqual(snapshot_inicial.eventos_programados, ())
+        self.assertEqual(mapa_inicial.status_code, 200, mapa_inicial.text)
+        self.assertEqual(mapa_inicial.json()["refugios"], [])
+        self.assertGreater(snapshot_avanzado.partida.turno, 0)
+        self.assertEqual(control.estado()["estado"], "activa")
+        self.assertEqual(refuge.status_code, 200, refuge.text)
+        self.assertEqual(resident.status_code, 200, resident.text)
+        self.assertEqual(status.status_code, 200, status.text)
+        self.assertEqual(status.json()["metricas"]["sobrevivientesActivos"], 1)
+
     def test_operador_coloca_habitante_refugio_e_incidente_en_el_mundo_activo(self) -> None:
         control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         app = crear_app(control_simulador_demo=control, seguridad=LOCAL)

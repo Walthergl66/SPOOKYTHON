@@ -8,7 +8,7 @@ import type { SimulatorSetup } from '../domain/simulator'
 import type { PanelPort, SimulatorPort } from '../application/ports'
 import { usePanel } from '../application/usePanel'
 import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
-import { placeOperatorElement } from '../infrastructure/http/operator'
+import { placeOperatorElement, startOperatorWorld as startOperatorWorldRequest } from '../infrastructure/http/operator'
 import { loadPanelMap, loadPanelRoute, loadPanelSnapshot } from '../infrastructure/http/panel'
 import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, restartChallengeRound, setSimulatorSpeed, startChallengeRound } from '../infrastructure/http/simulator'
 import { subscribePanel } from '../infrastructure/realtime/panel'
@@ -154,7 +154,19 @@ export function App() {
     }
   }
   const operatorRunBlocked = simulatorUnavailable || simulator?.rondaReto != null
-  const startOperatorWorld = () => void runControl('iniciar', { ...setup, zombies: setup.zombies ?? 42 })
+  const startOperatorWorld = async () => {
+    setOperatorBusy(true)
+    setOperatorError(null)
+    setOperatorNotice(null)
+    try {
+      acceptStatus(await startOperatorWorldRequest())
+      await refreshPanel()
+    } catch (error) {
+      setOperatorError(error instanceof Error ? error.message : 'No se pudo iniciar un mundo vacío.')
+    } finally {
+      setOperatorBusy(false)
+    }
+  }
 
   return (
     <main className="app-shell dashboard-shell">

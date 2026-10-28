@@ -41,6 +41,7 @@ class RelojSimuladorLocal:
         periodo_s: float = 2.0,
         velocidad: float = 4.0,
         bloqueo_estado: RLock | None = None,
+        continuar_sin_sobrevivientes: bool = False,
     ) -> None:
         if not math.isfinite(periodo_s) or periodo_s <= 0:
             raise ValueError("El período del reloj debe ser positivo y finito.")
@@ -50,6 +51,7 @@ class RelojSimuladorLocal:
         self._periodo_s = periodo_s
         self._velocidad = validar_velocidad(velocidad)
         self._bloqueo_estado = bloqueo_estado or RLock()
+        self._continuar_sin_sobrevivientes = continuar_sin_sobrevivientes
         self._detener = Event()
         self._pausado = Event()
         self._hilo: Thread | None = None
@@ -122,7 +124,7 @@ class RelojSimuladorLocal:
                     snapshot = self._snapshots.obtener(self._run_id)
                     if snapshot is None or snapshot.partida.estado is not EstadoPartida.ACTIVA:
                         return
-                    if not any(
+                    if not self._continuar_sin_sobrevivientes and not any(
                         item.estado is EstadoSobreviviente.ACTIVO
                         for item in snapshot.partida.sobrevivientes
                     ):

@@ -10,7 +10,7 @@ import math
 import random
 import secrets
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from navira.adapters.mapas_memoria import CatalogoMapasMemoria
@@ -95,6 +95,7 @@ def crear_contexto_demo(
     preparar_inicial: bool = True,
     refugios: tuple[Refugio, ...] | None = None,
     ronda_reto: int | None = None,
+    mundo_vacio: bool = False,
 ) -> ContextoDemo:
     """Crea una partida con estado inicial aleatorio y expone dependencias.
 
@@ -102,12 +103,15 @@ def crear_contexto_demo(
     Los perfiles son fixtures; no representan distribuciones oficiales.
     """
 
-    if (
-        isinstance(cantidad_sobrevivientes, bool)
-        or not isinstance(cantidad_sobrevivientes, int)
-        or not 1 <= cantidad_sobrevivientes <= 200
-    ):
-        raise ValueError("La población debe ser un entero entre 1 y 200.")
+    cantidad_sobrevivientes_valida = (
+        isinstance(cantidad_sobrevivientes, int)
+        and not isinstance(cantidad_sobrevivientes, bool)
+        and ((cantidad_sobrevivientes == 0 and mundo_vacio) or 1 <= cantidad_sobrevivientes <= 200)
+    )
+    if not cantidad_sobrevivientes_valida:
+        raise ValueError("La población debe ser un entero entre 1 y 200, salvo al crear un mundo operador vacío.")
+    if mundo_vacio and (cantidad_zombies != 0 or ronda_reto is not None or eventos_ciudad):
+        raise ValueError("El mundo operador vacío no admite zombies iniciales, eventos ni preset Reto.")
     if semilla is not None and (isinstance(semilla, bool) or not isinstance(semilla, int)):
         raise ValueError("La semilla debe ser un entero o None.")
     if not isinstance(modo, ModoPartida):
@@ -117,7 +121,10 @@ def crear_contexto_demo(
     # remain unchanged so unit fixtures and local scenarios keep their topology.
     if mapa.version.startswith("manta-osm-"):
         mapa = recortar_mapa(mapa, MANTA_PLAYABLE_BOUNDS)
-    if refugios is not None:
+    if mundo_vacio:
+        # El operador elige los refugios sobre un grafo que conserva sus calles.
+        mapa = replace(mapa, version=f"{mapa.version}+operador-vacio", refugios=())
+    elif refugios is not None:
         mapa = mapa_con_refugios(mapa, tuple(refugios))
     grafo = Grafo(mapa)
     if ronda_reto is not None:
@@ -132,10 +139,11 @@ def crear_contexto_demo(
         raise ValueError(f"Escenario demo desconocido: {escenario}. Opciones: {opciones}.")
     if intensidad not in FRACCION_NODOS_POR_INTENSIDAD:
         raise ValueError("La intensidad demo debe ser baja, media o alta.")
+    minimo_zombies = 0 if mundo_vacio else 1
     if cantidad_zombies is not None and (
         isinstance(cantidad_zombies, bool)
         or not isinstance(cantidad_zombies, int)
-        or not 1 <= cantidad_zombies <= 200
+        or not minimo_zombies <= cantidad_zombies <= 200
     ):
         raise ValueError("La cantidad de zombies debe ser un entero entre 1 y 200.")
     if not isinstance(eventos_ciudad, bool):
@@ -144,9 +152,11 @@ def crear_contexto_demo(
     rng = random.Random(semilla_real)
     nodos_refugio = {refugio.nodo for refugio in grafo.mapa.refugios}
     nodos_inicio = _nodos_inicio_elegibles(grafo, nodos_refugio)
-    if not nodos_inicio:
+    if not nodos_inicio and not mundo_vacio:
         raise ValueError("El mapa demo requiere un nodo transitable con ruta a algún refugio.")
-    if ronda_reto is not None and grafo.mapa.version.startswith("manta-osm-"):
+    if mundo_vacio:
+        posiciones = ()
+    elif ronda_reto is not None and grafo.mapa.version.startswith("manta-osm-"):
         posiciones = _posiciones_iniciales_reto(
             grafo,
             nodos_inicio,
@@ -164,7 +174,7 @@ def crear_contexto_demo(
         nodos_zombie_elegibles = tuple(
             nodo for nodo in nodos_inicio if nodo not in nodos_protegidos
         )
-    zombies = crear_zombies(
+    zombies = () if mundo_vacio else crear_zombies(
         escenario,
         nodos_zombie_elegibles,
         posiciones,
@@ -179,7 +189,7 @@ def crear_contexto_demo(
         ),
         proporcion_foco=PROPORCION_AMENAZAS_FOCO_RETO,
     )
-    eventos = (
+    eventos = () if mundo_vacio else (
         crear_eventos_reto(
             grafo,
             ronda_reto,
