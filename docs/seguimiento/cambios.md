@@ -2,6 +2,18 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-101 — Juego como modo de operador interactivo
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: el usuario pidió que Juego mantenga la simulación en ejecución y permita elegir una herramienta para colocar habitantes, caminantes, corredores, hordas, dormidos, refugios e incidentes en el mapa; confirmó que busca una experiencia «más de operador».
+- Especificación/tareas: SPEC-010 CA-010-01…06; PRD-12, TRD-18; P4-06, T-52 y T-53.
+- Resultado: Jugar arranca el mundo automático local de operador (20 habitantes, 42 amenazas mixtas, 4×), ofrece pausa/continuación y una paleta de herramientas. Los actores/refugios se colocan sobre nodos del mapa y los incidentes cierran una calle visible. Las mutaciones se validan y versionan en servidor; los dormidos permanecen ocultos al panel.
+- Límites de seguridad y alcance: endpoint de intervención disponible solo con opt-in local, loopback y origen local; rechaza Reto, partidas pausadas/inexistentes, ubicaciones inválidas y límites de cantidad. No se habilita control remoto ni se cambia el modo Simulador o la evaluación Reto. El bloqueo compartido con el reloj mantiene atómica la intervención frente al ciclo automático.
+- Archivos: backend de control, reloj y ejecución; endpoint/schemas y pruebas; nueva paleta, cliente de colocación, integración de mapa y navegación; SPEC-010, ADR-042 y documentos propietarios de producto, dominio, contratos, módulos, calidad y trazabilidad.
+- Validación: suite backend de control 16/16; dos pruebas de integración focalizadas 2/2; frontend 96/96; build correcto con advertencia existente de chunk grande; `check_docs.py` (132 Markdown/134 archivos), `check_sdd.py` (10 SPEC), regresiones SDD 8/8 y `git diff --check` pasan. Smoke en navegador aislado `5174/8002`: Jugar abrió la paleta, inició mundo automático con mapa de Manta visible, y colocar un caminante devolvió confirmación `caminante agregado` mientras el turno seguía avanzando y el snapshot se actualizó. El clic visual para crear incidente no quedó confirmado; su validación backend está en las pruebas de integración. La corrida local alcanzó al menos el turno 102; no demuestra cadencia sostenida ni evaluación oficial.
+- Commits: código `c27d576` (`feat(juego): add live operator mode`); esta entrada se registra en el commit documental independiente.
+- Siguiente acción: mantener intacta la partida anterior en 5173/8001. Antes de marcar SPEC-010 verificada, completar T-53 confirmando visualmente colocación de incidente y actualización cartográfica; probar además concurrencia bajo carga y pausa prolongada.
+
 ## CAM-100 — Asistente de inicio y configuración del Simulador
 
 - Fecha: 2026-10-27, Ecuador continental.

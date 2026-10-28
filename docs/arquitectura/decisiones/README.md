@@ -46,5 +46,6 @@ Un ADR documenta una elección duradera y su motivo. «Aceptada para diseño» n
 | [ADR-039](0039-reinicio-ronda-reto.md) | Reiniciar la ronda Reto actual mediante endpoint local protegido y un mundo/run nuevos | Aceptada para implementación local | CAM-095; T-47. No implementa replay durable ni campaña de 15 minutos. |
 | [ADR-040](0040-reemplazo-reto-pausado.md) | Reemplazar una ronda Reto pausada al iniciar otro preset | Aceptada para implementación local | CAM-097/T-49; solo el run pausado de Reto es reemplazable. |
 | [ADR-041](0041-asistente-inicio-simulador.md) | Asistente de dos pasos para refugios y conteos; velocidad local fija en 4× | Aceptada para implementación local | CAM-100/T-51; revisión visual pendiente. |
+| [ADR-042](0042-juego-operador-mundo-interactivo.md) | «Jugar» como modo de operador en mundo automático que sigue avanzando | Aceptada para demo local | CAM-101/T-52; operación pública, persistencia y smoke visual completos pendientes. |
 
 Usar [plantilla](../../metodo/plantillas/decision.md). Numeración correlativa, fecha, contexto, decisión, alternativas, consecuencias, pendientes y enlaces. No renumerar IDs ya citados. Para cambiar una decisión relevante, añadir ADR nuevo y marcar el anterior sustituido con enlace recíproco. Correcciones menores pueden aclararse sin fingir que la decisión original ya decía otra cosa.

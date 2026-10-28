@@ -35,10 +35,11 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 23. Aclaración del usuario (2026-10-27): «Lo que el jurado va a buscar» lista errores comunes; si la ruta evita solo el nodo de una horda y pasa por un vecino, es un error. La regla oficial aplicable es R-06: bloquea el nodo y todos sus vecinos.
 24. Solicitud del usuario (2026-10-27): completar las pruebas de las tres rondas de cinco minutos y las brechas de carga asociadas.
 25. Solicitud del usuario (2026-10-27): en Simulador, mostrar inicialmente solo «Iniciar simulación»; después elegir puntos seguros, configurar la cantidad de habitantes y zombies, y dejar la velocidad fija en 4× sin selector.
+26. Solicitud y confirmación del usuario (2026-10-27): organizar la app como tres experiencias —Reto, Simulador y Juego— y redefinir Juego como modo de operador. El mundo debe seguir corriendo mientras el usuario coloca habitantes, tipos de zombies, refugios e incidentes donde indique en el mapa.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 
-La versión mínima de juego contempla un personaje humano activo por partida, supuesto de implementación comunicado en la conversación. Multijugador simultáneo y múltiples partidas concurrentes no forman parte de la primera versión; ampliar si el usuario lo solicita.
+La versión principal actual separa Reto, Simulador y Juego de operador; sus reglas de dominio automáticas se comparten. La API de personaje humano queda como flujo implementado anterior y no está conectada a la navegación principal actual. Multijugador y múltiples partidas concurrentes no forman parte de la primera versión.
 
 ## Obligaciones del reto
 

@@ -1,15 +1,14 @@
 # Modos de uso
 
-Estado: los modos de dominio `simulador` y `juego` se mantienen; la interfaz ofrece demo libre, flujo de reto y juego humano. «Reto» usa partidas automáticas de modo `simulador`; no crea un tercer modo de dominio. El control local continúa protegido por opt-in y loopback. Arquitectura compartida: [ADR-002](../arquitectura/decisiones/0002-dos-modos.md), [ADR-035](../arquitectura/decisiones/0035-flujo-evaluacion-reto.md).
+Estado: los modos de dominio `simulador` y `juego` se mantienen; la interfaz ofrece Reto, Simulador y Juego de operador. «Reto» es una evaluación automática, «Simulador» configura/observa una demo libre y «Jugar» permite intervenir una demo automática local mientras avanza. El modo operador no crea un tercer modo de dominio. Las API de personaje humano aún existen, pero ya no se enlazan desde el Jugar principal. Arquitectura compartida: [ADR-002](../arquitectura/decisiones/0002-dos-modos.md), [ADR-035](../arquitectura/decisiones/0035-flujo-evaluacion-reto.md) y [ADR-042](../arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md).
 
-| Aspecto | Simulador | Juego |
+| Experiencia | Control | Propósito y límite |
 |---|---|---|
-| Control | Todos automáticos vía `/paso` | Un humano y personajes automáticos. |
-| Propósito | Medir el motor y ejecutar rondas oficiales | Llevar tu personaje aleatorio a un refugio. |
-| Vista | Mapa global, rutas y métricas | Personaje, vecinos, refugios y cuenta atrás. |
-| Decisión | Motor | Calle elegida o espera; radio opcional. |
-| Resultado | Reporte de ronda | Evacuado, mordido o partida interrumpida. |
-| Medición | Métricas oficiales automáticas | Métricas de juego separadas. |
+| Reto | Automático, presets R1/R2/R3; sin intervenciones humanas | Probar el motor y reportar resultados por separado. Usa el dominio `simulador`. |
+| Simulador | Demo libre automática, con configuración local | Explorar perfiles y refugios; no es una evaluación oficial. Usa `simulador`. |
+| Juego | Operador agrega entidades/eventos al mapa mientras el reloj automático avanza | Intervención lúdica local; no equivale a control de un personaje ni a métricas oficiales. Usa `simulador`. |
+
+El modo de dominio `juego` sigue disponible en componentes/APIs humanas anteriores, pero no está conectado a la tarjeta Jugar actual.
 
 La interfaz añade **Reto** con presets de Anochecer (20), Medianoche (80) y Apocalipsis (200). En el fixture Manta sus habitantes aparecen aleatoriamente en las zonas aproximadas de Tarqui, Los Esteros, Barbasquillo y Jocay, con un reparto equilibrado y reproducible por semilla. Las amenazas del Reto concentran una cuota provisional del 80% de cada tipo dentro de 3,5 km del ancla de Parque La Dolorosa y los eventos prefieren calles de esa área; queda una parte fuera para cubrir la ciudad. Simulador libre conserva sus apariciones y selección globales. Se usan el mismo motor, mapa y resolutor; cada ronda puede reiniciarse desde el panel y aún no se automatiza la campaña consecutiva de 15 minutos. Densidad, proporciones de tipos, radio, geometría/cuota exacta de sectores y turnos de evento son provisionales porque el enunciado no los especifica. Véanse [ADR-037](../arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md), [ADR-038](../arquitectura/decisiones/0038-foco-amenazas-reto.md) y [ADR-039](../arquitectura/decisiones/0039-reinicio-ronda-reto.md).
 
@@ -25,7 +24,7 @@ En la demo del mapa Manta, ambos modos comparten el subgrafo urbano limitado por
 
 - «Simulador»: demo libre; observar/iniciar o configurar requiere el control local de operador.
 - «Reto»: presets de evaluación automática; los parámetros no definidos por el reto se muestran como provisionales.
-- «Jugar»: entrar en partida habilitada; si no existe, mostrar estado y acción permitida, sin dar permisos administrativos anónimos.
+- «Jugar»: iniciar/continuar un mundo local y colocar herramientas en una partida activa; detener las colocaciones cuando el mundo se pausa o corresponde a Reto.
 - Durante una prueba oficial, mostrar observación y explicar que el juego está temporalmente ocupado.
 
 Controles iniciales: clic en vecino, botones con nombre de destino, Tab/Enter y «Esperar». No usar WASD sin definir cómo elegir entre vecinos de un grafo irregular. Movimiento visual con opción de reducir animación, foco visible y estados que no dependan solo de color.

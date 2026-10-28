@@ -93,6 +93,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-038](arquitectura/decisiones/0038-foco-amenazas-reto.md) | Concentración provisional de amenazas/eventos del Reto en un núcleo urbano de Manta | Cambie la distribución espacial de amenazas del Reto o se confirme un modelo oficial. |
 | [ADR-039](arquitectura/decisiones/0039-reinicio-ronda-reto.md) | Reinicio de la ronda Reto actual con mundo nuevo | Cambie el ciclo de vida o el contrato de reinicio Reto. |
 | [ADR-040](arquitectura/decisiones/0040-reemplazo-reto-pausado.md) | Reemplazo de un run Reto pausado por otro preset | Cambie cuándo una partida local puede sustituirse por otro preset Reto. |
+| [ADR-042](arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md) | «Jugar» como modo de operador que interviene un mundo automático vivo | Cambie la experiencia de Jugar o sus límites de intervención local. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
@@ -112,6 +113,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [SPEC-007](metodo/especificaciones/SPEC-007-panel-operador-local.md) | Criterios del tablero y control local de demo | Cambie el flujo local de operación; no autoriza control administrativo público. |
 | [SPEC-008](metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial y vista 3D | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
 | [SPEC-009](metodo/especificaciones/SPEC-009-modo-reto.md) | Presets de la prueba de fuego, separados de demo libre y juego | Cambien las rondas, sus presets o la campaña de evaluación. |
+| [SPEC-010](metodo/especificaciones/SPEC-010-juego-operador.md) | Paleta de operador e intervención del mapa en un mundo vivo | Cambien herramientas, validaciones o colocación local de entidades/eventos. |
 | [plantillas/cambio.md](metodo/plantillas/cambio.md) | Formato de cambio | Se necesiten campos nuevos. |
 | [plantillas/decision.md](metodo/plantillas/decision.md) | Formato de ADR | Se necesiten campos nuevos. |
 | [plantillas/transferencia.md](metodo/plantillas/transferencia.md) | Formato de transferencia | Cambie el protocolo de continuidad. |

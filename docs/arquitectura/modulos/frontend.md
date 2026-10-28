@@ -2,17 +2,20 @@
 
 Estado: base React + TypeScript + Vite, panel en vivo y tablero de control local implementados parcialmente en `frontend/`. La UI consume el panel HTTP y snapshots públicos de `WS /ws/panel`; CAM-051 reemplaza el SVG por MapLibre GL JS con cartografía vectorial OpenFreeMap/OSM, edificios extruidos cuando hay altura, cámara 2D/3D y capas de snapshot. CAM-038 agrega controles humanos para `POST /juego/unirse` y `POST /juego/accion`; CAM-040 ensambla el backend en modo demo local y el proxy Vite reenvía `/juego`; CAM-041 muestra el restante informado por servidor. CAM-050 agrega un tablero y operaciones locales para demos; CAM-057 permite elegir intensidad sintética; CAM-081 quita el ajuste de incidentes, que permanecen siempre activos en este control local; CAM-082 sortea entre 1–10 al inicio y muestra alerta/punto amarillo parpadeante al confirmarlos, con rutas ya recalculadas evitando el cierre. CAM-096 añade pausa/continuación de la ronda Reto con los controles locales existentes, conservando run y ronda; CAM-097 unifica el botón principal entre iniciar/pausar/continuar y ofrece iniciar un preset nuevo cuando una ronda Reto está pausada. No son controles públicos de operador. El mundo conserva autoridad de modo y auditoría T-19 sigue parcial.
 
-CAM-100 cambia el inicio de Simulador a un asistente de dos pasos: los cuatro refugios primero, habitantes/zombies después. La cantidad de zombies se envía al control local y se confirma en su estado; el escenario es mixto y la velocidad queda fija en 4× sin selector. Esta interacción solo altera la demo libre, no Reto ni Jugar; T-51 y SPEC-007 describen aceptación y límites.
+CAM-100 cambia el inicio de Simulador a un asistente de dos pasos: los cuatro refugios primero, habitantes/zombies después. La cantidad de zombies se envía al control local y se confirma en su estado; el escenario es mixto y la velocidad queda fija en 4× sin selector. Esta interacción solo altera la demo libre.
+
+CAM-101 convierte la tarjeta «Jugar» en modo operador local: `features/operator/OperatorControls.tsx` contiene estado de run y paleta; `infrastructure/http/operator.ts` adapta la colocación; `CityMap` encaja el clic en nodo/calle y llama la API. Las API de personaje humano (`features/game`, `application/useGameSession`) permanecen sin borrarse, pero no se montan desde la navegación primaria. `T-52` cubre validación/API; la prueba visual/cartográfica T-53 queda pendiente.
 
 | Área | Responsabilidad | Estado que le corresponde |
 |---|---|---|
 | `app/` | Entrada, rutas, proveedores y selector de modo | Vista actual y navegación. |
 | `features/simulation/` | Panel global, rondas y métricas | Proyección automática y filtros. |
-| `features/game/` | Personaje, vecinos, acciones, radio y resultado | Intención local y órdenes confirmadas. |
+| `features/operator/` | Inicio/pausa/continuación y paleta de intervención en mapa | Herramienta elegida y acuse; no mantiene estado de mundo autoritativo. |
+| `features/game/` | Personaje humano previo, vecinos, acciones, radio y resultado | Código heredado no conectado a la tarjeta Jugar actual. |
 | `features/map/` | Cartografía externa MapLibre y capas GeoJSON de snapshots | Instancia visual, cámara 2D/3D, selección de habitantes y presentación de ruta/detalle desde el snapshot. |
 | `features/session/` | Sesión temporal y recuperación | Identidad permitida, sin secretos de servicio. |
 | `domain/` | Tipos, parsers y reglas puras (`panel`, `game`, `simulator`) con pruebas vitest | Datos validados, sin red. |
-| `infrastructure/http/` | Única frontera HTTP (`health`, `panel`, `game`, `simulator`) y errores tipados `GameApiError`/`SimulatorApiError` | Solicitudes y respuestas. `loadPanelRoute` valida la consulta individual de ruta del habitante seleccionado (CAM-093). |
+| `infrastructure/http/` | Única frontera HTTP (`health`, `panel`, `game`, `simulator`, `operator`) y errores validados por consumidor | Solicitudes y respuestas. `placeOperatorElement` envía la herramienta y objetivo al endpoint local protegido. |
 | `infrastructure/realtime/` | WebSocket, secuencia, reconexión y sincronización | Conectado/desconectado/recuperando. |
 | `shared/ui/` | Botones, alertas, contadores y accesibilidad | Estados visuales reutilizables. |
 

@@ -25,6 +25,7 @@ Representar reglas de Navira con conceptos del juego, independientes de FastAPI 
 | Mundo y simulación | Grafo, zombies, eventos y resolución | Publica observación y resultado. |
 | Planificación | Elegir paso/refugio y estimar riesgo | Consume observación, devuelve intención. |
 | Participación humana | Propiedad, aparición y órdenes | Entrega intención al mismo resolutor. |
+| Operación interactiva | Valida inserción de entidades/refugios y cierres sobre una partida automática viva | Persiste una nueva versión completa por el puerto CAS; la UI no es autoridad. |
 | Observación/evaluación | Panel, métricas y reportes | Consume resultados; no modifica posiciones. |
 
 Son límites dentro de un monolito modular, no servicios nuevos. Las identidades compartidas son valores simples; no se pasa un objeto mutable del mundo al planificador o al navegador.
@@ -36,6 +37,7 @@ Son límites dentro de un monolito modular, no servicios nuevos. Las identidades
 - Valores inmutables propuestos: NodeId, RunId, TurnNumber, SnapshotVersion, distancia en metros, velocidad y segmento dirigido. Validar unidades y valores antes de entrar al núcleo.
 - Partida es la frontera lógica de consistencia del turno; el coordinador autoriza transiciones. No obliga a cargar/guardar todo el mundo como un único item de base de datos.
 - Registro de órdenes es otra frontera de concurrencia: cada reemplazo tiene secuencia y versión; solo la sesión propietaria puede solicitarlo.
+- Intervención de operador no crea un agregado de mundo paralelo: modifica `Partida`/`SnapshotMundo` inmutables usando el grafo versionado y una escritura CAS. Reto queda fuera de este caso de uso.
 - Servicios de dominio puros: transitabilidad, detector de mordidas, resolución y elegibilidad de aparición. Usar una función si no necesita estado o identidad.
 - Políticas intercambiables: controlador automático y humano producen intenciones. Tipos zombie pueden usar composición/estrategias; no se exige una clase hija por tipo.
 

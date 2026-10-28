@@ -72,6 +72,10 @@ En partidas Manta, el servidor calcula al inicio de cada preparación el conjunt
 
 El panel local inicia con una sola acción principal. Al elegirla, solicita primero los cuatro puntos seguros y después conteos enteros de 1 a 200 para habitantes y zombies; el servidor aplica ambos conteos al mundo sintético. La interfaz fija la velocidad de demo en 4× y no ofrece selector. Estos campos pertenecen a la superficie de desarrollo local y no modifican `POST /paso`, Reto ni el modo humano. Detalle: [SPEC-007](../metodo/especificaciones/SPEC-007-panel-operador-local.md), [contrato API](../arquitectura/contratos/api.md).
 
+### TRD-18 — Intervenciones del modo operador
+
+Las colocaciones requieren opt-in local, loopback y Origin same-host, una partida automática activa que no pertenezca a Reto, IDs de nodo/segmento existentes y confirmación CAS del snapshot. El servidor crea las entidades; el cliente solo expresa herramienta y objetivo. Los zombies respetan el búfer del refugio y límites locales de población; dormidos permanecen ocultos en la proyección. Un refugio agrega una versión inmutable de mapa. Un incidente cierra el segmento inmediatamente, invalida rutas comprometidas y aparece como evento aplicado. Pausar detiene las colocaciones. No exponer este endpoint en producción sin autenticación, auditoría y persistencia adecuadas. Detalle: [SPEC-010](../metodo/especificaciones/SPEC-010-juego-operador.md) y [API](../arquitectura/contratos/api.md).
+
 ## Riesgos y aceptación
 
 Reglas ambiguas, región, TLS y sesiones siguen en [pendientes](../seguimiento/pendientes.md); ningún documento nuevo las cierra por inferencia. Verificar con las especificaciones y pruebas correspondientes antes de marcar implementado/verificado. Una discrepancia con código se investiga, no se resuelve adaptando silenciosamente los requisitos al fallo.

@@ -24,13 +24,13 @@ Recomendar un siguiente paso válido hacia un refugio, priorizando menos mordida
 
 Mostrar zombies visibles por tipo, sobrevivientes, rutas, refugios, cierres y turno. Al seleccionar un sobreviviente en el mapa, mostrar sus datos y la ruta recomendada del snapshot actual. Al confirmarse un incidente vial, alertar en el mapa y señalar el punto afectado; las nuevas recomendaciones deben rodear el cierre. Comunicar desconexión y última actualización. Prioridad: obligatoria; un mapa detenido no se presenta como vivo. Detalle: [espectador](../dominio/flujos/espectador.md).
 
-### PRD-05 — Juego humano complementario
+### PRD-05 — Juego humano complementario (alcance anterior)
 
-Permitir entrar como personaje en un nodo aleatorio elegible y llevarlo a un refugio mediante calles vecinas o espera. Primera versión: un humano por partida y resto automático, sin registro permanente. Radio opcional aconseja sin mover ni garantizar supervivencia. Prioridad: solicitada por el usuario. Detalle: [jugador](../dominio/flujos/jugador.md).
+El alcance anterior permitía entrar como personaje y llevarlo a un refugio. Tras la solicitud explícita de organizar el producto en Reto, Simulador y Juego de operador, ese flujo deja de ser la experiencia principal de «Jugar». Sus API y módulo frontend se conservan por ahora como implementación anterior, pero la navegación principal presenta el modo operador definido en PRD-12. No asumir que el juego humano sigue expuesto en la interfaz.
 
 ### PRD-06 — Roles y separación de modos
 
-Separar espectador, jugador, operador y servicio. El modo queda fijo por partida; la evaluación oficial no admite control humano y sus métricas se separan del juego. En la interfaz, «Simulador» es demo libre, «Reto» configura rondas de evaluación sobre el modo automático existente y «Jugar» conserva el control humano. Prioridad: necesaria para integrar el complemento sin alterar el reto. Detalle: [roles](../dominio/flujos/roles.md), [modos](../dominio/modos.md), [SPEC-009](../metodo/especificaciones/SPEC-009-modo-reto.md).
+Separar espectador, operador y servicio. La interfaz ofrece «Reto» (rondas automáticas), «Simulador» (configuración y observación libre) y «Jugar» (intervención de operador en un mundo automático). Reto no admite intervenciones; Jugar comparte reglas y motor automático, pero no reporta métricas oficiales. Prioridad: necesaria para separar las tres experiencias. Detalle: [roles](../dominio/flujos/roles.md), [modos](../dominio/modos.md), [SPEC-009](../metodo/especificaciones/SPEC-009-modo-reto.md) y [SPEC-010](../metodo/especificaciones/SPEC-010-juego-operador.md).
 
 ### PRD-07 — Evaluación reproducible
 
@@ -51,6 +51,10 @@ La política de ruta debe priorizar la reducción del número de sobrevivientes 
 ### PRD-11 — Perímetro de protección de refugios
 
 En partidas del mapa Manta, impedir que los zombies aparezcan o avancen a menos de una cuadra topológica de un refugio. La protección incluye el nodo del refugio y las intersecciones conectadas directamente por cualquier sentido de calle; solo el grafo Manta usa esta regla, porque los mapas pequeños sintéticos no representan distancias urbanas. Prioridad: mejora solicitada por el usuario. Detalle: [reglas](../dominio/reglas-juego.md) y [SPEC-001](../metodo/especificaciones/SPEC-001-mundo-simulacion.md).
+
+### PRD-12 — Juego de operador en mundo vivo
+
+Permitir iniciar/continuar un mundo automático local y elegir una herramienta para colocar habitantes, caminantes, corredores, hordas, zombies dormidos, refugios o incidentes sobre el mapa. El reloj continúa mientras se usa la paleta. Cada acción se valida y confirma en el servidor; un incidente bloquea el segmento y actualiza el planificador. El modo comparte las reglas del simulador, aplica el perímetro de refugios y no permite editar rondas Reto. La superficie actual es solo desarrollo local con opt-in/loopback. Detalle: [operador](../dominio/flujos/operador.md), [API](../arquitectura/contratos/api.md) y [SPEC-010](../metodo/especificaciones/SPEC-010-juego-operador.md).
 
 ## Alcance y exclusiones
 

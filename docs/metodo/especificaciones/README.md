@@ -13,6 +13,7 @@ Cada SPEC detalla aceptación y enlaza requisitos del [PRD](../../producto/PRD.m
 | [SPEC-007](SPEC-007-panel-operador-local.md) | Panel de simulación con control local de demo | CAM-050/063/079/081/082/100 y T-26/37/41/43/44/51 cubren control local, asistente de inicio, conteos exactos y velocidad fija; no habilita operaciones públicas ni despliegue. |
 | [SPEC-008](SPEC-008-mapa-cartografico-3d.md) | Mapa cartográfico real con vista 3D y actores animados | CAM-077 convierte la ventana urbana en límite jugable y restringe el selector (T-39). El fixture fuente OSM ampliado se conserva; cobertura, payload y fallback de proveedor mantienen sus límites documentados. |
 | [SPEC-009](SPEC-009-modo-reto.md) | Presets dedicados de la prueba de fuego | CAM-088 separa presets locales de la demo libre; CAM-094 agrega spawn aleatorio reproducible en cuatro sectores; CAM-095 concentra amenazas/eventos; CAM-096/097 controlan pausa, continuación y nueva ronda. CAM-098/CAM-099 miden tres campañas locales secuenciales R1/R2/R3, nueve rondas y tres semillas base. Parámetros oficiales, AWS y evaluación oficial siguen pendientes. |
+| [SPEC-010](SPEC-010-juego-operador.md) | Modo operador para colocar elementos en una ciudad que sigue avanzando | CAM-101 implementa paleta, colocación backend por snapshot/CAS y cierre manual de incidente. T-52 cubre API local; T-53 smoke cartográfico pendiente. No permite intervenir Reto ni habilita operación pública. |
 
 ## Uso
 

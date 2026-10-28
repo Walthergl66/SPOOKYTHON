@@ -46,8 +46,8 @@ El diagrama describe flujo de ejecución. Las dependencias de código se definen
 | Panel → aplicación | Proyección observable | Lectura limitada; no usa credencial maestra. |
 | Panel → observación | `WS /ws/panel`, snapshots completos por versión | Origen del mismo host; memoria local; no ofrece replay durable. |
 | Navegador → proveedor cartográfico | Tiles vectoriales del área visible para la capa base del mapa | Solicitud externa de lectura; no envía estado de juego ni credenciales Navira; servicio público sin SLA. Véase [ADR-016](decisiones/0016-mapa-maplibre-openfreemap.md). |
-| Operador → simulador | Inicio/cierre/eventos | Credencial administrativa distinta. |
-| Tablero local → demo sintética | `GET /demo/simulador` y operaciones de demo | Opt-in de proceso, loopback y origen same-host; no disponible en despliegue. |
+| Operador → simulador | Inicio/cierre/eventos | Credencial administrativa distinta en el futuro productivo. |
+| Tablero local → demo sintética | Control local y colocación `/demo/operador/elementos` | Opt-in de proceso, loopback, Origin same-host y CAS; no disponible en despliegue. |
 | Núcleo → almacenamiento | Puertos de aplicación | Rol IAM y adaptador de infraestructura. |
 
 Los contratos públicos previstos están en [API](contratos/api.md) y [eventos](contratos/eventos.md). Identidades y almacenamiento, en [datos](../dominio/datos.md).

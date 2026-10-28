@@ -1,18 +1,18 @@
 # Roles y responsabilidades
 
-Estado: diseño previsto. Los roles de producto no son roles IAM de AWS.
+Estado: espectador, operador de demo y servicio tienen flujos locales implementados parcialmente. Los roles de producto no son roles IAM de AWS.
 
 ## Actores del producto
 
 | Actor | Puede | No puede | Flujo |
 |---|---|---|---|
 | Espectador | Ver proyección, rutas y métricas permitidas | Mover, reiniciar, cambiar modo o ver dormidos | [Espectador](espectador.md). |
-| Jugador | Controlar su personaje, esperar y pedir sugerencia | Controlar otros, alterar reloj o revelar información oculta | [Jugador](jugador.md). |
-| Operador | Iniciar/finalizar, elegir escenario y programar cierres | Alterar resultados históricos sin dejar registro | [Operador](operador.md). |
+| Jugador humano (alcance anterior) | Las API heredadas permiten sesión/personaje/orden cuando se ensamblan | No está disponible en la navegación principal actual | [Jugador](jugador.md). |
+| Operador local | Iniciar/pausar/continuar el mundo, elegir una herramienta y agregar actores, refugios o incidentes | Modificar Reto, escribir desde el navegador posiciones confirmadas, eludir límites/reglas, operar fuera de loopback | [Operador](operador.md). |
 | Simulador de servicio | Mover zombies, consultar `/paso`, aplicar decisiones y publicar | Compartir secretos o ejecutar dos coordinadores | [Simulador](simulador.md). |
 | Motor | Recomendar un paso sobre una instantánea observable | Modificar el mundo o consultar dormidos privados | [Algoritmos](../../arquitectura/algoritmos.md). |
 
-La sesión de jugador acredita propiedad del personaje; no es una cuenta permanente. El operador usa una credencial distinta a la API key de servicio. El modo simulador no admite control humano en sus rondas oficiales.
+La sesión humana acredita propiedad del personaje; no es una cuenta permanente. El control local de operador requiere opt-in del proceso, loopback y Origin same-host. No se incluye una superficie productiva de administración. Reto no admite control humano ni intervenciones.
 
 ## Roles de trabajo humano
 

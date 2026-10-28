@@ -1,6 +1,6 @@
 # Flujo del jugador
 
-Estado: sesión/aparición y órdenes locales en CAM-036/037; coordinador/reloj demo en CAM-039/040; contador, radio y recuperación UI en CAM-041..043; vencimiento local en CAM-046. El modo de juego solo se ensambla con opt-in local y no ofrece persistencia durable ni despliegue. Contratos: [API](../../arquitectura/contratos/api.md). Reglas: [mundo](../reglas-juego.md).
+Estado: flujo humano anterior, implementado parcialmente en API/UI, sin enlace desde la navegación principal desde CAM-101. «Jugar» ahora significa operador local según [ADR-042](../../arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md) y [SPEC-010](../../metodo/especificaciones/SPEC-010-juego-operador.md). El siguiente flujo se conserva como referencia de la funcionalidad existente, no como la pantalla principal vigente.
 
 ## Entrar
 
