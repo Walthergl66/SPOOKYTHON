@@ -182,7 +182,7 @@ class PanelPublicoTests(unittest.TestCase):
         self.assertEqual(ruta[1] if len(ruta) > 1 else ruta[0], decision.siguiente_nodo)
         self.assertIn(ruta[-1], {refugio["nodo"] for refugio in cliente.get("/panel/mapa").json()["refugios"]})
 
-    def test_panel_mantiene_rutas_recomendadas_en_todas_las_fases_del_simulador(self) -> None:
+    def test_panel_calcula_bajo_demanda_la_ruta_seleccionada_fuera_de_decisiones(self) -> None:
         contexto = crear_contexto_demo(semilla=12, escenario="libre")
         snapshot = contexto.snapshots.obtener(contexto.run_id)
         assert snapshot is not None
@@ -197,18 +197,43 @@ class PanelPublicoTests(unittest.TestCase):
             )
         )
 
-        estado = ConsultarPanel(
+        panel = ConsultarPanel(
             contexto.snapshots, contexto.mapas, contexto.servicio_decision
-        ).consultar_estado()
-
-        activos = {
+        )
+        estado = panel.consultar_estado()
+        seleccionado = next(
             persona["id"]
             for persona in estado["sobrevivientes"]
             if persona["estado"] == EstadoSobreviviente.ACTIVO.value
-        }
-        rutas = {ruta["sobrevivienteId"] for ruta in estado["rutasPrevistas"]}
-        self.assertTrue(activos)
-        self.assertEqual(rutas, activos)
+        )
+
+        # El snapshot liviano no calcula rutas para toda la población fuera de
+        # decisiones; la selección interactiva calcula exclusivamente una.
+        self.assertEqual(estado["rutasPrevistas"], ())
+        ruta = panel.consultar_ruta(seleccionado)
+        self.assertEqual(ruta["sobrevivienteId"], seleccionado)
+        self.assertEqual(ruta["turno"], resuelto.partida.turno)
+        self.assertEqual(ruta["snapshotVersion"], resuelto.version)
+        self.assertTrue(ruta["trayecto"])
+        self.assertEqual(ruta["trayecto"][0], next(
+            persona["nodo"] for persona in estado["sobrevivientes"]
+            if persona["id"] == seleccionado
+        ))
+
+    def test_endpoint_de_ruta_devuelve_un_solo_habitante_seleccionado(self) -> None:
+        app = crear_app_demo(semilla=12, escenario="libre")
+        cliente = TestClient(app)
+        estado = cliente.get("/panel/estado").json()
+        seleccionado = next(
+            persona["id"] for persona in estado["sobrevivientes"]
+            if persona["estado"] == EstadoSobreviviente.ACTIVO.value
+        )
+
+        respuesta = cliente.get(f"/panel/ruta/{seleccionado}")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.json()["sobrevivienteId"], seleccionado)
+        self.assertTrue(respuesta.json()["trayecto"])
 
     def test_panel_no_publica_rutas_humanas_fuera_de_fase_de_decisiones(self) -> None:
         contexto = crear_contexto_demo(

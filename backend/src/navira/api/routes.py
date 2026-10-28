@@ -20,6 +20,7 @@ from navira.api.schemas import (
     SolicitudIniciarDemoSchema,
     SolicitudVelocidadDemoSchema,
     SolicitudIniciarRetoSchema,
+    RespuestaRutaPanelSchema,
 )
 from navira.api.seguridad import (
     COOKIE_SESION_JUGADOR,
@@ -229,6 +230,23 @@ async def mapa_panel(
         return consulta.consultar_mapa()
     except PanelNoDisponible as error:
         raise _error(status.HTTP_503_SERVICE_UNAVAILABLE, error) from error
+
+
+@router.get("/panel/ruta/{sobreviviente_id}", response_model=RespuestaRutaPanelSchema, tags=["panel"])
+async def ruta_panel(
+    sobreviviente_id: str,
+    consulta: ConsultarPanel | None = Depends(deps.consulta_panel),
+) -> dict[str, object]:
+    """Calcula la ruta para una única persona seleccionada en el mapa."""
+
+    if consulta is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No hay una partida activa.")
+    try:
+        return consulta.consultar_ruta(sobreviviente_id)
+    except PanelNoDisponible as error:
+        raise _error(status.HTTP_503_SERVICE_UNAVAILABLE, error) from error
+    except EntidadNoEncontrada as error:
+        raise _error(status.HTTP_404_NOT_FOUND, error) from error
 
 
 @router.post(

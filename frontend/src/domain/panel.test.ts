@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classifyCursor, nextPanelLog, parsePanelMap, parsePanelState, pickMap, type PanelLog } from './panel'
+import { classifyCursor, nextPanelLog, parsePanelMap, parsePanelRoute, parsePanelState, pickMap, type PanelLog } from './panel'
 
 const mapa = {
   version: 'm1',
@@ -69,6 +69,17 @@ describe('parsePanelState', () => {
       .toThrow('El servicio devolvió eventos de ciudad con un formato no válido.')
     expect(() => parsePanelState({ ...estadoActivo, eventosCiudad: [{ id: 'e', turno: 1, causa: 'x', segmentoId: 's1', lat: Number.NaN, lng: 0 }] }))
       .toThrow('El servicio devolvió eventos de ciudad con un formato no válido.')
+  })
+})
+
+describe('parsePanelRoute', () => {
+  it('acepta una ruta del habitante seleccionado con versión de snapshot', () => {
+    expect(parsePanelRoute({ runId: 'r1', turno: 2, snapshotVersion: 9, sobrevivienteId: 's1', trayecto: ['n1', 'n2'] }))
+      .toEqual({ runId: 'r1', turno: 2, snapshotVersion: 9, sobrevivienteId: 's1', trayecto: ['n1', 'n2'] })
+  })
+  it('rechaza rutas incompletas o con nodos inválidos', () => {
+    expect(() => parsePanelRoute({ runId: 'r1', turno: 2, snapshotVersion: 9, sobrevivienteId: 's1', trayecto: ['n1', 2] }))
+      .toThrow('El servicio devolvió una ruta con un formato no válido.')
   })
 })
 

@@ -30,6 +30,14 @@ export interface PanelSnapshot {
   state: PanelState
 }
 
+export interface PanelRoute {
+  runId: string
+  turno: number
+  snapshotVersion: number
+  sobrevivienteId: string
+  trayecto: string[]
+}
+
 export type PanelConnection = 'connecting' | 'live' | 'reconnecting' | 'stale'
 export type PanelCursor = { runId: string | null; sequence: number }
 
@@ -161,6 +169,25 @@ export function parsePanelState(value: unknown): PanelState {
       evacuados: metricas.evacuados as number,
       zombiesVisibles: metricas.zombiesVisibles as number,
     },
+  }
+}
+
+/** Valida la ruta calculada por el servidor para el habitante seleccionado. */
+export function parsePanelRoute(value: unknown): PanelRoute {
+  if (!isRecord(value)
+    || typeof value.runId !== 'string'
+    || typeof value.turno !== 'number' || !Number.isInteger(value.turno) || value.turno < 0
+    || typeof value.snapshotVersion !== 'number' || !Number.isInteger(value.snapshotVersion) || value.snapshotVersion < 1
+    || typeof value.sobrevivienteId !== 'string'
+    || !Array.isArray(value.trayecto) || !value.trayecto.every((node) => typeof node === 'string')) {
+    throw new Error('El servicio devolvió una ruta con un formato no válido.')
+  }
+  return {
+    runId: value.runId,
+    turno: value.turno,
+    snapshotVersion: value.snapshotVersion,
+    sobrevivienteId: value.sobrevivienteId,
+    trayecto: value.trayecto,
   }
 }
 

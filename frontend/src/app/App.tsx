@@ -1,22 +1,22 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { GameControls } from '../features/game/GameControls'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { RefugeDialog } from '../features/map/RefugeDialog'
-import type { PanelConnection } from '../domain/panel'
+import type { PanelConnection, PanelRoute } from '../domain/panel'
 import { SIMULATOR_SPEEDS, type SimulatorSetup } from '../domain/simulator'
 import type { GamePort, PanelPort, SimulatorPort } from '../application/ports'
 import { usePanel } from '../application/usePanel'
 import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
 import { useGameSession } from '../application/useGameSession'
 import { joinGame, restoreGameSession, sendGameOrder } from '../infrastructure/http/game'
-import { loadPanelMap, loadPanelSnapshot } from '../infrastructure/http/panel'
+import { loadPanelMap, loadPanelRoute, loadPanelSnapshot } from '../infrastructure/http/panel'
 import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, setSimulatorSpeed, startChallengeRound } from '../infrastructure/http/simulator'
 import { subscribePanel } from '../infrastructure/realtime/panel'
 import { checkHealth } from '../infrastructure/http/health'
 import { BrandMark } from '../shared/ui/BrandMark'
 
 // Puertos de módulo: identidad estable entre renders, que los efectos de los hooks usan como dependencia.
-const panelPort: PanelPort = { loadSnapshot: loadPanelSnapshot, loadMap: loadPanelMap, subscribe: subscribePanel }
+const panelPort: PanelPort = { loadSnapshot: loadPanelSnapshot, loadMap: loadPanelMap, loadRoute: loadPanelRoute, subscribe: subscribePanel }
 const simulatorPort: SimulatorPort = { getStatus: getSimulatorStatus, getCandidates: getSimulatorCandidates, control: controlSimulator, setSpeed: setSimulatorSpeed }
 const gamePort: GamePort = { join: joinGame, restore: restoreGameSession, sendOrder: sendGameOrder }
 
@@ -27,6 +27,9 @@ const SurvivorRoutePanel = lazy(() => import('../features/map/SurvivorRoutePanel
 export function App() {
   const [mode, setMode] = useState<NaviraMode>('challenge')
   const [selectedSurvivorId, setSelectedSurvivorId] = useState<string | undefined>()
+  const [selectedRoute, setSelectedRoute] = useState<PanelRoute | null>(null)
+  const [selectedRouteLoading, setSelectedRouteLoading] = useState(false)
+  const [selectedRouteError, setSelectedRouteError] = useState<string | null>(null)
   const [challengeRound, setChallengeRound] = useState<1 | 2 | 3>(1)
   const [challengeBusy, setChallengeBusy] = useState(false)
   const [challengeError, setChallengeError] = useState<string | null>(null)
@@ -65,6 +68,50 @@ export function App() {
   const statusLabel = active ? `Turno ${state.turno} · ${(state.fase ?? 'fase desconocida').replaceAll('_', ' ')}` : state?.estado === 'sin_partida' ? 'Sin partida activa' : loading ? 'Conectando con el panel' : 'Datos no disponibles'
   const allSurvivors = active ? state.sobrevivientes ?? [] : []
   const selectedRouteOwner = allSurvivors.some(({ id }) => id === selectedSurvivorId) ? selectedSurvivorId : undefined
+  const selectedSurvivor = allSurvivors.find(({ id }) => id === selectedRouteOwner)
+  const selectedSnapshotRoute = state?.rutasPrevistas?.find(({ sobrevivienteId }) => sobrevivienteId === selectedRouteOwner)
+  const selectedSnapshotRouteKey = selectedSnapshotRoute?.trayecto.join('\u0000')
+  useEffect(() => {
+    if (!state || !selectedRouteOwner || !selectedSurvivor || selectedSurvivor.estado !== 'activo') {
+      setSelectedRouteLoading(false)
+      setSelectedRouteError(null)
+      return
+    }
+    if (selectedSnapshotRoute) {
+      const route: PanelRoute = {
+        runId: state.runId!,
+        turno: state.turno!,
+        snapshotVersion: state.snapshotVersion!,
+        sobrevivienteId: selectedRouteOwner,
+        trayecto: selectedSnapshotRoute.trayecto,
+      }
+      setSelectedRoute((current) => current?.runId === route.runId && current.turno === route.turno && current.sobrevivienteId === route.sobrevivienteId && current.trayecto.join('\u0000') === route.trayecto.join('\u0000') ? current : route)
+      setSelectedRouteLoading(false)
+      setSelectedRouteError(null)
+      return
+    }
+    // Solo el modo automático solicita una ruta fuera de la fase de decisiones.
+    // El resultado se reutiliza durante ese turno; no se recalcula para toda la cohorte.
+    if (state.modo !== 'simulador') return
+    if (selectedRoute && selectedRoute.runId === state.runId && selectedRoute.turno === state.turno && selectedRoute.sobrevivienteId === selectedRouteOwner) return
+
+    const controller = new AbortController()
+    setSelectedRouteLoading(true)
+    setSelectedRouteError(null)
+    void panelPort.loadRoute(selectedRouteOwner, controller.signal).then((route) => {
+      if (route.runId !== state.runId || route.turno !== state.turno || route.sobrevivienteId !== selectedRouteOwner) return
+      setSelectedRoute(route)
+    }).catch((error: unknown) => {
+      if (!controller.signal.aborted) setSelectedRouteError(error instanceof Error ? error.message : 'No se pudo calcular la ruta recomendada.')
+    }).finally(() => {
+      if (!controller.signal.aborted) setSelectedRouteLoading(false)
+    })
+    return () => controller.abort()
+  }, [state?.runId, state?.turno, state?.modo, selectedRouteOwner, selectedSurvivor?.estado, selectedSnapshotRouteKey, selectedRoute])
+  const stateWithSelectedRoute = useMemo(() => {
+    if (!state || selectedSurvivor?.estado !== 'activo' || selectedSnapshotRoute || !selectedRoute || selectedRoute.runId !== state.runId || selectedRoute.turno !== state.turno || selectedRoute.sobrevivienteId !== selectedRouteOwner) return state
+    return { ...state, rutasPrevistas: [...(state.rutasPrevistas ?? []), { sobrevivienteId: selectedRoute.sobrevivienteId, trayecto: selectedRoute.trayecto }] }
+  }, [state, selectedSnapshotRoute, selectedRoute, selectedRouteOwner, selectedSurvivor?.estado])
   const simulatorIsRunning = simulator?.estado === 'activa'
   const showPicker = candidates !== null && !simulatorUnavailable
   const pickerLockedReason = simulatorBusy ? 'Se está actualizando la simulación. Espera un momento.' : null
@@ -160,7 +207,7 @@ export function App() {
 
           <div className="run-details"><span>Modo de vista</span><strong>{mode === 'challenge' ? `Reto · ronda ${challengeRound}` : mode === 'simulator' ? 'Simulador · demo libre' : 'Juego humano'}</strong><span>Turno observado</span><strong>{state?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
           {mode === 'game' ? <GameControls modeSelected connection={connection} game={game} /> : null}
-          {active && allSurvivors.length > 0 && map ? <Suspense fallback={<div className="survivor-route-loading" role="status">Cargando información del habitante…</div>}><SurvivorRoutePanel state={state} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} /></Suspense> : null}
+          {active && allSurvivors.length > 0 && map ? <Suspense fallback={<div className="survivor-route-loading" role="status">Cargando información del habitante…</div>}><SurvivorRoutePanel state={stateWithSelectedRoute ?? state} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} routeLoading={selectedRouteLoading} routeError={selectedRouteError} /></Suspense> : null}
         </aside>
 
         <section className="city-panel dashboard-map-panel" aria-label="Mapa y estado de Manta">
@@ -169,7 +216,7 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} /></Suspense> : <MapPlaceholder />}
+            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={stateWithSelectedRoute ?? state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} /></Suspense> : <MapPlaceholder />}
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{map?.version ?? (simulatorUnavailable ? 'BACKEND SIN CONTROL LOCAL' : 'AÚN SIN SNAPSHOT')}</div>
           </div>

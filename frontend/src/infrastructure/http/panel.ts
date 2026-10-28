@@ -1,4 +1,4 @@
-import { parsePanelMap, parsePanelState, type PanelMap, type PanelSnapshot } from '../../domain/panel'
+import { parsePanelMap, parsePanelRoute, parsePanelState, type PanelMap, type PanelRoute, type PanelSnapshot } from '../../domain/panel'
 
 export async function loadPanelSnapshot(signal?: AbortSignal): Promise<PanelSnapshot> {
   const stateResponse = await fetch('/panel/estado', { signal, headers: { Accept: 'application/json' } })
@@ -26,4 +26,23 @@ export async function loadPanelMap(expectedVersion: string, signal?: AbortSignal
   const map = parsePanelMap(await response.json())
   if (map.version !== expectedVersion) throw new Error('La versión del mapa no coincide con el snapshot recibido.')
   return map
+}
+
+/** Pide al servidor la ruta de una sola persona, sin calcular la cohorte completa. */
+export async function loadPanelRoute(survivorId: string, signal?: AbortSignal): Promise<PanelRoute> {
+  const response = await fetch(`/panel/ruta/${encodeURIComponent(survivorId)}`, {
+    signal,
+    headers: { Accept: 'application/json' },
+  })
+  if (!response.ok) {
+    let detail = 'No se pudo obtener la ruta recomendada.'
+    try {
+      const body: unknown = await response.json()
+      if (typeof body === 'object' && body !== null && 'detail' in body && typeof body.detail === 'string') detail = body.detail
+    } catch {
+      // Conserva el mensaje local si el servidor no envía JSON de error.
+    }
+    throw new Error(detail)
+  }
+  return parsePanelRoute(await response.json())
 }

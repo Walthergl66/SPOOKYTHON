@@ -6,10 +6,12 @@ interface SurvivorRoutePanelProps {
   map: PanelMap
   selectedSurvivorId: string | undefined
   onSelectSurvivor: (survivorId: string) => void
+  routeLoading?: boolean
+  routeError?: string | null
 }
 
 /** Presents the selected inhabitant and the route in the current server snapshot. */
-export function SurvivorRoutePanel({ state, map, selectedSurvivorId, onSelectSurvivor }: SurvivorRoutePanelProps) {
+export function SurvivorRoutePanel({ state, map, selectedSurvivorId, onSelectSurvivor, routeLoading = false, routeError = null }: SurvivorRoutePanelProps) {
   const survivors = state.sobrevivientes ?? []
   const details = getSurvivorRouteDetails(state, map, selectedSurvivorId)
   const survivor = details?.survivor
@@ -35,7 +37,7 @@ export function SurvivorRoutePanel({ state, map, selectedSurvivorId, onSelectSur
             <summary>Ver recorrido completo ({path.length} nodos)</summary>
             <ol>{path.map((node, index) => <li key={`${node}-${index}`}>{node}</li>)}</ol>
           </details> : null}
-        </div> : <p className="survivor-route-empty">{survivor.estado === 'activo' ? 'El servidor no ofrece una ruta para este snapshot.' : 'Este habitante ya no tiene una ruta activa.'}</p>}
+        </div> : <p className="survivor-route-empty" role={routeError ? 'alert' : routeLoading ? 'status' : undefined}>{routeLoading ? 'Calculando ruta recomendada…' : routeError ?? (survivor.estado === 'activo' ? 'El servidor no ofrece una ruta para este snapshot.' : 'Este habitante ya no tiene una ruta activa.')}</p>}
       </> : <div className="survivor-route-hint"><span className="panel-overline">SEGUIMIENTO DE HABITANTES</span><strong>Selecciona un habitante en el mapa</strong><span>Verás su estado, posición y ruta recomendada actual.</span></div>}
 
       <details className="survivor-list-fallback">

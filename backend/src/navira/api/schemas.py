@@ -213,6 +213,16 @@ class PanelSinPartidaSchema(BaseModel):
     estado: Literal["sin_partida"]
 
 
+class RespuestaRutaPanelSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    runId: str
+    turno: int = Field(ge=0)
+    snapshotVersion: int = Field(ge=1)
+    sobrevivienteId: str
+    trayecto: list[str]
+
+
 class PanelPartidaActivaSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

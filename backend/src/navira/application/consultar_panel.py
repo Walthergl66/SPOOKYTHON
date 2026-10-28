@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from navira.application.decidir_paso import DecidirPaso, nodos_horda_visibles
+from navira.application.decidir_paso import DecidirPaso, EntidadNoEncontrada, nodos_horda_visibles
 from navira.application.puerta_decisiones import PuertaDecisiones
 from navira.domain.mapa import Grafo
 from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, FaseTurno, TipoZombie
@@ -116,13 +116,7 @@ class ConsultarPanel:
             if (
                 personaje.estado is EstadoSobreviviente.ACTIVO
                 and self.planificador is not None
-                # En simulador automático la tarjeta de selección necesita una
-                # recomendación disponible durante todas las fases del turno.
-                # En juego humano se conserva la ventana oficial de decisiones.
-                and (
-                    partida.modo.value == "simulador"
-                    or partida.fase is FaseTurno.DECISIONES
-                )
+                and partida.fase is FaseTurno.DECISIONES
             )
         )
 
@@ -173,6 +167,47 @@ class ConsultarPanel:
                 ),
                 "zombiesVisibles": len(zombies_visibles),
             },
+        }
+
+    def consultar_ruta(self, sobreviviente_id: str) -> dict[str, object]:
+        """Calcula una sola ruta para la persona elegida, sobre el snapshot vigente.
+
+        El panel no vuelve a calcular rutas de toda la población en cada fase:
+        la selección interactiva pide únicamente el trayecto que necesita.
+        """
+
+        try:
+            snapshot = self.snapshots.obtener_activa()
+        except RuntimeError as error:
+            raise PanelNoDisponible("Hay más de una partida activa.") from error
+        if snapshot is None or snapshot.partida.estado is not EstadoPartida.ACTIVA:
+            raise PanelNoDisponible("No hay una partida activa para consultar rutas.")
+
+        partida = snapshot.partida
+        grafo = self.mapas.obtener(partida.map_version)
+        if grafo is None:
+            raise PanelNoDisponible("No está disponible la versión de mapa de la partida.")
+        if self.planificador is None:
+            raise PanelNoDisponible("No está disponible el planificador de rutas.")
+        partida.validar_mapa(grafo.mapa)
+        sobreviviente = next(
+            (item for item in partida.sobrevivientes if item.id == sobreviviente_id),
+            None,
+        )
+        if sobreviviente is None or sobreviviente.estado is not EstadoSobreviviente.ACTIVO:
+            raise EntidadNoEncontrada("El sobreviviente activo no existe en el snapshot consultado.")
+
+        trayecto = ()
+        if partida.modo.value == "simulador" or partida.fase is FaseTurno.DECISIONES:
+            trayecto = self.planificador.prever_ruta_en_snapshot(
+                snapshot, sobreviviente_id, grafo
+            )
+        return {
+            "runId": partida.run_id,
+            "turno": partida.turno,
+            "snapshotVersion": snapshot.version,
+            "sobrevivienteId": sobreviviente_id,
+            "trayecto": list(trayecto),
         }
 
     @staticmethod
