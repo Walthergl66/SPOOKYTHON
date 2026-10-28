@@ -7,7 +7,7 @@ Tareas: P4-07, P5-02
 Pruebas: T-58  
 Cambio: CAM-127  
 Decisión: [ADR-046](../../arquitectura/decisiones/0046-demo-publica-multisesion.md)
-Evidencia: [CAM-126 y CAM-127](../../seguimiento/cambios.md#cam-127-habilitar-los-tres-modos-en-la-demo-pública-y-publicar-la-revisión); suite externa completa pendiente.
+Evidencia: [CAM-126 a CAM-128](../../seguimiento/cambios.md#cam-128-enrutar-juego-en-el-proxy-y-verificar-los-tres-modos-publicos); carga concurrente, revisión visual de Jugar y validación de estado/factura AWS pendientes.
 
 ## Objetivo y alcance
 
@@ -36,4 +36,4 @@ El perfil público se activa solo con `NAVIRA_PUBLIC_DEMO_CONTROL=1`. `NAVIRA_PU
 
 ## Verificación y estado
 
-T-58 valida aislamiento por cookie, inicio de mundos distintos, origen, capacidad, expiración y limpieza; una prueba ASGI del perfil público recorre Juego → Reto para un navegador, Simulador para otro y confirma `runId` distintos. La integración local de Podman con dos clientes y `nginx -t` pasan. La primera instancia de Lightsail responde en HTTPS y se verificaron salud, bootstrap, inicio humano y la carga de la interfaz. Tras reconstruir y publicar el backend con el enrutamiento de Jugar y la selección optimizada de aparición, falta repetir el smoke externo, probar WebSocket y completar revisión visual/carga; AWS no permite consultar el estado de recursos con el perfil CLI actual. No marcar esta SPEC verificada por builds o pruebas locales solamente.
+T-58 valida aislamiento por cookie, inicio de mundos distintos, origen, capacidad, expiración y limpieza; la prueba ASGI y el smoke HTTPS recorren Juego → Reto en un navegador y Simulador en otro, confirman tres `runId` distintos y Origin ajeno 403. `nginx -t`, el health check HTTPS y el estado del panel “En vivo” del navegador pasan. No hubo prueba de carga concurrente ni review visual del mapa dentro de Jugar; tampoco lectura del estado de recursos/costos vía AWS API. No marcar esta SPEC verificada por builds o pruebas locales solamente.

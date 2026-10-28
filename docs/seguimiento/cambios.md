@@ -1,3 +1,15 @@
+## CAM-128 — Enrutar Jugar en el proxy y verificar los tres modos públicos
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el smoke HTTPS de CAM-127 encontró que el Nginx de frontend no reenviaba `/juego/`; el usuario autorizó despliegue público y actualización de la aplicación.
+- Relación: PRD-13, TRD-19, SPEC-011; P4-07/P5-02; ADR-046; CAM-126/127.
+- Resultado: Nginx de frontend reenvía `/juego/` al backend; se desplegó `navira-frontend:public-128` junto al backend `navira-backend:public-127`. La URL [https://3.17.253.59.nip.io](https://3.17.253.59.nip.io) entrega UI por TLS. Smoke HTTPS recorrió Jugar y Reto en una sesión, Simulador en otra; observó tres `runId` diferentes, `Secure`/`HttpOnly` en cookie y rechazo 403 a Origin ajeno. `GET /panel/estado` conservó el run esperado; browser accessibility snapshot mostró selector Reto/Simulador/Jugar, Reto listo y panel “En vivo”. La capacidad se reinició al terminar smoke para liberar cookies de prueba; quedó abierta una sesión limpia de navegador.
+- Archivos: `deploy/lightsail/nginx.conf`, SPEC-011, T-58, infraestructura y este historial.
+- Verificación: build frontend y 99 pruebas pasan; imagen frontend construida con Podman y `nginx -t` pasa; suite backend 245/245; health HTTPS, multisesión/modos, cookie/origen y panel pasan externamente. El intento de publicar otra etiqueta ECR fue denegado (`ecr:GetAuthorizationToken`); se transfirió la imagen por SSH a Lightsail y se ejecutó como contenedor con reinicio automático.
+- Límites: solo se verificó una carga manual con dos sesiones; no es prueba de carga/abuso o SLA. Lightsail es un solo proceso/worker con estado volátil y límite de tres sesiones. `aws lightsail:GetInstance` está denegado a la CLI, así que no se pudo confirmar control-plane ni factura. La URL usa nip.io, no dominio propio.
+- Siguiente paso exacto: revisar visualmente el modo Jugar en la pestaña pública; monitorear el límite de sesiones y cargos; al concluir los tres días, detener/eliminar la instancia y revisar la Static IP.
+- Commit o PR: `0bc8b65`; imágenes runtime construidas desde `3b2efce` (`backend public-127`, `frontend public-128`).
+
 ## CAM-127 — Habilitar los tres modos en la demo pública y publicar la revisión
 
 - Fecha: 2026-10-28, America/Guayaquil.
