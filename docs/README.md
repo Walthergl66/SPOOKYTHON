@@ -114,7 +114,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [SPEC-007](metodo/especificaciones/SPEC-007-panel-operador-local.md) | Criterios del tablero y control local de demo | Cambie el flujo local de operación; no autoriza control administrativo público. |
 | [SPEC-008](metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial y vista 3D | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
 | [SPEC-009](metodo/especificaciones/SPEC-009-modo-reto.md) | Presets de la prueba de fuego, separados de demo libre y juego | Cambien las rondas, sus presets o la campaña de evaluación. |
-| [SPEC-010](metodo/especificaciones/SPEC-010-juego-operador.md) | Paleta de operador e intervención del mapa en un mundo vivo | Cambien herramientas, validaciones o colocación local de entidades/eventos. |
+| [SPEC-010](metodo/especificaciones/SPEC-010-juego-operador.md) | Paleta de operador, nueva partida e intervención del mapa en un mundo vivo | Cambien herramientas, ciclo de partida, validaciones o colocación local de entidades/eventos. |
 | [plantillas/cambio.md](metodo/plantillas/cambio.md) | Formato de cambio | Se necesiten campos nuevos. |
 | [plantillas/decision.md](metodo/plantillas/decision.md) | Formato de ADR | Se necesiten campos nuevos. |
 | [plantillas/transferencia.md](metodo/plantillas/transferencia.md) | Formato de transferencia | Cambie el protocolo de continuidad. |

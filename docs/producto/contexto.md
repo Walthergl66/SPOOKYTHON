@@ -37,6 +37,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 25. Solicitud del usuario (2026-10-27): en Simulador, mostrar inicialmente solo «Iniciar simulación»; después elegir puntos seguros, configurar la cantidad de habitantes y zombies, y dejar la velocidad fija en 4× sin selector.
 26. Solicitud y confirmación del usuario (2026-10-27): organizar la app como tres experiencias —Reto, Simulador y Juego— y redefinir Juego como modo de operador. El mundo debe seguir corriendo mientras el usuario coloca habitantes, tipos de zombies, refugios e incidentes donde indique en el mapa.
 27. Solicitud del usuario (2026-10-27): al empezar un nuevo Juego de operador, mostrar el mapa jugable de Manta vacío de habitantes, zombies, refugios e incidentes para que el usuario coloque las piezas.
+28. Solicitud del usuario (2026-10-27): agregar en Jugar un botón visible para iniciar una nueva partida vacía mientras otra partida de operador está activa o pausada.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 

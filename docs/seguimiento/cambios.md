@@ -2,6 +2,18 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-105 — Iniciar una nueva partida desde Jugar
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: el usuario pidió un botón en Jugar para iniciar una partida nueva.
+- Especificación/requisitos/tarea: SPEC-010 CA-010-07/08; P4-06; T-56. El endpoint local de inicio vacío existente se reutiliza.
+- Rama: `master`; código `d3579a9`, commit documental pendiente.
+- Resultado: el panel del operador mantiene Pausar/Continuar y muestra «Iniciar nueva partida» mientras una partida de Jugar esté activa o pausada. El click sustituye el run por otro `runId` vacío y activo, limpia la herramienta/selección local y conserva excluido el modo Reto. Al no existir run, el inicio inicial también se rotula «Iniciar nueva partida».
+- Archivos: `frontend/src/app/App.tsx`, `frontend/src/features/operator/OperatorControls.tsx`, `backend/tests/test_control_simulador_demo.py`; SPEC-010, módulo frontend, flujo de operador, calidad, contexto, trazabilidad, plan, índices, estado e historial.
+- Verificación: prueba HTTP focal de reemplazo del run y T-54 (2/2), frontend (97/97), `npm run build` correcto; persiste la advertencia conocida del chunk MapLibre >500 kB. En `localhost:5173` se vio el botón junto a «Continuar mundo» en un run operador pausado (turno 337); no se pulsó para conservar ese estado. Los validadores docs/SDD se ejecutan al cierre.
+- Límites: nueva partida reemplaza el mundo actual en memoria sin diálogo de confirmación, según la acción explícita del usuario; no se conserva estado del run anterior. El comportamiento sigue siendo local y requiere control demo habilitado.
+- Siguiente acción: registrar validadores y separar commits de código/documentación. La instancia local actual sigue pausada e intacta; el frontend ya refleja el cambio por Vite/HMR.
+
 ## CAM-104 — Reglas de riesgo y rutas compartidas en Juego
 
 - Fecha: 2026-10-27, Ecuador continental.
@@ -13,7 +25,8 @@ Registro acumulativo. No reemplaza commits; al existir un repositorio operativo,
 - Resultado: las calles/segmentos incidentados y nodos bloqueados siguen siendo filtros duros del planificador compartido. Una horda bloquea nodo y vecinos entrantes/salientes independientemente de cierres. Caminantes y corredores activos elevan en 0.4 la exposición estimada de nodos abiertos a un salto como preferencia blanda; no impide el paso si no hay alternativa y no cambia la regla de mordida por misma casilla/cruce opuesto. La ruta comprometida se invalida si cualquier nodo restante queda bloqueado; simulador y Juego consumen el mismo resolutor.
 - Verificación: `test_decidir_paso.py` (18/18), `test_prediccion_rutas.py` (7/7), `git diff --check`, `python3 backend/scripts/check_docs.py` (133 Markdown), `check_sdd.py` (10 SPEC) y regresiones SDD (8/8) pasan. La suite backend completa corrió 238 pruebas y tuvo un fallo ajeno al cambio: `test_refugios_simulador.RefugiosSimuladorTests.test_reiniciar_con_refugios_validos_usa_el_mapa_personalizado` recibió 422 porque el caso existente reinicia con cero zombies, rechazados por la validación del control de demo. No se midió la latencia de una ronda ni el comportamiento del proceso local con este código aún cargado.
 - Límites: presión de vecindad y factor 0.4 son una preferencia heurística no calibrada, no una probabilidad de mordida ni garantía de ruta óptima/segura. No se cierra T-11, T-22 ni SPEC-002/SPEC-010.
-- Siguiente acción: crear el commit de documentación. Para probar en Juego, cargar el backend nuevo en una sesión local controlada; reiniciar puede perder el estado volátil de la partida actual.
+- Commits: código `b769e48`; documentación `366df6d`.
+- Siguiente acción: cargar el backend actualizado en una sesión local controlada para probar la paridad visual; reiniciar puede perder el estado volátil de la partida actual.
 
 ## CAM-103 — Identificador estable al colocar incidente
 

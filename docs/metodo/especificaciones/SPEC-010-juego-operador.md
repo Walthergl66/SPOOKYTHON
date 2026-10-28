@@ -4,8 +4,8 @@ ID: SPEC-010
 Estado: en-revision  
 Requisitos: PRD-06, PRD-12, TRD-06, TRD-07, TRD-12, TRD-18  
 Tareas: P4-06  
-Pruebas: T-52, T-53, T-54, T-55
-Cambio: CAM-104
+Pruebas: T-52, T-53, T-54, T-55, T-56
+Cambio: CAM-105
 Decisión: [ADR-042](../../arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md)
 Evidencia: validación API y recorrido parcial del modo en [CAM-101](../../seguimiento/cambios.md#cam-101-juego-como-modo-de-operador-interactivo); inicio vacío cubierto por [CAM-102](../../seguimiento/cambios.md#cam-102-juego-inicia-con-el-mapa-vacío); cierre de calle por clic en mapa cubierto por [CAM-103](../../seguimiento/cambios.md#cam-103-identificador-estable-al-colocar-incidente); paridad del planificador con incidentes, hordas y zombies cubierta en [CAM-104](../../seguimiento/cambios.md#cam-104-reglas-de-riesgo-y-rutas-compartidas-en-juego). Faltan otros criterios de T-53.
 
@@ -26,6 +26,7 @@ La API local requiere `NAVIRA_LOCAL_DEMO_CONTROL=1`, conexión loopback y Origin
 | CA-010-05 | Refugio crea mapa versionado nuevo y aparece en el panel; incidente cierra el segmento, alerta como aplicado e invalida las rutas comprometidas para recalcular. | T-52, T-53 |
 | CA-010-06 | Una intervención se serializa con la ronda y confirma una versión de snapshot siguiente por CAS. Error de conflicto se informa y se puede volver a intentar. | T-52 |
 | CA-010-07 | «Nueva partida» inicia con cartografía/calles, cero habitantes, zombies, refugios e incidentes. El reloj sigue disponible en un mundo sin sobrevivientes y el operador puede colocar elementos después del inicio. | T-54 |
+| CA-010-08 | Mientras Jugar tiene un mundo operador activo o pausado, ofrece «Iniciar nueva partida». La acción reemplaza el run por otro vacío, activa el reloj y limpia la selección local; Pausar/Continuar permanecen disponibles para el mundo actual. Reto no se reemplaza desde este control. | T-56 |
 
 ## Modelo y fronteras
 
@@ -40,4 +41,4 @@ Límites iniciales: 200 habitantes, 200 zombies y 8 refugios por mundo local. Se
 
 ## Verificación y estado
 
-T-52 cubre API local, colocación de actores/refugio/cierre, mapa versionado, protección de Reto y objetivo inválido. T-54 prueba inicio vacío, avance del reloj y colocación posterior. En T-53, CAM-103 confirma visualmente selección de calle e incidente aplicado en backend; siguen pendientes el recorrido de todas las herramientas y la comprobación de objetivos inválidos desde UI. CA-010-06 tiene regresión del lock/CAS pendiente más allá de la integración local. Esta SPEC permanece `en-revision` hasta que todos los criterios y límites se prueben; una build sola no la verifica.
+T-52 cubre API local, colocación de actores/refugio/cierre, mapa versionado, protección de Reto y objetivo inválido. T-54 prueba inicio vacío, avance del reloj y colocación posterior. T-56 prueba que la API reemplaza un mundo operador activo por un run vacío nuevo; el smoke visual local confirmó que el botón queda visible al lado de «Continuar mundo» con una partida pausada. No se pulsó para preservar ese mundo. En T-53, CAM-103 confirma visualmente selección de calle e incidente aplicado en backend; siguen pendientes el recorrido de todas las herramientas y la comprobación de objetivos inválidos desde UI. CA-010-06 tiene regresión del lock/CAS pendiente más allá de la integración local. Esta SPEC permanece `en-revision` hasta que todos los criterios y límites se prueben; una build sola no la verifica.

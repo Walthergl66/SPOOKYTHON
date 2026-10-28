@@ -18,6 +18,8 @@ CAM-081 elimina del menú el control de incidentes viales aleatorios y los deja 
 4. Crear `runId` y estado inicial. Las cantidades libres pertenecen al perfil sintético y no alteran los presets de Reto.
 5. Iniciar reloj y habilitar observación. En juego, habilitar la incorporación de un humano.
 
+En Jugar, el botón «Iniciar nueva partida» se mantiene disponible mientras el mundo operador está activo o pausado. Crea un `runId` distinto en el mismo mapa vacío y reemplaza el run anterior; Pausar/Continuar siguen controlando el run que se está observando. No se permite usarlo para sustituir una ronda Reto.
+
 ## Durante la ejecución
 
 - Generar cierres con identificador, turno objetivo y segmento afectado; rechazar solicitudes ambiguas o pasadas.
