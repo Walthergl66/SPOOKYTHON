@@ -2,7 +2,7 @@
 
 Fecha de ejecución: 2026-10-27, Ecuador continental. Evidencia local sobre el fixture OSM de Manta; no representa medición oficial, de supervivencia ni de AWS.
 
-Commit de implementación: `79bc5d6` (`feat(reto): add restart and centralize threats`).
+Commits separados: código `79bc5d6` (`feat(reto): add restart and centralize threats`); documentación `143acc1` (`docs(reto): document restart and urban threat focus`).
 
 ## Comportamiento verificado
 
