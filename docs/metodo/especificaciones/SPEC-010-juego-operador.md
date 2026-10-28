@@ -4,10 +4,10 @@ ID: SPEC-010
 Estado: en-revision  
 Requisitos: PRD-06, PRD-12, TRD-06, TRD-07, TRD-12, TRD-18  
 Tareas: P4-06  
-Pruebas: T-52, T-53, T-54
-Cambio: CAM-103
+Pruebas: T-52, T-53, T-54, T-55
+Cambio: CAM-104
 Decisión: [ADR-042](../../arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md)
-Evidencia: validación API y recorrido parcial del modo en [CAM-101](../../seguimiento/cambios.md#cam-101-juego-como-modo-de-operador-interactivo); inicio vacío cubierto por [CAM-102](../../seguimiento/cambios.md#cam-102-juego-inicia-con-el-mapa-vacío); cierre de calle por clic en mapa cubierto por [CAM-103](../../seguimiento/cambios.md#cam-103-identificador-estable-al-colocar-incidente). Faltan otros criterios de T-53.
+Evidencia: validación API y recorrido parcial del modo en [CAM-101](../../seguimiento/cambios.md#cam-101-juego-como-modo-de-operador-interactivo); inicio vacío cubierto por [CAM-102](../../seguimiento/cambios.md#cam-102-juego-inicia-con-el-mapa-vacío); cierre de calle por clic en mapa cubierto por [CAM-103](../../seguimiento/cambios.md#cam-103-identificador-estable-al-colocar-incidente); paridad del planificador con incidentes, hordas y zombies cubierta en [CAM-104](../../seguimiento/cambios.md#cam-104-reglas-de-riesgo-y-rutas-compartidas-en-juego). Faltan otros criterios de T-53.
 
 ## Objetivo y alcance
 

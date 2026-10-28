@@ -4,9 +4,9 @@ ID: SPEC-002
 Estado: implementada
 Requisitos: PRD-03, PRD-09, PRD-10, TRD-01, TRD-02, TRD-05, TRD-06, TRD-09, TRD-12, TRD-14
 Tareas: P0-01, P0-02, P2-01, P2-02, P2-03, P3-01, P3-02, P3-03
-Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30, T-31, T-32, T-33, T-34, T-35, T-36, T-46
-Cambio: CAM-086
-Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044, CAM-058, CAM-059, CAM-060, CAM-061, CAM-062, CAM-084 y CAM-086 en [cambios](../../seguimiento/cambios.md) y sus reportes locales.
+Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30, T-31, T-32, T-33, T-34, T-35, T-36, T-46, T-55
+Cambio: CAM-104
+Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044, CAM-058, CAM-059, CAM-060, CAM-061, CAM-062, CAM-084, CAM-086 y CAM-104 en [cambios](../../seguimiento/cambios.md) y sus reportes locales.
 
 ## Objetivo y alcance
 
@@ -29,6 +29,7 @@ Dar un siguiente paso válido y oportuno hacia un refugio, priorizando menor exp
 | CA-002-11 | Las rutas de sobrevivientes activos se asignan conjuntamente por snapshot; la exposición prevista precede a congestión y costo, y la ruta mostrada coincide con la acción automática. El resolutor conserva autoridad sobre colisiones y mordidas. | T-35, T-31 |
 | CA-002-12 | La política solo suma exposición en turnos cubiertos por el pronóstico; no repite el último turno conocido como si describiera el futuro restante. | T-36 |
 | CA-002-13 | El compromiso de ruta automática sobrevive snapshots sucesivos y se recorta con movimiento confirmado; solo se reemplaza ante zombie visible dentro del radio configurado, cierre que invalida el trayecto o desviación. No genera ciclos ni desvíos por congestión sola; consultas antiguas no mutan el compromiso vigente. | T-46 |
+| CA-002-14 | Incidentes no aparecen en la ruta; la horda excluye su nodo y todos sus vecinos topológicos incluso junto a calles cerradas; zombies activos bloquean el nodo ocupado y su vecindad añade riesgo blando para elegir una alternativa. Cualquier bloqueo actual sobre un nodo restante invalida el compromiso antes del siguiente paso. Si no hay alternativa, el motor no afirma que esperar o pasar junto a un zombie sea seguro. | T-55 |
 
 ## Plan y módulos
 
@@ -42,4 +43,4 @@ La implementación inicial de P0-01/P0-02 cubre el proceso FastAPI, esquemas, AP
 
 CAM-084 agrega CA-002-13: el snapshot conserva rutas completas automáticas entre turnos y el coordinador guarda el sufijo solo tras resolver el movimiento. Se mantienen hasta amenaza visible dentro del radio topológico configurado, cierre invalidante o desviación; un zombie lejano no fuerza por sí solo el cambio. El radio inicial de tres saltos es provisional. T-46 queda pendiente de automatización/evidencia; esta tarea no verifica cohortes, reducción de mordidas ni cumplimiento integral de la SPEC.
 
-CAM-086 reduce trabajo redundante del pronóstico al agregar zombies con transiciones lineales antes de propagar su masa y cachear el índice inverso de aristas por grafo. Una regresión compara la salida agregada de nodos y cruces con la suma de pronósticos individuales. La SPEC permanece parcial: no se declara alcanzada la cadencia de 500 ms ni se completan T-11/T-22/T-46.
+CAM-086 reduce trabajo redundante del pronóstico al agregar zombies con transiciones lineales antes de propagar su masa y cachear el índice inverso de aristas por grafo. Una regresión compara la salida agregada de nodos y cruces con la suma de pronósticos individuales. CAM-104 endurece la vigencia de rutas frente a cualquier nodo peligroso restante, conserva el perímetro topológico completo de hordas junto a cierres y añade preferencia blanda por alejarse de zombies activos próximos. La SPEC permanece parcial: no se declara alcanzada la cadencia de 500 ms ni se completan T-11/T-22/T-46.

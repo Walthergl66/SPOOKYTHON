@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-104 — Reglas de riesgo y rutas compartidas en Juego
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Origen: solicitud del usuario de unificar las reglas para evitar incidentes, hordas y zombies próximos, tras observar que Juego no respetaba los otros modos.
+- Especificación/tareas: PRD-03/10, TRD-14, ODDD invariant 10, R-06/R-08/R-10, SPEC-002 CA-002-14, SPEC-010; P3-03/P4-06; T-55. ADR-043 registra la política.
+- Rama: `master`; código `b769e48`, commit de documentación pendiente.
+- Motivo: endurecer filtros de peligros actuales sin declarar la proximidad de un zombie como mordida, mantener horda bloqueando su nodo y todos los vecinos topológicos aun junto a cierres, y evitar continuar rutas confirmadas que quedan bloqueadas más adelante.
+- Archivos: `backend/src/navira/application/decidir_paso.py`, `domain/visibilidad.py`, `routing/prediccion.py`, `backend/tests/test_decidir_paso.py`; PRD, TRD, ODDD, reglas, algoritmos, módulo backend, calidad, SPEC-002/010, trazabilidad, plan, ADR-043, índices, estado e historial.
+- Resultado: las calles/segmentos incidentados y nodos bloqueados siguen siendo filtros duros del planificador compartido. Una horda bloquea nodo y vecinos entrantes/salientes independientemente de cierres. Caminantes y corredores activos elevan en 0.4 la exposición estimada de nodos abiertos a un salto como preferencia blanda; no impide el paso si no hay alternativa y no cambia la regla de mordida por misma casilla/cruce opuesto. La ruta comprometida se invalida si cualquier nodo restante queda bloqueado; simulador y Juego consumen el mismo resolutor.
+- Verificación: `test_decidir_paso.py` (18/18), `test_prediccion_rutas.py` (7/7), `git diff --check`, `python3 backend/scripts/check_docs.py` (133 Markdown), `check_sdd.py` (10 SPEC) y regresiones SDD (8/8) pasan. La suite backend completa corrió 238 pruebas y tuvo un fallo ajeno al cambio: `test_refugios_simulador.RefugiosSimuladorTests.test_reiniciar_con_refugios_validos_usa_el_mapa_personalizado` recibió 422 porque el caso existente reinicia con cero zombies, rechazados por la validación del control de demo. No se midió la latencia de una ronda ni el comportamiento del proceso local con este código aún cargado.
+- Límites: presión de vecindad y factor 0.4 son una preferencia heurística no calibrada, no una probabilidad de mordida ni garantía de ruta óptima/segura. No se cierra T-11, T-22 ni SPEC-002/SPEC-010.
+- Siguiente acción: crear el commit de documentación. Para probar en Juego, cargar el backend nuevo en una sesión local controlada; reiniciar puede perder el estado volátil de la partida actual.
+
 ## CAM-103 — Identificador estable al colocar incidente
 
 - Fecha: 2026-10-27, Ecuador continental.

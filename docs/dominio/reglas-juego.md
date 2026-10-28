@@ -11,7 +11,7 @@ Estado: implementación parcial del grafo, movimiento zombie, cierres programado
 | R-03 | Un movimiento de sobreviviente es a un vecino por calle habilitada o a sí mismo | Movimiento inválido equivale a espera; mantener reglas iguales para humano y automático. |
 | R-04 | Caminante: una calle cada dos turnos, dirección aleatoria | Registrar su fase y el estado aleatorio privado. |
 | R-05 | Corredor: dos calles por turno; persigue a un sobreviviente a tres nodos o menos | Contar saltos en el grafo vigente y registrar los dos tramos. |
-| R-06 | Horda bloquea su nodo y todos los vecinos | No reducir el bloqueo al nodo central. Su movimiento exacto está pendiente. |
+| R-06 | Horda bloquea su nodo y todos los vecinos topológicos | El bloqueo no se reduce al nodo central ni desaparece porque un segmento vecino esté cerrado; los vecinos incluyen sentidos entrantes y salientes. Su movimiento exacto está pendiente. |
 | R-07 | Dormido invisible hasta que un sobreviviente está a dos nodos o menos; despierta como caminante | No filtrar sus datos en proyección, predicción ni ayudas de la radio. |
 | R-08 | Eventos eliminan aristas transitables | Invalidar rutas y decisiones basadas en la versión anterior. |
 | R-09 | Mordida por coincidencia de nodo al final del turno | Resolver tras aplicar conjuntamente los movimientos. |
@@ -29,6 +29,7 @@ Estado: implementación parcial del grafo, movimiento zombie, cierres programado
 - Identificar un segmento de calle de forma canónica para detectar cruces aunque tenga dos aristas dirigidas. No confundir segmentos paralelos físicamente distintos.
 - No declarar una mordida en un nodo intermedio solo porque un corredor pasó por él: aplicar R-09 y R-10, salvo aclaración oficial.
 - Mordida conocida no significa movimiento topológicamente inválido. El motor evita ese destino; si el jugador lo elige legalmente, el resolutor aplica la consecuencia. La horda sí restringe transitabilidad.
+- Para rutas automáticas, un nodo ocupado por zombie activo y el perímetro de horda son bloqueos duros. Los nodos a un salto de caminantes/corredores reciben exposición blanda para preferir rodearlos si existe alternativa; no son una regla de mordida ni un bloqueo legal. Los segmentos con incidente permanecen excluidos del trayecto. Si una ruta comprometida contiene cualquier nodo que el snapshot actual bloquea, debe replantearse antes de conservarla.
 - Un sobreviviente mordido no vuelve a decidir ni vuelve a recibir mordidas. Un evacuado deja de participar después de resolver su llegada de manera válida y no puede ser mordido en turnos posteriores (CAM-060/T-34).
 - Un destino marcado como zona segura se interpreta siempre dentro de la amenaza y fuente que lo respalda. En el fixture actual, “Zona Segura” corresponde a los mapas de evacuación por tsunami del GAD Manta; no acredita seguridad ante terremotos ni sustituye alertas oficiales. Ver [fuentes y límites](mapa-manta.md).
 - R-14 es una mecánica del simulador, no una certificación de que el área real alrededor del marcador sea inmune a zombies, tsunami o terremotos. “Una cuadra” se aproxima con una arista topológica en el grafo OSM; la longitud física de las cuadras puede variar. Solo se activa en el mapa Manta; fixtures sintéticos no geográficos mantienen sus reglas.

@@ -54,7 +54,7 @@ El código implementa `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimient
 7. La aleatoriedad pertenece al estado privado versionado de la partida; nunca se consulta desde planificadores o proyecciones.
 8. Repetir una decisión HTTP para la misma instantánea conserva su respuesta, aunque la trayectoria del mundo cambie en turnos posteriores.
 9. Para mapas Manta, el grafo de la partida es una proyección acotada: ninguna intención, aparición o ruta puede referir un nodo exterior; el recorte es inmutable y el mapa fuente permanece separado.
-10. Un compromiso de ruta automática es parte del snapshot versionado y solo avanza con el movimiento confirmado por CAS. El panel no lo modifica; el sistema lo reemplaza por amenaza visible cercana o por invalidez topológica/cierre.
+10. Un compromiso de ruta automática es parte del snapshot versionado y solo avanza con el movimiento confirmado por CAS. El panel no lo modifica; el sistema lo reemplaza por amenaza visible cercana o si cualquier nodo restante queda bloqueado por horda/zombie o pierde transitabilidad por cierre.
 
 ## Casos de uso, repositorios y eventos
 

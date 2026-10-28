@@ -94,6 +94,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-039](arquitectura/decisiones/0039-reinicio-ronda-reto.md) | Reinicio de la ronda Reto actual con mundo nuevo | Cambie el ciclo de vida o el contrato de reinicio Reto. |
 | [ADR-040](arquitectura/decisiones/0040-reemplazo-reto-pausado.md) | Reemplazo de un run Reto pausado por otro preset | Cambie cuándo una partida local puede sustituirse por otro preset Reto. |
 | [ADR-042](arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md) | «Jugar» como modo de operador que interviene un mundo automático vivo | Cambie la experiencia de Jugar o sus límites de intervención local. |
+| [ADR-043](arquitectura/decisiones/0043-filtros-de-riesgo-y-rutas-comprometidas.md) | Filtros compartidos para incidentes, hordas, zombies próximos y rutas comprometidas | Cambie las reglas de transitabilidad o la política de riesgo alrededor de amenazas. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
