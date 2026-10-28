@@ -1,3 +1,15 @@
+## CAM-141 — Recalcular hacia un refugio alternativo si el objetivo queda bloqueado
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de revisar una ruta que pasa junto a una horda y un habitante que queda inmóvil al bloquearse su ruta.
+- Relación: SPEC-002/CA-002-09/14/15, R-06/R-08/R-11/R-12, T-55/T-62/T-63, P3-03, ADR-034/043/051.
+- Hallazgo: el resolutor ya rechazaba el nodo de horda y todos sus vecinos, pero el planificador individual y el de cohortes seguían limitados al refugio asignado. Si ese objetivo quedaba sin ruta legal, devolvían espera aunque otro refugio fuese alcanzable.
+- Cambio: al detectar que el refugio asignado carece de ruta legal bajo los bloqueos y cierres observables, ampliar la búsqueda a todos los refugios alcanzables y elegir el de menor costo. Aplicar el fallback en la búsqueda individual, en la ruta estática y en la planificación agrupada; conservar el compromiso alternativo mientras el destino original siga inaccesible. Si no existe refugio alcanzable, conservar la salida segura/espera vigente de CA-002-09. No relajar la regla de horda ni convertir la preferencia de riesgo alrededor de zombies en bloqueo legal.
+- Archivos: `backend/src/navira/application/decidir_paso.py`, `backend/tests/test_decidir_paso.py`, SPEC-002/CA-002-15, regla de destino alternativo, algoritmo, módulo backend, T-63, ADR-051, trazabilidad, plan, estado e índices.
+- Verificación ejecutada: `tests.test_decidir_paso`, `tests.test_resolver`, `tests.test_panel` y `tests.test_simulacion_automatica` pasan, 66/66, con `/tmp/navira-perf-env`; `compileall`, `check_docs.py` (146 Markdown/148 archivos), `check_sdd.py` (11 SPEC) y `git diff --check` pasan.
+- Límites/pendiente: fixtures pequeños demuestran selección de ruta, no validación visual del mapa de Manta ni reducción estadística de mordidas. SPEC-002 y P3-03 permanecen parciales; el smoke visual en mapa Manta queda pendiente.
+- Commit o PR: pendiente.
+
 ## CAM-140 — Automatizar despliegue Lightsail con OIDC y regla SSH temporal
 
 - Fecha: 2026-10-28, America/Guayaquil.

@@ -4,9 +4,9 @@ ID: SPEC-002
 Estado: implementada
 Requisitos: PRD-03, PRD-09, PRD-10, TRD-01, TRD-02, TRD-05, TRD-06, TRD-09, TRD-12, TRD-14
 Tareas: P0-01, P0-02, P2-01, P2-02, P2-03, P3-01, P3-02, P3-03
-Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30, T-31, T-32, T-33, T-34, T-35, T-36, T-46, T-55, T-62
-Cambio: CAM-137
-Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044, CAM-058, CAM-059, CAM-060, CAM-061, CAM-062, CAM-084, CAM-086, CAM-104, CAM-132, CAM-133 y CAM-137 en [cambios](../../seguimiento/cambios.md) y sus reportes locales. `test_resolver.py` cubre los criterios de mordida enumerados y la regresión de horda con cierres; la verificación integral de esta SPEC sigue pendiente.
+Pruebas: T-03, T-04, T-05, T-07, T-08, T-10, T-11, T-22, T-30, T-31, T-32, T-33, T-34, T-35, T-36, T-46, T-55, T-62, T-63
+Cambio: CAM-141
+Evidencia: parcial; ver CAM-020, CAM-028, CAM-029, CAM-033, CAM-034, CAM-035, CAM-044, CAM-058, CAM-059, CAM-060, CAM-061, CAM-062, CAM-084, CAM-086, CAM-104, CAM-132, CAM-133, CAM-137 y CAM-141 en [cambios](../../seguimiento/cambios.md) y sus reportes locales. `test_resolver.py` cubre los criterios de mordida enumerados y la regresión de horda con cierres; `test_decidir_paso.py` agrega regresiones focalizadas de destino alternativo individual y por cohorte. La verificación integral de esta SPEC sigue pendiente.
 
 ## Objetivo y alcance
 
@@ -30,6 +30,7 @@ Dar un siguiente paso válido y oportuno hacia un refugio, priorizando menor exp
 | CA-002-12 | La política solo suma exposición en turnos cubiertos por el pronóstico; no repite el último turno conocido como si describiera el futuro restante. | T-36 |
 | CA-002-13 | El compromiso de ruta automática sobrevive snapshots sucesivos y se recorta con movimiento confirmado; solo se reemplaza ante zombie visible dentro del radio configurado, cierre que invalida el trayecto o desviación. No genera ciclos ni desvíos por congestión sola; consultas antiguas no mutan el compromiso vigente. | T-46 |
 | CA-002-14 | Incidentes no aparecen en la ruta; la horda excluye su nodo y todos sus vecinos topológicos incluso junto a calles cerradas; el resolutor rechaza una intención hacia esos vecinos aunque el habitante llegue por otra calle. Zombies activos bloquean el nodo ocupado y su vecindad añade riesgo blando para elegir una alternativa. Cualquier bloqueo actual sobre un nodo restante invalida el compromiso antes del siguiente paso. Si no hay alternativa, el motor no afirma que esperar o pasar junto a un zombie sea seguro. | T-55, T-62 |
+| CA-002-15 | Si el refugio asignado queda sin ruta legal por una horda, zombie, incidente o cruce confirmado, recalcular hacia el refugio alcanzable de menor costo. La ruta mostrada y la decisión automática comparten ese destino y nunca atraviesan el nodo ni los vecinos bloqueados de una horda. Si no hay refugio legal alcanzable, se conserva la regla de salida inmediata segura/espera de CA-002-09. | T-63 |
 
 ## Plan y módulos
 

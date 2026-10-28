@@ -230,6 +230,7 @@ class DecidirPaso:
             for survivor in rutas_estaticas:
                 por_refugio.setdefault(survivor.refugio_objetivo, []).append(survivor)
             refugios_por_id = {refugio.id: refugio for refugio in grafo.mapa.refugios}
+            campos_estaticos: dict[str | None, RutasHaciaRefugios] = {}
             for objetivo, grupo in por_refugio.items():
                 nodos_destino = (
                     (refugios_por_id[objetivo].nodo,)
@@ -256,6 +257,16 @@ class DecidirPaso:
                 )
                 for survivor in compatibles:
                     ruta = campo.desde(survivor.nodo)
+                    if ruta is None and objetivo is not None:
+                        campo_alternativo = campos_estaticos.get(None)
+                        if campo_alternativo is None:
+                            campo_alternativo = RutasHaciaRefugios(
+                                grafo, aristas_cerradas=snapshot.aristas_cerradas | cruces,
+                                segmentos_cerrados=snapshot.segmentos_cerrados,
+                                nodos_bloqueados=frozenset(bloqueados), perfil=self._perfil,
+                            )
+                            campos_estaticos[None] = campo_alternativo
+                        ruta = campo_alternativo.desde(survivor.nodo)
                     asignados[survivor.id] = (
                         (ruta.origen, *(calle.destino for calle in ruta.calles))
                         if ruta is not None else (survivor.nodo,)
@@ -315,7 +326,10 @@ class DecidirPaso:
                     segmentos_cerrados=actual.segmentos_cerrados,
                     nodos_bloqueados=actual.nodos_bloqueados, perfil=self._perfil,
                 )
-            return campos[clave].desde(origen)
+            ruta = campos[clave].desde(origen)
+            if ruta is None and objetivo is not None:
+                return ruta_desde(origen, None, paso_actual=paso_actual)
+            return ruta
 
         for survivor in orden:
             candidatos: dict[str, tuple[float, float, tuple[str, ...]]] = {}
@@ -420,10 +434,21 @@ class DecidirPaso:
             refugio is None
             or compromiso.nodos[0] != survivor.nodo
             or compromiso.nodos[-1] != refugio.nodo
-            or (survivor.refugio_objetivo is not None and survivor.refugio_objetivo != refugio.id)
         ):
             return None
         bloqueados, cruces = peligros_visibles(snapshot, grafo)
+        if survivor.refugio_objetivo is not None and survivor.refugio_objetivo != refugio.id:
+            ruta_objetivo = seleccionar_refugio(
+                grafo,
+                survivor.nodo,
+                refugio_objetivo=survivor.refugio_objetivo,
+                aristas_cerradas=snapshot.aristas_cerradas | cruces,
+                segmentos_cerrados=snapshot.segmentos_cerrados,
+                nodos_bloqueados=frozenset(bloqueados),
+                perfil=self._perfil,
+            )
+            if ruta_objetivo is not None:
+                return None
         if set(compromiso.nodos[1:]) & bloqueados:
             return None
         for indice, (origen, destino) in enumerate(zip(compromiso.nodos, compromiso.nodos[1:])):
@@ -479,6 +504,15 @@ class DecidirPaso:
             nodos_bloqueados=frozenset(bloqueados),
             perfil=self._perfil,
         )
+        if ruta is None and survivor.refugio_objetivo is not None:
+            ruta = seleccionar_refugio(
+                grafo,
+                survivor.nodo,
+                aristas_cerradas=snapshot.aristas_cerradas | cruces,
+                segmentos_cerrados=snapshot.segmentos_cerrados,
+                nodos_bloqueados=frozenset(bloqueados),
+                perfil=self._perfil,
+            )
         if ruta is not None:
             return (ruta.origen, *(calle.destino for calle in ruta.calles))
         return (survivor.nodo,)
@@ -533,9 +567,10 @@ class DecidirPaso:
         """Intenta exposición futura observable y conserva Dijkstra como respaldo."""
         nodos_bloqueados, cruces_peligrosos = peligros_visibles(snapshot, grafo)
         aristas_cerradas = snapshot.aristas_cerradas
+        refugio_objetivo = sobreviviente.refugio_objetivo
         refugios = (
-            frozenset({sobreviviente.refugio_objetivo})
-            if sobreviviente.refugio_objetivo is not None
+            frozenset({refugio_objetivo})
+            if refugio_objetivo is not None
             else frozenset(refugio.id for refugio in grafo.mapa.refugios)
         )
         condicion_actual = CondicionTurno(
@@ -572,6 +607,21 @@ class DecidirPaso:
             zombies,
             observables,
         )
+        if refugio_objetivo is not None:
+            ruta_objetivo = seleccionar_refugio(
+                grafo,
+                sobreviviente.nodo,
+                refugio_objetivo=refugio_objetivo,
+                aristas_cerradas=aristas_cerradas | cruces_peligrosos,
+                segmentos_cerrados=snapshot.segmentos_cerrados,
+                nodos_bloqueados=frozenset(nodos_bloqueados),
+                perfil=self._perfil,
+            )
+            if ruta_objetivo is None:
+                # The configured destination has no currently legal route.
+                # Replan to the closest reachable refuge instead of waiting.
+                refugios = frozenset(refugio.id for refugio in grafo.mapa.refugios)
+                refugio_objetivo = None
         temporal = buscar_ruta_temporal(
             grafo,
             sobreviviente.nodo,
@@ -588,7 +638,7 @@ class DecidirPaso:
         ruta = seleccionar_refugio(
             grafo,
             sobreviviente.nodo,
-            refugio_objetivo=sobreviviente.refugio_objetivo,
+            refugio_objetivo=refugio_objetivo,
             aristas_cerradas=aristas_cerradas | cruces_peligrosos,
             segmentos_cerrados=snapshot.segmentos_cerrados,
             nodos_bloqueados=frozenset(nodos_bloqueados),

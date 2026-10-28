@@ -106,6 +106,123 @@ class DecidirPasoTests(unittest.TestCase):
         self.assertEqual(resultado_horda.siguiente_nodo, "N-0001")
         self.assertEqual(resultado_cruce.siguiente_nodo, "N-0001")
 
+    def test_horda_inaccesibiliza_refugio_objetivo_y_recalcula_al_alternativo(self) -> None:
+        grafo = Grafo(Mapa(
+            version="horda-refugio-alternativo-v1",
+            nodos=tuple(Nodo(nodo, 0, indice) for indice, nodo in enumerate(
+                ("ORIGEN", "HORDA", "VECINO_HORDA", "DESVIO", "REFUGIO_1", "REFUGIO_2")
+            )),
+            calles=(
+                Calle("E-OV", "S-OV", "ORIGEN", "VECINO_HORDA", 10, TipoCalle.CALLE, 20),
+                Calle("E-HV", "S-HV", "HORDA", "VECINO_HORDA", 10, TipoCalle.CALLE, 20),
+                Calle("E-VR1", "S-VR1", "VECINO_HORDA", "REFUGIO_1", 10, TipoCalle.CALLE, 20),
+                Calle("E-OD", "S-OD", "ORIGEN", "DESVIO", 15, TipoCalle.CALLE, 20),
+                Calle("E-DR2", "S-DR2", "DESVIO", "REFUGIO_2", 15, TipoCalle.CALLE, 20),
+            ),
+            refugios=(Refugio("R-1", "REFUGIO_1"), Refugio("R-2", "REFUGIO_2")),
+        ))
+        partida = Partida(
+            run_id="run-horda-refugio-alternativo",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(Sobreviviente("S-1", "ORIGEN", refugio_objetivo="R-1"),),
+            zombies=(Zombie("Z-H", TipoZombie.HORDA, "HORDA"),),
+            estado=EstadoPartida.ACTIVA,
+            turno=1,
+            fase=FaseTurno.DECISIONES,
+        )
+        snapshot = SnapshotMundo(partida, version=1)
+        servicio = DecidirPaso(SnapshotStub(snapshot), CatalogoMapasMemoria((grafo,)))
+
+        ruta = servicio.prever_ruta(SolicitudPaso("S-1", "ORIGEN", 1))
+        compromiso = servicio.proponer_compromiso_en_snapshot(snapshot, "S-1", grafo)
+
+        self.assertEqual(ruta, ("ORIGEN", "DESVIO", "REFUGIO_2"))
+        self.assertNotIn("VECINO_HORDA", ruta)
+        self.assertEqual(servicio.ejecutar(SolicitudPaso("S-1", "ORIGEN", 1)).siguiente_nodo, "DESVIO")
+        self.assertIsNotNone(compromiso)
+        self.assertEqual(compromiso.refugio_id, "R-2")
+
+    def test_grupo_replanifica_a_otro_refugio_si_el_objetivo_queda_bloqueado(self) -> None:
+        grafo = Grafo(Mapa(
+            version="grupo-refugio-alternativo-v1",
+            nodos=tuple(Nodo(nodo, 0, indice) for indice, nodo in enumerate(
+                ("ORIGEN_1", "ORIGEN_2", "HORDA", "VECINO_HORDA", "DESVIO", "REFUGIO_1", "REFUGIO_2")
+            )),
+            calles=(
+                Calle("E-1V", "S-1V", "ORIGEN_1", "VECINO_HORDA", 10, TipoCalle.CALLE, 20),
+                Calle("E-2V", "S-2V", "ORIGEN_2", "VECINO_HORDA", 10, TipoCalle.CALLE, 20),
+                Calle("E-HV", "S-HV", "HORDA", "VECINO_HORDA", 10, TipoCalle.CALLE, 20),
+                Calle("E-VR1", "S-VR1", "VECINO_HORDA", "REFUGIO_1", 10, TipoCalle.CALLE, 20),
+                Calle("E-1D", "S-1D", "ORIGEN_1", "DESVIO", 15, TipoCalle.CALLE, 20),
+                Calle("E-2D", "S-2D", "ORIGEN_2", "DESVIO", 15, TipoCalle.CALLE, 20),
+                Calle("E-DR2", "S-DR2", "DESVIO", "REFUGIO_2", 15, TipoCalle.CALLE, 20),
+            ),
+            refugios=(Refugio("R-1", "REFUGIO_1"), Refugio("R-2", "REFUGIO_2")),
+        ))
+        partida = Partida(
+            run_id="run-grupo-refugio-alternativo",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(
+                Sobreviviente("S-1", "ORIGEN_1", refugio_objetivo="R-1"),
+                Sobreviviente("S-2", "ORIGEN_2", refugio_objetivo="R-1"),
+            ),
+            zombies=(Zombie("Z-H", TipoZombie.HORDA, "HORDA"),),
+            estado=EstadoPartida.ACTIVA,
+            turno=1,
+            fase=FaseTurno.DECISIONES,
+        )
+        servicio = DecidirPaso(
+            SnapshotStub(SnapshotMundo(partida, version=1)), CatalogoMapasMemoria((grafo,))
+        )
+
+        rutas = tuple(
+            servicio.prever_ruta(SolicitudPaso(persona.id, persona.nodo, 1))
+            for persona in partida.sobrevivientes
+        )
+
+        self.assertEqual(rutas, (
+            ("ORIGEN_1", "DESVIO", "REFUGIO_2"),
+            ("ORIGEN_2", "DESVIO", "REFUGIO_2"),
+        ))
+
+    def test_incidente_y_zombie_en_ruta_no_dejan_habitante_deteniendo_su_ruta(self) -> None:
+        grafo = Grafo(Mapa(
+            version="incidente-zombie-refugio-alternativo-v1",
+            nodos=tuple(Nodo(nodo, 0, indice) for indice, nodo in enumerate(
+                ("ORIGEN", "PASO_BLOQUEADO", "DESVIO", "PASO_ALTERNATIVO", "REFUGIO_1", "REFUGIO_2")
+            )),
+            calles=(
+                Calle("E-OB", "S-OB", "ORIGEN", "PASO_BLOQUEADO", 10, TipoCalle.CALLE, 20),
+                Calle("E-BR1", "S-BR1", "PASO_BLOQUEADO", "REFUGIO_1", 10, TipoCalle.CALLE, 20),
+                Calle("E-OD", "S-OD", "ORIGEN", "DESVIO", 15, TipoCalle.CALLE, 20),
+                Calle("E-DP", "S-DP", "DESVIO", "PASO_ALTERNATIVO", 15, TipoCalle.CALLE, 20),
+                Calle("E-PR2", "S-PR2", "PASO_ALTERNATIVO", "REFUGIO_2", 10, TipoCalle.CALLE, 20),
+            ),
+            refugios=(Refugio("R-1", "REFUGIO_1"), Refugio("R-2", "REFUGIO_2")),
+        ))
+        partida = Partida(
+            run_id="run-incidente-zombie-refugio-alternativo",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(Sobreviviente("S-1", "ORIGEN", refugio_objetivo="R-1"),),
+            zombies=(Zombie("Z-1", TipoZombie.CAMINANTE, "PASO_BLOQUEADO"),),
+            estado=EstadoPartida.ACTIVA,
+            turno=1,
+            fase=FaseTurno.DECISIONES,
+        )
+        snapshot = SnapshotMundo(partida, version=1, segmentos_cerrados=frozenset({"S-OB"}))
+        servicio = DecidirPaso(SnapshotStub(snapshot), CatalogoMapasMemoria((grafo,)))
+
+        ruta = servicio.prever_ruta(SolicitudPaso("S-1", "ORIGEN", 1))
+
+        self.assertEqual(ruta, ("ORIGEN", "DESVIO", "PASO_ALTERNATIVO", "REFUGIO_2"))
+        self.assertNotEqual(servicio.ejecutar(SolicitudPaso("S-1", "ORIGEN", 1)).siguiente_nodo, "ORIGEN")
+
     def test_horda_conserva_todos_sus_vecinos_aunque_sus_calles_estan_cerradas(self) -> None:
         partida = Partida(
             run_id="run-horda-cierres",
