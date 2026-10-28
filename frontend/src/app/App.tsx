@@ -183,6 +183,12 @@ export function App() {
             <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorIsRunning || simulator?.estado === 'pausada' || simulatorUnavailable}>
               {challengeBusy ? 'Preparando…' : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
             </button>
+            {!challengeBusy && simulator?.rondaReto && simulator.runId && simulatorIsRunning ? <button className="sim-action sim-pause challenge-start" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy || simulatorUnavailable}>
+              Pausar R{simulator.rondaReto}
+            </button> : null}
+            {!challengeBusy && simulator?.rondaReto && simulator.runId && simulator?.estado === 'pausada' ? <button className="sim-action sim-start challenge-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy || simulatorUnavailable}>
+              Continuar R{simulator.rondaReto}
+            </button> : null}
             {!challengeBusy && simulator?.rondaReto && simulator.runId ? <button className="sim-action sim-reset challenge-start" type="button" onClick={() => void restartChallenge()} disabled={simulatorBusy || simulatorUnavailable}>
               {`Reiniciar R${simulator.rondaReto}`}
             </button> : null}

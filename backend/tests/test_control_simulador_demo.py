@@ -15,6 +15,24 @@ LOCAL = ConfiguracionSeguridad(control_demo_local=True)
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
+    def test_reto_se_puede_pausar_y_continuar_sin_perder_la_ronda(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43125)) as client:
+            headers = {"Origin": "http://localhost:5173"}
+            started = client.post("/reto/iniciar", headers=headers, json={"ronda": 2, "semilla": 44})
+            paused = client.post("/demo/simulador/pausar", headers=headers)
+            resumed = client.post("/demo/simulador/reanudar", headers=headers)
+            control.cerrar()
+
+        self.assertEqual(started.status_code, 200, started.text)
+        self.assertEqual(paused.status_code, 200, paused.text)
+        self.assertEqual(paused.json()["estado"], "pausada")
+        self.assertEqual(paused.json()["rondaReto"], 2)
+        self.assertEqual(resumed.status_code, 200, resumed.text)
+        self.assertEqual(resumed.json()["estado"], "activa")
+        self.assertEqual(resumed.json()["rondaReto"], 2)
+
     def test_ruta_reto_reinicia_la_ronda_actual_en_un_run_nuevo(self) -> None:
         control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
