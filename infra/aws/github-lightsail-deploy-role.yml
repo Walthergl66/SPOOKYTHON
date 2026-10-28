@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Short-lived GitHub Actions OIDC role that can open and close only TCP/22
+  on the Navira Lightsail instance. Create the GitHub OIDC provider first.
+
+Parameters:
+  LightsailInstanceArn:
+    Type: String
+    Description: ARN returned by Lightsail GetInstance for navira-public-demo.
+    AllowedPattern: '^arn:aws:lightsail:us-east-2:[0-9]{12}:Instance/[0-9a-fA-F-]{36}$'
+    ConstraintDescription: Must be the ARN of the Navira Lightsail instance in us-east-2.
+
+Resources:
+  NaviraGitHubLightsailDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: >-
+        Allows the master-only GitHub Actions deploy job to open SSH from its
+        own IPv4 /32 and close that exact rule after deployment.
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: repo:Walthergl66/SPOOKYTHON:ref:refs/heads/master
+      Policies:
+        - PolicyName: ManageOnlyNaviraRunnerSshRule
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: ManageSshRuleOnNaviraInstanceOnly
+                Effect: Allow
+                Action:
+                  - lightsail:OpenInstancePublicPorts
+                  - lightsail:CloseInstancePublicPorts
+                Resource: !Ref LightsailInstanceArn
+
+Outputs:
+  GitHubActionsRoleArn:
+    Description: Set as repository Actions variable LIGHTSAIL_DEPLOY_ROLE_ARN.
+    Value: !GetAtt NaviraGitHubLightsailDeployRole.Arn

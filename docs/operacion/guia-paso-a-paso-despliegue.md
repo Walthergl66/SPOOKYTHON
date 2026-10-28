@@ -1,6 +1,6 @@
 # Guía paso a paso para completar Navira
 
-Actualizada: 2026-10-28, CAM-131. CAM-125 completó R1/R2/R3 en Fargate, Ohio; CAM-126..128 publicaron la demo en Lightsail. El release `ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665` se instaló manualmente y `/` y `/salud` responden 200. Actions #50 falló solo al conectar al SSH restringido; P-21 impide CD automático por ahora. Esta guía conserva el trayecto ECS como referencia de evaluación; para el servicio temporal consultar también [infraestructura](infraestructura.md), [ADR-047](../arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) y [estado actual](../seguimiento/estado-actual.md).
+Actualizada: 2026-10-28, CAM-140. CAM-125 completó R1/R2/R3 en Fargate, Ohio; CAM-126..128 publicaron la demo en Lightsail. El release `81212bce74cea102b27a308f0f3bff894af43003` se instaló manualmente y `/` y `/salud` respondieron 200. El workflow se prepara para CD con OIDC y regla SSH temporal `/32`; aún requiere proveedor/rol AWS, la variable `LIGHTSAIL_DEPLOY_ROLE_ARN` y un primer run exitoso. Esta guía conserva el trayecto ECS como referencia de evaluación; para el servicio temporal consultar [infraestructura](infraestructura.md), [ADR-047](../arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md), [ADR-050](../arquitectura/decisiones/0050-despliegue-lightsail-oidc-firewall-temporal.md) y [estado actual](../seguimiento/estado-actual.md).
 
 ## Situación de partida comprobada
 
@@ -69,7 +69,15 @@ Referencias oficiales: [usar AWS Budgets](https://docs.aws.amazon.com/cost-manag
 
 ## Fase 4 — Publicar a staging una sola versión
 
-La demo web temporal ya está publicada en Lightsail; no es el staging privado descrito en la arquitectura objetivo. El run #50 de Actions pasó CI/build, pero agotó el tiempo al conectar por SSH. La revisión `ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665` se desplegó manualmente desde el origen administrativo y `/` y `/salud` responden 200. Para activar CD automático, resolver la conectividad SSH restringida (P-21); no abrir SSH globalmente. En `master`, el workflow construye imágenes desde el SHA, despliega después de CI y verifica endpoints.
+La demo web temporal ya está publicada en Lightsail; no es el staging privado descrito en la arquitectura objetivo. Para habilitar CD automático de forma acotada, completa una sola vez estos pasos:
+
+1. En IAM, crea o reutiliza el proveedor OIDC con URL `https://token.actions.githubusercontent.com` y audiencia `sts.amazonaws.com`.
+2. En Lightsail/CloudShell, obtén el ARN de la instancia con `aws lightsail get-instance --region us-east-2 --instance-name navira-public-demo --query 'instance.arn' --output text`.
+3. En CloudFormation, crea un stack usando [`github-lightsail-deploy-role.yml`](../../infra/aws/github-lightsail-deploy-role.yml) y parámetro `LightsailInstanceArn` igual al ARN anterior. Confirma la creación del rol IAM y copia el output `GitHubActionsRoleArn`.
+4. En GitHub → Settings → Secrets and variables → Actions → Variables, añade `LIGHTSAIL_DEPLOY_ROLE_ARN` con ese ARN. Los secrets `LIGHTSAIL_HOST`, `LIGHTSAIL_USER`, `LIGHTSAIL_SSH_PRIVATE_KEY`, `LIGHTSAIL_KNOWN_HOSTS` y variable `NAVIRA_PUBLIC_URL` ya se configuraron previamente según capturas del usuario; no vuelvas a revelar sus valores.
+5. Ejecuta `Navira CI` mediante `workflow_dispatch` en `master` o haz push de una revisión. Comprueba que backend tests/frontend build pasan; que el job abra SSH desde el `/32` del runner; que el paso de limpieza cierre esa misma regla; y que `/salud` y `/` respondan por HTTPS.
+
+El rol no tiene credenciales AWS persistentes y puede modificar solo las reglas públicas de la instancia Navira. No abrir SSH a `0.0.0.0/0`. Si el runner se interrumpe antes de la limpieza, revisa y cierra manualmente la regla temporal que quede. El primer run aún no se ha verificado.
 
 1. Ejecutar la CI de GitHub sobre el SHA candidato y exigir backend tests + frontend build verdes.
 2. Construir y publicar la imagen con etiqueta inmutable asociada al SHA; desplegar el frontend del mismo SHA. Mantener `desiredCount=1` para el coordinador.

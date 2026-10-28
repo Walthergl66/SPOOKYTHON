@@ -49,6 +49,10 @@ jobs:
     needs: [backend, frontend]
     if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
     concurrency:
       group: navira-lightsail-production
       cancel-in-progress: false
@@ -62,9 +66,10 @@ jobs:
           LIGHTSAIL_SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
           LIGHTSAIL_KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_KNOWN_HOSTS }}
           NAVIRA_PUBLIC_URL: ${{ vars.NAVIRA_PUBLIC_URL }}
+          LIGHTSAIL_DEPLOY_ROLE_ARN: ${{ vars.LIGHTSAIL_DEPLOY_ROLE_ARN }}
         run: |
           set -euo pipefail
-          for name in LIGHTSAIL_HOST LIGHTSAIL_USER LIGHTSAIL_SSH_PRIVATE_KEY LIGHTSAIL_KNOWN_HOSTS NAVIRA_PUBLIC_URL; do
+          for name in LIGHTSAIL_HOST LIGHTSAIL_USER LIGHTSAIL_SSH_PRIVATE_KEY LIGHTSAIL_KNOWN_HOSTS NAVIRA_PUBLIC_URL LIGHTSAIL_DEPLOY_ROLE_ARN; do
             if [[ -z "${!name:-}" ]]; then
               echo "Required GitHub secret/variable is missing: $name" >&2
               exit 1
@@ -87,6 +92,33 @@ jobs:
           docker save "navira-backend:${IMAGE_TAG}" "navira-frontend:${IMAGE_TAG}" \
             | gzip -1 > "/tmp/navira-release-${IMAGE_TAG}.tar.gz"
 
+      - name: Detect this runner's public IPv4
+        id: runner-ip
+        run: |
+          set -euo pipefail
+          runner_ipv4="$(curl --fail --silent --show-error --ipv4 https://api.ipify.org)"
+          python3 -c 'import ipaddress, sys; ipaddress.IPv4Address(sys.argv[1])' "$runner_ipv4"
+          echo "cidr=${runner_ipv4}/32" >> "$GITHUB_OUTPUT"
+
+      - name: Assume restricted Lightsail firewall role
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.LIGHTSAIL_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-2
+          role-session-name: navira-lightsail-${{ github.run_id }}
+
+      - name: Temporarily allow SSH from this runner only
+        id: open-runner-ssh
+        env:
+          RUNNER_CIDR: ${{ steps.runner-ip.outputs.cidr }}
+        run: |
+          set -euo pipefail
+          aws lightsail open-instance-public-ports \
+            --region us-east-2 \
+            --instance-name navira-public-demo \
+            --port-info "fromPort=22,toPort=22,protocol=tcp,cidrs=${RUNNER_CIDR}"
+          echo "opened=true" >> "$GITHUB_OUTPUT"
+
       - name: Install pinned SSH host key
         env:
           LIGHTSAIL_SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
@@ -103,17 +135,41 @@ jobs:
         env:
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          RUNNER_CIDR: ${{ steps.runner-ip.outputs.cidr }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           set -euo pipefail
           target="${LIGHTSAIL_USER}@${LIGHTSAIL_HOST}"
-          ssh_opts=(-i "$HOME/.ssh/navira_lightsail" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          ssh_opts=(-i "$HOME/.ssh/navira_lightsail" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o ConnectTimeout=10)
+          connected=0
+          for attempt in $(seq 1 8); do
+            if ssh "${ssh_opts[@]}" "$target" true; then
+              connected=1
+              break
+            fi
+            sleep 5
+          done
+          if [[ "$connected" -ne 1 ]]; then
+            echo "Could not reach Lightsail over SSH from runner CIDR ${RUNNER_CIDR}." >&2
+            exit 1
+          fi
           scp "${ssh_opts[@]}" \
             "/tmp/navira-release-${IMAGE_TAG}.tar.gz" \
             deploy/lightsail/deploy-release.sh \
             "${target}:/tmp/"
           ssh "${ssh_opts[@]}" "$target" \
             "sudo bash /tmp/deploy-release.sh '${IMAGE_TAG}' '/tmp/navira-release-${IMAGE_TAG}.tar.gz'"
+
+      - name: Close temporary SSH rule
+        if: always() && steps.open-runner-ssh.outcome == 'success'
+        env:
+          RUNNER_CIDR: ${{ steps.runner-ip.outputs.cidr }}
+        run: |
+          set -euo pipefail
+          aws lightsail close-instance-public-ports \
+            --region us-east-2 \
+            --instance-name navira-public-demo \
+            --port-info "fromPort=22,toPort=22,protocol=tcp,cidrs=${RUNNER_CIDR}"
 
       - name: Verify public HTTPS endpoints
         env:

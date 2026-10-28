@@ -1,3 +1,15 @@
+## CAM-140 — Automatizar despliegue Lightsail con OIDC y regla SSH temporal
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de dejar listo el despliegue a través de GitHub Actions.
+- Relación: SPEC-005/CA-005-01/T-23; P0-04/P5-02; ADR-047/050; P-21.
+- Hallazgo: el runner hospedado no podía conectar a SSH restringido al origen administrativo. El repositorio es público, por lo que un runner self-hosted persistente en el host desplegado daría exposición innecesaria a cambios de PR.
+- Cambio: CI/CD asume rol AWS por OIDC, restringido a este repositorio y a `master`. El job obtiene su IPv4, abre temporalmente TCP/22 desde un `/32`, usa la clave SSH y `known_hosts` ya configurados, despliega imágenes por SHA con rollback, valida endpoints HTTPS y cierra la misma regla aun en fallo ordinario. Se agrega plantilla CloudFormation de rol mínimo con permiso solo para abrir/cerrar puertos públicos de la instancia Lightsail de Navira.
+- Archivos: `.github/workflows/ci.yml`, `infra/aws/github-lightsail-deploy-role.yml`; ADR-050 y ADR-047, README/índice ADR, infraestructura, seguridad, guía de despliegue, SPEC-005, plan/pendientes, estado actual.
+- Verificación ejecutada: `python3 backend/scripts/check_docs.py` (145 Markdown/147 archivos), `python3 backend/scripts/check_sdd.py` (11 SPEC), parseo YAML del workflow y template, `bash -n` para cada script `run:` y `git diff --check` pasan. `actionlint` y `cfn-lint` no están instalados en el entorno; no se ejecutaron build/suites porque el cambio solo altera workflow/IaC y documentación. Aún no se creó el proveedor/rol ni se ejecutó un deploy hospedado.
+- Límites/pendiente: la sesión AWS CLI local expiró. P-21 continúa bloqueando la primera ejecución hasta crear/reutilizar proveedor OIDC, aplicar plantilla, guardar output como variable GitHub `LIGHTSAIL_DEPLOY_ROLE_ARN` y ejecutar `workflow_dispatch`. Si el runner es terminado abruptamente, cleanup puede no completar; inspeccionar regla y cerrar manualmente. El CD no debe declararse verificado hasta pasar el primer run.
+- Commit o PR: pendiente tras validar esta configuración.
+
 ## CAM-136 — Detener la partida y volver a la entrada inicial
 
 - Fecha: 2026-10-28, America/Guayaquil.
