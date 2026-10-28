@@ -1,15 +1,15 @@
 # Guía paso a paso para completar Navira
 
-Actualizada: 2026-10-28. Es una guía de ejecución y verificación; no acredita que AWS esté configurado ni autoriza gasto o publicación. El estado vigente se contrasta con [estado actual](../seguimiento/estado-actual.md), [SPEC-005](../metodo/especificaciones/SPEC-005-aws-evaluacion.md), [plan](../seguimiento/plan-implementacion.md), [pendientes](../seguimiento/pendientes.md), [seguridad](seguridad.md) y [costos](costos.md).
+Actualizada: 2026-10-28. CAM-125 aplicó el runner efímero y completó R1/R2/R3 en Fargate, Ohio; **la app pública todavía no está desplegada**. App Runner recibió una denegación por política organizativa. Usar esta guía para el siguiente trayecto permitido y no presentar el runner como URL funcional. El estado vigente se contrasta con [estado actual](../seguimiento/estado-actual.md), [SPEC-005](../metodo/especificaciones/SPEC-005-aws-evaluacion.md), [plan](../seguimiento/plan-implementacion.md), [pendientes](../seguimiento/pendientes.md), [seguridad](seguridad.md) y [costos](costos.md).
 
 ## Situación de partida comprobada
 
 - Las campañas R1/R2/R3 se han repetido tres veces localmente: nueve rondas de cinco minutos y 69.572 solicitudes HTTP exitosas. La evidencia está en [CAM-098](../calidad/resultados/campana-reto-cam098.md) y [CAM-099](../calidad/resultados/repeticiones-reto-cam099.md); todavía no mide RTT, disponibilidad o recursos de AWS.
 - La CI tiene jobs para pruebas backend y build frontend en [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), pero su ejecución remota no está comprobada.
-- CAM-116 añade Dockerfile y smoke local del backend. Aún no existe plantilla de infraestructura ni se ha publicado imagen en ECR. La documentación propone CloudFormation, S3/CloudFront, ALB, ECS Fargate, ECR, DynamoDB y CloudWatch; son diseño, no recursos existentes.
+- CAM-125 mantiene stack de campaña en AWS con ECR, ECS, CloudWatch, roles IAM, security group y task definition. Imagen inmutable por digest; campaña AWS R1/R2/R3 exitosa y escaneo del digest sin hallazgos. El stack no contiene frontend, ALB, servicio web persistente, URL, TLS ni DynamoDB.
 - El control de demo de Simulador/Jugar exige opt-in y conexión loopback. No se debe habilitar `NAVIRA_LOCAL_DEMO_CONTROL=1` detrás de una URL pública. La API key falla cerrada en rutas protegidas cuando no está configurada.
 - Los snapshots, sesiones y coordinación son volátiles y de un proceso. Reiniciar el proceso pierde el mundo; añadir réplicas no es seguro con la coordinación actual.
-- El usuario eligió `us-east-2` (Ohio). CAM-117 confirma por APIs específicas un Budget mensual de US$10 y alertas ACTUAL a 50/80/100 %, con un suscriptor email cada una; según el usuario, falta verificar el correo. La identidad SSO está verificada, pero permisos de creación, dominio, certificados, URL pública y gasto real no. El usuario autorizó continuar preparación con revisión manual de gasto; la estimación para Ohio sigue provisional, no una cotización de la cuenta.
+- El usuario eligió `us-east-2` (Ohio). CAM-117 confirma por APIs específicas un Budget mensual de US$10 y alertas ACTUAL a 50/80/100 %; el correo está `Inactive` y el usuario autorizó monitoreo manual. CAM-125 estima Fargate del runner (~US$0,051 con tarifas indicativas), pero el gasto real, créditos y elegibilidad no se han verificado. La cuenta denegó App Runner; URL pública, dominio y certificados siguen pendientes.
 
 ## Fase 0 — Congelar y verificar el candidato
 
@@ -37,7 +37,7 @@ Actualizada: 2026-10-28. Es una guía de ejecución y verificación; no acredita
 ## Fase 1 — Preparar cuenta, región y presupuesto
 
 1. La región elegida por el usuario es `us-east-2` (Ohio). CAM-117 verificó `Hackathon-Budget` de US$10 mensual y tres alertas (50/80/100 %). CAM-120: el usuario acepta continuar aunque la captura muestre el destinatario email `Inactive`; revisar gasto manualmente y no tratar Budget como límite duro. El panel compartido indica Free Plan con US$120 de crédito y 177 días restantes; verificar en Billing saldo/fecha y elegibilidad de cada recurso. AWS limita servicios/features en Free Plan y el acceso IAM sigue siendo un control separado. La lectura de identidad no concede permisos de creación de recursos.
-2. La ventana prevista por el usuario es de tres días en `us-east-2`. En AWS Pricing Calculator especificar el tiempo real de cada recurso: por ejemplo, Fargate 1 vCPU/2 GB suma 36 horas si corre 12 h/día, o 72 horas si debe permanecer disponible toda la ventana. Estimar por separado ALB, IPv4, S3, CloudFront, ECR, CloudWatch, datos y persistencia; los servicios de red pueden seguir cobrando mientras la tarea está detenida. Configurar alertas de gasto/uso con destinatarios comprobados. La alerta de AWS Budgets puede llegar con retraso y no detiene automáticamente el gasto; mantener vigilancia y una lista explícita de recursos que se crearán.
+2. La ventana prevista por el usuario es de tres días en `us-east-2`. CAM-125 estima solo el cómputo de la tarea (4 vCPU/8 GiB, 924.611 s) en ~US$0,051; no es factura. Antes de ampliar, recalcular ALB, IPv4, S3, CloudFront, ECR, CloudWatch, datos y persistencia. El correo Budget no está activo; el usuario autorizó vigilancia manual y el Budget no detiene automáticamente el gasto.
 3. Autenticación de la nueva experiencia Free/Blank Canvas: no requiere obtener SSO Start URL de IAM Identity Center. CAM-124 confirma `aws login --profile navira --region us-east-2`, identidad consultada sin guardar su salida, y validación CloudFormation. La sesión CLI es temporal. Si una cuenta usa IAM Identity Center tradicional, configurar SSO por separado. No copiar claves a Git, Markdown, JavaScript, comandos guardados, tickets o logs.
 4. Usar `us-east-2` en AWS Pricing Calculator y registrar región, fecha, supuestos y cálculo real en [costos](costos.md); guardar evidencia sin datos sensibles. La tarifa pública del ALB de Ohio fue confirmada en CAM-114; falta la exportación final con las opciones reales de la cuenta.
 
@@ -63,9 +63,9 @@ Referencias oficiales: [usar AWS Budgets](https://docs.aws.amazon.com/cost-manag
 4. Configurar roles IAM separados, Secrets Manager/configuración segura, TLS en navegador y origen, cabeceras de origen y security groups mínimos. Para Fargate, asignar security group a la tarea y restringir su entrada al security group del ALB, conforme a las [recomendaciones de red de ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-network.html). Validar el tramo CDN–origen antes de enviar credenciales.
 5. Configurar health check y `GET /salud`; verificar que rutas API no caigan en fallback HTML de la SPA y que la política de caché no almacene respuestas del estado ni del juego.
 
-**Salida de fase:** imagen arrancable y plantilla revisada en un entorno de pruebas; el diff de infraestructura, permisos y costos queda documentado. No existe hoy un comando de despliegue confirmado.
+**Salida parcial CAM-125:** stack del runner e imagen fueron aplicados y la campaña ejecutada. No se desplegó la app web. App Runner está denegado por política organizativa; cualquier alternativa debe cumplir ADR-045, TLS y acceso restringido.
 
-**Estado parcial CAM-124:** imagen base, digest/lock runtime y plantilla del runner tienen validación local; AWS validó la plantilla y hay un Change Set revisable. Ningún recurso fue creado. El usuario acepta continuar sin correo activo y monitorear manualmente. El plan gratuito restringe servicios/funciones; consultar créditos y disponibilidad de cada recurso antes de ejecutar. Revisar/aprobar el Change Set antes de crear; después quedan la imagen inmutable, definición Fargate y prueba de campaña. TLS/red de staging sigue pendiente.
+**Estado CAM-125:** stack de campaña, imagen Alpine por digest, task definition y campaña completa en Fargate están en AWS; detalles en [reporte](../calidad/resultados/campana-aws-cam125.md). No hay tarea activa. Para publicar la aplicación, elegir un hosting permitido, completar staging privado con TLS/autenticación y hacer una prueba remota; no abrir el control local como workaround de la denegación de App Runner.
 
 ## Fase 4 — Publicar a staging una sola versión
 
@@ -76,7 +76,7 @@ Referencias oficiales: [usar AWS Budgets](https://docs.aws.amazon.com/cost-manag
 5. Ejecutar un smoke Reto corto y un ciclo de pausa/reinicio controlado. Verificar que se usan IDs de run nuevos y que un reinicio no se presenta como continuidad de una partida perdida.
 6. Registrar SHA, digest de imagen, versión del mapa, parámetros, región, URL, fecha, resultados, p95, errores y límites. No copiar claves ni datos privados al reporte.
 
-**Salida de fase:** staging reproducible y T-23 parcial con reporte de humo; no anunciar producción todavía.
+**Salida de fase:** no alcanzada. No existe URL de staging ni se ha ejecutado smoke externo de salud/API/WebSocket; la campaña efímera no sustituye el servicio web.
 
 ## Fase 5 — Ejecutar la evaluación remota completa
 

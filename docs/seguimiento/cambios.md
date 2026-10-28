@@ -1,3 +1,17 @@
+## CAM-125 — Desplegar y ejecutar campaña efímera de evaluación en Ohio
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario autorizó aplicar la infraestructura revisada y completar el despliegue de Navira con urgencia.
+- Relación: SPEC-005, P5-02/P5-03; P-06/P-11/P-19/P-20; ADR-045; CAM-116/CAM-124.
+- Resultado: se ejecutó el Change Set del runner y quedó un stack ECS/ECR/CloudWatch/IAM/security group. La imagen Debian inicial reveló vulnerabilidades altas/medias/bajas en el escaneo; se sustituyó por `python:3.12-alpine3.24` fijada al digest oficial de Alpine 3.24.3, se reconstruyó y el escaneo del digest publicado no mostró hallazgos. La task definition quedó fijada a imagen por digest con 4 vCPU y 8 GiB. Una tarea Fargate completó R1/R2/R3, terminó con exit code 0 y no quedan tareas activas. Las tres ventanas fueron 300.127/300.103/300.159 s; hubo 22.767 respuestas HTTP 200, cero fallos, evacuados 20/65/171 y mordidos 0/2/2. R1 utilizó 142 turnos activos y ocho slots ociosos; R2/R3 usaron 150. Reporte: [campaña AWS CAM-125](../calidad/resultados/campana-aws-cam125.md).
+- Alcance de despliegue: esto despliega el ejecutor efímero de evaluación, no el sitio/app. El intento App Runner fue denegado por política de la organización. No hay frontend público, servicio persistente, ALB, URL, TLS ni almacenamiento durable; conservar la restricción de ADR-045 y no abrir el control local.
+- Archivos: `infra/aws/campaign.yml`, reporte CAM-125, SPEC-005, índice de especificaciones, índice general, infraestructura, costos, guía de despliegue, plan, estado, pendientes e historial.
+- Verificación: CloudFormation `UPDATE_COMPLETE`; los recursos enumerados incluyen ECR, cluster, logs, roles, SG y task definition. Task `STOPPED`, contenedor exit code 0; `list-tasks` confirmó cero tareas ejecutándose. R1/R2/R3 registraron sus ventanas y solicitudes exitosas en CloudWatch. `cfn-lint` no reportó diagnósticos. La suite backend 240/240 y frontend 99/99/build ya habían pasado en esta preparación; smoke local del contenedor Alpine pasó. Checks documentales y `git diff --check` se ejecutan al cierre de esta actualización.
+- Costo: Fargate 4 vCPU/8 GiB por 924.611 s se estima en aproximadamente US$0,051 con las tarifas indicativas de `costos.md`; no es dato de facturación. ECR/logs y otros cargos no están contabilizados. Recursos base permanecen para reuso.
+- Límites: el cliente y ASGI corrieron en loopback dentro de la tarea, así que esta medición no representa latencia de Internet/ALB/CloudFront. La ejecución no atribuye un SHA Git porque el checkout estaba sin commits de despliegue. El presupuesto tiene correo `Inactive`; se sigue con monitoreo manual aceptado por el usuario. No es prueba oficial ni verifica elegibilidad/cobertura de crédito.
+- Siguiente paso exacto: cerrar el trayecto seguro de publicación que sí permita la organización: confirmar un hosting permitido por política, preparar servicio/staging con TLS y acceso restringido, y medir `/paso` desde un cliente externo. La autorización del usuario para desplegar persiste; no crear un endpoint público inseguro para superar la denegación de App Runner.
+- Commit o PR: no creado; cambios locales sin commit.
+
 ## CAM-124 — Autenticar AWS CLI y preparar Change Set de campaña
 
 - Fecha: 2026-10-28, America/Guayaquil.
@@ -8,7 +22,7 @@
 - Archivos: estado actual, pendientes, guía de despliegue, infraestructura e historial.
 - Verificación: AWS CLI 2.37.0; `sts get-caller-identity` exitoso sin divulgar resultado sensible; `cloudformation validate-template` exitoso; Change Set consultado y sus seis acciones revisadas; `list-stack-resources` vacío. No hay medición de costo real ni creación de recursos.
 - Límites: el Change Set solo describe el runner efímero; no publica la app, no crea API/ALB/frontend, no lanza tareas ni resuelve TLS/dominio. Al ejecutarlo sí se crearían los seis recursos descritos; revisar su compatibilidad con las restricciones/cuotas del Free Plan y presupuesto. La sesión temporal de `aws login` vence; no compartir tokens o archivos de credenciales.
-- Siguiente paso: revisar con el usuario el diff de esos seis recursos y el costo/alcance; solo después de aprobación explícita ejecutar este Change Set. Luego construir/publicar una imagen con digest y actualizar la plantilla para registrar la definición Fargate.
+- Siguiente paso (superado por CAM-125): se ejecutó el Change Set autorizado; ver reporte de campaña y bloqueos restantes de publicación.
 - Commit o PR: no creado; evidencia local y AWS documentada, pendiente de revisión.
 
 ## CAM-123 — Usar inicio CLI de la nueva experiencia AWS

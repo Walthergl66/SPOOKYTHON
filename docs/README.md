@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-27. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
+Actualizado: 2026-10-28, CAM-125. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
 
 ## Dónde está cada cosa
 
@@ -174,6 +174,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/reto-nueva-simulacion-pausada-cam097.md](calidad/resultados/reto-nueva-simulacion-pausada-cam097.md) | Evidencia CAM-097: iniciar un preset nuevo desde Reto pausado | Cambie el comportamiento de sustitución o se repita su prueba. |
 | [resultados/campana-reto-cam098.md](calidad/resultados/campana-reto-cam098.md) | Campaña local secuencial R1/R2/R3 con ventana de cinco minutos y medición HTTP loopback; distingue actividad de slots ociosos | Nueva versión del evaluador o campaña; no equivale a AWS ni demuestra 150 turnos activos. |
 | [resultados/repeticiones-reto-cam099.md](calidad/resultados/repeticiones-reto-cam099.md) | Tres campañas locales R1/R2/R3 con semillas distintas; nueve rondas, carga y variación de resultados | Nueva repetición comparable o ejecución AWS; no sustituye prueba oficial. |
+| [resultados/campana-aws-cam125.md](calidad/resultados/campana-aws-cam125.md) | Una campaña completa R1/R2/R3 en ECS Fargate, Ohio; identifica digest, métricas loopback, eventos y límites | Nueva ejecución AWS o cambio de imagen; no acredita endpoint público, ALB ni evaluación oficial. |
 | [resultados/verificacion-sdd.md](calidad/resultados/verificacion-sdd.md) | Evidencia de incorporación metodológica | Conservar resultados de CAM-004; nuevas ejecuciones se registran sin alterar resultados históricos. |
 
 ## operacion/

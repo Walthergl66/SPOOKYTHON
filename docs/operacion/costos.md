@@ -62,12 +62,14 @@ Fuentes: [Fargate](https://aws.amazon.com/fargate/pricing/), [ALB](https://aws.a
 
 ## Evidencias pendientes
 
+CAM-125: la campaña Fargate de 4 vCPU/8 GiB duró 924,611 s entre inicio y fin según el reporte del runner. Con las tarifas indicativas de Fargate usadas en este documento, el cómputo solo se estima en **US$0,051**; no es lectura de factura y no incluye ECR, CloudWatch Logs, transferencia, impuestos ni recursos base retenidos. La tarea se detuvo y `list-tasks` confirmó cero tareas activas. El cluster, ECR, grupo de logs, roles y security group quedan para reuso y no generan una tarifa horaria equivalente a la tarea, aunque ECR/logs pueden almacenar datos. El escaneo y la tarea terminada no prueban el saldo real de créditos. Revisar Cost Explorer/Billing cuando se actualice y antes de ampliar la infraestructura.
+
 | Evidencia | Ubicación prevista | Estado |
 |---|---|---|
 | Budget configurado desde el inicio | Consultas AWS Budgets CAM-115/CAM-117 y captura aportada CAM-120 | `Hackathon-Budget`, US$10 mensual; alertas ACTUAL 50/80/100 %. El usuario acepta monitoreo manual; la captura indica email `Inactive`, sin acciones, y no prueba entrega. AWS Budget alerta, no bloquea gastos. |
 | Plan y créditos disponibles | Captura compartida por el usuario CAM-120; consultar AWS Billing al provisionar | Free Plan, saldo visual US$120, US$0 por pagar, 177 días restantes y fin 2027-04-21. Saldo/servicios elegibles no verificados por API; revisar en el momento de la ejecución. |
 | Cálculo completo mensual | Este archivo o exportación enlazada | Pendiente de dimensionamiento. |
-| Gasto real del evento | Resumen comprobado sin datos sensibles | No verificado. |
+| Gasto real del evento | Cost Explorer/Billing | No verificado; solo existe una estimación del cómputo de campaña en CAM-125. |
 
 Un Budget con alerta no garantiza un tope automático de gasto. Mantener revisión durante pruebas y no retirar recursos antes del pitch sin instrucción correspondiente.
 

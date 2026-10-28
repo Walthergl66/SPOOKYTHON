@@ -1,6 +1,6 @@
 # Infraestructura y operación AWS
 
-Estado: diseño previsto; no hay recursos de aplicación ni URL comprobados. Región elegida: `us-east-2` (Ohio). CAM-117 verificó `Hackathon-Budget` por US$10 mensuales con alertas ACTUAL de 50/80/100 %; CAM-120 muestra email `Inactive` sin acciones. El usuario acepta continuar sin confirmación del email y monitorear manualmente. La captura Free Plan indica US$120 de crédito, pero servicios/funciones y uso elegibles deben comprobarse. CAM-124 autentica el perfil CLI `navira`, valida la plantilla en AWS y deja el Change Set `navira-foundation-review-20261028c` disponible para revisión. Contiene seis recursos propuestos; no se ejecutó y `list-stack-resources` está vacío. No hay stack de aplicación ni recursos creados. Las subredes públicas candidatas se obtuvieron mediante lectura pero sus IDs se omiten. Costos: [costos](costos.md). Accesos: [seguridad](seguridad.md).
+Estado al 2026-10-28 (CAM-125): recursos AWS de evaluación creados en `us-east-2` y una campaña Fargate R1/R2/R3 completada; la tarea terminó con código 0 y no quedan tareas ejecutándose. No existe servicio web, URL pública ni staging conectado a la interfaz. El intento con App Runner fue rechazado por una política de la organización. El correo del Budget aparece `Inactive`; el usuario aceptó supervisión manual. El crédito Free Plan de la captura no demuestra elegibilidad de cargos. Evidencia: [CAM-125](../calidad/resultados/campana-aws-cam125.md). Costos: [costos](costos.md). Accesos: [seguridad](seguridad.md).
 
 ## Recursos iniciales
 
@@ -8,9 +8,9 @@ Estado: diseño previsto; no hay recursos de aplicación ni URL comprobados. Reg
 |---|---|---|
 | AWS Budget con alerta | Visibilidad del gasto desde el inicio | `Hackathon-Budget`, US$10 mensual; tres umbrales y un suscriptor email por alerta comprobados en CAM-117. Verificación/entrega del correo pendiente según el usuario; revisar gasto manualmente. |
 | Plan de cuenta AWS | Créditos y disponibilidad de servicios | Captura aportada en CAM-120: Free Plan, US$120 de saldo mostrado y 177 días restantes. Saldo no auditado por CLI; confirmar disponibilidad de cada recurso/feature y elegibilidad de cargos antes de crear. |
-| Imagen backend | Empaquetado local y smoke de salud | Dockerfile, digest base fijado y lock runtime en CAM-116; build/salud/mapa/usuario no root/SIGTERM pasan con Podman local. No publicada en ECR. |
-| Runner R1/R2/R3 | Ejecutar la campaña efímera en AWS sin listener | Plantilla validada por AWS y Change Set disponible para revisión (CAM-124); no ejecutado. Requiere una VPC existente con subredes públicas. |
-| ECR, ECS, IAM y CloudWatch | Imagen y tarea puntual de campaña | Seis recursos base propuestos en CAM-124 (ECR, cluster ECS, grupo de logs, dos roles y SG); no aplicados. La task definition se condiciona a una imagen con digest y no está en el Change Set. |
+| Imagen backend | Empaquetado y smoke de salud | Publicada en ECR como digest inmutable; smoke local de `/salud`, fixture, no-root y SIGTERM pasa. Escaneo del digest ejecutado sin hallazgos (CAM-125). |
+| Runner R1/R2/R3 | Ejecutar campaña efímera en AWS sin listener | Ejecutado en una tarea Fargate de 4 vCPU/8 GiB; las tres ventanas de 300 s terminaron y la tarea salió 0. Evidencia CAM-125; loopback no es métrica de red pública. |
+| ECR, ECS, IAM y CloudWatch | Imagen y tarea puntual de campaña | Stack aplicado: repositorio ECR, cluster ECS, grupo de logs, dos roles IAM, security group sin entrada y task definition anclada a digest. Un runner terminó; no hay servicio ECS persistente ni tareas activas. |
 | S3 privado + CloudFront | Frontend y entrada HTTPS pública | Pendiente. |
 | ALB | Enrutar API/WebSocket a tarea | Pendiente. |
 | ECS Fargate | API, simulador y proceso de planificación | Pendiente. |
@@ -46,7 +46,7 @@ La campaña completa se ejecutará en una tarea efímera y privada desde el mism
 
 `infra/aws/campaign.yml` declara ECR con tags inmutables, logs con retención configurable, un cluster ECS, rol de ejecución limitado a extraer esa imagen/escribir esos logs y un security group sin entrada y con salida HTTPS. La definición Fargate solo se crea después de proporcionar la URI ECR inmutable `@sha256`; se lanza explícitamente con `aws ecs run-task`, una sola tarea, subred pública y `assignPublicIp=ENABLED`. El stack no crea listener, servicio persistente, NAT ni frontend. `VpcId` y subredes son parámetros de infraestructura existente; comprobar que las subredes tengan ruta al Internet Gateway. La tarea no tiene permiso de aplicación para mutar staging.
 
-`cfn-lint` pasó localmente y CAM-124 verificó `cloudformation:ValidateTemplate` y la creación del Change Set usando la sesión temporal del perfil `navira`. El Change Set está disponible y muestra seis altas, pero todavía no se ha ejecutado; la lista de recursos del stack está vacía. Revisar sus permisos/costos y compatibilidad con el plan antes de ejecutar. Esta validación no demuestra cuotas, rutas a Internet de las subredes, disponibilidad futura, cobros cubiertos por créditos ni éxito de despliegue. El runner no resuelve TLS/red de staging público.
+`cfn-lint` y `cloudformation:ValidateTemplate` pasaron. CAM-125 ejecutó y verificó el stack, publicó la imagen, creó una task definition inmutable y corrió la campaña. El digest y resultados están en el reporte CAM-125. Esta verificación no demuestra cobertura de créditos, factura final, URL pública, TLS, servicio web, API remota ni persistencia. La cuenta denegó App Runner por política organizativa. El runner no resuelve TLS/red de staging.
 
 ## Operación y recuperación
 
