@@ -70,7 +70,7 @@ class RegistroSesionesDemoTests(unittest.TestCase):
                 primero.cookies["navira_demo_session"],
                 segundo.cookies["navira_demo_session"],
             )
-            self.assertIn("HttpOnly", estado_primero.headers["set-cookie"])
+            self.assertIn("HttpOnly", inicio_primero.headers["set-cookie"])
 
             origen_cruzado = primero.post(
                 "/demo/operador/iniciar",
