@@ -47,7 +47,7 @@ Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema invál
 | `GET /demo/simulador` | Proceso local habilitado y loopback | Estado de una demo local. |
 | `POST /demo/simulador/{iniciar,pausar,reanudar,reiniciar}` | Proceso local habilitado, loopback y Origin same-host | Operación de un simulador sintético local; fuera del API público/productivo. |
 | `POST /reto/iniciar` | Proceso local habilitado, loopback y Origin same-host | Inicia un preset de ronda del reto en el motor local; no disponible en API pública. |
-| `POST /reto/iniciar` | Proceso local habilitado, loopback y Origin same-host | Inicia un preset de ronda del reto en el motor local; no disponible en API pública. |
+| `POST /reto/reiniciar` | Proceso local habilitado, loopback y Origin same-host | Reinicia el preset Reto de la partida actual, creando run y mundo aleatorios nuevos; 409 si la partida no pertenece a Reto. No disponible en API pública. |
 
 ### Control de demo local
 
@@ -57,7 +57,11 @@ Esta superficie es solo para demo local. No configurarla detrás de un reverse p
 
 `POST /reto/iniciar` recibe `{ "ronda": 1|2|3, "semilla": entero opcional }`. Define 20 caminantes; 80 caminantes/corredores/hordas sin dormidos; o 200 con todos los tipos, respectivamente. Usa intensidad media provisional y cadencia nominal de 2 s. Ronda 2 escoge un puente etiquetado para turno 50; ronda 3 cierra dos segmentos distintos en turnos 50 y 100; R1 no agrega evento de reto. El enunciado no especifica densidad zombie, proporciones, sitio ni momento exacto: esos valores son supuestos locales. Si existe una partida activa o pausada, responde 409 y no la reemplaza. Las rondas se inician individualmente; no se automatiza aún la secuencia de quince minutos. El endpoint no cambia el contrato obligatorio `POST /paso` ni queda expuesto en modo público.
 
-`POST /reto/iniciar` recibe `{ "ronda": 1|2|3, "semilla": entero opcional }`. Define 20 caminantes; 80 caminantes/corredores/hordas sin dormidos; o 200 con todos los tipos, respectivamente. Usa intensidad media provisional y cadencia nominal de 2 s. Ronda 2 escoge un puente etiquetado para turno 50; ronda 3 cierra dos segmentos distintos en turnos 50 y 100; R1 no agrega evento de reto. El enunciado no especifica densidad zombie, proporciones, sitio ni momento exacto: esos valores son supuestos locales. Las rondas se inician individualmente; no se automatiza aún la secuencia de quince minutos. El endpoint no cambia el contrato obligatorio `POST /paso` ni queda expuesto en modo público.
+`POST /reto/iniciar` recibe `{ "ronda": 1|2|3, "semilla": entero opcional }`. Define 20 caminantes; 80 caminantes/corredores/hordas sin dormidos; o 200 con todos los tipos, respectivamente. Usa intensidad media provisional y cadencia nominal de 2 s. Ronda 2 escoge un puente etiquetado para turno 50; ronda 3 cierra dos segmentos distintos en turnos 50 y 100; R1 no agrega evento de reto. El enunciado no especifica densidad zombie, proporciones, sitio ni momento exacto: esos valores son supuestos locales. Si existe una partida activa o pausada, responde 409 y no la reemplaza. Las rondas se inician individualmente; no se automatiza aún la secuencia de quince minutos. El endpoint no cambia el contrato obligatorio `POST /paso` ni queda expuesto en modo público.
+
+`POST /reto/reiniciar` no recibe cuerpo: exige que el control tenga una ronda Reto previa, recrea su mismo preset con semilla aleatoria nueva e inicia otro `runId`; puede sustituir la ronda Reto en curso o pausada. Si no hay ronda Reto previa responde 409. Comparte protección local de `POST /reto/iniciar` y no cambia el contrato de `/paso`.
+
+En el fixture Manta, Reto concentra una cuota provisional del 80% de cada tipo zombie dentro de 3.500 m de un ancla central aproximada (Parque La Dolorosa/R-03); el remanente se sortea fuera del foco. Los cierres de R2/R3 se eligen de segmentos dentro del foco cuando existen. Conteos, densidad media, radio y proporción son supuestos sintéticos, no parámetros oficiales. Este sesgo no se aplica a demo libre ni a mapas sintéticos.
 
 Las rutas de panel evitan enviar `x-api-key` maestra al navegador. Tienen proyección y límites propios; no son una puerta de entrada al estado real. La CLI administrativa tampoco conserva secretos en argumentos o ejemplos versionados.
 

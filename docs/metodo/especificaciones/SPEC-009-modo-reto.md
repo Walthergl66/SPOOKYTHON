@@ -5,8 +5,8 @@ Estado: en-revision
 Requisitos: PRD-06, PRD-07, TRD-02, TRD-10, TRD-11
 Tareas: P4-05, P5-01, P5-03
 Pruebas: T-11, T-18, T-47
-Cambio: pendiente
-Evidencia: pendiente
+Cambio: CAM-095
+Evidencia: [reporte CAM-095](../../calidad/resultados/reto-foco-reinicio-cam095.md)
 
 ## Objetivo y alcance
 
@@ -14,7 +14,7 @@ Origen: solicitud del usuario de agregar una opción dedicada al reto y conserva
 
 El reto define 20 caminantes en Anochecer; 80 sobrevivientes con caminantes, corredores y hordas y un puente colapsado en Medianoche; 200 sobrevivientes con todos los tipos, incluidos dormidos, y dos calles bloqueadas en Apocalipsis. Cada ronda tiene duración objetivo de cinco minutos. El enunciado no fija cantidad/densidad zombie, composición proporcional, turno exacto de los eventos, ni puente/calles concretas. El flujo adopta densidad media y eventos determinados por semilla como supuestos locales, visibles y sustituibles; no se anuncian como parámetros oficiales. Ver P-09/P-15.
 
-La demo libre conserva sus perfiles, intensidad, refugios y control actuales. El reto se ejecuta como operación separada local; AWS, persistencia durable, reportes oficiales y cumplimiento integral de T-11 siguen fuera de esta especificación hasta verificarlos.
+La demo libre conserva sus perfiles, intensidad, refugios y control actuales. En Reto sobre Manta se aplica un foco urbano provisional para amenazas/eventos y se ofrece reiniciar el preset actual; el reto se ejecuta como operación separada local. AWS, persistencia durable, reportes oficiales y cumplimiento integral de T-11 siguen fuera de esta especificación hasta verificarlos.
 
 ## Criterios de aceptación
 
@@ -26,10 +26,12 @@ La demo libre conserva sus perfiles, intensidad, refugios y control actuales. El
 | CA-009-04 | La operación de reto no cambia los defaults, eventos ni controles del endpoint de demo libre; humano y automáticos conservan el mismo resolutor. | T-47 |
 | CA-009-05 | La UI distingue configuración/reporte de evaluación y advierte que densidad y calendario exacto son provisionales. No afirma que una medición local sea AWS, T-11 completa o evaluación aprobada. | T-47 |
 | CA-009-06 | En el fixture Manta, las personas de cada ronda aparecen solo en las zonas de Tarqui, Los Esteros, Barbasquillo y Jocay; el reparto es equilibrado, usa nodos viales alcanzables por ruta dirigida a un refugio y se reproduce con la semilla. Simulador libre mantiene su muestreo general. Las áreas y el reparto se declaran aproximaciones configurables porque el reto no da polígonos ni cupos por sector. | T-47 |
+| CA-009-07 | Desde una partida Reto existente se puede reiniciar la misma ronda. El servidor crea un `runId` y mundo nuevos, conserva el preset de población y no sustituye una ronda distinta o una partida libre. Si no hay ronda Reto para reiniciar, el endpoint responde 409. | T-47 |
+| CA-009-08 | En las rondas Reto del fixture Manta, al menos la cuota redondeada del 80% de cada tipo de zombie queda dentro de 3.500 m del ancla urbana documentada; los eventos R2/R3 prefieren segmentos en esa zona si hay candidatos. Simulador libre conserva su muestreo global y el conteo/composición provisional no cambian. | T-47 |
 
 ## Plan y módulos
 
-PRD-07 y P5-03 son propietarios del requisito de tres rondas; P5-01 cubre medición. El flujo de interfaz vive en frontend; la preparación de escenarios/eventos y la selección aleatoria de inicios por sector, en aplicación/simulación backend; la API solo adapta solicitudes. La aproximación de sectores está registrada en [ADR-037](../../arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md). El dominio continúa con dos modos según [ADR-002](../../arquitectura/decisiones/0002-dos-modos.md). Contratos de evaluación y límites: [SPEC-005](SPEC-005-aws-evaluacion.md), [reglas](../../dominio/reglas-juego.md) y [pendientes](../../seguimiento/pendientes.md).
+PRD-07 y P5-03 son propietarios del requisito de tres rondas; P5-01 cubre medición. El flujo de interfaz vive en frontend; la preparación de escenarios/eventos y la selección aleatoria de inicios por sector, en aplicación/simulación backend; la API solo adapta solicitudes. La aproximación de sectores está registrada en [ADR-037](../../arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md), la concentración de amenazas en [ADR-038](../../arquitectura/decisiones/0038-foco-amenazas-reto.md) y el reinicio de ronda en [ADR-039](../../arquitectura/decisiones/0039-reinicio-ronda-reto.md). El dominio continúa con dos modos según [ADR-002](../../arquitectura/decisiones/0002-dos-modos.md). Contratos de evaluación y límites: [SPEC-005](SPEC-005-aws-evaluacion.md), [reglas](../../dominio/reglas-juego.md) y [pendientes](../../seguimiento/pendientes.md).
 
 ## Riesgos y verificación
 

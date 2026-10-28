@@ -2,6 +2,18 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-095 — Centrar amenazas del Reto y permitir reiniciar la ronda
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: el usuario reportó que faltaba reinicio en modo Reto y que zombies, hordas e incidentes dejaban vacío el centro del mapa.
+- Especificación: SPEC-009 CA-009-07/08, P4-05 parcial, T-47; ADR-038 fija distribución espacial sintética; ADR-039 fija semántica/contrato de reinicio.
+- Rama: `master`; commit de código `79bc5d6` (`feat(reto): add restart and centralize threats`); documentación se confirma en commit separado.
+- Decisión/resultado: en Manta Reto, muestrear por tipo al menos `round(80% de la cantidad de ese tipo)` dentro de 3.500 m de la referencia central de Parque La Dolorosa/R-03 y ubicar el resto fuera cuando existan nodos. R2/R3 prefieren puentes/calles del mismo foco, con fallback si faltan candidatos. La demo libre conserva exactamente la selección global anterior, sus conteos y generador de cierres. El botón «Reiniciar Rn» llama `POST /reto/reiniciar`; el backend recrea el mismo preset con un run/semilla nuevos y responde 409 si no hay una ronda Reto que reiniciar.
+- Archivos: `backend/src/navira/simulation/escenarios.py`, `backend/src/navira/demo.py`, `backend/src/navira/application/control_simulador_demo.py`, `backend/src/navira/api/routes.py`, pruebas backend, `frontend/src/app/App.tsx`, `frontend/src/application/useSimulator.ts`, cliente/tests frontend; SPEC-009, ADR-038/039, contratos, mapa Manta, modos, pruebas, plan, contexto, pendientes, trazabilidad, índices, reporte y estado.
+- Verificación: pruebas backend focalizadas 5/5 y suite completa 227/227; frontend 95/95 y build correcto con advertencia existente de chunk `mapArea` (1.065,62 kB); compileall; `check_docs.py` (124 Markdown/126 archivos); `check_sdd.py` (9 SPEC); regresiones SDD 8/8; `git diff --check`. En proceso API reiniciado, `/salud` 200 y `POST /reto/reiniciar` 200 manteniendo R2/80 con `runId` nuevo. El árbol de accesibilidad del navegador confirmó «Reiniciar R2» y API disponible; cartografía aún indicaba carga. El `POST /reto/iniciar` previo devolvió el 409 esperado ante una ronda activa.
+- Límites: el centro, radio, cuota del 80%, densidad y proporción zombie son supuestos de presentación y no reglas oficiales o modelo de riesgo. El foco no aumenta el conteo total; redistribuye los zombies existentes. No demuestra menos mordidos, balance oficial, campaña 3×5 min, T-11 ni AWS. P-09/P-15 quedan abiertos.
+- Siguiente paso: confirmar los documentos actualizados en el commit documental separado y revisar estado de rama/servicios.
+
 ## CAM-094 — Iniciar habitantes del Reto en los cuatro sectores establecidos
 
 - Fecha: 2026-10-27, Ecuador continental.

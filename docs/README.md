@@ -90,6 +90,8 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-035](arquitectura/decisiones/0035-flujo-evaluacion-reto.md) | Flujo de evaluación separado de demo libre, sobre el modo automático compartido | CAM-088; presets locales probados, campaña completa y despliegue pendientes. |
 | [ADR-036](arquitectura/decisiones/0036-ruta-individual-bajo-demanda.md) | Consultar bajo demanda la ruta del habitante seleccionado fuera de la fase de decisiones | CAM-093; evitar calcular rutas de toda la población en cada fase. |
 | [ADR-037](arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md) | Muestrear sobrevivientes del Reto en cuatro zonas sectoriales aproximadas y mantener libre el spawn del Simulador | Cambie el origen geográfico inicial del Reto o aparezca una geometría oficial. |
+| [ADR-038](arquitectura/decisiones/0038-foco-amenazas-reto.md) | Concentración provisional de amenazas/eventos del Reto en un núcleo urbano de Manta | Cambie la distribución espacial de amenazas del Reto o se confirme un modelo oficial. |
+| [ADR-039](arquitectura/decisiones/0039-reinicio-ronda-reto.md) | Reinicio de la ronda Reto actual con mundo nuevo | Cambie el ciclo de vida o el contrato de reinicio Reto. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
@@ -161,6 +163,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/coordinacion-rutas-cam061.md](calidad/resultados/coordinacion-rutas-cam061.md) | Comparación exploratoria de la política coordinada contra Dijkstra en tres pares CAM-061 | Cambien la política, muestra o evaluación; no acredita efecto causal separado ni mejora universal. |
 | [resultados/horizonte-riesgo-cam062.md](calidad/resultados/horizonte-riesgo-cam062.md) | Evidencia funcional de puntaje de exposición limitado al horizonte y comparación exploratoria CAM-062 | Cambie el límite del pronóstico o se repita la evaluación; seis pares sintéticos no demuestran efecto causal ni mejora universal. |
 | [resultados/default-media-cam063.md](calidad/resultados/default-media-cam063.md) | Comparación emparejada de intensidad media frente a alta que motiva el default de demo CAM-063 | Cambie generador/configuración o se repita evaluación; muestra de tres semillas y un escenario. |
+| [resultados/reto-foco-reinicio-cam095.md](calidad/resultados/reto-foco-reinicio-cam095.md) | Verificación local de la concentración central por tipo y reinicio del preset Reto | Cambie radio/cuota o ciclo de reinicio; no acredita densidad oficial, T-11 o AWS. |
 | [resultados/verificacion-sdd.md](calidad/resultados/verificacion-sdd.md) | Evidencia de incorporación metodológica | Conservar resultados de CAM-004; nuevas ejecuciones se registran sin alterar resultados históricos. |
 
 ## operacion/

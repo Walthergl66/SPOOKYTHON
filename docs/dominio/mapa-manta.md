@@ -24,6 +24,8 @@ Estos círculos son zonas locales de spawn para la partida, no límites oficiale
 
 Cuatro destinos se transcribieron de las capas “Zonas Seguras” de los mapas de evacuación por tsunami publicados por la Dirección de Ambiente y Riesgos del GAD Manta:
 
+Para Reto, el generador usa como ancla central aproximada el punto OSM del Parque La Dolorosa/R-03 (`-0.9522745219919659, -80.72726572846808`) y un radio de 3.500 m para concentrar amenazas y preferir eventos viales. Esta es una región de juego elegida para que la vista Reto cubra el centro; no es un límite de parroquia, zona de riesgo ni clasificación de seguridad. Cuota, centro y radio son supuestos locales definidos en [ADR-038](../arquitectura/decisiones/0038-foco-amenazas-reto.md), no densidad oficial.
+
 | ID | Lugar | Parroquia | Ajuste a red vial |
 |---|---|---|---:|
 | R-01 | Parque y cancha municipal Cristo Rey | Tarqui | 37,3 m |
