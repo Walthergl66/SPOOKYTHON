@@ -14,14 +14,14 @@ Parameters:
       IP; its security group allows outbound HTTPS only and has no ingress.
   Cpu:
     Type: String
-    Default: '1024'
-    AllowedValues: ['1024']
-    Description: One vCPU; matches the provisional three-day cost model.
+    Default: '4096'
+    AllowedValues: ['1024', '4096']
+    Description: Four vCPUs for the AWS challenge campaign; reduces local-campaign timing lag.
   Memory:
     Type: String
-    Default: '2048'
-    AllowedValues: ['2048']
-    Description: Two GiB; matches the provisional three-day cost model.
+    Default: '8192'
+    AllowedValues: ['2048', '8192']
+    Description: Eight GiB for the AWS challenge campaign.
   LogRetentionDays:
     Type: Number
     Default: 7
