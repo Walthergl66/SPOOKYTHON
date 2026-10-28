@@ -1783,5 +1783,17 @@ Usar [plantilla de cambio](../metodo/plantillas/cambio.md). Cada entrada signifi
 - Revisión solicitada: `81212bc` (`origin/master`); la revisión instalada permanece `ddfa843f81c9cb87732d56b4a1f5b59cf0ee466`.
 - Resultado: el puerto SSH y host key fijado respondieron desde el origen administrativo, pero `ec2-user` rechazó la identidad privada configurada (`Permission denied (publickey,...)`). No se transfirieron imágenes, no se ejecutó `deploy-release.sh` y no se modificaron contenedores, instancia ni firewall. Se preservó el servicio actual.
 - Siguiente paso: instalar/autorizar en Lightsail la clave pública pareja al secreto `LIGHTSAIL_SSH_PRIVATE_KEY` para `ec2-user`, o configurar una identidad SSH válida; probar autenticación y reintentar el script de despliegue documentado. No abrir SSH a todo Internet. El CD hospedado conserva además el bloqueo de origen descrito en P-21.
-- Estado de verificación: despliegue fallido antes de transferir; no afirmar que CAM-136/137 estén publicados en la URL pública.
-- Commit o PR: registro documental del intento; sin commit todavía.
+- Estado de verificación: intento fallido antes de transferir; el siguiente registro CAM-139 documenta el despliegue exitoso.
+- Commit: `16be474` (registro documental local).
+
+## CAM-139 — Despliegue verificado en Lightsail
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: continuación autorizada por el usuario tras instalar la clave pública SSH en la instancia.
+- Release: `81212bce74cea102b27a308f0f3bff894af43003` (código CAM-136/137, procedente de `origin/master`).
+- Procedimiento: autenticación SSH desde el origen administrativo con host key fijado; build local de frontend/backend con Podman; transferencia y ejecución de `deploy/lightsail/deploy-release.sh`.
+- Resultado: ambos contenedores quedaron activos, etiquetados con el SHA indicado. `https://3.17.253.59.nip.io/` y `/salud` respondieron HTTP 200; `/salud` devolvió `{"estado":"activo","servicio":"navira"}`. No se abrió ni modificó el firewall.
+- Incidencias: el primer archivo de imágenes no conservó por separado los tags backend/frontend y falló el health check; el script restauró el release anterior. Se reconstruyó el archivo con un manifiesto multi-imagen verificado y el siguiente despliegue pasó.
+- Límites: smoke de disponibilidad y versión; no equivale a validación visual de modos ni medición pública de latencia/cadencia. GitHub Actions sigue sin alcanzar SSH por la restricción de origen (P-21). El estado del juego reside en memoria y se pierde al reemplazar contenedores.
+- Siguiente paso: mantener P-21 para resolver conectividad restringida del runner; hacer smoke funcional visual y obtener métricas HTTP públicas para cerrar las brechas pendientes.
+- Commit o PR: registro documental posterior al despliegue, por separado.
