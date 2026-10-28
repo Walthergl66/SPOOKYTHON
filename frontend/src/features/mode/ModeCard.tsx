@@ -9,7 +9,7 @@ interface ModeCardProps {
 const details: Record<NaviraMode, { number: string; title: string; subtitle: string; icon: string }> = {
   simulator: { number: 'B', title: 'Simulador', subtitle: 'Observa la ciudad en movimiento', icon: '◉' },
   challenge: { number: 'A', title: 'Reto', subtitle: 'Prueba de fuego del hackathon', icon: '◈' },
-  game: { number: 'C', title: 'Jugar', subtitle: 'Toma el control de un personaje', icon: '↗' },
+  game: { number: 'C', title: 'Jugar', subtitle: 'Opera el mundo en vivo', icon: '↗' },
 }
 
 export function ModeCard({ mode, selected, onSelect }: ModeCardProps) {

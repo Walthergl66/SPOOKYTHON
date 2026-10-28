@@ -20,6 +20,7 @@ from navira.api.schemas import (
     SolicitudIniciarDemoSchema,
     SolicitudVelocidadDemoSchema,
     SolicitudIniciarRetoSchema,
+    SolicitudElementoOperadorSchema,
     RespuestaRutaPanelSchema,
 )
 from navira.api.seguridad import (
@@ -201,6 +202,22 @@ async def reiniciar_demo_simulador(
             refugios=_refugios(solicitud),
         )
     except (OSError, ValueError) as error:
+        raise _error(422, error) from error
+
+
+@router.post("/demo/operador/elementos", tags=["demo local"])
+async def colocar_elemento_operador(
+    solicitud: SolicitudElementoOperadorSchema,
+    request: Request,
+) -> dict[str, object]:
+    """Aplica al snapshot un elemento del modo operador local."""
+    gestor = _control_demo_local(request)
+    exigir_operador_local(request)
+    try:
+        return gestor.colocar_elemento(tipo=solicitud.tipo, nodo=solicitud.nodo, segmento_id=solicitud.segmentoId)
+    except RuntimeError as error:
+        raise _error(409, error) from error
+    except ValueError as error:
         raise _error(422, error) from error
 
 

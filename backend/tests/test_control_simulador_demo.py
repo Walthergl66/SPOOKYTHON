@@ -9,12 +9,61 @@ from fastapi.testclient import TestClient
 
 from navira.api.seguridad import ConfiguracionSeguridad
 from navira.main import crear_app, crear_control_simulador_demo
+from navira.domain.mapa import nodos_protegidos_refugios
 
 RAIZ = Path(__file__).resolve().parents[1]
 LOCAL = ConfiguracionSeguridad(control_demo_local=True)
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
+    def test_operador_coloca_habitante_refugio_e_incidente_en_el_mundo_activo(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        headers = {"Origin": "http://localhost:5173"}
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43127)) as client:
+            started = client.post("/demo/simulador/iniciar", headers=headers, json={"escenario": "mixto", "sobrevivientes": 20, "zombies": 10, "semilla": 37})
+            snapshot = control._snapshot()
+            grafo = control._contexto.mapas.obtener(snapshot.partida.map_version)
+            nodo = next(n.id for n in grafo.mapa.nodos if n.id not in nodos_protegidos_refugios(grafo))
+            refuge_node = next(n.id for n in grafo.mapa.nodos if all(r.nodo != n.id for r in grafo.mapa.refugios))
+            segment = next(c.segmento_id for c in grafo.mapa.calles if c.segmento_id not in snapshot.segmentos_cerrados)
+            horde = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "horda", "nodo": nodo})
+            sleeper = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "dormido", "nodo": nodo})
+            hidden_state = client.get("/panel/estado", headers=headers)
+            person = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "habitante", "nodo": nodo})
+            refuge = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "refugio", "nodo": refuge_node})
+            incident = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "incidente", "segmentoId": segment})
+            invalid_node = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "habitante", "nodo": "fuera-del-mapa"})
+            state = client.get("/panel/estado", headers=headers)
+            map_response = client.get("/panel/mapa", headers=headers)
+            control.cerrar()
+
+        self.assertEqual(started.status_code, 200, started.text)
+        self.assertEqual(horde.status_code, 200, horde.text)
+        self.assertEqual(sleeper.status_code, 200, sleeper.text)
+        self.assertEqual(person.status_code, 200, person.text)
+        self.assertNotIn(sleeper.json()["elementoId"], {z["id"] for z in hidden_state.json()["zombies"]})
+        self.assertEqual(refuge.status_code, 200, refuge.text)
+        self.assertEqual(incident.status_code, 200, incident.text)
+        self.assertEqual(invalid_node.status_code, 422)
+        self.assertEqual(state.status_code, 200, state.text)
+        self.assertEqual(map_response.status_code, 200, map_response.text)
+        self.assertEqual(map_response.json()["version"], state.json()["mapVersion"])
+        self.assertIn(segment, state.json()["segmentosBloqueados"])
+        self.assertGreaterEqual(len(map_response.json()["refugios"]), 5)
+
+    def test_operador_rechaza_ronda_reto_y_ubicaciones_fuera_del_mapa(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        headers = {"Origin": "http://localhost:5173"}
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43128)) as client:
+            reto = client.post("/reto/iniciar", headers=headers, json={"ronda": 1, "semilla": 37})
+            blocked = client.post("/demo/operador/elementos", headers=headers, json={"tipo": "habitante", "nodo": "fuera-del-mapa"})
+            control.cerrar()
+
+        self.assertEqual(reto.status_code, 200, reto.text)
+        self.assertEqual(blocked.status_code, 409)
+
     def test_reto_se_puede_pausar_y_continuar_sin_perder_la_ronda(self) -> None:
         control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         app = crear_app(control_simulador_demo=control, seguridad=LOCAL)

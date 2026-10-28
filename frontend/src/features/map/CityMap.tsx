@@ -5,6 +5,7 @@ import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { PanelMap, PanelState } from '../../domain/panel'
 import type { SimulatorSpeed } from '../../domain/simulator'
+import type { OperatorTool } from '../../domain/operator'
 import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, emptyCollection, indexMapPositions, mergeActiveMovements, movementDurationMs, positionAlongPath } from './mapFeatures'
 import type { AnimatedMovement, FeatureCollection, Position } from './mapFeatures'
 import { boundsWithin, gameBounds, MANTA_CITY_VIEW, outsideBoundsMask, type MapBounds } from './mapArea'
@@ -15,6 +16,8 @@ interface CityMapProps {
   selectedSurvivorId: string | undefined
   onSelectSurvivor: (survivorId: string) => void
   animationSpeed: SimulatorSpeed
+  operatorTool?: OperatorTool | null
+  onOperatorPlacement?: (placement: { tipo: OperatorTool; nodo?: string; segmentoId?: string }) => void
 }
 
 const STYLE_URL = import.meta.env.VITE_NAVIRA_MAP_STYLE || 'https://tiles.openfreemap.org/styles/dark'
@@ -23,7 +26,7 @@ const MAP_CENTER: Position = [-80.714, -0.9895]
 
 setWorkerUrl(mapWorkerUrl)
 
-export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, animationSpeed }: CityMapProps) {
+export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, animationSpeed, operatorTool = null, onOperatorPlacement }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const latestDataRef = useRef<FeatureCollection>(emptyCollection())
@@ -33,14 +36,20 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
   const animationFrameRef = useRef<number | null>(null)
   const activeAnimationsRef = useRef(new Map<string, AnimatedMovement>())
   const latestStateRef = useRef(state)
+  const latestMapRef = useRef(map)
   const animationSpeedRef = useRef(animationSpeed)
   const onSelectSurvivorRef = useRef(onSelectSurvivor)
+  const operatorToolRef = useRef(operatorTool)
+  const onOperatorPlacementRef = useRef(onOperatorPlacement)
   const cadenceRef = useRef<{ runId: string | undefined; turno: number | undefined; startedAt: number | null; observedTurnMs: number | null }>({ runId: state.runId, turno: state.turno, startedAt: null, observedTurnMs: null })
   const seenIncidentsRef = useRef(new Set<string>())
   const [incidentAlert, setIncidentAlert] = useState<{ id: string; turno: number; causa: string } | null>(null)
   latestStateRef.current = state
+  latestMapRef.current = map
   animationSpeedRef.current = animationSpeed
   onSelectSurvivorRef.current = onSelectSurvivor
+  operatorToolRef.current = operatorTool
+  onOperatorPlacementRef.current = onOperatorPlacement
   const [ready, setReady] = useState(false)
   const [is3d, setIs3d] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -104,6 +113,7 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
       highlightWater(instance)
       addMapLayers(instance, latestDataRef.current, latestActorsRef.current, latestStreetsRef.current, areaRef.current)
       const selectSurvivor = (event: MapLayerMouseEvent) => {
+        if (operatorToolRef.current) return
         const survivor = event.features?.find((feature) => feature.properties?.kind === 'survivor')
         const survivorId = survivor?.properties?.actorId
         if (typeof survivorId === 'string') onSelectSurvivorRef.current(survivorId)
@@ -115,6 +125,19 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
         instance.on('mouseenter', layer, setActorCursor)
         instance.on('mouseleave', layer, clearActorCursor)
       }
+      instance.on('click', (event) => {
+        const tool = operatorToolRef.current
+        const place = onOperatorPlacementRef.current
+        if (!tool || !place) return
+        if (tool === 'incidente') {
+          const street = instance.queryRenderedFeatures(event.point, { layers: ['navira-streets'] })[0]
+          const segmentId = street?.id
+          if (typeof segmentId === 'string' || typeof segmentId === 'number') place({ tipo: tool, segmentoId: String(segmentId) })
+          return
+        }
+        const target = nearestNodeAtMapClick(instance, latestMapRef.current, event.lngLat.lng, event.lngLat.lat, event.point.x, event.point.y)
+        if (target) place({ tipo: tool, nodo: target })
+      })
       setReady(true)
       setMapError(null)
     })
@@ -278,6 +301,23 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
       <span className="map-provider-label">Cartografía OSM · representación de simulación</span>
     </div>
   )
+}
+
+/** Encaja el clic a una intersección visible; evita colocar unidades en el océano o entre calles. */
+function nearestNodeAtMapClick(mapInstance: MapLibreMap, map: PanelMap, lng: number, lat: number, x: number, y: number): string | null {
+  let nearest: PanelMap['nodos'][number] | null = null
+  let bestMeters = Number.POSITIVE_INFINITY
+  const metersPerDegree = 111_320
+  const longitudeScale = Math.cos((lat * Math.PI) / 180)
+  const bounds = mapInstance.getBounds()
+  for (const node of map.nodos) {
+    if (!bounds.contains([node.lng, node.lat])) continue
+    const distance = Math.hypot((node.lat - lat) * metersPerDegree, (node.lng - lng) * metersPerDegree * longitudeScale)
+    if (distance < bestMeters) { bestMeters = distance; nearest = node }
+  }
+  if (!nearest) return null
+  const projected = mapInstance.project([nearest.lng, nearest.lat])
+  return Math.hypot(projected.x - x, projected.y - y) <= 24 ? nearest.id : null
 }
 
 /** Frames the fixed urban viewport and prevents zooming out beyond its extent. */

@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class SolicitudPasoSchema(BaseModel):
@@ -119,6 +119,25 @@ class SolicitudIniciarRetoSchema(BaseModel):
 
     ronda: Literal[1, 2, 3]
     semilla: int | None = Field(default=None, ge=0)
+
+
+class SolicitudElementoOperadorSchema(BaseModel):
+    """Intervención validada en el mapa durante una demo automática local."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tipo: Literal["habitante", "caminante", "corredor", "horda", "dormido", "refugio", "incidente"]
+    nodo: str | None = Field(default=None, min_length=1, max_length=128)
+    segmentoId: str | None = Field(default=None, min_length=1, max_length=256)
+
+    @model_validator(mode="after")
+    def validar_objetivo(self):
+        if self.tipo == "incidente":
+            if self.segmentoId is None or self.nodo is not None:
+                raise ValueError("Un incidente requiere segmentoId y no acepta nodo.")
+        elif self.nodo is None or self.segmentoId is not None:
+            raise ValueError("Esta herramienta requiere nodo y no acepta segmentoId.")
+        return self
 
 
 class NodoPanelSchema(BaseModel):

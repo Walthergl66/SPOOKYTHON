@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from threading import RLock
+
 from navira.application.decidir_paso import DecidirPaso, ProveedorMapas, SolicitudPaso
 from navira.application.snapshots import (
     RepositorioSnapshots,
@@ -41,14 +43,23 @@ class EjecutarRondaAutomatica:
         *,
         reglas: ConfiguracionReglas = ConfiguracionReglas(),
         decidir: DecidirPaso | None = None,
+        bloqueo_operador: RLock | None = None,
     ) -> None:
         self._snapshots = snapshots
         self._mapas = mapas
         self._reglas = reglas
         self._decidir = decidir or DecidirPaso(snapshots, mapas)
+        self._bloqueo_operador = bloqueo_operador or RLock()
 
     def ejecutar(self, run_id: str, *, version_esperada: int) -> ResultadoTurno:
         """Prepara si hace falta, decide para cada sobreviviente y resuelve."""
+
+        # El operador escribe sobre el mismo snapshot; serializar la ronda
+        # completa evita que una colocación válida invalide el CAS del reloj.
+        with self._bloqueo_operador:
+            return self._ejecutar_bajo_bloqueo(run_id, version_esperada=version_esperada)
+
+    def _ejecutar_bajo_bloqueo(self, run_id: str, *, version_esperada: int) -> ResultadoTurno:
 
         snapshot = self._snapshots.obtener(run_id)
         if snapshot is None:

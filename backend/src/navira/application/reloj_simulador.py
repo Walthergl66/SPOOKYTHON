@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import math
-from threading import Event, Thread
+from threading import Event, RLock, Thread
 from time import monotonic
 
 from navira.application.simulacion_automatica import EjecutarRondaAutomatica
@@ -40,6 +40,7 @@ class RelojSimuladorLocal:
         *,
         periodo_s: float = 2.0,
         velocidad: float = 4.0,
+        bloqueo_estado: RLock | None = None,
     ) -> None:
         if not math.isfinite(periodo_s) or periodo_s <= 0:
             raise ValueError("El período del reloj debe ser positivo y finito.")
@@ -48,6 +49,7 @@ class RelojSimuladorLocal:
         self._ejecutar_ronda = ejecutar_ronda
         self._periodo_s = periodo_s
         self._velocidad = validar_velocidad(velocidad)
+        self._bloqueo_estado = bloqueo_estado or RLock()
         self._detener = Event()
         self._pausado = Event()
         self._hilo: Thread | None = None
@@ -112,20 +114,23 @@ class RelojSimuladorLocal:
                 return
             if self._pausado.is_set():
                 continue
-            snapshot = self._snapshots.obtener(self._run_id)
-            if snapshot is None or snapshot.partida.estado is not EstadoPartida.ACTIVA:
-                return
-            if not any(
-                item.estado is EstadoSobreviviente.ACTIVO
-                for item in snapshot.partida.sobrevivientes
-            ):
-                return
             inicio_ronda = monotonic()
             try:
-                self._ejecutar_ronda.ejecutar(
-                    self._run_id,
-                    version_esperada=snapshot.version,
-                )
+                # El snapshot y su versión se leen junto con el mismo lock que
+                # usa el operador, evitando que un alta entre lectura y CAS.
+                with self._bloqueo_estado:
+                    snapshot = self._snapshots.obtener(self._run_id)
+                    if snapshot is None or snapshot.partida.estado is not EstadoPartida.ACTIVA:
+                        return
+                    if not any(
+                        item.estado is EstadoSobreviviente.ACTIVO
+                        for item in snapshot.partida.sobrevivientes
+                    ):
+                        return
+                    self._ejecutar_ronda.ejecutar(
+                        self._run_id,
+                        version_esperada=snapshot.version,
+                    )
             except Exception as error:
                 self._error = str(error)
                 _LOG.exception("Se detuvo el simulador local para run %s", self._run_id)

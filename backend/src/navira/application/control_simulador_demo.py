@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 from threading import RLock
+from dataclasses import replace
 from typing import Literal, Protocol
+import uuid
 
 from navira.application.consultar_panel import ConsultarPanel
 from navira.application.decidir_paso import DecidirPaso, ProveedorMapas
 from navira.application.reloj_simulador import RelojSimuladorLocal, validar_velocidad
 from navira.application.simulacion_automatica import EjecutarRondaAutomatica
 from navira.application.snapshots import RepositorioSnapshots
-from navira.domain.mapa import Mapa, Refugio
+from navira.domain.mapa import Grafo, Mapa, Refugio, nodos_protegidos_refugios
+from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, ModoPartida, Sobreviviente, TipoZombie, Zombie
+from navira.domain.snapshot import EventoCierre, SnapshotMundo
 
 
 class ContextoSimulacion(Protocol):
@@ -90,7 +94,7 @@ class ControlSimuladorDemoLocal:
                 "turno": snapshot.partida.turno if snapshot is not None else None,
                 "escenario": self._configuracion.get("escenario"),
                 "sobrevivientesIniciales": self._configuracion.get("cantidad_sobrevivientes"),
-                "zombiesIniciales": len(snapshot.partida.zombies) if snapshot is not None else None,
+                "zombiesIniciales": self._configuracion.get("cantidad_zombies"),
                 "intensidad": self._configuracion.get("intensidad"),
                 "eventosCiudad": self._configuracion.get("eventos_ciudad"),
                 "rondaReto": self._configuracion.get("ronda_reto"),
@@ -127,6 +131,7 @@ class ControlSimuladorDemoLocal:
                 contexto.snapshots,
                 contexto.mapas,
                 decidir=contexto.servicio_decision,
+                bloqueo_operador=self._lock,
             )
             # El flujo del reto usa la cadencia nominal; la preferencia de velocidad
             # de la demo libre se conserva y no se modifica.
@@ -135,6 +140,7 @@ class ControlSimuladorDemoLocal:
                 contexto.snapshots,
                 ejecutar,
                 velocidad=1.0 if ronda_reto is not None else self._velocidad,
+                bloqueo_estado=self._lock,
             )
             self._contexto = contexto
             self._reloj = reloj
@@ -146,7 +152,7 @@ class ControlSimuladorDemoLocal:
             self._configuracion = {
                 "escenario": escenario,
                 "cantidad_sobrevivientes": cantidad_sobrevivientes,
-                "cantidad_zombies": cantidad_zombies,
+                "cantidad_zombies": len(contexto.snapshots.obtener(contexto.run_id).partida.zombies),
                 "intensidad": intensidad,
                 "eventos_ciudad": ronda_reto is None,
                 "ronda_reto": ronda_reto,
@@ -154,6 +160,91 @@ class ControlSimuladorDemoLocal:
             self._estado = "activa"
             reloj.iniciar()
             return self.estado()
+
+    def colocar_elemento(self, *, tipo: str, nodo: str | None = None, segmento_id: str | None = None) -> dict[str, object]:
+        """Aplica una intervención de operador al mundo activo mediante CAS.
+
+        La posición solo se acepta si pertenece al mapa versionado actual. Los
+        incidentes cierran el segmento de inmediato y las altas invalidan las
+        rutas comprometidas para que la próxima resolución recalcule el plan.
+        """
+        with self._lock:
+            if self._contexto is None or self._reloj is None or not self._reloj.ejecutandose:
+                raise RuntimeError("Inicia o continúa un mundo en ejecución antes de colocar elementos.")
+            if self._configuracion.get("ronda_reto") is not None:
+                raise RuntimeError("El modo operador no puede modificar una ronda del Reto.")
+            snapshot = self._contexto.snapshots.obtener(self._contexto.run_id)
+            if snapshot is None or snapshot.partida.estado is not EstadoPartida.ACTIVA:
+                raise RuntimeError("No hay un mundo automático activo para modificar.")
+            partida = snapshot.partida
+            grafo = self._contexto.mapas.obtener(partida.map_version)
+            if grafo is None:
+                raise RuntimeError("No está disponible el mapa de la partida.")
+
+            partida_siguiente = partida
+            snapshot_siguiente = snapshot
+            elemento_id = f"OP-{uuid.uuid4().hex[:12]}"
+            if tipo == "incidente":
+                if not segmento_id:
+                    raise ValueError("Selecciona una calle del mapa para colocar un incidente.")
+                segmentos = {calle.segmento_id for calle in grafo.mapa.calles}
+                if segmento_id not in segmentos:
+                    raise ValueError("La calle seleccionada no pertenece al mapa de la partida.")
+                if segmento_id in snapshot.segmentos_cerrados:
+                    raise ValueError("Esa calle ya está cerrada.")
+                evento = EventoCierre(elemento_id, partida.turno, segmentos=frozenset({segmento_id}), causa="Incidente vial del operador")
+                snapshot_siguiente = replace(
+                    snapshot,
+                    version=snapshot.version + 1,
+                    segmentos_cerrados=snapshot.segmentos_cerrados | {segmento_id},
+                    eventos_programados=(*snapshot.eventos_programados, evento),
+                    eventos_aplicados=(*snapshot.eventos_aplicados, evento.id),
+                    rutas_comprometidas=(),
+                )
+            else:
+                if not nodo or nodo not in grafo.mapa.nodos_por_id:
+                    raise ValueError("Selecciona una intersección válida del mapa.")
+                if tipo == "habitante":
+                    if len(partida.sobrevivientes) >= 200:
+                        raise ValueError("El mundo alcanzó el límite local de 200 habitantes.")
+                    persona = Sobreviviente(elemento_id, nodo)
+                    partida_siguiente = replace(partida, sobrevivientes=(*partida.sobrevivientes, persona))
+                elif tipo in {item.value for item in TipoZombie}:
+                    if len(partida.zombies) >= 200:
+                        raise ValueError("El mundo alcanzó el límite local de 200 zombies.")
+                    protegido = nodos_protegidos_refugios(grafo)
+                    if nodo in protegido:
+                        raise ValueError("No se pueden colocar zombies en un refugio ni en su cuadra vecina.")
+                    zombie_tipo = TipoZombie(tipo)
+                    zombie = Zombie(
+                        elemento_id,
+                        zombie_tipo,
+                        nodo,
+                        estado=EstadoZombie.DORMIDO if zombie_tipo is TipoZombie.DORMIDO else EstadoZombie.ACTIVO,
+                        turno_activacion=partida.turno + 5 if zombie_tipo is TipoZombie.DORMIDO else None,
+                    )
+                    partida_siguiente = replace(partida, zombies=(*partida.zombies, zombie))
+                elif tipo == "refugio":
+                    if any(refugio.nodo == nodo for refugio in grafo.mapa.refugios):
+                        raise ValueError("Ya existe un refugio en esa intersección.")
+                    if len(grafo.mapa.refugios) >= 8:
+                        raise ValueError("El mundo alcanzó el límite local de 8 refugios.")
+                    refugio = Refugio(elemento_id, nodo)
+                    mapa_nuevo = replace(grafo.mapa, version=f"{grafo.mapa.version}-op-{elemento_id.lower()}", refugios=(*grafo.mapa.refugios, refugio))
+                    grafo_nuevo = Grafo(mapa_nuevo)
+                    registrar = getattr(self._contexto.mapas, "registrar", None)
+                    if registrar is None:
+                        raise RuntimeError("El catálogo de mapas no admite refugios dinámicos.")
+                    registrar(grafo_nuevo)
+                    partida_siguiente = replace(partida, map_version=mapa_nuevo.version)
+                else:
+                    raise ValueError("Herramienta de operador no reconocida.")
+                snapshot_siguiente = replace(snapshot, partida=partida_siguiente, version=snapshot.version + 1, rutas_comprometidas=())
+
+            if not self._contexto.snapshots.guardar_si_version(partida.run_id, snapshot.version, snapshot_siguiente):
+                raise RuntimeError("El mundo avanzó mientras colocabas el elemento. Vuelve a seleccionarlo.")
+            self._panel = ConsultarPanel(self._contexto.snapshots, self._contexto.mapas, self._contexto.servicio_decision)
+            return {"aceptado": True, "elementoId": elemento_id, "tipo": tipo, "runId": partida.run_id, "snapshotVersion": snapshot_siguiente.version}
 
     def iniciar_ronda_reto(self, ronda: int, semilla: int | None = None) -> dict[str, object]:
         """Inicia un preset Reto; solo reemplaza otra ronda Reto si está pausada."""

@@ -1,14 +1,14 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { GameControls } from '../features/game/GameControls'
+import { OperatorControls } from '../features/operator/OperatorControls'
+import type { OperatorTool } from '../domain/operator'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { RefugeDialog } from '../features/map/RefugeDialog'
 import type { PanelConnection, PanelRoute } from '../domain/panel'
 import type { SimulatorSetup } from '../domain/simulator'
-import type { GamePort, PanelPort, SimulatorPort } from '../application/ports'
+import type { PanelPort, SimulatorPort } from '../application/ports'
 import { usePanel } from '../application/usePanel'
 import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
-import { useGameSession } from '../application/useGameSession'
-import { joinGame, restoreGameSession, sendGameOrder } from '../infrastructure/http/game'
+import { placeOperatorElement } from '../infrastructure/http/operator'
 import { loadPanelMap, loadPanelRoute, loadPanelSnapshot } from '../infrastructure/http/panel'
 import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, restartChallengeRound, setSimulatorSpeed, startChallengeRound } from '../infrastructure/http/simulator'
 import { subscribePanel } from '../infrastructure/realtime/panel'
@@ -18,7 +18,6 @@ import { BrandMark } from '../shared/ui/BrandMark'
 // Puertos de módulo: identidad estable entre renders, que los efectos de los hooks usan como dependencia.
 const panelPort: PanelPort = { loadSnapshot: loadPanelSnapshot, loadMap: loadPanelMap, loadRoute: loadPanelRoute, subscribe: subscribePanel }
 const simulatorPort: SimulatorPort = { getStatus: getSimulatorStatus, getCandidates: getSimulatorCandidates, control: controlSimulator, setSpeed: setSimulatorSpeed }
-const gamePort: GamePort = { join: joinGame, restore: restoreGameSession, sendOrder: sendGameOrder }
 
 const RefugePicker = lazy(() => import('../features/map/RefugePicker').then(({ RefugePicker: Component }) => ({ default: Component })))
 const CityMap = lazy(() => import('../features/map/CityMap').then(({ CityMap: Component }) => ({ default: Component })))
@@ -33,6 +32,10 @@ export function App() {
   const [challengeRound, setChallengeRound] = useState<1 | 2 | 3>(1)
   const [challengeBusy, setChallengeBusy] = useState(false)
   const [challengeError, setChallengeError] = useState<string | null>(null)
+  const [operatorTool, setOperatorTool] = useState<OperatorTool>('habitante')
+  const [operatorBusy, setOperatorBusy] = useState(false)
+  const [operatorError, setOperatorError] = useState<string | null>(null)
+  const [operatorNotice, setOperatorNotice] = useState<string | null>(null)
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
@@ -41,8 +44,6 @@ export function App() {
   useEffect(() => {
     if (simulator?.rondaReto) setChallengeRound(simulator.rondaReto)
   }, [simulator?.rondaReto])
-
-  const game = useGameSession(gamePort, { modeSelected: mode === 'game', state: snapshot?.state ?? null, map: snapshot?.map ?? null, onJoined: setSelectedSurvivorId })
 
   const [refugeDialogOpen, setRefugeDialogOpen] = useState(false)
   const [setupStage, setSetupStage] = useState<'refuges' | 'population'>('refuges')
@@ -138,6 +139,22 @@ export function App() {
       setChallengeBusy(false)
     }
   }
+  const placeOperatorItem = async (placement: { tipo: OperatorTool; nodo?: string; segmentoId?: string }) => {
+    setOperatorBusy(true)
+    setOperatorError(null)
+    setOperatorNotice(null)
+    try {
+      const id = await placeOperatorElement(placement)
+      setOperatorNotice(`${placement.tipo} agregado · ${id}`)
+      await refreshPanel()
+    } catch (error) {
+      setOperatorError(error instanceof Error ? error.message : 'No se pudo colocar el elemento.')
+    } finally {
+      setOperatorBusy(false)
+    }
+  }
+  const operatorRunBlocked = simulatorUnavailable || simulator?.rondaReto != null
+  const startOperatorWorld = () => void runControl('iniciar', { ...setup, zombies: setup.zombies ?? 42 })
 
   return (
     <main className="app-shell dashboard-shell">
@@ -154,10 +171,22 @@ export function App() {
 
       <section className="dashboard-grid" id="main-content" tabIndex={-1} aria-label="Panel de Navira">
         <aside className="sim-control-panel" aria-labelledby="simulation-control-title">
-          <div className="panel-section-heading"><span className="panel-overline">OPERACIÓN LOCAL</span><h1 id="simulation-control-title">Control de simulación</h1></div>
+          <div className="panel-section-heading"><span className="panel-overline">OPERACIÓN LOCAL</span><h1 id="simulation-control-title">{mode === 'game' ? 'Panel del operador' : 'Control de simulación'}</h1></div>
           <div className="control-status" role="status"><span className={`context-pulse${simulatorIsRunning ? '' : ' is-idle'}`} aria-hidden="true" /><span>{simulator?.estado === 'activa' ? 'En curso' : simulator?.estado === 'pausada' ? 'Pausada' : simulator?.estado === 'finalizada' ? 'Finalizada' : simulator?.estado === 'error' ? 'Detenida por error' : 'Lista para iniciar'}</span></div>
 
-          {mode === 'challenge' ? <section className="challenge-setup" aria-labelledby="challenge-title">
+          {mode === 'game' ? <OperatorControls
+            tool={operatorTool}
+            onToolChange={(next) => { setOperatorTool(next); setOperatorError(null); setOperatorNotice(null) }}
+            disabled={operatorBusy || simulator?.rondaReto != null}
+            busy={operatorBusy || simulatorBusy}
+            canRun={!operatorRunBlocked && simulator?.estado !== 'activa' && simulator?.estado !== 'pausada'}
+            runState={simulator?.estado}
+            onStart={startOperatorWorld}
+            onPause={() => void runControl('pausar')}
+            onContinue={() => void runControl('reanudar')}
+            error={operatorError ?? (simulator?.rondaReto != null ? 'Pausa o termina el Reto antes de usar el modo operador.' : simulatorUnavailable ? 'El control requiere NAVIRA_LOCAL_DEMO_CONTROL=1 en el backend local.' : null)}
+            notice={operatorNotice}
+          /> : mode === 'challenge' ? <section className="challenge-setup" aria-labelledby="challenge-title">
             <div className="panel-section-heading"><span className="panel-overline">PRUEBA DE FUEGO · TRACK A</span><h2 id="challenge-title">Selecciona una ronda</h2></div>
             <div className="challenge-rounds" role="group" aria-label="Rondas del reto">
               {([
@@ -194,8 +223,7 @@ export function App() {
           {simulatorMessage ? <div className="control-notice is-error" role="alert"><strong>No se pudo completar la acción</strong><span>{simulatorMessage}</span></div> : null}
           {simulator?.error ? <div className="control-notice is-error" role="alert"><strong>El reloj se detuvo</strong><span>{simulator.error}</span></div> : null}
 
-          <div className="run-details"><span>Modo de vista</span><strong>{mode === 'challenge' ? `Reto · ronda ${challengeRound}` : mode === 'simulator' ? 'Simulador · demo libre' : 'Juego humano'}</strong><span>Turno observado</span><strong>{state?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
-          {mode === 'game' ? <GameControls modeSelected connection={connection} game={game} /> : null}
+          <div className="run-details"><span>Modo de vista</span><strong>{mode === 'challenge' ? `Reto · ronda ${challengeRound}` : mode === 'simulator' ? 'Simulador · demo libre' : 'Juego · operador'}</strong><span>Turno observado</span><strong>{state?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
           {active && allSurvivors.length > 0 && map ? <Suspense fallback={<div className="survivor-route-loading" role="status">Cargando información del habitante…</div>}><SurvivorRoutePanel state={stateWithSelectedRoute ?? state} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} routeLoading={selectedRouteLoading} routeError={selectedRouteError} /></Suspense> : null}
         </aside>
 
@@ -205,7 +233,7 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder />}><CityMap map={map} state={stateWithSelectedRoute ?? state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} /></Suspense> : <MapPlaceholder />}
+            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={map} state={stateWithSelectedRoute ?? state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} operatorTool={mode === 'game' && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense> : <MapPlaceholder mode={mode} />}
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{map?.version ?? (simulatorUnavailable ? 'BACKEND SIN CONTROL LOCAL' : 'AÚN SIN SNAPSHOT')}</div>
           </div>
@@ -273,8 +301,8 @@ function Metric({ label, value }: { label: string; value?: number | null }) {
   return <div className="metric"><span>{label}</span><strong>{value ?? '—'}</strong></div>
 }
 
-function MapPlaceholder() {
-  return <div className="map-placeholder" role="img" aria-label="No hay un mapa de partida activo"><span className="placeholder-orbit" aria-hidden="true"><span /><span /><span /></span><strong>Inicia una simulación para cargar el mapa.</strong><span>El panel mostrará únicamente el estado publicado por el servidor.</span></div>
+function MapPlaceholder({ mode }: { mode: NaviraMode }) {
+  return <div className="map-placeholder" role="img" aria-label="No hay un mapa de partida activo"><span className="placeholder-orbit" aria-hidden="true"><span /><span /><span /></span><strong>{mode === 'game' ? 'Inicia un mundo operador para activar el mapa.' : 'Inicia una simulación para cargar el mapa.'}</strong><span>El panel mostrará únicamente el estado publicado por el servidor.</span></div>
 }
 
 function connectionLabel(connection: PanelConnection) {
