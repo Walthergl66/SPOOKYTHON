@@ -1,3 +1,27 @@
+## CAM-146 — Asignar el sector más cercano a refugios configurables
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: aclaración del usuario: identificar el sector según la ubicación del refugio y usar el más cercano cuando sea necesario.
+- Relación: PRD-01/04, SPEC-008 CA-008-02, P4-04 y T-27; amplía CAM-145.
+- Resultado: cada ubicación de refugio se compara geográficamente con los cuatro puntos seguros del GAD Manta documentados en el fixture. Los nodos oficiales muestran su sector; una ubicación configurada muestra «Sector cercano: …» según el anclaje de menor distancia Haversine. El ID del nodo no se muestra.
+- Archivos: `frontend/src/features/map/refugeSectors.ts`, `frontend/src/app/App.tsx`; SPEC-008, módulos frontend, T-27, plan, trazabilidad, estado e historial.
+- Validación: pendiente de build, validadores documentales/SDD y `git diff --check`.
+- Límite: asigna sector por proximidad a puntos oficiales, no por polígonos parroquiales; los sectores de puntos personalizados son aproximados.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-145 — Mostrar el sector de los refugios oficiales
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de reemplazar el ID de nodo mostrado bajo cada refugio por el nombre del sector.
+- Relación: PRD-01/04, SPEC-008 CA-008-02, P4-04 y T-27.
+- Decisión: usar la parroquia/sector declarado por la fuente del GAD Manta para los cuatro anclajes oficiales. Comparar tanto ID como nodo para evitar asignar ese nombre a un refugio personalizado que reutilice `R-01`…`R-04`; en tal caso indicar que el sector no está identificado.
+- Resultado: el panel lateral muestra Tarqui, Los Esteros o Manta debajo del identificador del refugio oficial, en lugar del ID técnico del nodo.
+- Archivos: `frontend/src/features/map/refugeSectors.ts`, `frontend/src/app/App.tsx`, SPEC-008, módulo frontend, T-27, plan, trazabilidad, estado e historial.
+- Validación: `cd frontend && npm run build` correcto (se mantiene advertencia existente de bundle cartográfico >500 kB); `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` correctos. Vite reiniciado y frontend HTTP 200; backend preservado, `/salud` HTTP 200 y `/panel/estado` HTTP 200 con run activo.
+- Validación visual: pendiente; no se afirma que se inspeccionó la interfaz en navegador.
+- Límite: los puntos personalizados no tienen polígonos o metadatos territoriales en el contrato actual, así que no se les inventa un sector.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-144 — Dejar solo los datos ficticios en la ficha del habitante
 
 - Fecha: 2026-10-28, America/Guayaquil.
