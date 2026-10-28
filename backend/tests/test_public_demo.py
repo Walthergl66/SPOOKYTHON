@@ -19,9 +19,18 @@ class _ControlFalso:
         self.run_id = run_id
         self.consultar_panel = None
         self.cerrado = False
+        self.partida_iniciada = False
 
     def estado(self):
-        return {"habilitado": True, "estado": "sin_partida", "runId": self.run_id}
+        return {
+            "habilitado": True,
+            "estado": "activa" if self.partida_iniciada else "sin_partida",
+            "runId": self.run_id if self.partida_iniciada else None,
+        }
+
+    def iniciar_mundo_operador(self):
+        self.partida_iniciada = True
+        return {"estado": "activa", "runId": self.run_id}
 
     def cerrar(self):
         self.cerrado = True
