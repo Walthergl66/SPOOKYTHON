@@ -59,6 +59,16 @@ describe('controlSimulator con refugios', () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).refugios).toBeUndefined()
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty('eventosCiudad')
   })
+
+  it('dirige pausa y continuación a los controles compartidos del run actual', async () => {
+    const estado = { habilitado: true, estado: 'pausada', runId: 'reto-r2', turno: 12, escenario: 'reto_medianoche', sobrevivientesIniciales: 80, intensidad: 'media', eventosCiudad: false, velocidad: 1, error: null, rondaReto: 2 }
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify(estado))))
+    vi.stubGlobal('fetch', fetchMock)
+    await controlSimulator('pausar')
+    await controlSimulator('reanudar')
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/demo/simulador/pausar', expect.objectContaining({ method: 'POST', body: undefined }))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/demo/simulador/reanudar', expect.objectContaining({ method: 'POST', body: undefined }))
+  })
 })
 
 describe('startChallengeRound', () => {

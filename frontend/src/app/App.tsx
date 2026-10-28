@@ -180,16 +180,13 @@ export function App() {
               </button>)}
             </div>
             <p className="challenge-note">Densidad media provisional. Puente, calles y turnos de evento se sortearán de forma reproducible; el reto no define esos parámetros. Cada ronda se inicia por separado.</p>
-            <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorIsRunning || simulator?.estado === 'pausada' || simulatorUnavailable}>
-              {challengeBusy ? 'Preparando…' : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
+            <button className={`sim-action ${simulatorIsRunning ? 'sim-pause' : 'sim-start'} challenge-start`} type="button" onClick={() => simulatorIsRunning && simulator?.rondaReto ? void runControl('pausar') : simulator?.estado === 'pausada' && simulator?.rondaReto ? void runControl('reanudar') : void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable || (simulatorIsRunning && !simulator?.rondaReto) || (simulator?.estado === 'pausada' && !simulator?.rondaReto)}>
+              {challengeBusy ? 'Preparando…' : simulatorIsRunning && simulator?.rondaReto ? `Pausar R${simulator.rondaReto}` : simulator?.estado === 'pausada' && simulator?.rondaReto ? `Continuar R${simulator.rondaReto}` : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
             </button>
-            {!challengeBusy && simulator?.rondaReto && simulator.runId && simulatorIsRunning ? <button className="sim-action sim-pause challenge-start" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy || simulatorUnavailable}>
-              Pausar R{simulator.rondaReto}
+            {!challengeBusy && simulator?.rondaReto && simulator.runId && simulator?.estado === 'pausada' ? <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
+              {`Nueva simulación R${challengeRound}`}
             </button> : null}
-            {!challengeBusy && simulator?.rondaReto && simulator.runId && simulator?.estado === 'pausada' ? <button className="sim-action sim-start challenge-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy || simulatorUnavailable}>
-              Continuar R{simulator.rondaReto}
-            </button> : null}
-            {!challengeBusy && simulator?.rondaReto && simulator.runId ? <button className="sim-action sim-reset challenge-start" type="button" onClick={() => void restartChallenge()} disabled={simulatorBusy || simulatorUnavailable}>
+            {!challengeBusy && simulator?.rondaReto && simulator.runId ? <button className="sim-action sim-reset challenge-start" type="button" onClick={() => void restartChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
               {`Reiniciar R${simulator.rondaReto}`}
             </button> : null}
             {challengeError ? <div className="control-notice is-error" role="alert">{challengeError}</div> : null}

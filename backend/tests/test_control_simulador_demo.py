@@ -33,6 +33,25 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertEqual(resumed.json()["estado"], "activa")
         self.assertEqual(resumed.json()["rondaReto"], 2)
 
+    def test_nueva_ronda_reemplaza_reto_pausado_con_run_nuevo(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43126)) as client:
+            headers = {"Origin": "http://localhost:5173"}
+            original = client.post("/reto/iniciar", headers=headers, json={"ronda": 2, "semilla": 44})
+            paused = client.post("/demo/simulador/pausar", headers=headers)
+            nueva = client.post("/reto/iniciar", headers=headers, json={"ronda": 3, "semilla": 45})
+            conflicto_activa = client.post("/reto/iniciar", headers=headers, json={"ronda": 1, "semilla": 46})
+            control.cerrar()
+
+        self.assertEqual(original.status_code, 200, original.text)
+        self.assertEqual(paused.status_code, 200, paused.text)
+        self.assertEqual(nueva.status_code, 200, nueva.text)
+        self.assertNotEqual(nueva.json()["runId"], original.json()["runId"])
+        self.assertEqual(nueva.json()["rondaReto"], 3)
+        self.assertEqual(nueva.json()["sobrevivientesIniciales"], 200)
+        self.assertEqual(conflicto_activa.status_code, 409)
+
     def test_ruta_reto_reinicia_la_ronda_actual_en_un_run_nuevo(self) -> None:
         control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         app = crear_app(control_simulador_demo=control, seguridad=LOCAL)

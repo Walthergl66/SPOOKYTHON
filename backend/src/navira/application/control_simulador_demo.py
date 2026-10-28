@@ -151,19 +151,23 @@ class ControlSimuladorDemoLocal:
             return self.estado()
 
     def iniciar_ronda_reto(self, ronda: int, semilla: int | None = None) -> dict[str, object]:
-        """Inicia un preset automático de evaluación sin cambiar la configuración libre."""
+        """Inicia un preset Reto; solo reemplaza otra ronda Reto si está pausada."""
 
         if ronda not in (1, 2, 3):
             raise ValueError("La ronda del reto debe ser 1, 2 o 3.")
-        if self.estado()["estado"] in ("activa", "pausada"):
-            raise RuntimeError("Finaliza la partida actual antes de iniciar una ronda del reto.")
-        return self.iniciar(
-            escenario={1: "caminantes", 2: "reto_medianoche", 3: "mixto"}[ronda],
-            cantidad_sobrevivientes={1: 20, 2: 80, 3: 200}[ronda],
-            intensidad="media",
-            semilla=semilla,
-            ronda_reto=ronda,
-        )
+        with self._lock:
+            actual = self.estado()
+            if actual["estado"] == "activa":
+                raise RuntimeError("Pausa la ronda actual antes de iniciar otra ronda del reto.")
+            if actual["estado"] == "pausada" and self._configuracion.get("ronda_reto") not in (1, 2, 3):
+                raise RuntimeError("No se puede reemplazar una partida libre pausada desde el modo Reto.")
+            return self.iniciar(
+                escenario={1: "caminantes", 2: "reto_medianoche", 3: "mixto"}[ronda],
+                cantidad_sobrevivientes={1: 20, 2: 80, 3: 200}[ronda],
+                intensidad="media",
+                semilla=semilla,
+                ronda_reto=ronda,
+            )
 
     def reiniciar_ronda_reto(self) -> dict[str, object]:
         """Recrea la ronda Reto actual como un run nuevo con semilla aleatoria."""
