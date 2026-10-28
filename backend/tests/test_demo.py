@@ -13,7 +13,13 @@ from fastapi.testclient import TestClient
 
 from navira.application.decidir_paso import SolicitudPaso
 from navira.api.seguridad import ConfiguracionSeguridad
-from navira.demo import crear_contexto_demo
+from navira.demo import (
+    RADIO_ZONA_SPAWN_RETO_M,
+    SECTORES_SPAWN_RETO,
+    _distancia_metros,
+    _nodos_inicio_elegibles,
+    crear_contexto_demo,
+)
 from navira.domain.modelo import EstadoZombie
 from navira.domain.mapa import Refugio, cargar_mapa, nodos_protegidos_refugios
 from navira.main import _crear_app_configurada, crear_app, crear_app_demo
@@ -107,6 +113,7 @@ class DemoBootstrapTests(unittest.TestCase):
         uno = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=1, preparar_inicial=False)
         dos_a = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=2, preparar_inicial=False)
         dos_b = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=2, preparar_inicial=False)
+        dos_otra_semilla = crear_contexto_demo(ruta_manta, semilla=124, ronda_reto=2, preparar_inicial=False)
         tres_a = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=3, preparar_inicial=False)
         tres_b = crear_contexto_demo(ruta_manta, semilla=123, ronda_reto=3, preparar_inicial=False)
         s1 = uno.snapshots.obtener(uno.run_id)
@@ -114,19 +121,76 @@ class DemoBootstrapTests(unittest.TestCase):
         s3a, s3b = tres_a.snapshots.obtener(tres_a.run_id), tres_b.snapshots.obtener(tres_b.run_id)
 
         self.assertEqual(len(s1.partida.sobrevivientes), 20)
+        self.assertEqual(_conteos_por_sector(uno.grafo, s1.partida.sobrevivientes), (5, 5, 5, 5))
         self.assertEqual({z.tipo.value for z in s1.partida.zombies}, {"caminante"})
         self.assertEqual(s1.eventos_programados, ())
         self.assertEqual(len(s2a.partida.sobrevivientes), 80)
+        self.assertEqual(_conteos_por_sector(dos_a.grafo, s2a.partida.sobrevivientes), (20, 20, 20, 20))
+        self.assertEqual(
+            tuple(item.nodo for item in s2a.partida.sobrevivientes),
+            tuple(item.nodo for item in s2b.partida.sobrevivientes),
+        )
+        self.assertNotEqual(
+            tuple(item.nodo for item in s2a.partida.sobrevivientes),
+            tuple(
+                item.nodo
+                for item in dos_otra_semilla.snapshots.obtener(dos_otra_semilla.run_id).partida.sobrevivientes
+            ),
+        )
         self.assertEqual({z.tipo.value for z in s2a.partida.zombies}, {"caminante", "corredor", "horda"})
         self.assertEqual(s2a.eventos_programados, s2b.eventos_programados)
         self.assertEqual(len(s2a.eventos_programados), 1)
         puente_id = next(iter(s2a.eventos_programados[0].segmentos))
         self.assertTrue(any(c.segmento_id == puente_id and c.tipo.value == "puente" for c in dos_a.grafo.mapa.calles))
         self.assertEqual(len(s3a.partida.sobrevivientes), 200)
+        self.assertEqual(_conteos_por_sector(tres_a.grafo, s3a.partida.sobrevivientes), (50, 50, 50, 50))
         self.assertEqual({z.tipo.value for z in s3a.partida.zombies}, {"caminante", "corredor", "horda", "dormido"})
         self.assertEqual(s3a.eventos_programados, s3b.eventos_programados)
         self.assertEqual(len(s3a.eventos_programados), 2)
         self.assertEqual({e.turno_objetivo for e in s3a.eventos_programados}, {50, 100})
+
+    def test_reto_usa_nodos_unicos_elegibles_en_los_cuatro_sectores(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        contexto = crear_contexto_demo(
+            ruta_manta,
+            semilla=7081,
+            ronda_reto=3,
+            preparar_inicial=False,
+        )
+        habitantes = contexto.snapshots.obtener(contexto.run_id).partida.sobrevivientes
+        refugios = {refugio.nodo for refugio in contexto.grafo.mapa.refugios}
+        nodos_elegibles = set(_nodos_inicio_elegibles(contexto.grafo, refugios))
+
+        self.assertEqual(len({persona.nodo for persona in habitantes}), len(habitantes))
+        self.assertTrue(
+            all(persona.nodo in nodos_elegibles for persona in habitantes)
+        )
+        self.assertEqual(_conteos_por_sector(contexto.grafo, habitantes), (50, 50, 50, 50))
+
+    def test_simulador_libre_conserva_spawn_en_toda_la_zona_jugable(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        contexto = crear_contexto_demo(
+            ruta_manta,
+            semilla=123,
+            cantidad_sobrevivientes=20,
+            preparar_inicial=False,
+        )
+        coordenadas = {nodo.id: (nodo.lat, nodo.lng) for nodo in contexto.grafo.mapa.nodos}
+        posiciones = (
+            coordenadas[persona.nodo]
+            for persona in contexto.snapshots.obtener(contexto.run_id).partida.sobrevivientes
+        )
+
+        self.assertTrue(
+            any(
+                min(
+                    _distancia_metros(posicion, (lat, lng))
+                    for _, lat, lng in SECTORES_SPAWN_RETO
+                )
+                > RADIO_ZONA_SPAWN_RETO_M
+                for posicion in posiciones
+            )
+        )
 
     def test_nueva_partida_obtiene_semilla_y_run_id_independientes(self) -> None:
         with patch("navira.demo.secrets.randbits", side_effect=(101, 202)):
@@ -269,6 +333,22 @@ class DemoBootstrapTests(unittest.TestCase):
             ).siguiente_nodo,
             "D-001",
         )
+
+
+def _conteos_por_sector(grafo, habitantes) -> tuple[int, ...]:
+    coordenadas = {nodo.id: (nodo.lat, nodo.lng) for nodo in grafo.mapa.nodos}
+    conteos = [0] * len(SECTORES_SPAWN_RETO)
+    for persona in habitantes:
+        posicion = coordenadas[persona.nodo]
+        distancias = tuple(
+            _distancia_metros(posicion, (lat, lng))
+            for _, lat, lng in SECTORES_SPAWN_RETO
+        )
+        sector = min(range(len(distancias)), key=distancias.__getitem__)
+        if distancias[sector] > RADIO_ZONA_SPAWN_RETO_M:
+            return tuple(-1 for _ in conteos)
+        conteos[sector] += 1
+    return tuple(conteos)
 
 
 if __name__ == "__main__":

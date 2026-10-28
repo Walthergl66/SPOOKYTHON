@@ -6,6 +6,7 @@ Manta ni como escenario oficial de evaluación.
 
 from __future__ import annotations
 
+import math
 import random
 import secrets
 import uuid
@@ -48,6 +49,17 @@ from navira.simulation.escenarios import (
 
 MAPA_DEMO_POR_DEFECTO = Path(__file__).resolve().parents[2] / "data/maps/demo-sintetico.json"
 MAPA_MANTA_POR_DEFECTO = Path(__file__).resolve().parents[2] / "data/maps/manta-hackathon-v1.json"
+
+# El reto nombra estos cuatro sectores, pero no entrega polígonos ni cantidades
+# por sector. Los puntos de referencia proceden de lugares OSM; el radio forma
+# una zona local aproximada y sustituible si la organización publica límites.
+SECTORES_SPAWN_RETO: tuple[tuple[str, float, float], ...] = (
+    ("Tarqui", -0.9784464, -80.7243193),
+    ("Los Esteros", -0.9585425, -80.6846573),
+    ("Barbasquillo", -0.9515404, -80.7527254),
+    ("Jocay", -0.9598756, -80.7161161),
+)
+RADIO_ZONA_SPAWN_RETO_M = 1_500.0
 
 IntensidadDemo = IntensidadEscenario
 ESCENARIOS_DEMO = ESCENARIOS
@@ -122,7 +134,14 @@ def crear_contexto_demo(
     nodos_inicio = _nodos_inicio_elegibles(grafo, nodos_refugio)
     if not nodos_inicio:
         raise ValueError("El mapa demo requiere un nodo transitable con ruta a algún refugio.")
-    if cantidad_sobrevivientes <= len(nodos_inicio):
+    if ronda_reto is not None and grafo.mapa.version.startswith("manta-osm-"):
+        posiciones = _posiciones_iniciales_reto(
+            grafo,
+            nodos_inicio,
+            cantidad_sobrevivientes,
+            rng,
+        )
+    elif cantidad_sobrevivientes <= len(nodos_inicio):
         posiciones = tuple(rng.sample(nodos_inicio, cantidad_sobrevivientes))
     else:
         posiciones = tuple(rng.choice(nodos_inicio) for _ in range(cantidad_sobrevivientes))
@@ -251,3 +270,74 @@ def _nodos_inicio_elegibles(grafo: Grafo, refugios: set[str]) -> tuple[str, ...]
         for nodo in grafo.mapa.nodos
         if nodo.id not in refugios and nodo.id in alcanzables
     )
+
+
+def _posiciones_iniciales_reto(
+    grafo: Grafo,
+    nodos_elegibles: tuple[str, ...],
+    cantidad: int,
+    rng: random.Random,
+) -> tuple[str, ...]:
+    """Reparte el inicio de Reto entre sus cuatro zonas geográficas.
+
+    La ronda reparte la población de forma equilibrada (diferencia máxima de
+    una persona) y el RNG de la partida elige nodos distintos dentro de radios
+    locales. Solo entran nodos viales alcanzables desde un refugio y fuera de
+    los refugios; Simulador libre conserva su muestreo de ciudad completa.
+    """
+
+    coordenadas = {nodo.id: (nodo.lat, nodo.lng) for nodo in grafo.mapa.nodos}
+    candidatos_por_sector: list[list[str]] = [[] for _ in SECTORES_SPAWN_RETO]
+    for nodo_id in nodos_elegibles:
+        coordenada = coordenadas[nodo_id]
+        distancias = tuple(
+            _distancia_metros(coordenada, (lat, lng))
+            for _, lat, lng in SECTORES_SPAWN_RETO
+        )
+        sector = min(range(len(distancias)), key=distancias.__getitem__)
+        if distancias[sector] <= RADIO_ZONA_SPAWN_RETO_M:
+            candidatos_por_sector[sector].append(nodo_id)
+
+    if any(not candidatos for candidatos in candidatos_por_sector):
+        faltantes = [
+            SECTORES_SPAWN_RETO[indice][0]
+            for indice, candidatos in enumerate(candidatos_por_sector)
+            if not candidatos
+        ]
+        raise ValueError(
+            "El mapa no contiene nodos elegibles en todos los sectores de Reto: "
+            + ", ".join(faltantes)
+        )
+
+    base, sobrantes = divmod(cantidad, len(SECTORES_SPAWN_RETO))
+    orden_resto = list(range(len(SECTORES_SPAWN_RETO)))
+    rng.shuffle(orden_resto)
+    cuotas = [base] * len(SECTORES_SPAWN_RETO)
+    for indice in orden_resto[:sobrantes]:
+        cuotas[indice] += 1
+
+    posiciones: list[str] = []
+    for indice, cuota in enumerate(cuotas):
+        candidatos = candidatos_por_sector[indice]
+        if cuota > len(candidatos):
+            raise ValueError(
+                f"El sector {SECTORES_SPAWN_RETO[indice][0]} no tiene nodos "
+                f"suficientes para ubicar {cuota} sobrevivientes de Reto."
+            )
+        posiciones.extend(rng.sample(candidatos, cuota))
+    return tuple(posiciones)
+
+
+def _distancia_metros(
+    origen: tuple[float, float], destino: tuple[float, float]
+) -> float:
+    """Distancia Haversine entre coordenadas WGS84, expresada en metros."""
+
+    lat1, lon1 = map(math.radians, origen)
+    lat2, lon2 = map(math.radians, destino)
+    delta_lat, delta_lon = lat2 - lat1, lon2 - lon1
+    a = (
+        math.sin(delta_lat / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
+    )
+    return 6_371_000 * 2 * math.asin(math.sqrt(a))
