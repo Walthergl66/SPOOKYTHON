@@ -2,7 +2,8 @@
 set -Eeuo pipefail
 
 dnf update -y
-dnf install -y podman nginx certbot python3-certbot-nginx
+dnf install -y docker nginx certbot python3-certbot-nginx
+systemctl enable --now docker
 systemctl enable --now nginx
 
 cat >/etc/nginx/conf.d/navira-redirect.conf <<'NGINX'
