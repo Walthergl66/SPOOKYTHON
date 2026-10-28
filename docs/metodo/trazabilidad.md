@@ -14,6 +14,7 @@ Estado: referencias documentales; no representa funcionalidad implementada. Los 
 | [SPEC-008](especificaciones/SPEC-008-mapa-cartografico-3d.md) | PRD-01, PRD-04, TRD-07, TRD-09, TRD-15 | CAM-051/052/053/054/055/056/073/074/075/076/077, P1-01/P4-04, T-27/T-38/T-39. La fuente OSM conserva su envolvente completa; partidas Manta y selector quedan dentro de la ventana urbana. La caja no es frontera municipal certificada; payload y cobertura OSM siguen pendientes. |
 | [SPEC-009](especificaciones/SPEC-009-modo-reto.md) | PRD-06, PRD-07, TRD-02, TRD-10, TRD-11 | CAM-088/094/095/096/097/098/099/106, P4-05/P5-01/P5-03, T-47/T-49/T-50/T-57 local: presets, spawn sectorial, foco, controles, campañas y sustitución limpia al iniciar desde otro modo. Persistencia, polígonos/cuotas/densidad oficiales, T-11 integral y AWS pendientes. |
 | [SPEC-010](especificaciones/SPEC-010-juego-operador.md) | PRD-06, PRD-12, TRD-06, TRD-07, TRD-12, TRD-18 | CAM-101/102/103/104/105/106/P4-06; T-52 API de colocación, T-54 inicio vacío, T-56 nueva partida y T-57 transición desde otros modos; T-53 confirma cierre visual de calle por incidente. Resto de herramientas, inválidos, persistencia/auditoría/identidad productiva pendientes. |
+| [SPEC-011](especificaciones/SPEC-011-demo-publica-multisesion.md) | PRD-13, TRD-19 | CAM-126/P4-07; T-58 cubre aislamiento/capacidad/expiración local, integración de dos navegadores y build de imagen; Lightsail, TLS público, carga y prueba de abuso quedan pendientes hasta evidencia. |
 
 ## Cadena de ejemplo
 

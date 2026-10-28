@@ -51,6 +51,8 @@ CAM-038 conecta la vista seleccionada «Jugar» a los contratos de sesión/orden
 
 Desde `frontend/`, `npm ci` instala el lockfile y `npm test` ejecuta vitest (59 pruebas en 6 archivos: dominio, infraestructura de `game` y `mapFeatures`; CAM-068, CAM-070 y CAM-072) y `npm run build` valida TypeScript y produce el bundle Vite. En desarrollo, Vite reenvía `/panel`, `/juego` y `/ws` a `127.0.0.1:8000`. `.github/workflows/ci.yml` define las verificaciones backend/frontend en push a `master` y pull request; el workflow remoto no se afirma como ejecutado.
 
+CAM-126 hace que `frontend/src/main.tsx` complete `GET /demo/sesion` antes de montar el dashboard cuando `VITE_PUBLIC_DEMO=1`; si el backend devuelve límite 429 o error, presenta una pantalla de reintento. En local, sin esa variable, la app monta igual que antes. `App.tsx` muestra el alcance temporal de la sesión pública y no gestiona el token; el navegador envía la cookie HttpOnly automáticamente. `deploy/lightsail/Dockerfile.frontend` compila con ese flag y Nginx sirve los archivos, limita rutas de API y proxifica WebSocket/backend bajo el mismo origen.
+
 ## Reglas
 
 - El servidor manda sobre posición, turno, mordida y propiedad; una animación no confirma un movimiento.
