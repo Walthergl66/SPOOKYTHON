@@ -342,7 +342,12 @@ class ControlSimuladorDemoLocal:
         refugios: tuple[Refugio, ...] | None = None,
     ) -> dict[str, object]:
         zombies_configurados = self._configuracion.get("cantidad_zombies")
-        if cantidad_zombies is None and not isinstance(zombies_configurados, int):
+        if cantidad_zombies is None and (
+            not isinstance(zombies_configurados, int) or zombies_configurados == 0
+        ):
+            # Cero es el conteo resultante del perfil `libre`, no una cantidad
+            # explícita válida para la API. Al reiniciar, dejar que el escenario
+            # regenere su composición evita reenviar ese cero como configuración.
             zombies_configurados = None
         return self.iniciar(
             escenario=escenario or str(self._configuracion.get("escenario", "libre")),

@@ -94,7 +94,9 @@ class RefugiosSimuladorTests(unittest.TestCase):
     def test_reiniciar_con_refugios_validos_usa_el_mapa_personalizado(self) -> None:
         with self._cliente() as client:
             self.assertEqual(self._iniciar(client, None).status_code, 200)
-            self.assertEqual(self._iniciar(client, VALIDOS, "reiniciar").status_code, 200)
+            respuesta = self._iniciar(client, VALIDOS, "reiniciar")
+            self.assertEqual(respuesta.status_code, 200, respuesta.text)
+            self.assertEqual(respuesta.json()["zombiesIniciales"], 0)
             grafo = self.control._contexto.grafo
             self.assertEqual({r.id: r.nodo for r in grafo.mapa.refugios}, {r["id"]: r["nodo"] for r in VALIDOS})
 

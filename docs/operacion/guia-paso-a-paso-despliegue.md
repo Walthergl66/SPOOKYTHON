@@ -9,7 +9,7 @@ Actualizada: 2026-10-28. Es una guía de ejecución y verificación; no acredita
 - En el repositorio revisado no hay Dockerfile ni plantilla de infraestructura. La documentación propone CloudFormation, S3/CloudFront, ALB, ECS Fargate, ECR, DynamoDB y CloudWatch; son diseño, no recursos existentes.
 - El control de demo de Simulador/Jugar exige opt-in y conexión loopback. No se debe habilitar `NAVIRA_LOCAL_DEMO_CONTROL=1` detrás de una URL pública. La API key falla cerrada en rutas protegidas cuando no está configurada.
 - Los snapshots, sesiones y coordinación son volátiles y de un proceso. Reiniciar el proceso pierde el mundo; añadir réplicas no es seguro con la coordinación actual.
-- AWS, región autorizada, Budget, dominio, certificados, URL pública y gasto real no están comprobados. La estimación de costos existente es una referencia incompleta, no una cotización.
+- El usuario eligió `us-east-2` (Ohio). Aún no se verifican la cuenta, los permisos, el Budget, el dominio, certificados, URL pública ni gasto real. La estimación existente para `us-east-1` es una referencia incompleta y no es una cotización para Ohio.
 
 ## Fase 0 — Congelar y verificar el candidato
 
@@ -32,18 +32,18 @@ Actualizada: 2026-10-28. Es una guía de ejecución y verificación; no acredita
 
 3. Resolver o documentar fallos reales antes de llamar a esto una versión candidata. No considerar los checks documentales como pruebas de funcionamiento.
 
-**Salida de fase:** SHA identificado, jobs locales correctos y ningún fallo de producto sin triage. La suite backend tuvo una falla registrada en CAM-104; volver a correr la versión actual y confirmar si sigue presente.
+**Salida de fase:** SHA identificado, jobs locales correctos y ningún fallo de producto sin triage. El 2026-10-28 la suite backend sobre el árbol de trabajo pasó 240/240; CAM-107 corrige el fallo anterior de reinicio con cero zombies. El árbol incluye cambios sin commit, por lo que ese resultado aún no identifica un SHA inmutable de candidato.
 
 ## Fase 1 — Preparar cuenta, región y presupuesto
 
-1. Confirmar qué cuenta AWS se usará, quién administra facturación y qué región permite el reto. `us-east-1` es solo la propuesta actual.
-2. Antes de crear recursos, calcular un presupuesto actualizado para la duración real del evento y configurar alertas de gasto/uso con destinatarios comprobados. La alerta de AWS Budgets puede llegar con retraso y no es un límite que detenga automáticamente el gasto; mantener vigilancia y una lista explícita de recursos que se crearán.
+1. La región elegida por el usuario es `us-east-2` (Ohio). Una captura aportada el 2026-10-28 muestra `Hackathon-Budget` creado por US$10. Confirmar en su detalle período, umbrales y destinatarios de alertas; la captura no identifica la región de recursos, la cuenta de despliegue ni los permisos.
+2. La ventana prevista por el usuario es de tres días en `us-east-2`. En AWS Pricing Calculator especificar el tiempo real de cada recurso: por ejemplo, Fargate 1 vCPU/2 GB suma 36 horas si corre 12 h/día, o 72 horas si debe permanecer disponible toda la ventana. Estimar por separado ALB, IPv4, S3, CloudFront, ECR, CloudWatch, datos y persistencia; los servicios de red pueden seguir cobrando mientras la tarea está detenida. Configurar alertas de gasto/uso con destinatarios comprobados. La alerta de AWS Budgets puede llegar con retraso y no detiene automáticamente el gasto; mantener vigilancia y una lista explícita de recursos que se crearán.
 3. Confirmar permisos mínimos para desplegar y leer métricas. No copiar claves a Git, Markdown, JavaScript, comandos guardados, tickets o logs. Usar el mecanismo de credenciales aprobado para la cuenta.
-4. Registrar región, fecha, supuestos y cálculo real en [costos](costos.md); guardar evidencia sin datos sensibles.
+4. Usar `us-east-2` en AWS Pricing Calculator y registrar región, fecha, supuestos y cálculo real en [costos](costos.md); guardar evidencia sin datos sensibles.
 
 Referencias oficiales: [usar AWS Budgets](https://docs.aws.amazon.com/cost-management/latest/userguide/bcm-lite-use-budget.html) y [seguridad de red de Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-network.html). AWS actualiza los datos de Budgets varias veces al día y las alertas pueden retrasarse; por eso una alerta no equivale a un tope inmediato de gasto.
 
-**Salida de fase:** región y permisos aprobados, Budget visible con alerta probada, y costo estimado actualizado. Si falta cualquiera, detener creación de infraestructura.
+**Salida de fase:** región y permisos aprobados, Budget con período/alertas comprobados y costo estimado para la ventana de tres días que se pueda comparar con los US$10 listados. Si falta cualquiera, detener creación de infraestructura. Un Budget con alertas no es un tope automático de gasto.
 
 ## Fase 2 — Cerrar los bloqueos de publicación
 

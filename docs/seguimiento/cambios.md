@@ -10,6 +10,68 @@
 - Límites: un solo run local en memoria; iniciar otro modo descarta el run anterior tras la acción confirmada. No se prueba persistencia, concurrencia entre procesos o un despliegue público. La prueba de reinicio de refugios que usa cero zombies reportada previamente sigue sin estar corregida y es independiente.
 - Siguiente paso: en el navegador, pulsar «Iniciar R2», comprobar el nuevo `runId` y luego iniciar Jugar desde Reto; cambiar de pestaña sin iniciar y confirmar que el mundo del servidor permanece. El smoke API ya verificó esos endpoints y dejó Jugar activo/vacío. No crear commits ni publicar.
 
+## CAM-107 — Reinicio libre con cero zombies y región AWS elegida
+
+- Fecha: 2026-10-28, Ecuador continental.
+- Origen: verificación de preparación para despliegue encontró que `POST /demo/simulador/reiniciar` fallaba con 422 cuando el escenario `libre` tenía cero zombies; el usuario pidió corregirlo, repetir la suite y eligió AWS `us-east-2`.
+- Requisitos/criterios/tareas: flujo de reinicio del Simulador local; SPEC-007/T-51; preparación operativa según SPEC-005. Sin cambio de contrato público.
+- Rama: `master`; cambios locales sin commit ni publicación.
+- Resultado: al reiniciar sin conteo explícito, un cero guardado como resultado de un perfil vacío se traduce a `None`, para que el escenario genere su composición predeterminada y no se reenvíe el cero como parámetro inválido. Se agregó una aserción de regresión que confirma que `libre` continúa en cero zombies. La región elegida para el despliegue queda documentada como `us-east-2` (Ohio); la estimación previa de `us-east-1` se conserva como referencia histórica y no se considera válida para Ohio.
+- Archivos: `backend/src/navira/application/control_simulador_demo.py`, `backend/tests/test_refugios_simulador.py`, `docs/operacion/infraestructura.md`, `docs/operacion/costos.md`, `docs/operacion/guia-paso-a-paso-despliegue.md`, estado e historial.
+- Verificación: prueba enfocada de refugios con aserción de cero zombies (7/7); suite completa backend (240/240, 221,673 s); `python3 backend/scripts/check_docs.py` (135 Markdown), `python3 backend/scripts/check_sdd.py` (10 SPEC), ocho regresiones `test_check_sdd.py` y `git diff --check` correctos. Frontend no se repitió porque el cambio no lo afecta; la última corrida disponible fue 99/99 y build correcto.
+- Límites: cuenta, región habilitada, permisos, Budget, destinatarios, costo actualizado y recursos AWS siguen sin comprobarse; no se creó infraestructura ni se publicó el código. El build frontend conserva la advertencia de bundle del mapa >1 MB.
+- Siguiente paso: el usuario configura un Cost Budget para la cuenta AWS en la consola, con límite definido según duración/arquitectura y alertas verificadas; luego se actualiza el cálculo para `us-east-2` en AWS Pricing Calculator. Solo después se inicia la preparación de recursos.
+
+## CAM-108 — Confirmación visual del Cost Budget
+
+- Fecha: 2026-10-28, Ecuador continental.
+- Origen: el usuario confirmó que creó el AWS Cost Budget y aportó una captura de la lista de presupuestos.
+- Alcance: avance operativo de Fase 1 de SPEC-005; no cambia código ni crea recursos de aplicación.
+- Resultado: la captura muestra `Hackathon-Budget` con US$10 listados y un banner de creación exitosa. Se registra como evidencia aportada por el usuario, no archivada para evitar conservar información de su consola.
+- Archivos: `docs/operacion/costos.md`, `docs/operacion/infraestructura.md`, `docs/operacion/guia-paso-a-paso-despliegue.md`, `docs/seguimiento/estado-actual.md` y este historial.
+- Límites: la captura no demuestra período, umbrales, destinatarios ni entrega de alertas; tampoco demuestra cuenta/permisos para despliegue. AWS Budgets es alerta, no límite rígido de gasto. El cálculo anterior corresponde a `us-east-1`, por lo que aún no se puede comparar con el presupuesto para `us-east-2`.
+- Siguiente paso: crear una estimación en AWS Pricing Calculator con región `us-east-2`, arquitectura y horas reales de uso; contrastar el total con US$10 y ajustar el Budget/alcance antes de crear recursos.
+
+## CAM-109 — Estimación parcial de Fargate
+
+- Fecha: 2026-10-28, Ecuador continental.
+- Origen: el usuario compartió el cálculo de una tarea diaria de 1 vCPU/2 GB activa 12 horas al día y su subtotal mensual de Fargate.
+- Alcance: avance operativo de la estimación de costos en Fase 1 de SPEC-005; sin cambio de código ni creación de recursos.
+- Resultado: se documentan 30,42 ejecuciones/días equivalentes, aproximadamente 365 horas de tarea, y US$18,03/mes según tarifas aportadas; el cálculo con horas exactas arroja cerca de US$18,02 por redondeo. Para 730 horas/mes, el mismo tamaño sería aproximadamente US$36,04 con las tarifas usadas. US$18,03 excede el Budget listado de US$10 en US$8,03 y solo cubre Fargate.
+- Archivos: `docs/operacion/costos.md`, `docs/seguimiento/estado-actual.md` y este historial.
+- Límites: no se aportó captura de la calculadora, región seleccionada ni detalle de tarifas, por lo que no se valida el precio de `us-east-2`. ALB, IPv4, S3, CloudFront, ECR, CloudWatch, tráfico y persistencia no están incluidos. El funcionamiento solo 12 h/día implica API inaccesible fuera del horario si se detiene la única tarea.
+- Siguiente paso: confirmar en la calculadora `us-east-2`, Linux/x86, concurrencia y horas de servicio; completar el resto de servicios y acordar si el Budget debe ajustarse antes de crear recursos.
+
+## CAM-110 — Ajuste de estimación a ventana de tres días
+
+- Fecha: 2026-10-28, Ecuador continental.
+- Origen: el usuario aclaró que el despliegue será en Ohio y que la aplicación se usará solo durante tres días.
+- Alcance: actualiza la estimación/ventana de Fase 1 de SPEC-005; no cambia código ni crea recursos.
+- Resultado: para una tarea Fargate de 1 vCPU/2 GB a 12 h/día durante tres días (36 horas), el costo con las tarifas aportadas es aproximadamente US$1,78; si corre las 72 horas, cerca de US$3,55. La comparación mensual previa de US$18,03 no representa el uso puntual de tres días.
+- Archivos: `docs/operacion/costos.md`, `docs/operacion/guia-paso-a-paso-despliegue.md`, `docs/seguimiento/estado-actual.md` y este historial.
+- Límites: el total AWS sigue pendiente porque faltan horas/consumos de ALB, IPv4, S3, CloudFront, ECR, CloudWatch, transferencia y persistencia. Los recursos que sigan activos pueden facturar durante las 72 h aunque Fargate esté detenido. El Budget de US$10 no constituye un límite de gasto.
+- Siguiente paso: completar AWS Pricing Calculator para Ohio y una ventana de tres días, según el horario real de disponibilidad; comparar el costo total con el Budget antes de crear recursos.
+
+## CAM-111 — Estimación parcial de LCU del ALB
+
+- Fecha: 2026-10-28, Ecuador continental.
+- Origen: el usuario compartió la estimación del componente variable LCU para un ALB.
+- Alcance: avanza el cálculo de costos de Fase 1 de SPEC-005; no crea recursos ni altera código.
+- Resultado: los supuestos ingresados dan `max(0,01; 0,04; 0,000333; 0) = 0,04 LCU`. A US$0,008 por LCU-hora, 730 horas representan US$0,23/mes; las 72 horas previstas en tres días representan cerca de US$0,02 en cargos LCU.
+- Archivos: `docs/operacion/costos.md`, `docs/seguimiento/estado-actual.md` y este historial.
+- Límites: la cifra no incluye la tarifa base por hora/fracción del ALB, IPv4, transferencia ni otros servicios. Conexiones/bytes son valores de entrada del estimador, no telemetría observada. La tarifa fija para Ohio todavía debe tomarse del calculador regional.
+- Siguiente paso: sumar el precio fijo del ALB para 72 h en Ohio y terminar estimaciones de IP, frontend, logs, almacenamiento y transferencia para la ventana real.
+
+## CAM-112 — Modelo provisional del costo total de tres días
+
+- Fecha: 2026-10-28, Ecuador continental.
+- Origen: el usuario pidió calcular y documentar directamente el costo del despliegue de tres días en `us-east-2`.
+- Alcance: estimación de costos de Fase 1 de SPEC-005; sin cambios de código y sin creación de recursos AWS.
+- Resultado: se modeló una topología breve con 1 tarea Fargate Linux/x86 1 vCPU/2 GB, un ALB por 72 h, 0,04 LCU promedio, dos IPv4 del ALB por 72 h, una IP de tarea por 36 h (12 h/día), una imagen ECR de 1 GB y 1 GB de logs. Como alternativa de frontend se usa el plan gratuito CloudFront dentro de sus cuotas actuales, 5 GB de almacenamiento S3 acreditado y sin dominio propio. Subtotal aproximado: US$4,83 para 12 h/día o US$6,78 con tarea 24/7. Presupuestos anteriores de solo Fargate/LCU se conservan como desglose.
+- Archivos: `docs/operacion/costos.md`, `docs/seguimiento/estado-actual.md` y este historial.
+- Límites: no es una cotización/exportación de AWS Pricing Calculator. El cargo ALB de US$0,0225/h procede del ejemplo público de `us-east-1`, debe confirmarse en Ohio. Logs/imagen/tráfico son cantidades de escenario, no mediciones. CloudFront Free requiere que distribución y uso respeten el plan; no se modelan dominio, DynamoDB (no implementado), NAT, impuestos, ni cargos por encima de cuotas. AWS Budgets alerta, no bloquea gastos.
+- Siguiente paso: confrontar este modelo con el calculador en Ohio y la tarifa ALB exacta de la cuenta; revisar período/destinatarios del Budget y permisos. Antes de crear staging, completar controles de autenticación/operación y definir cómo se aceptará el estado temporal en memoria.
+
 # Historial de cambios y contexto
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.

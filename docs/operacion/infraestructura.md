@@ -1,12 +1,12 @@
 # Infraestructura y operación AWS
 
-Estado: diseño previsto; no hay recursos, URL o credenciales comprobados. Región propuesta `us-east-1`, pendiente P-06. Costos: [costos](costos.md). Accesos: [seguridad](seguridad.md).
+Estado: diseño previsto; no hay recursos de aplicación, URL o credenciales comprobados. El usuario eligió `us-east-2` (Ohio). La captura que aportó confirma un Budget llamado `Hackathon-Budget` con US$10 listados; período y alertas no se ven en la evidencia, y faltan cuenta/permisos para despliegue. El cálculo de costos de referencia aún corresponde a `us-east-1` y no aplica a esta región hasta recalcularlo. Costos: [costos](costos.md). Accesos: [seguridad](seguridad.md).
 
 ## Recursos iniciales
 
 | Recurso | Propósito | Estado |
 |---|---|---|
-| AWS Budget con alerta | Visibilidad del gasto desde el inicio | No verificado. |
+| AWS Budget con alerta | Visibilidad del gasto desde el inicio | Budget US$10 creado según captura; período, umbrales, destinatarios y notificación no verificados. |
 | S3 privado + CloudFront | Frontend y entrada HTTPS pública | Pendiente. |
 | ALB | Enrutar API/WebSocket a tarea | Pendiente. |
 | ECS Fargate | API, simulador y proceso de planificación | Pendiente. |
