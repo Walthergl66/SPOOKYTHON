@@ -1,6 +1,6 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-28, CAM-113 define el alcance privado de Fase 2. CAM-107 a CAM-112 contienen preparación local previa; backend completo previo 240/240 y frontend previo 99/99/build. Para CAM-113 pasan docs (136 Markdown), SDD (10 SPEC), regresiones SDD (8/8), API HTTP (7/7), controles locales (19/19) y `git diff --check`. Región `us-east-2` y ventana de tres días confirmadas. El usuario reportó el Budget de US$10 creado; la captura confirma su nombre/monto, pero no deja auditar período y alertas. Modelo de costos provisional: ~US$4,83 con Fargate 12 h/día o ~US$6,78 en 24/7; ALB usa referencia de otra región. No hay cuenta/permisos ni recursos de aplicación comprobados y AWS CLI no está instalado en el entorno. Cambios sin commit ni publicación; no se crearon recursos AWS. ADR-045 define staging privado por red, `/paso` con API key, campaña AWS efímera sin listener y staging volátil de un coordinador. Es diseño, no despliegue. Siguiente paso: instalar/configurar AWS CLI mediante el proveedor de credenciales autorizado (sin compartir claves), comprobar permisos y validar costos faltantes de Ohio; después preparar Fase 3. Detalle en CAM-107 a CAM-113.
+Última actualización: 2026-10-28, CAM-114 comprobó identidad AWS con el perfil `default` y confirmó tarifa base/LCU del ALB para Ohio. `us-east-2` y ventana de tres días están confirmadas. El usuario reportó Budget de US$10 con alertas; la API de Budgets devuelve AccessDenied, así que los detalles deben verificarse en consola o con permiso de lectura. STS no acredita permisos de creación; no se crearon recursos. La tarifa regional del ALB mantiene el cálculo preliminar (~US$4,83 si Fargate corre 12 h/día; ~US$6,78 en 24/7). Backend previo 240/240, frontend 99/99/build; CAM-113 validó docs/SDD/API/control local. No hay commit ni publicación. ADR-045 define staging privado, campaña AWS efímera sin listener y staging volátil de un coordinador. Siguiente paso: comprobar el detalle del Budget y los permisos de infraestructura antes de provisionar; continuar Fase 3 una vez cerrado ese gating. Detalle en CAM-107 a CAM-114.
 
 ## Hechos verificados
 
@@ -100,7 +100,7 @@ El checkout está en `master`. El puntero de seguimiento local `origin/master` o
 
 ## Próxima acción concreta
 
-CAM-113: Fase 2 de diseño cerrada localmente. Siguiente paso exacto: instalar/configurar AWS CLI con el mecanismo de credenciales aprobado y luego hacer una consulta STS de solo lectura (sin registrar cuenta/ARN); cotejar costos faltantes de `us-east-2`. Fase 3 solo empieza al cumplir el gating de Fase 1.
+CAM-114: identidad del perfil `default` y región `us-east-2` confirmadas; `budgets:DescribeBudgets` está denegado. Siguiente paso exacto: consultar en AWS Console el detalle/alertas de `Hackathon-Budget`; antes de provisionar, revisar un Change Set con permisos y costo. No crear recursos hasta validar el plan.
 
 CAM-066: siguiente paso exacto: abrir una sesión nueva, comprobar que aparecen `arquitecto-backend`, `arquitecto-frontend`, `revisor-arquitectura` y `documentador-sdd`, y que `revisor-arquitectura` reproduce la línea base de la guía. Después decidir el primer paso de migración (B1 o F1). El commit de la reorganización sigue pendiente de decisión, y la CI en GitHub no se ha ejecutado.
 

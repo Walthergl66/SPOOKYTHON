@@ -1,3 +1,15 @@
+## CAM-114 — Verificar perfil AWS y tarifa del ALB en Ohio
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario terminó de configurar AWS CLI y preguntó el siguiente paso de despliegue.
+- Relación: SPEC-005, P0-03/P5-02; P-06.
+- Resultado: `aws sts get-caller-identity` pasó con el perfil `default`; la región configurada es `us-east-2`. No se guardó cuenta ni ARN. La llamada de solo lectura a AWS Budgets devuelve AccessDenied, así que los detalles de alertas no pudieron auditarse con ese perfil. El perfil `navira` no existe en la configuración; no es necesario, ya que `default` está autenticado. El archivo público AWS Price List `AWSELB` de Ohio confirma ALB US$0,0225/h y LCU US$0,008/h; no cambia el modelo estimado.
+- Archivos: `docs/operacion/costos.md`, guía de despliegue, pendientes, estado e historial.
+- Verificación: consulta STS satisfactoria y consulta Budgets denegada; lectura de Price List regional. Sin creación ni cambio de recursos.
+- Límites: STS prueba identidad actual, no permisos de creación. AccessDenied de Budgets tampoco prueba que los demás permisos estén ausentes. El costo total sigue siendo aproximado, sujeto a exportación de Calculator, uso real y cuotas.
+- Siguiente paso: confirmar en consola el detalle del Budget o solicitar al administrador de cuenta permiso de lectura; antes de crear recursos, validar el permiso de despliegue mediante revisión del Change Set.
+- Commit o PR: no creado; preparación local sin publicación.
+
 ## CAM-113 — Alcance privado de staging y campaña AWS efímera
 
 - Fecha: 2026-10-28, America/Guayaquil.
