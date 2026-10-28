@@ -2,6 +2,21 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-096 — Pausar y continuar la ronda del modo Reto
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: el usuario indicó que en el panel Reto veía reinicio pero no la opción para parar/pausar la partida; pidió confirmar si era una versión anterior.
+- Especificación/tarea: SPEC-009 CA-009-09, P4-05 parcial, T-48.
+- Motivo: el control de reinicio se había incorporado sin exponer en Reto los endpoints de pausa/continuación que ya usa el Simulador.
+- Resultado: el panel del Reto muestra «Pausar Rn» mientras el run está activo y «Continuar Rn» si está pausado; conserva disponible «Reiniciar Rn». Reutiliza `POST /demo/simulador/pausar` y `/reanudar`, así la pausa conserva `runId`, ronda y mundo, y el reinicio genera uno nuevo.
+- Archivos: `frontend/src/app/App.tsx`, `backend/tests/test_control_simulador_demo.py`; SPEC-009, módulo frontend, T-48, plan, índice de SPEC, este historial, estado y [reporte de evidencia](../calidad/resultados/control-reto-pausa-cam096.md).
+- Decisiones: no requiere ADR; reutiliza el control local y la semántica existente de CAM-050/ADR-015.
+- Validación: test backend Reto pausa/continúa 1/1; `cd frontend && npm test -- --run` 95/95; `npm run build` correcto (advertencia conocida del bundle `mapArea`); navegador local: se continuó R2, apareció «Pausar R2», se pausó y apareció «Continuar R2», conservando `rondaReto=2`. El estado quedó pausado en turno 6. `/salud` y UI respondieron HTTP 200; `check_docs.py` (125 Markdown/127 archivos), `check_sdd.py` (9 SPEC), regresiones SDD 8/8 y `git diff --check` correctos.
+- Validación no ejecutada: suite completa backend no se repitió por ser un cambio focalizado.
+- Límites: es una pausa reanudable, no finaliza ni elimina una partida. El reinicio sigue creando un run nuevo. Control local solamente.
+- Siguiente acción: crear commits separados de código y documentación; luego retomar el diagnóstico cartográfico pendiente.
+- Commits separados en `master`: código `9e8cc5f` (`feat(reto): add pause and resume controls`) y documentación en commit posterior del historial local.
+
 ## CAM-095 — Centrar amenazas del Reto y permitir reiniciar la ronda
 
 - Fecha: 2026-10-27, Ecuador continental.

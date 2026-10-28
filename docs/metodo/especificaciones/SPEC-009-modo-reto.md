@@ -4,9 +4,9 @@ ID: SPEC-009
 Estado: en-revision
 Requisitos: PRD-06, PRD-07, TRD-02, TRD-10, TRD-11
 Tareas: P4-05, P5-01, P5-03
-Pruebas: T-11, T-18, T-47
-Cambio: CAM-095
-Evidencia: [reporte CAM-095](../../calidad/resultados/reto-foco-reinicio-cam095.md)
+Pruebas: T-11, T-18, T-47, T-48
+Cambio: CAM-096
+Evidencia: [reporte CAM-096](../../calidad/resultados/control-reto-pausa-cam096.md)
 
 ## Objetivo y alcance
 
@@ -28,6 +28,7 @@ La demo libre conserva sus perfiles, intensidad, refugios y control actuales. En
 | CA-009-06 | En el fixture Manta, las personas de cada ronda aparecen solo en las zonas de Tarqui, Los Esteros, Barbasquillo y Jocay; el reparto es equilibrado, usa nodos viales alcanzables por ruta dirigida a un refugio y se reproduce con la semilla. Simulador libre mantiene su muestreo general. Las áreas y el reparto se declaran aproximaciones configurables porque el reto no da polígonos ni cupos por sector. | T-47 |
 | CA-009-07 | Desde una partida Reto existente se puede reiniciar la misma ronda. El servidor crea un `runId` y mundo nuevos, conserva el preset de población y no sustituye una ronda distinta o una partida libre. Si no hay ronda Reto para reiniciar, el endpoint responde 409. | T-47 |
 | CA-009-08 | En las rondas Reto del fixture Manta, al menos la cuota redondeada del 80% de cada tipo de zombie queda dentro de 3.500 m del ancla urbana documentada; los eventos R2/R3 prefieren segmentos en esa zona si hay candidatos. Simulador libre conserva su muestreo global y el conteo/composición provisional no cambian. | T-47 |
+| CA-009-09 | Una ronda Reto activa permite pausarla desde el panel; una ronda pausada permite continuarla. Ambos controles conservan `runId`, ronda y mundo, mientras «Reiniciar Rn» crea una partida nueva. | T-48 |
 
 ## Plan y módulos
 

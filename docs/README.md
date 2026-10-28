@@ -164,6 +164,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/horizonte-riesgo-cam062.md](calidad/resultados/horizonte-riesgo-cam062.md) | Evidencia funcional de puntaje de exposición limitado al horizonte y comparación exploratoria CAM-062 | Cambie el límite del pronóstico o se repita la evaluación; seis pares sintéticos no demuestran efecto causal ni mejora universal. |
 | [resultados/default-media-cam063.md](calidad/resultados/default-media-cam063.md) | Comparación emparejada de intensidad media frente a alta que motiva el default de demo CAM-063 | Cambie generador/configuración o se repita evaluación; muestra de tres semillas y un escenario. |
 | [resultados/reto-foco-reinicio-cam095.md](calidad/resultados/reto-foco-reinicio-cam095.md) | Verificación local de la concentración central por tipo y reinicio del preset Reto | Cambie radio/cuota o ciclo de reinicio; no acredita densidad oficial, T-11 o AWS. |
+| [resultados/control-reto-pausa-cam096.md](calidad/resultados/control-reto-pausa-cam096.md) | Evidencia CAM-096: pausa y continuación de la ronda Reto | Cambien controles compartidos o se repita la verificación. |
 | [resultados/verificacion-sdd.md](calidad/resultados/verificacion-sdd.md) | Evidencia de incorporación metodológica | Conservar resultados de CAM-004; nuevas ejecuciones se registran sin alterar resultados históricos. |
 
 ## operacion/
