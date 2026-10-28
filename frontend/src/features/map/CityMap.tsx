@@ -16,6 +16,7 @@ interface CityMapProps {
   state: PanelState
   selectedSurvivorId: string | undefined
   onSelectSurvivor: (survivorId: string) => void
+  selectedRefugeId?: string
   animationSpeed: SimulatorSpeed
   paused?: boolean
   operatorTool?: OperatorTool | null
@@ -28,7 +29,7 @@ const MAP_CENTER: Position = [-80.714, -0.9895]
 
 setWorkerUrl(mapWorkerUrl)
 
-export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, animationSpeed, paused = false, operatorTool = null, onOperatorPlacement }: CityMapProps) {
+export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, selectedRefugeId, animationSpeed, paused = false, operatorTool = null, onOperatorPlacement }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const latestDataRef = useRef<FeatureCollection>(emptyCollection())
@@ -79,7 +80,7 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
   areaRef.current = area
   const overviewRef = useRef(true)
   latestStreetsRef.current = useMemo(() => createStreetFeatures(map, points), [map, points])
-  latestDataRef.current = useMemo(() => createSimulationFeatures(map, state, selectedSurvivorId, points), [map, state, selectedSurvivorId, points])
+  latestDataRef.current = useMemo(() => createSimulationFeatures(map, state, selectedSurvivorId, points, selectedRefugeId), [map, state, selectedSurvivorId, points, selectedRefugeId])
   latestActorsRef.current = useMemo(() => createActorFeatures(map, state, undefined, points), [map, state, points])
 
   useEffect(() => {
@@ -178,6 +179,23 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
 
   useEffect(() => {
     const instance = mapRef.current
+    if (!ready || !instance || !selectedRefugeId) return
+    const refuge = map.refugios.find((candidate) => candidate.id === selectedRefugeId)
+    const center = refuge ? points.get(refuge.nodo) : undefined
+    if (!center) return
+    overviewRef.current = false
+    instance.stop()
+    instance.easeTo({
+      center,
+      zoom: Math.max(instance.getZoom(), 16),
+      pitch: instance.getPitch(),
+      bearing: instance.getBearing(),
+      duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 550,
+    })
+  }, [map, points, ready, selectedRefugeId])
+
+  useEffect(() => {
+    const instance = mapRef.current
     if (!ready || !instance || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     let visible = true
     const timer = window.setInterval(() => {
@@ -270,7 +288,7 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
       if (activeAnimationsRef.current.size > 0) animationFrameRef.current = window.requestAnimationFrame(animate)
     }
     if (animationFrameRef.current === null) animationFrameRef.current = window.requestAnimationFrame(animate)
-  }, [ready, map, state, selectedSurvivorId, points, animationSpeed, paused])
+  }, [ready, map, state, selectedSurvivorId, selectedRefugeId, points, animationSpeed, paused])
 
   const togglePitch = () => {
     const instance = mapRef.current
@@ -296,7 +314,12 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
       <div ref={containerRef} className="maplibre-canvas" />
       {incidentAlert ? <div className="map-incident-alert" role="alert" aria-live="assertive">
         <span className="map-incident-alert-mark" aria-hidden="true">!</span>
-        <span><strong>ALERTA VIAL · TURNO {incidentAlert.turno}</strong><small>{incidentAlert.causa}. Vía cerrada; rutas de evacuación actualizadas.</small></span>
+        <div className="map-incident-alert-content">
+          <div className="map-incident-alert-heading"><strong>Alerta vial</strong><span className="map-incident-alert-turn">Turno {incidentAlert.turno}</span></div>
+          <p>{incidentAlert.causa}</p>
+          <span className="map-incident-alert-status"><i aria-hidden="true" />Vía cerrada · rutas actualizadas</span>
+        </div>
+        <button className="map-incident-alert-close" type="button" aria-label="Cerrar alerta vial" onClick={() => setIncidentAlert(null)}>×</button>
       </div> : null}
       <div className="map-view-controls" role="group" aria-label="Vista del mapa">
       <button className="map-view-toggle" type="button" onClick={showArea} disabled={!ready}>Vista urbana</button>
@@ -402,6 +425,11 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
     filter: ['==', ['get', 'kind'], 'road-incident'],
     layout: { 'text-field': ['get', 'glyph'], 'text-size': 13, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true, 'text-ignore-placement': true },
     paint: { 'text-color': '#2b2412', 'text-halo-color': '#fff2bf', 'text-halo-width': 0.6 },
+  })
+  map.addLayer({
+    id: 'navira-refuge-selection-halo', source: 'navira-simulation', type: 'circle',
+    filter: ['all', ['==', ['get', 'kind'], 'refuge'], ['==', ['get', 'selected'], true]],
+    paint: { 'circle-radius': 19, 'circle-color': '#62d597', 'circle-opacity': 0.2, 'circle-stroke-color': '#b7f4d1', 'circle-stroke-width': 2 },
   })
   map.addLayer({
     id: 'navira-markers', source: 'navira-simulation', type: 'circle',

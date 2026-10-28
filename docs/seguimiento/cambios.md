@@ -1,3 +1,129 @@
+## CAM-157 — Optimizar transferencia y validación del mapa
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de auditar y optimizar carga y respuesta para acercarse a la meta de 150 ms.
+- Relación: TRD-02/TRD-10, SPEC-008 CA-008-11/T-27 y P5-01/T-11. No se cambia `POST /paso` ni se afirman resultados de AWS.
+- Hallazgo: el JSON de `/panel/mapa` mide 16.077.219 bytes. Gzip predeterminado nivel 9 tomó mediana 742,8 ms por compresión local y emitió 1.558.625 bytes; nivel 1 tomó 51,6 ms y emitió 2.286.267 bytes. Sin gzip, el endpoint de loopback midió TTFB 348–376 ms; con gzip nivel 9, una muestra tardó 1.242 ms.
+- Cambio: middleware gzip usa nivel 1 y solo comprime cuando el cliente lo acepta (`gzip;q=0` conserva JSON plano); `/panel/mapa` agrega ETag ligado a `mapVersion`, `Cache-Control: private, no-cache` y `Vary: Accept-Encoding, Cookie`. Se cachean dos cuerpos gzip inmutables; una repetición por versión evita volver a construir y validar 94 mil tramos.
+- Verificación: app aislada con mapa Manta: primera respuesta gzip de referencia 449 ms/2.286.172 bytes; en la comprobación posterior con `TestClient`, 418 ms en frío, 33,81 ms en respuesta gzip reutilizada y 2,72 ms para 304. La prueba explícita con `gzip;q=0` devolvió JSON plano. Campaña local loopback aislada, semilla 20261026, mixto, 200 habitantes, concurrencia 200, 20 turnos/40 s: 3.944 HTTP 200, 0 fallas, p50 45,911 ms, p95 67,364 ms, p99 132,830 ms, máximo 136,040 ms y 20/20 ciclos dentro de 2 s. `test_panel.py` 19/19, `test_api_http.py` 8/8, frontend 97/97, build, `compileall`, `check_docs.py`, `check_sdd.py` y `git diff --check` pasan. El build advierte un chunk cartográfico de 1.067 kB (290 kB gzip). No mide AWS, red externa, R3 oficial ni mapa visible en navegador. T-11 sigue parcial.
+- Archivos: `backend/src/navira/main.py`, `backend/src/navira/api/compresion.py`, `backend/src/navira/application/consultar_panel.py`, `backend/src/navira/api/routes.py`, pruebas HTTP/panel, SPEC-008, contrato API, módulo backend, plan, estado, índice, reporte de auditoría e historial.
+- Siguiente paso: medir mapa frío y hasta mapa visible en navegador; repetir campaña R3 sostenida y medir endpoint público. No declarar requisito completo con esta muestra.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-156 — Enfocar refugios desde la lista del panel
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario para poder seleccionar un refugio desde «Refugios representados» y localizarlo automáticamente en el mapa.
+- Relación: PRD-04, SPEC-008 CA-008-13/T-27; comportamiento de presentación, sin cambios al servidor, rutas ni partida.
+- Cambio: cada fila se convierte en un botón accesible por teclado, con estado seleccionado visible. Al activarlo, MapLibre centra la cámara en el nodo del refugio y dibuja un halo; el movimiento respeta `prefers-reduced-motion`. Al cambiar de modo o `runId` se limpia la selección local. La capa mantiene el mapa visible durante la pausa.
+- Archivos: `frontend/src/app/App.tsx`, `frontend/src/features/map/CityMap.tsx`, `frontend/src/features/map/mapFeatures.ts`, `frontend/src/styles.css`, SPEC-008, módulo frontend, índice, estado e historial.
+- Verificación: `npm run build` y `npm test` pasan (97 pruebas); navegación por teclado está cubierta por semántica de botón, pero revisión visual en navegador sigue pendiente porque la automatización de navegador está deshabilitada en Work.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-155 — Pulir interacciones visuales de Navira
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de embellecer la interfaz y añadir animaciones sutiles a botones y controles.
+- Alcance/criterios: mantener la paleta y estructura del tablero; unificar transiciones cortas de interacción, respuesta de pulsación/hover donde hay puntero preciso, estados seleccionados con realce discreto y entrada breve de paneles; respetar `prefers-reduced-motion` y no añadir animación continua al mapa.
+- Resultado: transiciones coordinadas para botones de modos, operación, reto, juego y selección; realce suave de métricas y controles seleccionados; paneles laterales entran con desplazamiento de 5 px y breve desfase. No cambia estado, contratos ni reglas del mapa.
+- Archivos: `frontend/src/styles.css`, módulo frontend, README, estado e historial.
+- Verificación: `cd frontend && npm run build` pasa con el aviso conocido de chunk cartográfico >500 kB; `python3 backend/scripts/check_docs.py` pasa (148 Markdown/150 archivos), `python3 backend/scripts/check_sdd.py` pasa (11 SPEC) y `git diff --check` pasa. Frontend y backend loopback responden HTTP 200. No se ejecutaron pruebas automatizadas. La inspección visual de todos los estados interactivos queda pendiente.
+- ADR: no aplica; el cambio es de presentación reversible y no modifica arquitectura ni comportamiento de dominio.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-154 — Cerrar manualmente la alerta vial
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario para quitar la notificación del mapa con un control en la esquina superior derecha.
+- Relación: PRD-04, SPEC-003 CA-003-05; no cambia el evento, el cierre de calle ni la persistencia del marcador.
+- Cambio: botón «Cerrar alerta vial» con etiqueta accesible y foco visible; al activarlo desaparece la notificación actual. Se conserva la expiración automática de ocho segundos y el punto de incidente sigue en el mapa.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, SPEC-003, módulo frontend, README, estado e historial.
+- Verificación: `cd frontend && npm run build`, `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` y `git diff --check`; no se ejecutan tests automatizados. La app no mostraba un incidente activo para inspección visual.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-153 — Retirar el rediseño visual reciente del mapa
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario pidió descartar los cambios de diseño del mapa si estaban relacionados con que la página dejara de cargar tras una recarga.
+- Diagnóstico causal: `Failed to fetch` ocurrió porque Vite no escuchaba en el puerto 5173; el backend estaba sano. La capa visual de MapLibre no causa por sí misma el fallo de red. La indisponibilidad se presentó después del reinicio de Vite de la tarea CAM-151; el motivo exacto de terminación del proceso quedó sin determinar.
+- Cambio: se revirtió únicamente el código visual de CAM-151 en `CityMap.tsx` y `styles.css`, restaurando su estado previo. Se conservan el backend/run, el frontend base, cambios anteriores y el diagnóstico/restablecimiento CAM-152.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, SPEC-008, módulo frontend, README, estado e historial.
+- Verificación: `cd frontend && npm run build`, `python3 backend/scripts/check_docs.py` (148 Markdown/150 archivos), `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` pasan. HTTP frontend `5173`, proxy `/salud` y backend `8000` responden 200; se abrió una pestaña nueva que cargó el modo Reto. No se reinició backend ni la partida. El aspecto base se confirma por restauración del código y compilación; no se hizo una inspección visual comparativa del mapa ya iniciado.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-152 — Recuperar el frontend local tras `Failed to fetch`
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario reportó que al recargar la página el tablero dejó de cargar y el control de pausa mostraba `Failed to fetch`.
+- Diagnóstico: Vite no escuchaba en `127.0.0.1:5173`, aunque el backend seguía activo en `127.0.0.1:8000`. Por ello, las solicitudes same-origin del navegador y el proxy Vite no llegaban a las rutas del backend. La causa por la que terminó el proceso Vite anterior no se determinó.
+- Acción: se levantó Vite de nuevo. Sin reiniciar backend, partida o cambiar código.
+- Archivos: `docs/README.md`, estado actual e historial.
+- Verificación: Vite `/`, proxy `/salud`, proxy `/panel/estado` y backend `/salud` responden HTTP 200; navegador volvió a presentar R2 en vivo. No se ejecutaron tests porque no hubo cambio de código.
+- Siguiente paso: ante otra falla, comprobar por separado ambos puertos y el proxy; mantener backend intacto si hay un run que conservar.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-151 — Dar más jerarquía y respuesta visual al mapa
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de hacer el mapa más dinámico y mejorar su diseño.
+- Relación: PRD-04, SPEC-008; mejora de presentación sin modificar cartografía, rutas, snapshots ni reglas del servidor.
+- Cambio: el lienzo combina una retícula cartográfica tenue con mayor contraste de calles; la ruta recomendada seleccionada gana separación mediante un halo; los controles se agrupan en una barra flotante con estado de vista activo, estado en vivo/pausa y turno. «Vista urbana» y «Ver partida» ahora encuadran con transición breve, y las transiciones respetan `prefers-reduced-motion`.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, SPEC-008, módulo frontend, estado e historial.
+- Validación: `cd frontend && npm run build` pasa; persiste la advertencia conocida del bundle cartográfico mayor a 500 kB. El navegador local mostró calles, costa, barra de herramientas y turno en la vista Reto activa. No se reinició el backend ni se alteró el run activo; no se ejecutaron tests automatizados.
+- Límite: la ruta resaltada aparece solo cuando se selecciona un habitante con ruta disponible. La verificación visual se hizo en escritorio; el responsive se cubre con estilos pero no se inspeccionó en un viewport móvil. La SPEC-008/T-64 continúa parcial.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-150 — Mejorar la jerarquía visual de la alerta vial
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de mejorar visualmente la alerta vial mostrada sobre el mapa.
+- Relación: PRD-04, SPEC-003 CA-003-05, T-44; no cambia eventos, reglas, duración ni protocolo del mapa.
+- Diseño: superficie azul marino opaca con borde/acento ámbar para distinguir la alerta de la cartografía; icono de advertencia separado; encabezado conciso, turno en chip y causa como contenido principal; estado secundario «Vía cerrada · rutas actualizadas». El contenedor se adapta a móvil y usa una entrada de 180 ms con `prefers-reduced-motion` global ya respetado. El marcador amarillo persistente no cambia.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, SPEC-003, T-44, módulo frontend, estado, índice e historial.
+- Validación: `cd frontend && npm run build` correcto (permanece advertencia del chunk cartográfico >500 kB); `python3 backend/scripts/check_docs.py` correcto (148 Markdown/150 archivos), `python3 backend/scripts/check_sdd.py` correcto (11 SPEC) y `git diff --check` correcto. No se ejecutan tests automatizados. La inspección inicial del navegador mostró la app en espera, sin alerta activa; no se alteró la partida para forzar un evento. La revisión visual de la alerta en pantalla sigue pendiente.
+- Siguiente paso: validar visualmente la alerta cuando ocurra el próximo incidente; Vite sirve HTTP 200 y backend `/salud` responde 200.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-149 — Quitar la secuencia de actualizaciones del panel
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de retirar del panel la sección «Secuencia del panel / Últimas actualizaciones».
+- Relación: PRD-04, SPEC-003, panel de observación. No cambia contratos HTTP/WS ni reglas.
+- Cambio: eliminada la tarjeta visual y su presentación; retirado el buffer local y el helper de secuencia que solo servían a esa tarjeta. Se conservan los eventos aplicados en snapshots porque alimentan las alertas y los marcadores amarillos del mapa. Métricas, refugios y panel del habitante permanecen.
+- Archivos: `frontend/src/app/App.tsx`, `frontend/src/application/usePanel.ts`, `frontend/src/domain/panel.ts`, `frontend/src/domain/panel.test.ts` (se quitan las verificaciones del helper retirado), `frontend/src/styles.css`, SPEC-003, módulo frontend, estado, índice e historial.
+- Validación: `cd frontend && npm run build` correcto (permanece advertencia del chunk cartográfico >500 kB); `python3 backend/scripts/check_docs.py` correcto (148 Markdown/150 archivos); `python3 backend/scripts/check_sdd.py` correcto (11 SPEC); `git diff --check` correcto tras quitar una línea vacía final. No se ejecutan tests automatizados ni revisión visual. Vite reiniciado en `http://127.0.0.1:5173/` y HTTP 200; backend `/salud` HTTP 200 y sin reinicio.
+- Siguiente paso: confirmar frontend local HTTP 200 tras reiniciar y revisar visualmente que no haya tarjeta de secuencia. Alertas del mapa y controles siguen en el código.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-148 — Evitar que un polígono degenerado asigne el mismo barrio a todos los refugios
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario reportó que los cuatro refugios aparecían como «Jesus de Nazareth» aunque están separados en el mapa.
+- Relación: PRD-01/04, SPEC-008 CA-008-02, ADR-053; corrección focalizada de CAM-147. T-66 continúa pendiente como validación automatizada y visual completa.
+- Diagnóstico: el snapshot GeoManta contiene un barrio nombrado «Jesus de Nazareth» con `areaM2: 0` y vértices consecutivos repetidos. `pointOnSegment` calculaba producto cruzado/dot para una arista de longitud cero; ambas magnitudes eran cero para cualquier punto, por lo que el punto se consideraba dentro de ese polígono. Al tener área cero, el barrio se ordenaba antes que cualquier coincidencia válida y ganaba para los cuatro refugios.
+- Cambio: excluir barrios con área cartográfica reportada menor o igual que cero y tratar una arista de longitud cero como coincidente únicamente cuando el punto es exactamente su extremo. Si no hay barrio válido, se conserva el fallback parroquial.
+- Archivos: `frontend/src/features/map/refugeSectors.ts`, `docs/dominio/mapa-manta.md`, SPEC-008, T-66, módulo frontend, trazabilidad, estado, índice e historial.
+- Validación: `cd frontend && npm run build` correcto (persiste advertencia del chunk cartográfico >500 kB); `python3 backend/scripts/check_docs.py` correcto (148 Markdown/150 archivos); `python3 backend/scripts/check_sdd.py` correcto (11 SPEC); `git diff --check` correcto. Clasificación puntual ejecutada con el `/panel/mapa` activo y el algoritmo corregido: R-01 Parroquia San Mateo; R-02 Parroquia Parte De Cabecera Cantonal; R-03 La Fae · Los Esteros; R-04 Altamira · Los Esteros. No se ejecutan tests automatizados ni se inspecciona navegador en esta tarea. El backend no se reinicia.
+- Límite: la corrección no valida legalmente la cartografía fuente; 38 nodos continúan sin cobertura territorial y T-66 aún no está cerrado.
+- Siguiente paso: actualizar/confirmar Vite y revisar la lista en el panel. La clasificación indicada corresponde solo al snapshot activo consultado, no a todo run posible.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-147 — Asignar barrio y parroquia por polígonos de GeoManta
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario pidió que el nombre de cada refugio se obtenga del sector real donde cae su ubicación, cubriendo el mapa en lugar de aproximarlo con puntos cercanos.
+- Relación: PRD-01/04, SPEC-008 CA-008-02, ADR-053, P4-04 y T-66.
+- Motivo: la distancia a uno de cuatro refugios no identifica una frontera de barrio y podía rotular ubicaciones personalizadas de forma incorrecta.
+- Resultado: la lista identifica el barrio nombrado que contiene cada refugio y agrega su parroquia; barrios sin nombre/no disponibles recurren a la parroquia contenedora. Fuera de cobertura presenta «Sector no identificado», sin vecino más cercano. El asset se carga desde Navira en segundo plano una vez disponible el mapa Manta, sin llamar al GeoServer en cada snapshot.
+- Fuente/datos: WFS público GeoManta del GAD Manta, `geo_barrio` (231 polígonos; 221 nombres) y `geo_parroquia` (10 polígonos), más seis límites parroquiales CONALI/DPA-2023 del Geoportal EEQ. Snapshot consultado el 2026-10-28 y transformado a EPSG:4326. El asset contiene 247 polígonos y pesa 1.648.942 bytes sin comprimir (468.825 con gzip local). No se encontró metadato explícito de licencia abierta en GeoManta; la capa CONALI incluye límites legales/referenciales y zonas en estudio. Se conserva atribución y queda pendiente confirmar términos de redistribución.
+- Resultado cartográfico observado en las cuatro coordenadas de refugios: Cristo Rey · Tarqui; Colinas de Rocafuerte · Tarqui; La Dolorosa · Manta; Barbasquillo · Manta. El segundo y tercero difieren de la aproximación histórica; corresponde a la intersección con polígonos, no a la etiqueta de anclaje anterior.
+- Archivos: `frontend/src/features/map/refugeSectors.ts`, `frontend/src/app/App.tsx`, asset GeoJSON, `docs/dominio/mapa-manta.md`, SPEC-008, T-66, ADR-053, módulo frontend, plan, trazabilidad, índice y estado.
+- Validación: `cd frontend && npm run build` pasa (persiste advertencia de chunks cartográficos >500 kB); `python3 backend/scripts/check_docs.py` pasa (148 Markdown/150 archivos), `python3 backend/scripts/check_sdd.py` pasa (11 SPEC) y `git diff --check` pasa. El build incluye el asset. Vite fue reiniciado y sirve la app y el GeoJSON con HTTP 200 (1.648.942 bytes); backend `/salud` sigue HTTP 200 y no se reinició. No se ejecutaron tests ni inspección visual.
+- Cobertura: al cruzar todas las parroquias del asset con 35.518 nodos jugables, 35.480 (99,89 %) caen dentro de alguna parroquia; 38 quedan fuera. Para los refugios oficiales las etiquetas observadas son Cristo Rey · Tarqui, Colinas de Rocafuerte · Tarqui, La Dolorosa · Manta y Barbasquillo · Manta.
+- Límites: snapshot fechado; no certifica vigencia legal, límites catastrales, seguridad de los refugios ni cobertura de calles. La fuente no publicó licencia abierta visible y CONALI advierte que incorpora zonas en estudio. La respuesta comprimida del servidor real aún no se midió. T-66 debe comprobar con pruebas espaciales el cambio al cruzar un límite y el fallback ante fallo de carga.
+- Siguiente paso: correr validadores documentales, corregir hallazgos y luego inspeccionar el panel visualmente; confirmar autorización de redistribución antes de publicar el asset en el despliegue.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-146 — Asignar el sector más cercano a refugios configurables
 
 - Fecha: 2026-10-28, America/Guayaquil.
@@ -5,8 +131,9 @@
 - Relación: PRD-01/04, SPEC-008 CA-008-02, P4-04 y T-27; amplía CAM-145.
 - Resultado: cada ubicación de refugio se compara geográficamente con los cuatro puntos seguros del GAD Manta documentados en el fixture. Los nodos oficiales muestran su sector; una ubicación configurada muestra «Sector cercano: …» según el anclaje de menor distancia Haversine. El ID del nodo no se muestra.
 - Archivos: `frontend/src/features/map/refugeSectors.ts`, `frontend/src/app/App.tsx`; SPEC-008, módulos frontend, T-27, plan, trazabilidad, estado e historial.
-- Validación: pendiente de build, validadores documentales/SDD y `git diff --check`.
+- Validación: `cd frontend && npm run build` correcto (permanece la advertencia conocida de bundle cartográfico >500 kB); `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` correctos. Vite reiniciado, frontend HTTP 200 y backend `/salud` HTTP 200; el proceso backend no se reinició.
 - Límite: asigna sector por proximidad a puntos oficiales, no por polígonos parroquiales; los sectores de puntos personalizados son aproximados.
+- Estado histórico: la aproximación de CAM-146 queda reemplazada para el panel por la asignación poligonal de CAM-147.
 - Commit o PR: no solicitado ni creado.
 
 ## CAM-145 — Mostrar el sector de los refugios oficiales
@@ -20,6 +147,7 @@
 - Validación: `cd frontend && npm run build` correcto (se mantiene advertencia existente de bundle cartográfico >500 kB); `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` correctos. Vite reiniciado y frontend HTTP 200; backend preservado, `/salud` HTTP 200 y `/panel/estado` HTTP 200 con run activo.
 - Validación visual: pendiente; no se afirma que se inspeccionó la interfaz en navegador.
 - Límite: los puntos personalizados no tienen polígonos o metadatos territoriales en el contrato actual, así que no se les inventa un sector.
+- Continuidad: CAM-146 amplía este comportamiento y resuelve ubicaciones personalizadas mediante el punto sectorial oficial más cercano, etiquetándolo como aproximación.
 - Commit o PR: no solicitado ni creado.
 
 ## CAM-144 — Dejar solo los datos ficticios en la ficha del habitante

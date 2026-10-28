@@ -1,48 +1,109 @@
-type RefugeIdentity = { id: string; nodo: string }
-type MapNode = { id: string; lat: number; lng: number }
+type Position = [number, number]
+type LinearRing = Position[]
+type PolygonCoordinates = LinearRing[]
+type SectorGeometry =
+  | { type: 'Polygon'; coordinates: PolygonCoordinates }
+  | { type: 'MultiPolygon'; coordinates: PolygonCoordinates[] }
 
-/** GAD Manta safe-point coordinates and their source parish/sector labels. */
-const SECTOR_REFERENCES = [
-  { lat: -0.9588192943885248, lng: -80.71242442236326, sector: 'Tarqui' },
-  { lat: -0.9574742328837494, lng: -80.70208371535246, sector: 'Los Esteros' },
-  { lat: -0.9522745219919659, lng: -80.72726572846808, sector: 'Manta' },
-  { lat: -0.9460949, lng: -80.7488984, sector: 'Manta' },
-]
-const OFFICIAL_REFUGE_NODE_SECTORS: Record<string, string> = {
-  'N-OSM-4135495376': 'Tarqui',
-  'N-OSM-363670267': 'Los Esteros',
-  'N-OSM-363657391': 'Manta',
-  'N-OSM-4128106912': 'Manta',
+export type MapNode = { id: string; lat: number; lng: number }
+export type SectorFeature = {
+  type: 'Feature'
+  properties: { tipo: 'barrio' | 'parroquia'; nombre: string | null; parroquia?: string | null; fuente?: 'GeoManta' | 'CONALI'; areaM2?: number }
+  geometry: SectorGeometry
+}
+export type SectorCollection = { type: 'FeatureCollection'; features: SectorFeature[] }
+
+const SECTOR_DATA_URL = '/data/manta-sectores-2026-10-28.geojson'
+let sectorDataPromise: Promise<SectorCollection> | undefined
+
+/** Loads the dated GeoManta boundary snapshot once, avoiding a live dependency on its WFS during each run. */
+export function loadMantaSectors(): Promise<SectorCollection> {
+  if (!sectorDataPromise) {
+    sectorDataPromise = fetch(SECTOR_DATA_URL)
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`No se pudo cargar la cartografía territorial (${response.status}).`)
+        return response.json() as Promise<SectorCollection>
+      })
+      .catch((error: unknown) => {
+        sectorDataPromise = undefined
+        throw error
+      })
+  }
+  return sectorDataPromise
 }
 
-/** Gives custom refuges the sector attached to the nearest official geographic reference. */
-export function refugeSectorLabel(refuge: RefugeIdentity, nodes: MapNode[]): string {
-  const officialSector = OFFICIAL_REFUGE_NODE_SECTORS[refuge.nodo]
-  if (officialSector) return `Sector: ${officialSector}`
-
-  const node = nodes.find((candidate) => candidate.id === refuge.nodo)
+/** Returns the barrio that contains the refuge, with its parish; parish geometry is the fallback. */
+export function refugeSectorLabel(
+  node: MapNode | undefined,
+  sectors: SectorCollection,
+): string {
   if (!node) return 'Sector no identificado'
+  const point: Position = [node.lng, node.lat]
+  const barrio = sectors.features
+    .filter((feature) => feature.properties.tipo === 'barrio'
+      && hasName(feature.properties.nombre)
+      // GeoManta contains a named zero-area placeholder with repeated vertices.
+      // It is not a usable neighborhood boundary and must not label every refuge.
+      && (feature.properties.areaM2 === undefined || feature.properties.areaM2 > 0)
+      && contains(feature.geometry, point))
+    .sort((a, b) => (a.properties.areaM2 ?? Number.POSITIVE_INFINITY) - (b.properties.areaM2 ?? Number.POSITIVE_INFINITY))[0]
 
-  let nearest = SECTOR_REFERENCES[0]
-  let nearestDistance = distanceMeters(node, nearest)
-  for (const reference of SECTOR_REFERENCES.slice(1)) {
-    const distance = distanceMeters(node, reference)
-    if (distance < nearestDistance) {
-      nearest = reference
-      nearestDistance = distance
-    }
+  if (barrio) {
+    const parish = barrio.properties.parroquia
+    const barrioName = displayName(barrio.properties.nombre!)
+    return parish ? `${barrioName} · ${displayName(parish)}` : barrioName
   }
 
-  return `Sector cercano: ${nearest.sector}`
+  const parish = sectors.features
+    .filter((feature) => feature.properties.tipo === 'parroquia' && hasName(feature.properties.nombre) && contains(feature.geometry, point))
+    .sort((a, b) => {
+      const sourcePriority = (a.properties.fuente === 'GeoManta' ? 0 : 1) - (b.properties.fuente === 'GeoManta' ? 0 : 1)
+      return sourcePriority || (a.properties.areaM2 ?? Number.POSITIVE_INFINITY) - (b.properties.areaM2 ?? Number.POSITIVE_INFINITY)
+    })[0]
+
+  if (parish) return `Parroquia ${displayName(parish.properties.nombre!)}`
+  return 'Sector no identificado'
 }
 
-/** Haversine distance keeps sector choice based on geographic proximity. */
-function distanceMeters(from: { lat: number; lng: number }, to: { lat: number; lng: number }): number {
-  const radians = Math.PI / 180
-  const lat1 = from.lat * radians
-  const lat2 = to.lat * radians
-  const deltaLat = (to.lat - from.lat) * radians
-  const deltaLng = (to.lng - from.lng) * radians
-  const haversine = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2
-  return 2 * 6_371_000 * Math.asin(Math.sqrt(haversine))
+function displayName(name: string): string {
+  return name.toLocaleLowerCase('es-EC').replace(/(^|[\s-])([\p{L}])/gu, (_, separator: string, letter: string) => separator + letter.toLocaleUpperCase('es-EC'))
+}
+
+function hasName(name: string | null | undefined): name is string {
+  return Boolean(name?.trim())
+}
+
+function contains(geometry: SectorGeometry, point: Position): boolean {
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates
+  return polygons.some((rings) => pointInPolygon(rings, point))
+}
+
+function pointInPolygon(rings: PolygonCoordinates, point: Position): boolean {
+  const [outer, ...holes] = rings
+  return Boolean(outer && pointInRing(outer, point) && !holes.some((hole) => pointInRing(hole, point)))
+}
+
+/** Boundary points count as inside, making adjacent polygon edges stable for map-node coordinates. */
+function pointInRing(ring: LinearRing, point: Position): boolean {
+  let inside = false
+  for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
+    const [x1, y1] = ring[previous]
+    const [x2, y2] = ring[index]
+    if (pointOnSegment(point, [x1, y1], [x2, y2])) return true
+
+    const crossesLatitude = (y1 > point[1]) !== (y2 > point[1])
+    if (crossesLatitude && point[0] < ((x2 - x1) * (point[1] - y1)) / (y2 - y1) + x1) inside = !inside
+  }
+  return inside
+}
+
+function pointOnSegment(point: Position, start: Position, end: Position): boolean {
+  const lengthSquared = (end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2
+  if (lengthSquared === 0) return point[0] === start[0] && point[1] === start[1]
+
+  const cross = (point[1] - start[1]) * (end[0] - start[0]) - (point[0] - start[0]) * (end[1] - start[1])
+  if (Math.abs(cross) > 1e-9) return false
+  const dot = (point[0] - start[0]) * (end[0] - start[0]) + (point[1] - start[1]) * (end[1] - start[1])
+  if (dot < 0) return false
+  return dot <= lengthSquared
 }

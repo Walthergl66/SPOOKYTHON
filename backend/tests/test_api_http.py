@@ -21,6 +21,15 @@ class ApiHttpTests(unittest.TestCase):
         self.assertEqual(respuesta.headers.get("content-encoding"), "gzip")
         self.assertIn("/salud", respuesta.json()["paths"])
 
+    def test_no_comprime_si_el_cliente_rechaza_gzip(self) -> None:
+        respuesta = TestClient(crear_app()).get(
+            "/openapi.json", headers={"Accept-Encoding": "gzip;q=0"}
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertIsNone(respuesta.headers.get("content-encoding"))
+        self.assertIn("/salud", respuesta.json()["paths"])
+
     def test_salud_es_publica_y_minima(self) -> None:
         respuesta = self.cliente.get("/salud")
         self.assertEqual(respuesta.status_code, 200)

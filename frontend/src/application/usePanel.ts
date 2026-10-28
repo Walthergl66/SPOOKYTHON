@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { classifyCursor, nextPanelLog, pickMap, type PanelConnection, type PanelCursor, type PanelLog, type PanelSnapshot, type PanelState } from '../domain/panel'
+import { classifyCursor, pickMap, type PanelConnection, type PanelCursor, type PanelSnapshot, type PanelState } from '../domain/panel'
 import type { PanelPort } from './ports'
 
 /** Mantiene la última proyección válida del servidor: carga HTTP inicial/manual y snapshots por WebSocket. */
@@ -11,7 +11,6 @@ export function usePanel(port: PanelPort) {
   const [refreshCount, setRefreshCount] = useState(1)
   const [loading, setLoading] = useState(true)
   const [connection, setConnection] = useState<PanelConnection>('connecting')
-  const [eventLog, setEventLog] = useState<PanelLog[]>([])
   const cursorRef = useRef<PanelCursor | null>(null)
   const mapRef = useRef<PanelSnapshot['map']>(null)
 
@@ -36,12 +35,10 @@ export function usePanel(port: PanelPort) {
       // El snapshot queda vacío, pero la geometría inmutable puede reutilizarse
       // cuando el usuario inicie otra partida con la misma versión de mapa.
       setSnapshot({ map: null, state: nextState })
-      setEventLog([])
     } else {
       const matchingMap = pickMap(nextMap, mapRef.current, nextState.mapVersion)
       mapRef.current = matchingMap
       setSnapshot({ map: matchingMap, state: nextState })
-      setEventLog((current) => nextPanelLog(current, nextState))
       if (!matchingMap) {
         const mapVersion = nextState.mapVersion
         const runId = nextState.runId
@@ -91,5 +88,5 @@ export function usePanel(port: PanelPort) {
 
   useEffect(() => { if (snapshot?.map) mapRef.current = snapshot.map }, [snapshot?.map])
 
-  return { snapshot, connection, loading, error, updatedAt, eventLog, refresh }
+  return { snapshot, connection, loading, error, updatedAt, refresh }
 }

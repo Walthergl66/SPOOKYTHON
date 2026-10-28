@@ -57,5 +57,6 @@ Un ADR documenta una elección duradera y su motivo. «Aceptada para diseño» n
 | [ADR-050](0050-despliegue-lightsail-oidc-firewall-temporal.md) | CD a Lightsail con OIDC y regla SSH temporal /32 por runner | Aceptada para implementación | CAM-140; primera configuración AWS/Actions y ejecución pendientes. |
 | [ADR-051](0051-replanificacion-a-refugio-alternativo.md) | Elegir un refugio alcanzable si el destino asignado queda sin ruta legal | Aceptada e implementada localmente; regresiones focalizadas pasan | CAM-141; CA-002-15/T-63. |
 | [ADR-052](0052-perfiles-narrativos-aislados.md) | Asignar perfiles ficticios estables sin consumir el RNG del mundo y mostrarlos en la ficha | Aceptada para implementación local | CAM-143; T-65 y revisión visual pendientes. |
+| [ADR-053](0053-sectores-por-poligonos-geomanta.md) | Identificar barrio y parroquia de cada refugio por polígonos GeoManta | Implementada localmente; validación visual pendiente | CAM-147; T-66 pendiente. |
 
 Usar [plantilla](../../metodo/plantillas/decision.md). Numeración correlativa, fecha, contexto, decisión, alternativas, consecuencias, pendientes y enlaces. No renumerar IDs ya citados. Para cambiar una decisión relevante, añadir ADR nuevo y marcar el anterior sustituido con enlace recíproco. Correcciones menores pueden aclararse sin fingir que la decisión original ya decía otra cosa.

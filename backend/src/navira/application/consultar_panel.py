@@ -50,6 +50,19 @@ class ConsultarPanel:
             return None
         return snapshot.partida.run_id, snapshot.version
 
+    def version_mapa_activo(self) -> str:
+        """Devuelve la identidad del mapa sin proyectar sus decenas de miles de tramos."""
+
+        try:
+            snapshot = self.snapshots.obtener_activa()
+        except RuntimeError as error:
+            raise PanelNoDisponible("Hay más de una partida activa.") from error
+        if snapshot is None or snapshot.partida.estado is not EstadoPartida.ACTIVA:
+            raise PanelNoDisponible("No hay un mapa de partida activo para mostrar.")
+        if self.mapas.obtener(snapshot.partida.map_version) is None:
+            raise PanelNoDisponible("No está disponible la versión de mapa de la partida.")
+        return snapshot.partida.map_version
+
     def consultar_estado(self) -> dict[str, object]:
         """Devuelve `sin_partida` o una observación de la partida versionada."""
 

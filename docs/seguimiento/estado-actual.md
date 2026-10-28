@@ -1,6 +1,10 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-28, CAM-145. La ficha del habitante seleccionado muestra solo nombre, edad, ocupación y descripción ficticios; su ruta queda resaltada en el mapa. La lista de refugios muestra sector para los anclajes oficiales que coinciden por ID y nodo; ubicaciones personalizadas sin metadata territorial aparecen como no identificadas. Build frontend, check_docs, check_sdd y diff check pasan. Vite responde HTTP 200; el backend se conserva activo para no descartar la partida y `/panel/estado` respondió run activo, turno 140/resuelta, con 80 perfiles. No se ejecutaron pruebas de comportamiento ni inspección visual de CAM-144/145. T-65, etiquetas de refugio y nombres viales siguen pendientes de inspección visual. La última versión desplegada comprobada sigue siendo `81212bce74cea102b27a308f0f3bff894af43003` (CAM-139), no incluye CAM-142/143/144/145. El CD a Lightsail está configurado en workflow con OIDC restringido a `master` y apertura SSH temporal al `/32` del runner; falta proveedor OIDC, stack IAM y variable `LIGHTSAIL_DEPLOY_ROLE_ARN`, y ejecutar el primer deploy automático. Siguiente paso exacto: revisar visualmente los nombres de sector en la lista de refugios y ejecutar T-27/T-65 cuando corresponda.
+Última actualización: 2026-10-28, CAM-157. CAM-156 permite centrar el mapa en un refugio seleccionado desde su lista. CAM-157 reduce CPU de compresión para la geometría Manta y reutiliza gzip/ETag por versión; mapa frío 407–449 ms según cliente, recarga cacheada bajo 34 ms de tiempo total TestClient y 304 bajo 3 ms. Una corrida local aislada de 200 habitantes/20 turnos obtuvo p95 `/paso` 67,364 ms, 3.944 HTTP 200 y 0 fallas; no es campaña R3 ni medición AWS. El pulido CAM-155, cierre de alerta CAM-154 y rollback visual CAM-153 se conservan.
+
+## Reanudación exacta
+
+CAM-157: pruebas backend `test_panel.py` 19/19 y `test_api_http.py` 8/8, frontend 97/97, build, compileall, validadores docs/SDD y diff check pasan. La app activa previa en 5173/8000 no se reinició; navegador automatizado está deshabilitado. Pendiente medir carga/render hasta mapa visible y campaña R3 sostenida en el navegador/entorno desplegado; mapa frío continúa sobre el objetivo de 150 ms y el build advierte el chunk cartográfico de 1.067 kB. No se creó commit ni despliegue.
 
 ## Hechos verificados
 

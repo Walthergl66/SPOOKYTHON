@@ -186,6 +186,26 @@ class PanelPublicoTests(unittest.TestCase):
         self.assertEqual(len(mapa["refugios"]), len(contexto.grafo.mapa.refugios))
         self.assertNotIn("zombies", mapa)
 
+    def test_mapa_comprimido_reutiliza_etag_sin_reproyectar(self) -> None:
+        cliente = TestClient(crear_app_demo(semilla=9))
+        primera = cliente.get("/panel/mapa", headers={"Accept-Encoding": "gzip"})
+
+        self.assertEqual(primera.status_code, 200)
+        self.assertEqual(primera.headers.get("Content-Encoding"), "gzip")
+        self.assertTrue(primera.headers.get("ETag"))
+        self.assertIn("nodos", primera.json())
+
+        revalidada = cliente.get(
+            "/panel/mapa",
+            headers={
+                "Accept-Encoding": "gzip",
+                "If-None-Match": primera.headers["ETag"],
+            },
+        )
+        self.assertEqual(revalidada.status_code, 304)
+        self.assertEqual(revalidada.content, b"")
+        self.assertEqual(revalidada.headers.get("ETag"), primera.headers["ETag"])
+
     def test_ruta_prevista_coincide_con_la_primera_decision_del_motor(self) -> None:
         app = crear_app_demo(semilla=0, escenario="libre")
         cliente = TestClient(app)
