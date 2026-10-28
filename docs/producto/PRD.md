@@ -22,7 +22,7 @@ Recomendar un siguiente paso válido hacia un refugio, priorizando menos mordida
 
 ### PRD-04 — Observación comprensible en vivo
 
-Mostrar zombies visibles por tipo, sobrevivientes, rutas, refugios, cierres y turno. Al seleccionar un sobreviviente en el mapa, mostrar sus datos y la ruta recomendada del snapshot actual. Al confirmarse un incidente vial, alertar en el mapa y señalar el punto afectado; las nuevas recomendaciones deben rodear el cierre. Comunicar desconexión y última actualización. Prioridad: obligatoria; un mapa detenido no se presenta como vivo. Detalle: [espectador](../dominio/flujos/espectador.md).
+Mostrar zombies visibles por tipo, sobrevivientes, rutas, refugios, cierres y turno. Al seleccionar un sobreviviente en el mapa, resaltar su ruta recomendada del snapshot actual y mostrar en el panel lateral únicamente su ficha ficticia cuando exista; no presentar allí datos de estado, control, nodos, destino ni pasos de ruta. Al confirmarse un incidente vial, alertar en el mapa y señalar el punto afectado; las nuevas recomendaciones deben rodear el cierre. Comunicar desconexión y última actualización. Prioridad: obligatoria; un mapa detenido no se presenta como vivo. Detalle: [espectador](../dominio/flujos/espectador.md).
 
 ### PRD-05 — Juego humano complementario (alcance anterior)
 
@@ -62,7 +62,7 @@ Permitir que visitantes anónimos usen Reto, Simulador y Juego de operador en un
 
 ### PRD-14 — Identidad narrativa de habitantes
 
-Asignar a cada habitante un perfil ficticio, elegido aleatoriamente al crear el run, y mostrarlo en la ficha del habitante seleccionado. El catálogo inicial contiene 500 perfiles compactos (nombre, edad adulta aproximada, ocupación y descripción breve); no se repiten dentro del mismo run y una semilla fija reproduce la asignación. Los habitantes colocados durante Jugar o incorporados como jugador también reciben un perfil libre del catálogo. La narración no representa personas reales ni cambia movimiento, decisiones, rutas, encuentros, resultados o datos de seguridad. Detalle: [SPEC-001](../metodo/especificaciones/SPEC-001-mundo-simulacion.md), [SPEC-003](../metodo/especificaciones/SPEC-003-panel-vivo.md) y [datos](../dominio/datos.md).
+Asignar a cada habitante un perfil ficticio, elegido aleatoriamente al crear el run, y mostrar únicamente ese perfil en el panel al seleccionar al habitante. El catálogo inicial contiene 500 perfiles compactos (nombre, edad adulta aproximada, ocupación y descripción breve); no se repiten dentro del mismo run y una semilla fija reproduce la asignación. Los habitantes colocados durante Jugar o incorporados como jugador también reciben un perfil libre del catálogo. La narración no representa personas reales ni cambia movimiento, decisiones, rutas, encuentros, resultados o datos de seguridad. Detalle: [SPEC-001](../metodo/especificaciones/SPEC-001-mundo-simulacion.md), [SPEC-003](../metodo/especificaciones/SPEC-003-panel-vivo.md) y [datos](../dominio/datos.md).
 
 ## Alcance y exclusiones
 

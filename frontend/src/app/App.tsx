@@ -29,8 +29,6 @@ export function App() {
   const [mode, setMode] = useState<NaviraMode>('challenge')
   const [selectedSurvivorId, setSelectedSurvivorId] = useState<string | undefined>()
   const [selectedRoute, setSelectedRoute] = useState<PanelRoute | null>(null)
-  const [selectedRouteLoading, setSelectedRouteLoading] = useState(false)
-  const [selectedRouteError, setSelectedRouteError] = useState<string | null>(null)
   const [challengeRound, setChallengeRound] = useState<1 | 2 | 3>(1)
   const [challengeBusy, setChallengeBusy] = useState(false)
   const [challengeError, setChallengeError] = useState<string | null>(null)
@@ -51,8 +49,6 @@ export function App() {
     setMode(next)
     setSelectedSurvivorId(undefined)
     setSelectedRoute(null)
-    setSelectedRouteError(null)
-    setSelectedRouteLoading(false)
     setChallengeBusy(false)
     setChallengeError(null)
     clearSimulatorMessage()
@@ -95,8 +91,6 @@ export function App() {
   const selectedSnapshotRouteKey = selectedSnapshotRoute?.trayecto.join('\u0000')
   useEffect(() => {
     if (!state || !selectedRouteOwner || !selectedSurvivor || selectedSurvivor.estado !== 'activo') {
-      setSelectedRouteLoading(false)
-      setSelectedRouteError(null)
       return
     }
     if (selectedSnapshotRoute) {
@@ -108,8 +102,6 @@ export function App() {
         trayecto: selectedSnapshotRoute.trayecto,
       }
       setSelectedRoute((current) => current?.runId === route.runId && current.turno === route.turno && current.sobrevivienteId === route.sobrevivienteId && current.trayecto.join('\u0000') === route.trayecto.join('\u0000') ? current : route)
-      setSelectedRouteLoading(false)
-      setSelectedRouteError(null)
       return
     }
     // Solo el modo automático solicita una ruta fuera de la fase de decisiones.
@@ -118,16 +110,10 @@ export function App() {
     if (selectedRoute && selectedRoute.runId === state.runId && selectedRoute.turno === state.turno && selectedRoute.sobrevivienteId === selectedRouteOwner) return
 
     const controller = new AbortController()
-    setSelectedRouteLoading(true)
-    setSelectedRouteError(null)
     void panelPort.loadRoute(selectedRouteOwner, controller.signal).then((route) => {
       if (route.runId !== state.runId || route.turno !== state.turno || route.sobrevivienteId !== selectedRouteOwner) return
       setSelectedRoute(route)
-    }).catch((error: unknown) => {
-      if (!controller.signal.aborted) setSelectedRouteError(error instanceof Error ? error.message : 'No se pudo calcular la ruta recomendada.')
-    }).finally(() => {
-      if (!controller.signal.aborted) setSelectedRouteLoading(false)
-    })
+    }).catch(() => undefined)
     return () => controller.abort()
   }, [state?.runId, state?.turno, state?.modo, selectedRouteOwner, selectedSurvivor?.estado, selectedSnapshotRouteKey, selectedRoute])
   const stateWithSelectedRoute = useMemo(() => {
@@ -166,8 +152,6 @@ export function App() {
     setChallengeError(null)
     setSelectedSurvivorId(undefined)
     setSelectedRoute(null)
-    setSelectedRouteError(null)
-    setSelectedRouteLoading(false)
     setOperatorTool('habitante')
     setOperatorError(null)
     setOperatorNotice(null)
@@ -282,8 +266,7 @@ export function App() {
           {simulatorMessage ? <div className="control-notice is-error" role="alert"><strong>No se pudo completar la acción</strong><span>{simulatorMessage}</span></div> : null}
           {modeRunMatches && simulator?.error ? <div className="control-notice is-error" role="alert"><strong>El reloj se detuvo</strong><span>{simulator.error}</span></div> : null}
 
-          <div className="run-details"><span>Modo de vista</span><strong>{mode === 'challenge' ? `Reto · ronda ${challengeRound}` : mode === 'simulator' ? 'Simulador · demo libre' : 'Juego · operador'}</strong><span>Turno observado</span><strong>{visibleState?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
-          {active && allSurvivors.length > 0 && map ? <Suspense fallback={<div className="survivor-route-loading" role="status">Cargando información del habitante…</div>}><SurvivorRoutePanel state={stateWithSelectedRoute ?? state!} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} routeLoading={selectedRouteLoading} routeError={selectedRouteError} /></Suspense> : null}
+          {active && allSurvivors.length > 0 ? <Suspense fallback={null}><SurvivorRoutePanel state={visibleState!} selectedSurvivorId={selectedRouteOwner} /></Suspense> : null}
         </aside>
 
         <section className="city-panel dashboard-map-panel" aria-label="Mapa y estado de Manta">

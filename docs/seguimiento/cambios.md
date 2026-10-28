@@ -1,3 +1,16 @@
+## CAM-144 — Dejar solo los datos ficticios en la ficha del habitante
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario para conservar únicamente los datos ficticios visibles en el panel del habitante seleccionado.
+- Especificación y trazabilidad: PRD-04/PRD-14, SPEC-003 CA-003-06/07, P4-09 y T-65.
+- Resultado: al seleccionar un habitante se muestra solo nombre, edad, ocupación y descripción ficticios. Se quitaron de la ficha el estado, control, nodos, destino, ruta textual y selector de lista. La ruta recomendada sigue destacada sobre el mapa; si falta el perfil no se muestra ficha.
+- Archivos: `frontend/src/features/map/SurvivorRoutePanel.tsx`, `frontend/src/app/App.tsx`, `frontend/src/styles.css`; PRD, SPEC-003, módulo frontend, T-65, plan, trazabilidad, estado e historial.
+- Validación: `cd frontend && npm run build` correcto, con la advertencia existente de bundle cartográfico >500 kB; `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` correctos. Se reinició Vite; frontend HTTP 200. Backend `/salud` HTTP 200 y `GET /panel/estado` HTTP 200 con partida activa y perfiles en el snapshot.
+- Validación conductual y visual: pendiente T-65; no se afirma comprobación en navegador.
+- Límites: no cambia los datos de perfil, el contrato del panel, las rutas del servidor ni la simulación. La selección queda basada en el clic sobre marcador.
+- Siguiente acción: validar build/checks y revisar la vista del panel con un habitante seleccionado.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-143 — Perfiles narrativos ficticios para habitantes
 
 - Fecha: 2026-10-28, America/Guayaquil.
