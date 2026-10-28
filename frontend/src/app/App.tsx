@@ -3,7 +3,7 @@ import { OperatorControls } from '../features/operator/OperatorControls'
 import type { OperatorTool } from '../domain/operator'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { RefugeDialog } from '../features/map/RefugeDialog'
-import { refugeSectorLabel } from '../features/map/refugeSectors'
+import { loadMantaSectors, refugeSectorLabel, type SectorCollection } from '../features/map/refugeSectors'
 import type { PanelConnection, PanelMap, PanelRoute, PanelState } from '../domain/panel'
 import { statusMatchesMode, type SimulatorSetup } from '../domain/simulator'
 import type { PanelPort, SimulatorPort } from '../application/ports'
@@ -38,6 +38,8 @@ export function App() {
   const [operatorError, setOperatorError] = useState<string | null>(null)
   const [operatorNotice, setOperatorNotice] = useState<string | null>(null)
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
+  const [sectorData, setSectorData] = useState<SectorCollection | null>(null)
+  const [sectorDataFailed, setSectorDataFailed] = useState(false)
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
   const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, clearMessage: clearSimulatorMessage, busy: simulatorBusy, pendingAction, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
@@ -80,6 +82,25 @@ export function App() {
 
   const state = snapshot?.state ?? null
   const map = snapshot?.map ?? null
+  useEffect(() => {
+    if (!map?.refugios.length || !map.version.toLowerCase().includes('manta')) {
+      setSectorData(null)
+      setSectorDataFailed(false)
+      return
+    }
+    let current = true
+    void loadMantaSectors().then((data) => {
+      if (current) setSectorData(data)
+    }).catch(() => {
+      if (current) setSectorDataFailed(true)
+    })
+    return () => { current = false }
+  }, [map?.version, map?.refugios.length])
+  const refugeLabels = useMemo(() => {
+    if (!map?.version.toLowerCase().includes('manta') || !sectorData) return new Map<string, string>()
+    const nodes = new Map(map.nodos.map((node) => [node.id, node]))
+    return new Map(map.refugios.map((refuge) => [refuge.id, refugeSectorLabel(nodes.get(refuge.nodo), sectorData)]))
+  }, [map?.version, map?.nodos, map?.refugios, sectorData])
   const modeSnapshotMatches = modeRunMatches && state?.runId === simulator?.runId
   const active = modeSnapshotMatches && state?.estado === 'activa'
   const visibleState = modeSnapshotMatches ? state : null
@@ -297,7 +318,7 @@ export function App() {
           </section>
           <section className="stats-panel refuge-panel">
             <div className="panel-section-heading"><span className="panel-overline">DESTINOS DEL MAPA</span><h2>Refugios representados</h2></div>
-            {modeRunMatches && map?.refugios.length ? <ul className="refuge-list">{map.refugios.map((refuge) => <li key={refuge.id}><span className="refuge-mark" aria-hidden="true">⌂</span><span><strong>{refuge.id}</strong><small>{refugeSectorLabel(refuge, map.nodos)}</small></span></li>)}</ul> : <p className="empty-note">Se mostrarán al iniciar una partida.</p>}
+            {modeRunMatches && map?.refugios.length ? <ul className="refuge-list">{map.refugios.map((refuge) => <li key={refuge.id}><span className="refuge-mark" aria-hidden="true">⌂</span><span><strong>{refuge.id}</strong><small>{refugeLabels.get(refuge.id) ?? (sectorDataFailed ? 'Sector no disponible' : 'Identificando sector…')}</small></span></li>)}</ul> : <p className="empty-note">Se mostrarán al iniciar una partida.</p>}
           </section>
           <section className="stats-panel event-panel">
             <div className="panel-section-heading"><span className="panel-overline">SECUENCIA DEL PANEL</span><h2>Últimas actualizaciones</h2></div>

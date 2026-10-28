@@ -1,3 +1,32 @@
+## CAM-148 — Evitar que un polígono degenerado asigne el mismo barrio a todos los refugios
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario reportó que los cuatro refugios aparecían como «Jesus de Nazareth» aunque están separados en el mapa.
+- Relación: PRD-01/04, SPEC-008 CA-008-02, ADR-053; corrección focalizada de CAM-147. T-66 continúa pendiente como validación automatizada y visual completa.
+- Diagnóstico: el snapshot GeoManta contiene un barrio nombrado «Jesus de Nazareth» con `areaM2: 0` y vértices consecutivos repetidos. `pointOnSegment` calculaba producto cruzado/dot para una arista de longitud cero; ambas magnitudes eran cero para cualquier punto, por lo que el punto se consideraba dentro de ese polígono. Al tener área cero, el barrio se ordenaba antes que cualquier coincidencia válida y ganaba para los cuatro refugios.
+- Cambio: excluir barrios con área cartográfica reportada menor o igual que cero y tratar una arista de longitud cero como coincidente únicamente cuando el punto es exactamente su extremo. Si no hay barrio válido, se conserva el fallback parroquial.
+- Archivos: `frontend/src/features/map/refugeSectors.ts`, `docs/dominio/mapa-manta.md`, SPEC-008, T-66, módulo frontend, trazabilidad, estado, índice e historial.
+- Validación: `cd frontend && npm run build` correcto (persiste advertencia del chunk cartográfico >500 kB); `python3 backend/scripts/check_docs.py` correcto (148 Markdown/150 archivos); `python3 backend/scripts/check_sdd.py` correcto (11 SPEC); `git diff --check` correcto. Clasificación puntual ejecutada con el `/panel/mapa` activo y el algoritmo corregido: R-01 Parroquia San Mateo; R-02 Parroquia Parte De Cabecera Cantonal; R-03 La Fae · Los Esteros; R-04 Altamira · Los Esteros. No se ejecutan tests automatizados ni se inspecciona navegador en esta tarea. El backend no se reinicia.
+- Límite: la corrección no valida legalmente la cartografía fuente; 38 nodos continúan sin cobertura territorial y T-66 aún no está cerrado.
+- Siguiente paso: actualizar/confirmar Vite y revisar la lista en el panel. La clasificación indicada corresponde solo al snapshot activo consultado, no a todo run posible.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-147 — Asignar barrio y parroquia por polígonos de GeoManta
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario pidió que el nombre de cada refugio se obtenga del sector real donde cae su ubicación, cubriendo el mapa en lugar de aproximarlo con puntos cercanos.
+- Relación: PRD-01/04, SPEC-008 CA-008-02, ADR-053, P4-04 y T-66.
+- Motivo: la distancia a uno de cuatro refugios no identifica una frontera de barrio y podía rotular ubicaciones personalizadas de forma incorrecta.
+- Resultado: la lista identifica el barrio nombrado que contiene cada refugio y agrega su parroquia; barrios sin nombre/no disponibles recurren a la parroquia contenedora. Fuera de cobertura presenta «Sector no identificado», sin vecino más cercano. El asset se carga desde Navira en segundo plano una vez disponible el mapa Manta, sin llamar al GeoServer en cada snapshot.
+- Fuente/datos: WFS público GeoManta del GAD Manta, `geo_barrio` (231 polígonos; 221 nombres) y `geo_parroquia` (10 polígonos), más seis límites parroquiales CONALI/DPA-2023 del Geoportal EEQ. Snapshot consultado el 2026-10-28 y transformado a EPSG:4326. El asset contiene 247 polígonos y pesa 1.648.942 bytes sin comprimir (468.825 con gzip local). No se encontró metadato explícito de licencia abierta en GeoManta; la capa CONALI incluye límites legales/referenciales y zonas en estudio. Se conserva atribución y queda pendiente confirmar términos de redistribución.
+- Resultado cartográfico observado en las cuatro coordenadas de refugios: Cristo Rey · Tarqui; Colinas de Rocafuerte · Tarqui; La Dolorosa · Manta; Barbasquillo · Manta. El segundo y tercero difieren de la aproximación histórica; corresponde a la intersección con polígonos, no a la etiqueta de anclaje anterior.
+- Archivos: `frontend/src/features/map/refugeSectors.ts`, `frontend/src/app/App.tsx`, asset GeoJSON, `docs/dominio/mapa-manta.md`, SPEC-008, T-66, ADR-053, módulo frontend, plan, trazabilidad, índice y estado.
+- Validación: `cd frontend && npm run build` pasa (persiste advertencia de chunks cartográficos >500 kB); `python3 backend/scripts/check_docs.py` pasa (148 Markdown/150 archivos), `python3 backend/scripts/check_sdd.py` pasa (11 SPEC) y `git diff --check` pasa. El build incluye el asset. Vite fue reiniciado y sirve la app y el GeoJSON con HTTP 200 (1.648.942 bytes); backend `/salud` sigue HTTP 200 y no se reinició. No se ejecutaron tests ni inspección visual.
+- Cobertura: al cruzar todas las parroquias del asset con 35.518 nodos jugables, 35.480 (99,89 %) caen dentro de alguna parroquia; 38 quedan fuera. Para los refugios oficiales las etiquetas observadas son Cristo Rey · Tarqui, Colinas de Rocafuerte · Tarqui, La Dolorosa · Manta y Barbasquillo · Manta.
+- Límites: snapshot fechado; no certifica vigencia legal, límites catastrales, seguridad de los refugios ni cobertura de calles. La fuente no publicó licencia abierta visible y CONALI advierte que incorpora zonas en estudio. La respuesta comprimida del servidor real aún no se midió. T-66 debe comprobar con pruebas espaciales el cambio al cruzar un límite y el fallback ante fallo de carga.
+- Siguiente paso: correr validadores documentales, corregir hallazgos y luego inspeccionar el panel visualmente; confirmar autorización de redistribución antes de publicar el asset en el despliegue.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-146 — Asignar el sector más cercano a refugios configurables
 
 - Fecha: 2026-10-28, America/Guayaquil.
@@ -5,8 +34,9 @@
 - Relación: PRD-01/04, SPEC-008 CA-008-02, P4-04 y T-27; amplía CAM-145.
 - Resultado: cada ubicación de refugio se compara geográficamente con los cuatro puntos seguros del GAD Manta documentados en el fixture. Los nodos oficiales muestran su sector; una ubicación configurada muestra «Sector cercano: …» según el anclaje de menor distancia Haversine. El ID del nodo no se muestra.
 - Archivos: `frontend/src/features/map/refugeSectors.ts`, `frontend/src/app/App.tsx`; SPEC-008, módulos frontend, T-27, plan, trazabilidad, estado e historial.
-- Validación: pendiente de build, validadores documentales/SDD y `git diff --check`.
+- Validación: `cd frontend && npm run build` correcto (permanece la advertencia conocida de bundle cartográfico >500 kB); `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` correctos. Vite reiniciado, frontend HTTP 200 y backend `/salud` HTTP 200; el proceso backend no se reinició.
 - Límite: asigna sector por proximidad a puntos oficiales, no por polígonos parroquiales; los sectores de puntos personalizados son aproximados.
+- Estado histórico: la aproximación de CAM-146 queda reemplazada para el panel por la asignación poligonal de CAM-147.
 - Commit o PR: no solicitado ni creado.
 
 ## CAM-145 — Mostrar el sector de los refugios oficiales
@@ -20,6 +50,7 @@
 - Validación: `cd frontend && npm run build` correcto (se mantiene advertencia existente de bundle cartográfico >500 kB); `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` correctos. Vite reiniciado y frontend HTTP 200; backend preservado, `/salud` HTTP 200 y `/panel/estado` HTTP 200 con run activo.
 - Validación visual: pendiente; no se afirma que se inspeccionó la interfaz en navegador.
 - Límite: los puntos personalizados no tienen polígonos o metadatos territoriales en el contrato actual, así que no se les inventa un sector.
+- Continuidad: CAM-146 amplía este comportamiento y resuelve ubicaciones personalizadas mediante el punto sectorial oficial más cercano, etiquetándolo como aproximación.
 - Commit o PR: no solicitado ni creado.
 
 ## CAM-144 — Dejar solo los datos ficticios en la ficha del habitante

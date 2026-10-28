@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-146. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
+Actualizado: 2026-10-28, CAM-148. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
 
 ## Dónde está cada cosa
 
@@ -102,6 +102,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-050](arquitectura/decisiones/0050-despliegue-lightsail-oidc-firewall-temporal.md) | CD con OIDC y acceso SSH temporal acotado al runner | Cambie identidad AWS, permisos o firewall temporal de Actions. |
 | [ADR-051](arquitectura/decisiones/0051-replanificacion-a-refugio-alternativo.md) | Elegir un refugio alcanzable cuando el objetivo asignado pierde toda ruta legal | Cambie la política de destino alternativo del planificador. |
 | [ADR-052](arquitectura/decisiones/0052-perfiles-narrativos-aislados.md) | Perfiles narrativos ficticios estables, sin alterar el RNG del mundo | Cambie catálogo, asignación o alcance narrativo. |
+| [ADR-053](arquitectura/decisiones/0053-sectores-por-poligonos-geomanta.md) | Asignar barrio/parroquia de refugios por polígonos GeoManta, con snapshot local | Cambie fuente, método espacial o cobertura de etiquetas territoriales. |
 | [ADR-048](arquitectura/decisiones/0048-puente-r2-como-condicion-inicial.md) | Aplicar el puente colapsado de R2 al inicio antes de la primera decisión | Cambie el calendario/semántica inicial del puente del Reto. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 

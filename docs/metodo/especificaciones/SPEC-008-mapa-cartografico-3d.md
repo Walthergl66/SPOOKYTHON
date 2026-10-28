@@ -4,8 +4,8 @@ ID: SPEC-008
 Estado: en-revision
 Requisitos: PRD-01, PRD-04, TRD-07, TRD-09, TRD-15
 Tareas: P1-01, P4-04
-Pruebas: T-27, T-38, T-39, T-59, T-61, T-64
-Cambio: CAM-146
+Pruebas: T-27, T-38, T-39, T-59, T-61, T-64, T-66
+Cambio: CAM-148
 Evidencia: [límite jugable CAM-077](../../calidad/resultados/limite-jugable-cam077.md), [ventana urbana CAM-076](../../calidad/resultados/ventana-urbana-cam076.md), [cobertura CAM-073](../../calidad/resultados/cobertura-manta-cam073.md), [margen de navegación CAM-074](../../calidad/resultados/margen-navegacion-5km-cam074.md), [mar visible CAM-075](../../calidad/resultados/mar-visible-cam075.md), [reportes CAM-051..056](../../calidad/resultados/). CAM-142 agrega nombres viales y compila; T-64 visual aún no está comprobada.
 
 ## Objetivo y alcance
@@ -19,7 +19,7 @@ La primera implementación ofrece estilo oscuro, edificios extruidos cuando los 
 | Criterio | Comportamiento verificable | Pruebas |
 |---|---|---|
 | CA-008-01 | El mapa central carga cartografía vectorial con coordenadas de la envolvente ampliada del cantón Manta, controles de zoom/rotación y atribución legible a OpenFreeMap/OpenMapTiles/OSM. | T-27 |
-| CA-008-02 | Sobre el mapa base, las capas servidoras representan calles/bloqueos, rutas previstas y movimientos confirmados, refugios, sobrevivientes y zombies visibles en sus coordenadas. La lista identifica el sector del refugio por coincidencia con un anclaje oficial o, para ubicaciones personalizadas, por el anclaje geográfico más cercano; el segundo caso se etiqueta como sector cercano, no como frontera administrativa. Caminantes, corredores y hordas se distinguen con marcador y glifo propios: caminante rojo `Z`, corredor morado `C`, horda naranja `H`. | T-27, T-61 |
+| CA-008-02 | Sobre el mapa base, las capas servidoras representan calles/bloqueos, rutas previstas y movimientos confirmados, refugios, sobrevivientes y zombies visibles en sus coordenadas. La lista identifica el barrio que contiene cada refugio mediante polígonos de GeoManta y agrega su parroquia; excluye barrios cuyo proveedor reporta área cero y protege el punto-en-segmento de aristas degeneradas. Si no hay barrio válido, usa la parroquia que contiene la ubicación, priorizando GeoManta y recurriendo al límite parroquial CONALI en zonas vecinas. Fuera de cobertura muestra «Sector no identificado» y nunca infiere una frontera por cercanía a otro refugio. Caminantes, corredores y hordas se distinguen con marcador y glifo propios: caminante rojo `Z`, corredor morado `C`, horda naranja `H`. | T-27, T-61, T-66 |
 | CA-008-03 | La vista inclinada presenta extrusión 3D de huellas con altura disponible y permite alternar a 2D; datos de altura ausentes no se presentan como mediciones reales. | T-27 |
 | CA-008-04 | Falla del proveedor/WebGL muestra un estado comprensible y la interfaz mantiene disponibles las estadísticas/control; el build de frontend compila. | T-27 |
 | CA-008-05 | Cuando llega un snapshot de una partida en curso, cada actor cuya posición confirmada cambió se interpola por el trayecto entre nodos; respeta movimiento reducido y nunca modifica el estado del servidor. | T-27 |
