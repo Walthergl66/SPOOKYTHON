@@ -4,9 +4,9 @@ ID: SPEC-008
 Estado: en-revision
 Requisitos: PRD-01, PRD-04, TRD-07, TRD-09, TRD-15
 Tareas: P1-01, P4-04
-Pruebas: T-27, T-38, T-39, T-59, T-61
-Cambio: CAM-134
-Evidencia: [límite jugable CAM-077](../../calidad/resultados/limite-jugable-cam077.md), [ventana urbana CAM-076](../../calidad/resultados/ventana-urbana-cam076.md), [cobertura CAM-073](../../calidad/resultados/cobertura-manta-cam073.md), [margen de navegación CAM-074](../../calidad/resultados/margen-navegacion-5km-cam074.md), [mar visible CAM-075](../../calidad/resultados/mar-visible-cam075.md), [reportes CAM-051..056](../../calidad/resultados/)
+Pruebas: T-27, T-38, T-39, T-59, T-61, T-64
+Cambio: CAM-142
+Evidencia: [límite jugable CAM-077](../../calidad/resultados/limite-jugable-cam077.md), [ventana urbana CAM-076](../../calidad/resultados/ventana-urbana-cam076.md), [cobertura CAM-073](../../calidad/resultados/cobertura-manta-cam073.md), [margen de navegación CAM-074](../../calidad/resultados/margen-navegacion-5km-cam074.md), [mar visible CAM-075](../../calidad/resultados/mar-visible-cam075.md), [reportes CAM-051..056](../../calidad/resultados/). CAM-142 agrega nombres viales y compila; T-64 visual aún no está comprobada.
 
 ## Objetivo y alcance
 
@@ -29,6 +29,7 @@ La primera implementación ofrece estilo oscuro, edificios extruidos cuando los 
 | CA-008-09 | La cartografía del proveedor permanece visible dentro del viewport urbano fijado y los polígonos/canales de agua se distinguen del terreno; el recorte opaco comienza fuera de esa ventana. La vista y el selector usan el mismo recorte. | T-27, T-39 |
 | CA-008-10 | En partidas Manta, el grafo de juego excluye nodos fuera de la ventana y calles que crucen su borde; inicios, zombies, rutas y movimientos solo usan ese subgrafo. El selector encuadra la misma ventana, solo ofrece nodos internos y el endpoint rechaza una selección exterior. El fixture fuente ampliado permanece intacto. | T-39 |
 | CA-008-11 | Al entrar a la app, el componente MapLibre monta el mapa vacío y la cartografía base comienza a cargar mientras se configura una partida, sin esperar al snapshot de actores. La geometría del juego se conserva en caché de módulo por `mapVersion`, limitada a las dos versiones recientes e incluida cuando un snapshot indique `sin_partida`; los actores, eventos y rutas dinámicos solo proceden del snapshot vigente. El shell y controles siguen montados durante la carga. Cambiar de modo o `runId` no debe borrar ni volver a descargar una geometría válida. Una carga fallida debe informar el estado y permitir recuperación. | T-59 |
+| CA-008-12 | Mostrar nombres de calles del vector tile `transportation_name` siguiendo la línea de la vía: avenidas/calles principales desde el zoom de vista urbana y calles locales al acercarse. MapLibre controla la colisión; texto y halo mantienen contraste con el estilo oscuro, y las etiquetas quedan por debajo de actores y eventos. El mapa de selección de refugios conserva los nombres. No crear marcadores DOM/GeoJSON por calle ni modificar el grafo o las decisiones del motor. | T-64 |
 
 ## Plan y límites
 

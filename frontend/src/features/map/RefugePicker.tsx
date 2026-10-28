@@ -5,6 +5,7 @@ import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { outsideBoundsMask } from './mapArea'
 import { nodoMasCercano, puntoDentroLimites, type SimulatorCandidatos } from '../../domain/simulator'
+import { addStreetNameLayers } from './addStreetNameLayers'
 
 interface RefugePickerProps {
   candidates: SimulatorCandidatos
@@ -61,6 +62,7 @@ export function RefugePicker({ candidates, refugeIds, slots, placing, onPick, on
       instance.addLayer({ id: 'picker-outside-mask', source: 'picker-outside-mask', type: 'fill', paint: { 'fill-color': '#111722', 'fill-opacity': 0.94 } })
       // Trazo igual al de CityMap: calles finas y tenues que se marcan al acercar el zoom.
       instance.addLayer({ id: 'picker-streets', source: 'picker-streets', type: 'line', paint: { 'line-color': '#85b9d2', 'line-opacity': 0.28, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.2, 16, 3.2] } })
+      addStreetNameLayers(instance)
       instance.addLayer({ id: 'picker-nodes', source: 'picker-nodes', type: 'circle', paint: { 'circle-radius': 2, 'circle-color': '#b0e2d2', 'circle-opacity': 0.6 } })
       instance.addLayer({ id: 'picker-refuges', source: 'picker-refuges', type: 'circle', paint: { 'circle-radius': 9, 'circle-color': '#47cf91', 'circle-stroke-color': '#f4f7fc', 'circle-stroke-width': 1.5 } })
       instance.addLayer({ id: 'picker-refuge-labels', source: 'picker-refuges', type: 'symbol', layout: { 'text-field': ['get', 'label'], 'text-size': 10, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true }, paint: { 'text-color': '#0b1a14' } })

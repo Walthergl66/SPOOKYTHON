@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-141. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
+Actualizado: 2026-10-28, CAM-142. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
 
 ## Dónde está cada cosa
 
@@ -119,7 +119,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [SPEC-005](metodo/especificaciones/SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Cambie la infraestructura o la entrega. |
 | [SPEC-006](metodo/especificaciones/SPEC-006-metodologia.md) | PRD, TRD, ODDD y SDD | Cambie el método documental. |
 | [SPEC-007](metodo/especificaciones/SPEC-007-panel-operador-local.md) | Criterios del tablero y control local de demo, incluida pausa confirmada por servidor (CAM-134/T-60) | Cambie el flujo local de operación; no autoriza control administrativo público. |
-| [SPEC-008](metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial, vista 3D y precarga de geometría por versión (CAM-134/T-59) | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
+| [SPEC-008](metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial, vista 3D, precarga y etiquetas de calles por zoom (CAM-134/T-59, CAM-142/T-64) | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
 | [SPEC-009](metodo/especificaciones/SPEC-009-modo-reto.md) | Presets de la prueba de fuego, separados de demo libre y juego | Cambien las rondas, sus presets o la campaña de evaluación. |
 | [SPEC-010](metodo/especificaciones/SPEC-010-juego-operador.md) | Paleta de operador, nueva partida e intervención del mapa en un mundo vivo | Cambien herramientas, ciclo de partida, validaciones o colocación local de entidades/eventos. |
 | [SPEC-011](metodo/especificaciones/SPEC-011-demo-publica-multisesion.md) | Demo pública multisesión para Reto, Simulador y Jugar | Cambien aislamiento por navegador, límites, expiración o topología pública temporal. |

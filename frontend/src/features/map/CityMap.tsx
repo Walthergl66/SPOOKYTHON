@@ -9,6 +9,7 @@ import type { OperatorTool } from '../../domain/operator'
 import { createActorFeatures, createMovementAnimations, createSimulationFeatures, createStreetFeatures, emptyCollection, indexMapPositions, mergeActiveMovements, movementDurationMs, positionAlongPath } from './mapFeatures'
 import type { AnimatedMovement, FeatureCollection, Position } from './mapFeatures'
 import { boundsWithin, gameBounds, MANTA_CITY_VIEW, outsideBoundsMask, type MapBounds } from './mapArea'
+import { addStreetNameLayers } from './addStreetNameLayers'
 
 interface CityMapProps {
   map: PanelMap
@@ -365,6 +366,7 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
       'line-opacity': ['case', ['get', 'blocked'], 0.95, 0.28],
     },
   })
+  addStreetNameLayers(map)
   map.addLayer({
     id: 'navira-blocked-streets', source: 'navira-simulation', type: 'line',
     filter: ['==', ['get', 'kind'], 'blocked-street'],

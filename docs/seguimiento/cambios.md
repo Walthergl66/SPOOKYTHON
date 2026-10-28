@@ -1,3 +1,14 @@
+## CAM-142 — Mostrar nombres de calles en la cartografía
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de agregar nombres de calles al mapa.
+- Relación: SPEC-008/CA-008-12, PRD-01/04, T-64, P4-04; OpenFreeMap/OpenMapTiles y datos OSM.
+- Decisión: reutilizar la capa vectorial `transportation_name`; mostrar vías principales desde la vista urbana y calles locales con zoom cercano. MapLibre acomoda colisiones, el texto usa halo oscuro y las etiquetas quedan bajo capas dinámicas. La misma utilidad se aplica al mapa de partida y al selector de refugios. Calles sin atributo de nombre quedan sin texto.
+- Archivos: `frontend/src/features/map/addStreetNameLayers.ts`, `CityMap.tsx`, `RefugePicker.tsx`; SPEC-008, módulo frontend, prueba visual T-64, trazabilidad, plan, estado e índice documental.
+- Verificación: `cd frontend && npm run build` pasa (TypeScript y Vite). `check_docs.py`, `check_sdd.py` y `git diff --check` se ejecutan al cierre. No se añadieron ni ejecutaron pruebas automatizadas; T-64 requiere inspección visual manual.
+- Límites/pendiente: la fuente cartográfica solo etiqueta vías que tienen `name` en los vector tiles y la disponibilidad depende de OpenFreeMap/OSM; no se agregan nombres inventados ni se altera el grafo de simulación. Revisar densidad y ubicación de etiquetas en mapa Manta y selector de refugios.
+- Commit o PR: pendiente.
+
 ## CAM-141 — Recalcular hacia un refugio alternativo si el objetivo queda bloqueado
 
 - Fecha: 2026-10-28, America/Guayaquil.
