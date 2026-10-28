@@ -1,13 +1,17 @@
 """Rutas HTTP de la primera fase de Navira."""
 
 import asyncio
+import gzip
+from collections import OrderedDict
 from datetime import datetime, timezone
+from threading import Lock
 from time import monotonic
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, WebSocket, WebSocketDisconnect, status
 from starlette.concurrency import run_in_threadpool
 
 from navira.api import dependencias as deps
+from navira.api.compresion import cliente_acepta_gzip
 from navira.api.auth import validar_api_key
 from navira.api.schemas import (
     RespuestaEstadoPanelSchema,
@@ -56,6 +60,29 @@ from navira.application.decidir_paso import (
 )
 
 router = APIRouter()
+
+# El mapa es inmutable por versión. Se guardan solo dos representaciones gzip
+# para evitar retener otra copia Python de 16 MB y no volver a validarlas ni
+# serializarlas en cada recarga del panel.
+_MAPA_PANEL_GZIP: OrderedDict[str, bytes] = OrderedDict()
+_MAPA_PANEL_GZIP_LOCK = Lock()
+_MAPA_PANEL_GZIP_MAXIMO = 2
+
+
+def _obtener_mapa_gzip(version: str) -> bytes | None:
+    with _MAPA_PANEL_GZIP_LOCK:
+        cuerpo = _MAPA_PANEL_GZIP.get(version)
+        if cuerpo is not None:
+            _MAPA_PANEL_GZIP.move_to_end(version)
+        return cuerpo
+
+
+def _guardar_mapa_gzip(version: str, cuerpo: bytes) -> None:
+    with _MAPA_PANEL_GZIP_LOCK:
+        _MAPA_PANEL_GZIP[version] = cuerpo
+        _MAPA_PANEL_GZIP.move_to_end(version)
+        while len(_MAPA_PANEL_GZIP) > _MAPA_PANEL_GZIP_MAXIMO:
+            _MAPA_PANEL_GZIP.popitem(last=False)
 _PANEL_WS_INTERVAL_SECONDS = 0.25
 _PANEL_WS_HEARTBEAT_SECONDS = 2.0
 
@@ -287,14 +314,52 @@ async def estado_panel(
 
 @router.get("/panel/mapa", response_model=RespuestaMapaPanelSchema, tags=["panel"])
 async def mapa_panel(
+    request: Request,
     consulta: ConsultarPanel | None = Depends(deps.consulta_panel),
-) -> dict[str, object]:
+) -> dict[str, object] | Response:
     """Lee el grafo de la versión asociada a la partida activa."""
 
     if consulta is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No hay mapa activo.")
     try:
-        return consulta.consultar_mapa()
+        version = consulta.version_mapa_activo()
+        etiqueta = f'"{version}"'
+        cache_headers = {
+            "ETag": etiqueta,
+            "Cache-Control": "private, no-cache",
+            "Vary": "Accept-Encoding, Cookie",
+        }
+        if request.headers.get("if-none-match") == etiqueta:
+            return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers=cache_headers)
+
+        acepta_gzip = cliente_acepta_gzip(request.headers.get("accept-encoding", ""))
+        if acepta_gzip:
+            cuerpo = _obtener_mapa_gzip(version)
+            if cuerpo is not None:
+                return Response(
+                    content=cuerpo,
+                    media_type="application/json",
+                    headers={**cache_headers, "Content-Encoding": "gzip"},
+                )
+
+        proyeccion = consulta.consultar_mapa()
+        # Validar el DTO una vez conserva el contrato antes de almacenar bytes
+        # reutilizables para esta versión inmutable.
+        modelo = RespuestaMapaPanelSchema.model_validate(proyeccion)
+        cuerpo_json = modelo.model_dump_json().encode("utf-8")
+        if not acepta_gzip:
+            return Response(
+                content=cuerpo_json,
+                media_type="application/json",
+                headers=cache_headers,
+            )
+        cuerpo = gzip.compress(cuerpo_json, compresslevel=1, mtime=0)
+        _guardar_mapa_gzip(version, cuerpo)
+        return Response(
+            content=cuerpo,
+            media_type="application/json",
+            headers={**cache_headers, "Content-Encoding": "gzip"},
+        )
     except PanelNoDisponible as error:
         raise _error(status.HTTP_503_SERVICE_UNAVAILABLE, error) from error
 

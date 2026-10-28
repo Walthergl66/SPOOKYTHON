@@ -8,11 +8,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from navira.adapters.ordenes_memoria import RepositorioOrdenesMemoria
 from navira.adapters.sesiones_memoria import RepositorioSesionesMemoria
 from navira.adapters.sesiones_demo_memoria import LimiteSesionesDemo, RegistroSesionesDemoMemoria
 from navira.api.routes import router
+from navira.api.compresion import cliente_acepta_gzip
 from navira.api.seguridad import ConfiguracionSeguridad, fijar_cookie_demo
 from navira.application.coordinador_juego import CoordinadorJuego
 from navira.application.decidir_paso import DecidirPasoEspera
@@ -30,6 +32,25 @@ from navira.demo import (
     crear_contexto_demo,
     crear_contexto_juego_demo,
 )
+
+
+class GZipNegociado:
+    """Aplica GZipMiddleware solo si el cliente acepta gzip explícitamente."""
+
+    def __init__(self, app: ASGIApp, *, minimum_size: int, compresslevel: int) -> None:
+        self.app = app
+        self.gzip = GZipMiddleware(app, minimum_size=minimum_size, compresslevel=compresslevel)
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        accept_encoding = next(
+            (valor.decode("latin-1") for clave, valor in scope.get("headers", ()) if clave.lower() == b"accept-encoding"),
+            "",
+        )
+        middleware = self.gzip if cliente_acepta_gzip(accept_encoding) else self.app
+        await middleware(scope, receive, send)
 
 
 def crear_app(
@@ -67,7 +88,10 @@ def crear_app(
         lifespan=lifespan,
     )
     # The full OSM graph is large; compress JSON map projections for browsers.
-    aplicacion.add_middleware(GZipMiddleware, minimum_size=1000)
+    # The Manta map response is large JSON. Level 9 spends hundreds of ms on
+    # compression for a small bandwidth gain; level 1 keeps the response compact
+    # while leaving CPU available for turn planning and map startup.
+    aplicacion.add_middleware(GZipNegociado, minimum_size=1000, compresslevel=1)
     aplicacion.state.seguridad = seguridad or ConfiguracionSeguridad()
     aplicacion.state.decidir_paso = servicio_decision or DecidirPasoEspera()
     aplicacion.state.consultar_panel = consultar_panel

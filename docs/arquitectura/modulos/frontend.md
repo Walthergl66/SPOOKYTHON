@@ -31,6 +31,8 @@ CAM-154 añade a la alerta vial un botón accesible «Cerrar alerta vial» en la
 
 CAM-155 homogeneiza en `styles.css` las transiciones de controles y botones entre modos, destaca de forma leve métricas y opciones seleccionadas, y aplica una entrada corta a los paneles laterales. La animación se limita a transformaciones/opacidad y estados de interacción; no anima continuamente el mapa y la regla global de movimiento reducido la minimiza.
 
+CAM-156 vuelve seleccionables las filas de «Refugios representados». `App.tsx` mantiene el refugio seleccionado en estado local; `CityMap.tsx` centra la cámara en su nodo y `mapFeatures.ts` marca el GeoJSON para dibujar un halo. La selección no manda órdenes ni cambia el estado autoritativo. La transición respeta `prefers-reduced-motion`, se limpia cuando cambia el modo/run y funciona con el mapa pausado. CAM-157 mantiene las capas dinámicas ligadas a su snapshot y solo cachea la geometría pública por versión en el backend.
+
 CAM-145/146 añade `features/map/refugeSectors.ts`: la lista del panel muestra el sector oficial para los cuatro nodos base; una ubicación personalizada se asigna al sector del anclaje oficial más cercano por distancia geográfica y queda rotulada «Sector cercano» para dejar claro que es una aproximación, no una frontera parroquial.
 
 CAM-136 reemplaza los controles visibles de reinicio por «Detener simulación»/«Detener mundo». La acción espera la confirmación del backend, limpia selección/avisos y devuelve la navegación a Reto/R1; no fabrica un run vacío ni un snapshot local. Jugar conserva «Iniciar nueva partida» para su operación específica.

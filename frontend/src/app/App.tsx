@@ -72,6 +72,10 @@ export function App() {
     if (simulator?.rondaReto) setChallengeRound(simulator.rondaReto)
   }, [simulator?.rondaReto])
 
+  useEffect(() => {
+    setSelectedRefugeId(undefined)
+  }, [simulator?.runId])
+
   const [refugeDialogOpen, setRefugeDialogOpen] = useState(false)
   const [setupStage, setSetupStage] = useState<'refuges' | 'population'>('refuges')
 
@@ -299,7 +303,7 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={active && map ? map : EMPTY_MAP} state={active && visibleState ? stateWithSelectedRoute ?? visibleState : EMPTY_MAP_STATE} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} selectedRefugeId={selectedRefugeId} animationSpeed={simulator?.velocidad ?? 4} paused={simulator?.estado === 'pausada'} operatorTool={mode === 'game' && active && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense>
+            <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={modeRunMatches && map ? map : EMPTY_MAP} state={modeRunMatches && visibleState ? stateWithSelectedRoute ?? visibleState : EMPTY_MAP_STATE} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} selectedRefugeId={selectedRefugeId} animationSpeed={simulator?.velocidad ?? 4} paused={simulator?.estado !== 'activa'} operatorTool={mode === 'game' && active && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense>
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{modeRunMatches ? map?.version ?? 'AÚN SIN SNAPSHOT' : 'NUEVO MUNDO PENDIENTE DE INICIAR'}</div>
           </div>

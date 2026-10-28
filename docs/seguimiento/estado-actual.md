@@ -1,10 +1,10 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-28, CAM-155. El pulido visual agrega transiciones cortas a controles, realce suave de selección/métricas y una entrada breve para paneles laterales. El botón de alerta vial de CAM-154 se conserva. El rollback del rediseño de mapa CAM-153 sigue vigente. No se modifican reglas; falta revisar visualmente los estados de interacción.
+Última actualización: 2026-10-28, CAM-157. CAM-156 permite centrar el mapa en un refugio seleccionado desde su lista. CAM-157 reduce CPU de compresión para la geometría Manta y reutiliza gzip/ETag por versión; mapa frío 407–449 ms según cliente, recarga cacheada bajo 34 ms de tiempo total TestClient y 304 bajo 3 ms. Una corrida local aislada de 200 habitantes/20 turnos obtuvo p95 `/paso` 67,364 ms, 3.944 HTTP 200 y 0 fallas; no es campaña R3 ni medición AWS. El pulido CAM-155, cierre de alerta CAM-154 y rollback visual CAM-153 se conservan.
 
 ## Reanudación exacta
 
-CAM-155: build frontend, validadores docs/SDD y `git diff --check` pasan; frontend/backend loopback responden 200. Siguiente paso: recorrer con puntero y teclado los estados de botones y paneles en escritorio/móvil; no alterar la partida para forzar eventos. Si vuelve `Failed to fetch`, comprobar Vite en `5173` y su proxy `/salud` antes de reiniciar backend. No se creó commit ni despliegue.
+CAM-157: pruebas backend `test_panel.py` 19/19 y `test_api_http.py` 8/8, frontend 97/97, build, compileall, validadores docs/SDD y diff check pasan. La app activa previa en 5173/8000 no se reinició; navegador automatizado está deshabilitado. Pendiente medir carga/render hasta mapa visible y campaña R3 sostenida en el navegador/entorno desplegado; mapa frío continúa sobre el objetivo de 150 ms y el build advierte el chunk cartográfico de 1.067 kB. No se creó commit ni despliegue.
 
 ## Hechos verificados
 

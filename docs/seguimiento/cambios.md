@@ -1,3 +1,25 @@
+## CAM-157 — Optimizar transferencia y validación del mapa
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de auditar y optimizar carga y respuesta para acercarse a la meta de 150 ms.
+- Relación: TRD-02/TRD-10, SPEC-008 CA-008-11/T-27 y P5-01/T-11. No se cambia `POST /paso` ni se afirman resultados de AWS.
+- Hallazgo: el JSON de `/panel/mapa` mide 16.077.219 bytes. Gzip predeterminado nivel 9 tomó mediana 742,8 ms por compresión local y emitió 1.558.625 bytes; nivel 1 tomó 51,6 ms y emitió 2.286.267 bytes. Sin gzip, el endpoint de loopback midió TTFB 348–376 ms; con gzip nivel 9, una muestra tardó 1.242 ms.
+- Cambio: middleware gzip usa nivel 1 y solo comprime cuando el cliente lo acepta (`gzip;q=0` conserva JSON plano); `/panel/mapa` agrega ETag ligado a `mapVersion`, `Cache-Control: private, no-cache` y `Vary: Accept-Encoding, Cookie`. Se cachean dos cuerpos gzip inmutables; una repetición por versión evita volver a construir y validar 94 mil tramos.
+- Verificación: app aislada con mapa Manta: primera respuesta gzip de referencia 449 ms/2.286.172 bytes; en la comprobación posterior con `TestClient`, 418 ms en frío, 33,81 ms en respuesta gzip reutilizada y 2,72 ms para 304. La prueba explícita con `gzip;q=0` devolvió JSON plano. Campaña local loopback aislada, semilla 20261026, mixto, 200 habitantes, concurrencia 200, 20 turnos/40 s: 3.944 HTTP 200, 0 fallas, p50 45,911 ms, p95 67,364 ms, p99 132,830 ms, máximo 136,040 ms y 20/20 ciclos dentro de 2 s. `test_panel.py` 19/19, `test_api_http.py` 8/8, frontend 97/97, build, `compileall`, `check_docs.py`, `check_sdd.py` y `git diff --check` pasan. El build advierte un chunk cartográfico de 1.067 kB (290 kB gzip). No mide AWS, red externa, R3 oficial ni mapa visible en navegador. T-11 sigue parcial.
+- Archivos: `backend/src/navira/main.py`, `backend/src/navira/api/compresion.py`, `backend/src/navira/application/consultar_panel.py`, `backend/src/navira/api/routes.py`, pruebas HTTP/panel, SPEC-008, contrato API, módulo backend, plan, estado, índice, reporte de auditoría e historial.
+- Siguiente paso: medir mapa frío y hasta mapa visible en navegador; repetir campaña R3 sostenida y medir endpoint público. No declarar requisito completo con esta muestra.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-156 — Enfocar refugios desde la lista del panel
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario para poder seleccionar un refugio desde «Refugios representados» y localizarlo automáticamente en el mapa.
+- Relación: PRD-04, SPEC-008 CA-008-13/T-27; comportamiento de presentación, sin cambios al servidor, rutas ni partida.
+- Cambio: cada fila se convierte en un botón accesible por teclado, con estado seleccionado visible. Al activarlo, MapLibre centra la cámara en el nodo del refugio y dibuja un halo; el movimiento respeta `prefers-reduced-motion`. Al cambiar de modo o `runId` se limpia la selección local. La capa mantiene el mapa visible durante la pausa.
+- Archivos: `frontend/src/app/App.tsx`, `frontend/src/features/map/CityMap.tsx`, `frontend/src/features/map/mapFeatures.ts`, `frontend/src/styles.css`, SPEC-008, módulo frontend, índice, estado e historial.
+- Verificación: `npm run build` y `npm test` pasan (97 pruebas); navegación por teclado está cubierta por semántica de botón, pero revisión visual en navegador sigue pendiente porque la automatización de navegador está deshabilitada en Work.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-155 — Pulir interacciones visuales de Navira
 
 - Fecha: 2026-10-28, America/Guayaquil.
