@@ -307,6 +307,10 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .control-notice code { color: #e7edf4; font-size: 12px; }
 .control-notice.is-error { border-color: #ed7777; background: rgba(237, 119, 119, .1); }
 .control-notice.is-error strong { color: #ffaaa4; }
+.public-session-note { margin: 10px 0 14px; padding: 9px 10px; border-left: 2px solid #5ccbc8; background: rgba(92, 203, 200, .07); color: #b8c7d8; font-size: 11px; line-height: 1.5; }
+.public-demo-unavailable { min-height: 100vh; display: grid; align-content: center; justify-items: center; gap: 12px; padding: 24px; background: #101722; color: #e7edf4; text-align: center; }
+.public-demo-unavailable p { max-width: 38rem; color: #b8c7d8; }
+.public-demo-unavailable button { border: 1px solid #5ccbc8; border-radius: 6px; padding: 10px 16px; background: #1b2638; color: #e7edf4; cursor: pointer; }
 .operator-controls { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(181, 200, 224, .18); }
 .operator-help, .operator-paused-note, .operator-tool-hint { margin: 0; color: #aebbd0; font-size: 12px; line-height: 1.5; }
 .operator-tool-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }

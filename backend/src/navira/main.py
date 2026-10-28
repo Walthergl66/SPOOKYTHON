@@ -6,12 +6,14 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from starlette.middleware.gzip import GZipMiddleware
 
 from navira.adapters.ordenes_memoria import RepositorioOrdenesMemoria
 from navira.adapters.sesiones_memoria import RepositorioSesionesMemoria
+from navira.adapters.sesiones_demo_memoria import LimiteSesionesDemo, RegistroSesionesDemoMemoria
 from navira.api.routes import router
-from navira.api.seguridad import ConfiguracionSeguridad
+from navira.api.seguridad import ConfiguracionSeguridad, fijar_cookie_demo
 from navira.application.coordinador_juego import CoordinadorJuego
 from navira.application.decidir_paso import DecidirPasoEspera
 from navira.application.consultar_panel import ConsultarPanel
@@ -38,6 +40,7 @@ def crear_app(
     reloj_juego: RelojJuegoLocal | None = None,
     consultar_sesion_juego: ConsultarSesionJuego | None = None,
     control_simulador_demo: ControlSimuladorDemoLocal | None = None,
+    sesiones_demo_publicas: RegistroSesionesDemoMemoria | None = None,
     seguridad: ConfiguracionSeguridad | None = None,
 ) -> FastAPI:
     """Ensamblaje inyectable; sin servicio recibe espera determinista y sin seguridad, la más cerrada."""
@@ -54,6 +57,8 @@ def crear_app(
                 reloj_juego.detener()
             if control_simulador_demo is not None:
                 control_simulador_demo.cerrar()
+            if sesiones_demo_publicas is not None:
+                sesiones_demo_publicas.cerrar()
 
     aplicacion = FastAPI(
         title="Navira",
@@ -68,6 +73,36 @@ def crear_app(
     aplicacion.state.consultar_panel = consultar_panel
     aplicacion.state.consultar_sesion_juego = consultar_sesion_juego
     aplicacion.state.control_simulador_demo = control_simulador_demo
+    aplicacion.state.sesiones_demo_publicas = sesiones_demo_publicas
+    if sesiones_demo_publicas is not None:
+        ttl_cookie = int(os.environ.get("NAVIRA_PUBLIC_SESSION_COOKIE_SECONDS", "86400"))
+
+        @aplicacion.middleware("http")
+        async def asignar_sesion_demo(request, call_next):
+            """Asigna cada petición pública a su mundo y cookie independientes."""
+
+            if not request.url.path.startswith(("/panel/", "/demo/", "/reto/")):
+                return await call_next(request)
+            try:
+                control, token_nuevo = sesiones_demo_publicas.obtener_o_crear(
+                    request.cookies.get("navira_demo_session")
+                )
+            except LimiteSesionesDemo as error:
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": str(error)},
+                    headers={"Retry-After": "30"},
+                )
+            request.state.control_demo_publico = control
+            response = await call_next(request)
+            if token_nuevo is not None:
+                fijar_cookie_demo(
+                    response,
+                    token_nuevo,
+                    aplicacion.state.seguridad.cookie_segura,
+                    ttl_cookie,
+                )
+            return response
     aplicacion.state.unirse_juego = unirse_juego
     aplicacion.state.registrar_orden_juego = registrar_orden_juego
     aplicacion.include_router(router)
@@ -191,7 +226,22 @@ def _crear_app_configurada() -> FastAPI:
         api_key=os.environ.get("NAVIRA_API_KEY") or None,
         cookie_segura=os.environ.get("NAVIRA_COOKIE_SECURE", "1") != "0",
         control_demo_local=os.environ.get("NAVIRA_LOCAL_DEMO_CONTROL") == "1",
+        control_demo_publico=os.environ.get("NAVIRA_PUBLIC_DEMO_CONTROL") == "1",
     )
+
+    if seguridad.control_demo_publico:
+        mapa = os.environ.get("NAVIRA_DEMO_MAP", str(MAPA_MANTA_POR_DEFECTO))
+        max_sesiones = int(os.environ.get("NAVIRA_PUBLIC_MAX_SESSIONS", "3"))
+        ttl_sesion = float(os.environ.get("NAVIRA_PUBLIC_SESSION_IDLE_SECONDS", "10800"))
+        sesiones = RegistroSesionesDemoMemoria(
+            lambda: crear_control_simulador_demo(mapa),
+            max_sesiones=max_sesiones,
+            inactividad_segundos=ttl_sesion,
+        )
+        return crear_app(
+            sesiones_demo_publicas=sesiones,
+            seguridad=seguridad,
+        )
 
     if os.environ.get("NAVIRA_GAME_DEMO") == "1":
         mapa, semilla, escenario, sobrevivientes = _leer_parametros_demo()

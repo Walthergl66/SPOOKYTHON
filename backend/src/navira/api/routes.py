@@ -26,7 +26,7 @@ from navira.api.schemas import (
 from navira.api.seguridad import (
     COOKIE_SESION_JUGADOR,
     borrar_cookie_sesion,
-    exigir_operador_local,
+    exigir_control_demo,
     fijar_cookie_sesion,
     origen_mismo_host,
 )
@@ -70,12 +70,21 @@ def _sesion_expirada(request: Request, response: Response, error: Exception) -> 
     return _error(status.HTTP_410_GONE, error, dict(response.headers))
 
 
+@router.get("/demo/sesion", tags=["demo pública"])
+async def sesion_demo_publica(request: Request) -> dict[str, object]:
+    """Confirma el aislamiento anónimo que el middleware fijó en cookie HttpOnly."""
+
+    if not request.app.state.seguridad.control_demo_publico:
+        raise HTTPException(status_code=404, detail="La demo pública no está habilitada.")
+    return {"estado": "lista", "alcance": "sesion-independiente", "persistencia": "temporal"}
+
+
 @router.get("/demo/simulador", tags=["demo local"])
 async def estado_demo_simulador(request: Request) -> dict[str, object]:
     """Describe el control de simulador cuando el proceso lo habilita en localhost."""
 
     gestor = _control_demo_local(request)
-    exigir_operador_local(request, exigir_origen=False)
+    exigir_control_demo(request, exigir_origen=False)
     return gestor.estado()
 
 
@@ -84,7 +93,7 @@ async def candidatos_demo_simulador(request: Request) -> dict[str, object]:
     """Nodos elegibles para refugio, calles y refugios por defecto del mapa del simulador."""
 
     gestor = _control_demo_local(request)
-    exigir_operador_local(request, exigir_origen=False)
+    exigir_control_demo(request, exigir_origen=False)
     mapa = gestor.mapa
     if mapa is None:
         raise HTTPException(status_code=404, detail="El control local no expone un mapa.")
@@ -113,7 +122,7 @@ async def iniciar_ronda_reto(
     """Inicia un preset de la prueba de fuego en el control local opt-in."""
 
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     try:
         return gestor.iniciar_ronda_reto(solicitud.ronda, solicitud.semilla)
     except RuntimeError as error:
@@ -127,7 +136,7 @@ async def reiniciar_ronda_reto(request: Request) -> dict[str, object]:
     """Reinicia la ronda Reto actual con un mundo aleatorio nuevo."""
 
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     try:
         return gestor.reiniciar_ronda_reto()
     except RuntimeError as error:
@@ -142,7 +151,7 @@ async def iniciar_demo_simulador(
     request: Request,
 ) -> dict[str, object]:
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     try:
         return gestor.iniciar(
             escenario=solicitud.escenario,
@@ -159,7 +168,7 @@ async def iniciar_demo_simulador(
 @router.post("/demo/simulador/pausar", tags=["demo local"])
 async def pausar_demo_simulador(request: Request) -> dict[str, object]:
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     try:
         return gestor.pausar()
     except RuntimeError as error:
@@ -169,7 +178,7 @@ async def pausar_demo_simulador(request: Request) -> dict[str, object]:
 @router.post("/demo/simulador/reanudar", tags=["demo local"])
 async def reanudar_demo_simulador(request: Request) -> dict[str, object]:
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     try:
         return gestor.reanudar()
     except RuntimeError as error:
@@ -182,7 +191,7 @@ async def velocidad_demo_simulador(
     request: Request,
 ) -> dict[str, object]:
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     return gestor.fijar_velocidad(float(solicitud.velocidad))
 
 
@@ -192,7 +201,7 @@ async def reiniciar_demo_simulador(
     request: Request,
 ) -> dict[str, object]:
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     try:
         return gestor.reiniciar(
             escenario=solicitud.escenario,
@@ -212,7 +221,7 @@ async def colocar_elemento_operador(
 ) -> dict[str, object]:
     """Aplica al snapshot un elemento del modo operador local."""
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     try:
         return gestor.colocar_elemento(tipo=solicitud.tipo, nodo=solicitud.nodo, segmento_id=solicitud.segmentoId)
     except RuntimeError as error:
@@ -225,7 +234,7 @@ async def colocar_elemento_operador(
 async def iniciar_mundo_operador(request: Request) -> dict[str, object]:
     """Crea un mundo de Manta vacío para que el operador lo pueble."""
     gestor = _control_demo_local(request)
-    exigir_operador_local(request)
+    exigir_control_demo(request)
     try:
         return gestor.iniciar_mundo_operador()
     except RuntimeError as error:
@@ -472,8 +481,13 @@ async def observar_panel(websocket: WebSocket) -> None:
 
 
 def _control_demo_local(request: Request):
-    """Evita registrar controles operativos en el ensamblaje normal."""
+    """Resuelve control local o el control aislado de la sesión pública."""
 
+    if request.app.state.seguridad.control_demo_publico:
+        gestor = getattr(request.state, "control_demo_publico", None)
+        if gestor is None:
+            raise HTTPException(status_code=429, detail="No hay una sesión pública disponible.")
+        return gestor
     if not request.app.state.seguridad.control_demo_local:
         raise HTTPException(status_code=404, detail="El control local de demo está deshabilitado.")
     gestor = request.app.state.control_simulador_demo

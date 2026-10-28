@@ -218,6 +218,8 @@ export function App() {
           <div className="panel-section-heading"><span className="panel-overline">OPERACIÓN LOCAL</span><h1 id="simulation-control-title">{mode === 'game' ? 'Panel del operador' : 'Control de simulación'}</h1></div>
           <div className="control-status" role="status"><span className={`context-pulse${active ? '' : ' is-idle'}`} aria-hidden="true" /><span>{!modeRunMatches ? 'Partida nueva al iniciar' : simulator?.estado === 'activa' ? 'En curso' : simulator?.estado === 'pausada' ? 'Pausada' : simulator?.estado === 'finalizada' ? 'Finalizada' : simulator?.estado === 'error' ? 'Detenida por error' : 'Lista para iniciar'}</span></div>
 
+          {import.meta.env.VITE_PUBLIC_DEMO === '1' ? <p className="public-session-note">Tu sesión es independiente. Los datos se borran al reiniciar el servicio y tras 3 horas sin actividad.</p> : null}
+
           {mode === 'game' ? <OperatorControls
             tool={operatorTool}
             onToolChange={(next) => { setOperatorTool(next); setOperatorError(null); setOperatorNotice(null) }}

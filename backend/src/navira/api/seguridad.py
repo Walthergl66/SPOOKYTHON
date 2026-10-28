@@ -18,6 +18,7 @@ class ConfiguracionSeguridad:
     api_key: str | None = field(default=None, repr=False)
     cookie_segura: bool = True
     control_demo_local: bool = False
+    control_demo_publico: bool = False
 
 
 def fijar_cookie_sesion(response: Response, token: str, secure: bool) -> None:
@@ -43,6 +44,20 @@ def borrar_cookie_sesion(response: Response, secure: bool) -> None:
     )
 
 
+def fijar_cookie_demo(response: Response, token: str, secure: bool, max_age: int) -> None:
+    """Entrega la identidad anónima de una sesión aislada sin exponerla a JS."""
+
+    response.set_cookie(
+        key="navira_demo_session",
+        value=token,
+        httponly=True,
+        secure=secure,
+        samesite="strict",
+        path="/",
+        max_age=max_age,
+    )
+
+
 def exigir_operador_local(request: Request, *, exigir_origen: bool = True) -> None:
     """Restringe el control efímero a localhost y al origen del navegador."""
 
@@ -56,6 +71,20 @@ def exigir_operador_local(request: Request, *, exigir_origen: bool = True) -> No
         raise HTTPException(status_code=403, detail="El control de demo solo acepta conexiones locales.")
     if exigir_origen and not origen_local_mismo_host(request):
         raise HTTPException(status_code=403, detail="Origen no permitido.")
+
+
+def exigir_control_demo(request: Request, *, exigir_origen: bool = True) -> None:
+    """Permite controles en loopback o en la demo pública con Origin same-host.
+
+    El perfil público permite que cualquier visitante opere exclusivamente el
+    mundo asociado a su cookie; no comparte ni eleva privilegios entre sesiones.
+    """
+
+    if request.app.state.seguridad.control_demo_publico:
+        if exigir_origen and not origen_mismo_host(request):
+            raise HTTPException(status_code=403, detail="Origen no permitido.")
+        return
+    exigir_operador_local(request, exigir_origen=exigir_origen)
 
 
 def origen_local_mismo_host(request: Request) -> bool:

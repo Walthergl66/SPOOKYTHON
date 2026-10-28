@@ -56,6 +56,10 @@ En partidas del mapa Manta, impedir que los zombies aparezcan o avancen a menos 
 
 Permitir iniciar/continuar un mundo automático local y elegir una herramienta para colocar habitantes, caminantes, corredores, hordas, zombies dormidos, refugios o incidentes sobre el mapa. Cada mundo nuevo conserva las calles de Manta, pero comienza sin actores, refugios ni eventos colocados; la simulación acepta el mundo vacío y mantiene el reloj disponible para las acciones del operador. El reloj continúa mientras se usa la paleta. Cada acción se valida y confirma en el servidor; un incidente bloquea el segmento y actualiza el planificador. El modo comparte las reglas del simulador, aplica el perímetro de refugios y no permite editar rondas Reto. La superficie actual es solo desarrollo local con opt-in/loopback. Detalle: [operador](../dominio/flujos/operador.md), [API](../arquitectura/contratos/api.md) y [SPEC-010](../metodo/especificaciones/SPEC-010-juego-operador.md).
 
+### PRD-13 — Prueba pública con sesiones aisladas
+
+Permitir que visitantes anónimos usen Reto, Simulador y Juego de operador en una URL pública. Cada navegador recibe una partida independiente y temporal; iniciar, pausar, cambiar de modo o colocar elementos solo afecta su propia sesión. Los controles del servidor aplican límites de concurrencia, población y frecuencia. Las sesiones y partidas son volátiles: expiran por inactividad o se pierden al reiniciar la instancia. No incluye cuentas permanentes, persistencia de partida ni garantía de disponibilidad. Detalle: [SPEC-011](../metodo/especificaciones/SPEC-011-demo-publica-multisesion.md), [ADR-046](../arquitectura/decisiones/0046-demo-publica-multisesion.md).
+
 ## Alcance y exclusiones
 
 Comprometido: los requisitos anteriores, implementados de forma incremental. Fuera del mínimo: múltiples partidas concurrentes, multijugador simultáneo, cuentas permanentes, movimiento libre continuo, LLM para decidir pasos y app móvil. Capacidad de refugios y camionetas son extras condicionados, no requisitos activos nuevos.
