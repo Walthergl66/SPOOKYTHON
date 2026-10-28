@@ -164,9 +164,7 @@ def resolver_decisiones(
         intenciones_por_id[intencion.sobreviviente_id] = intencion
 
     zombies_actualizados = list(partida_decisiones.zombies)
-    bloqueados_horda = _nodos_bloqueados_por_horda(
-        zombies_actualizados, grafo, aristas_cerradas, segmentos_cerrados
-    )
+    bloqueados_horda = _nodos_bloqueados_por_horda(zombies_actualizados, grafo)
 
     movimientos_sobrevivientes: list[MovimientoSobreviviente] = []
     sobrevivientes_actualizados: list[Sobreviviente] = []
@@ -452,26 +450,21 @@ def _calle_hacia(
 def _nodos_bloqueados_por_horda(
     zombies: list[Zombie],
     grafo: Grafo,
-    aristas_cerradas: frozenset[str],
-    segmentos_cerrados: frozenset[str],
 ) -> frozenset[str]:
+    """Devuelve el perímetro topológico completo de cada horda activa.
+
+    Los incidentes impiden transitar por una calle, pero no hacen que los
+    vecinos de una horda dejen de estar bloqueados. Por eso esta validación
+    usa la topología del mapa sin aplicar los cierres del turno.
+    """
     bloqueados: set[str] = set()
+    entrantes = grafo.entrantes_habilitadas(frozenset(), frozenset())
     for zombie in zombies:
         if zombie.tipo is not TipoZombie.HORDA or zombie.estado is not EstadoZombie.ACTIVO:
             continue
         bloqueados.add(zombie.nodo)
-        for calle in grafo.calles_desde(
-            zombie.nodo,
-            aristas_cerradas=aristas_cerradas,
-            segmentos_cerrados=segmentos_cerrados,
-        ):
-            if calle.origen == zombie.nodo:
-                bloqueados.add(calle.destino)
-        for calle in grafo.mapa.calles:
-            if calle.id in aristas_cerradas or calle.segmento_id in segmentos_cerrados:
-                continue
-            if calle.destino == zombie.nodo:
-                bloqueados.add(calle.origen)
+        bloqueados.update(calle.destino for calle in grafo.salientes(zombie.nodo))
+        bloqueados.update(entrantes[zombie.nodo])
     return frozenset(bloqueados)
 
 

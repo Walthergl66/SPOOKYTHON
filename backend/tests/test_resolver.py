@@ -131,6 +131,18 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(resultado.partida.sobrevivientes[0].nodo, "N-0001")
         self.assertEqual(resultado.intenciones_rechazadas, ("S-1",))
 
+    def test_horda_bloquea_vecino_aunque_su_segmento_este_cerrado(self) -> None:
+        horda = Zombie("Z-H", TipoZombie.HORDA, "N-0003")
+        sobreviviente = Sobreviviente("S-1", "N-0001")
+        resultado = self.resolver(
+            iniciar(sobrevivientes=(sobreviviente,), zombies=(horda,)),
+            (orden(0, "S-1", "N-0002"),),
+            segmentos_cerrados=frozenset({"S-0002"}),
+        )
+
+        self.assertEqual(resultado.partida.sobrevivientes[0].nodo, "N-0001")
+        self.assertEqual(resultado.intenciones_rechazadas, ("S-1",))
+
     def test_dormido_despierta_a_dos_saltos_y_espera_ese_turno(self) -> None:
         dormido = Zombie("Z-D", TipoZombie.DORMIDO, "N-0001", EstadoZombie.DORMIDO)
         sobreviviente = Sobreviviente("S-1", "N-0003")
@@ -141,6 +153,16 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(actualizado.turno_activacion, 0)
         self.assertEqual(actualizado.nodo, "N-0001")
         self.assertEqual(resultado.movimientos_zombies[0].tramos, ())
+
+    def test_dormido_que_despierta_en_el_nodo_del_habitante_muerde_al_final(self) -> None:
+        dormido = Zombie("Z-D", TipoZombie.DORMIDO, "N-0001", EstadoZombie.DORMIDO)
+        sobreviviente = Sobreviviente("S-1", "N-0001")
+
+        resultado = self.resolver(iniciar(sobrevivientes=(sobreviviente,), zombies=(dormido,)))
+
+        self.assertEqual(resultado.partida.zombies[0].estado, EstadoZombie.ACTIVO)
+        self.assertEqual(resultado.mordidos, ("S-1",))
+        self.assertEqual(resultado.partida.sobrevivientes[0].estado, EstadoSobreviviente.MORDIDO)
 
     def test_opcion_de_configuracion_permite_mover_al_despertar(self) -> None:
         dormido = Zombie("Z-D", TipoZombie.DORMIDO, "N-0001", EstadoZombie.DORMIDO)
@@ -213,6 +235,15 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(resultado.mordidos, ())
         self.assertEqual(resultado.partida.sobrevivientes[0].estado, EstadoSobreviviente.EVACUADO)
 
+    def test_sobreviviente_mordido_no_acumula_otra_mordida_en_turnos_posteriores(self) -> None:
+        mordido = Sobreviviente("S-1", "N-0003", estado=EstadoSobreviviente.MORDIDO)
+        horda = Zombie("Z-H", TipoZombie.HORDA, "N-0003")
+
+        resultado = self.resolver(iniciar(turno=1, sobrevivientes=(mordido,), zombies=(horda,)))
+
+        self.assertEqual(resultado.mordidos, ())
+        self.assertEqual(resultado.partida.sobrevivientes[0].estado, EstadoSobreviviente.MORDIDO)
+
     def test_resolucion_comparte_reglas_entre_modulos(self) -> None:
         intencion = orden(0, "S-1", "N-0002")
         resultados = []
@@ -231,6 +262,23 @@ class ResolverTests(unittest.TestCase):
             resultados[1].partida.sobrevivientes[0].nodo,
         )
         self.assertEqual(resultados[0].mordidos, resultados[1].mordidos)
+
+    def test_mordida_comparte_regla_entre_simulador_y_juego(self) -> None:
+        resultados = []
+        for modo, control in (
+            (ModoPartida.SIMULADOR, ControlSobreviviente.AUTOMATICO),
+            (ModoPartida.JUEGO, ControlSobreviviente.HUMANO),
+        ):
+            sobreviviente = Sobreviviente("S-1", "N-0002", control=control)
+            caminante = Zombie("Z-1", TipoZombie.CAMINANTE, "N-0001", fase_movimiento=0)
+            resultado = self.resolver(
+                iniciar(sobrevivientes=(sobreviviente,), zombies=(caminante,), modo=modo),
+                (orden(0, "S-1", "N-0002"),),
+            )
+            resultados.append(resultado)
+
+        self.assertEqual(resultados[0].mordidos, ("S-1",))
+        self.assertEqual(resultados[1].mordidos, resultados[0].mordidos)
 
 
 if __name__ == "__main__":

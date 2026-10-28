@@ -60,6 +60,8 @@ Las credenciales de sesión se validan en el borde y producen una identidad simp
 No crear un servicio por entidad ni extraer microservicios inicialmente. Los comentarios y docstrings explican invariantes, unidades, fase del turno y motivos difíciles de deducir; no repiten cada línea. Un cambio de responsabilidad requiere actualizar este documento y el historial.
 
 
+CAM-137 corrige `_nodos_bloqueados_por_horda()` para obtener vecinos de la topología completa, sin filtrar por cierres viales, igual que `domain/visibilidad.py`; añade pruebas del resolutor para la excepción de cierre y de mordidas al despertar/paridad/terminalidad. El conjunto focalizado `test_resolver.py` pasa; la suite completa sigue en ejecución.
+
 CAM-073: el fixture `manta-hackathon-v1.json` contiene 44.590 nodos y 94.146 sentidos públicos de OSM. `RutasHaciaRefugios` crea un campo inverso temporal por snapshot, closures y objetivo para compartir rutas entre sobrevivientes; no persiste rutas entre turnos. `prediccion.py` reutiliza objetivos de corredor durante el mismo pronóstico. T-38 cubre equivalencia funcional. La serialización `GET /panel/mapa` fue aproximadamente 20 MB en HTTP loopback sin medir compresión; revisar límites de payload/cadencia antes del despliegue.
 
 CAM-077 añade `recortar_mapa()` como proyección inmutable. `crear_contexto_demo()` la aplica a mapas `manta-osm-*` antes de crear `Grafo`, apariciones, amenazas y refugios personalizados. Así rutas y movimientos usan solo el subgrafo interno. El control conserva el mapa fuente para candidatos y publica `limitesJugables`; al iniciar, el caso valida nuevamente la selección sobre el mapa recortado. T-39 cubre cotas, extremos de calles y rechazo HTTP exterior.

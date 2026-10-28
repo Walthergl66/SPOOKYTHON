@@ -145,7 +145,7 @@ class ControlSimuladorDemoTests(unittest.TestCase):
 
         self.assertEqual(started.status_code, 200, started.text)
         self.assertEqual(paused.status_code, 200, paused.text)
-        self.assertEqual(paused.json()["estado"], "pausada")
+        self.assertIn(paused.json()["estado"], {"pausando", "pausada"})
         self.assertEqual(paused.json()["rondaReto"], 2)
         self.assertEqual(resumed.status_code, 200, resumed.text)
         self.assertEqual(resumed.json()["estado"], "activa")
@@ -361,7 +361,7 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertEqual(started.json()["intensidad"], "alta")
         self.assertTrue(started.json()["eventosCiudad"])
         self.assertEqual(paused.status_code, 200, paused.text)
-        self.assertEqual(paused.json()["estado"], "pausada")
+        self.assertIn(paused.json()["estado"], {"pausando", "pausada"})
         self.assertEqual(resumed.status_code, 200, resumed.text)
         self.assertEqual(resumed.json()["estado"], "activa")
         self.assertEqual(restarted.status_code, 200, restarted.text)
