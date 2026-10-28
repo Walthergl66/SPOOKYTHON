@@ -87,6 +87,8 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-032](arquitectura/decisiones/0032-incidentes-viales-siempre-activos-en-demo.md) | Incidentes viales siempre activos, sin control en el menú de demo | CAM-081/T-43; campo HTTP legado ignorado. |
 | [ADR-033](arquitectura/decisiones/0033-alerta-y-cierres-aleatorios.md) | Incidentes viales 1–10, cierre y alerta cartográfica al aplicarse | CAM-082/T-44; no se revelan eventos futuros. |
 | [ADR-034](arquitectura/decisiones/0034-rutas-estables-y-replanificacion-cercana.md) | Conservar ruta confirmada y replantear ante amenaza cercana o invalidez | CAM-084; radio inicial de tres saltos y T-46 pendientes de validación conductual. |
+| [ADR-035](arquitectura/decisiones/0035-flujo-evaluacion-reto.md) | Flujo de evaluación separado de demo libre, sobre el modo automático compartido | CAM-088; presets locales probados, campaña completa y despliegue pendientes. |
+| [ADR-036](arquitectura/decisiones/0036-ruta-individual-bajo-demanda.md) | Consultar bajo demanda la ruta del habitante seleccionado fuera de la fase de decisiones | CAM-093; evitar calcular rutas de toda la población en cada fase. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/

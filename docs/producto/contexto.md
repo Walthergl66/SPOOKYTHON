@@ -29,6 +29,7 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 17. Solicitud del usuario (2026-10-27): mostrar los modos al abrir la app en el orden Reto, Simulador y Jugar, con Reto seleccionado inicialmente.
 18. Solicitud del usuario (2026-10-27): mostrar un único contador fijo de mordidos en el panel, conservando el total acumulado de la partida.
 19. Solicitud del usuario (2026-10-27): al seleccionar habitantes durante el Reto, mostrar en el panel su ruta recomendada vigente.
+20. Aclaración para resolver CAM-092: el snapshot no debe recalcular rutas para toda la población en todas las fases; al seleccionar un habitante, calcular bajo demanda únicamente su ruta y reflejarla en la ficha y el mapa.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 
