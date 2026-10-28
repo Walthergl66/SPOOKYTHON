@@ -98,6 +98,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-044](arquitectura/decisiones/0044-reemplazo-explicito-al-cambiar-de-modo.md) | Inicio explícito desde el modo destino reemplaza el run local con un mundo nuevo | Cambie el ciclo de vida o transición de runs entre Reto, Simulador y Jugar. |
 | [ADR-045](arquitectura/decisiones/0045-evaluacion-aws-privada.md) | Staging privado y evaluación AWS efímera sin controles locales expuestos | Cambie la topología, permisos o método de evaluación en AWS. |
 | [ADR-046](arquitectura/decisiones/0046-demo-publica-multisesion.md) | Demo temporal abierta con mundos aislados por cookie anónima | Cambie el modo público, sus límites o topología temporal. |
+| [ADR-047](arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) | Despliegue de `master` en Lightsail mediante GitHub Actions y SSH | Cambie la cadena de build, conectividad, rollback o destino. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/

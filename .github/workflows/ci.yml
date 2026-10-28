@@ -4,6 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -42,3 +43,84 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
+
+  deploy-lightsail:
+    name: Deploy to Lightsail
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: navira-lightsail-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate deployment configuration
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          LIGHTSAIL_SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+          LIGHTSAIL_KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_KNOWN_HOSTS }}
+          NAVIRA_PUBLIC_URL: ${{ vars.NAVIRA_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          for name in LIGHTSAIL_HOST LIGHTSAIL_USER LIGHTSAIL_SSH_PRIVATE_KEY LIGHTSAIL_KNOWN_HOSTS NAVIRA_PUBLIC_URL; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Required GitHub secret/variable is missing: $name" >&2
+              exit 1
+            fi
+          done
+          case "$NAVIRA_PUBLIC_URL" in
+            https://*) ;;
+            *) echo "NAVIRA_PUBLIC_URL must use HTTPS" >&2; exit 1 ;;
+          esac
+
+      - name: Build immutable images
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          docker build --pull -f backend/Dockerfile -t "navira-backend:${IMAGE_TAG}" backend
+          docker build --pull -f deploy/lightsail/Dockerfile.frontend \
+            --build-arg VITE_PUBLIC_DEMO=1 \
+            -t "navira-frontend:${IMAGE_TAG}" .
+          docker save "navira-backend:${IMAGE_TAG}" "navira-frontend:${IMAGE_TAG}" \
+            | gzip -1 > "/tmp/navira-release-${IMAGE_TAG}.tar.gz"
+
+      - name: Install pinned SSH host key
+        env:
+          LIGHTSAIL_SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+          LIGHTSAIL_KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$LIGHTSAIL_SSH_PRIVATE_KEY" > "$HOME/.ssh/navira_lightsail"
+          chmod 600 "$HOME/.ssh/navira_lightsail"
+          printf '%s\n' "$LIGHTSAIL_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Transfer and deploy release
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          target="${LIGHTSAIL_USER}@${LIGHTSAIL_HOST}"
+          ssh_opts=(-i "$HOME/.ssh/navira_lightsail" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          scp "${ssh_opts[@]}" \
+            "/tmp/navira-release-${IMAGE_TAG}.tar.gz" \
+            deploy/lightsail/deploy-release.sh \
+            "${target}:/tmp/"
+          ssh "${ssh_opts[@]}" "$target" \
+            "sudo bash /tmp/deploy-release.sh '${IMAGE_TAG}' '/tmp/navira-release-${IMAGE_TAG}.tar.gz'"
+
+      - name: Verify public HTTPS endpoints
+        env:
+          NAVIRA_PUBLIC_URL: ${{ vars.NAVIRA_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --retry 5 --retry-delay 2 --retry-connrefused \
+            "${NAVIRA_PUBLIC_URL%/}/salud"
+          curl --fail --show-error --silent --retry 5 --retry-delay 2 --retry-connrefused \
+            "${NAVIRA_PUBLIC_URL%/}/" -o /dev/null

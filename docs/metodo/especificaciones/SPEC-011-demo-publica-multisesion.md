@@ -5,9 +5,9 @@ Estado: en-revision
 Requisitos: PRD-13, TRD-19  
 Tareas: P4-07, P5-02  
 Pruebas: T-58  
-Cambio: CAM-127  
+Cambio: CAM-129
 Decisión: [ADR-046](../../arquitectura/decisiones/0046-demo-publica-multisesion.md)
-Evidencia: [CAM-126 a CAM-128](../../seguimiento/cambios.md#cam-128-enrutar-juego-en-el-proxy-y-verificar-los-tres-modos-publicos); carga concurrente, revisión visual de Jugar y validación de estado/factura AWS pendientes.
+Evidencia: [CAM-126 a CAM-129](../../seguimiento/cambios.md#cam-129-automatizar-la-actualizacion-de-lightsail-desde-github-actions); CD configurado localmente; primer run GitHub, conectividad del runner, carga concurrente, revisión visual de Jugar y validación de estado/factura AWS pendientes.
 
 ## Objetivo y alcance
 
@@ -32,7 +32,7 @@ Las sesiones se guardan en memoria, con máximo por instancia, expiración tras 
 
 El adaptador `RegistroSesionesDemoMemoria` guarda SHA-256 del token y asocia cada sesión con un coordinador compuesto; controles/dominio no reciben el token. El control automático y el juego humano usan mundos distintos dentro de la misma cookie; los endpoints de panel y órdenes resuelven servicios desde esa sesión. El contexto humano se crea de forma diferida al entrar a Jugar, y su reloj arranca después de la aparición del jugador. Cambiar a Simulador o Reto detiene el reloj humano para evitar que dos modos compitan dentro de la sesión. Middleware HTTP fija o renueva actividad para `/panel/`, `/demo/`, `/reto/`, `/juego/` y `/paso`; la cookie se emite al crear sesión. El frontend público espera el bootstrap `/demo/sesion` antes de montar el dashboard para evitar solicitudes iniciales sin identidad.
 
-El perfil público se activa solo con `NAVIRA_PUBLIC_DEMO_CONTROL=1`. `NAVIRA_PUBLIC_MAX_SESSIONS` y `NAVIRA_PUBLIC_SESSION_IDLE_SECONDS` acotan recursos. En la implementación temporal vigente, Lightsail ejecuta backend y frontend como contenedores Docker con red host; Nginx del host termina TLS y proxifica a la interfaz en loopback, que enruta al backend. La instancia debe permanecer única porque coordinador y sesiones están en memoria. La URL usa `nip.io`, un nombre temporal de terceros, no un dominio propiedad del proyecto. Revisar [seguridad](../../operacion/seguridad.md), [infraestructura](../../operacion/infraestructura.md) y [costos](../../operacion/costos.md).
+El perfil público se activa solo con `NAVIRA_PUBLIC_DEMO_CONTROL=1`. `NAVIRA_PUBLIC_MAX_SESSIONS` y `NAVIRA_PUBLIC_SESSION_IDLE_SECONDS` acotan recursos. En la implementación temporal vigente, Lightsail ejecuta backend y frontend como contenedores Docker con red host; Nginx del host termina TLS y proxifica a la interfaz en loopback, que enruta al backend. La instancia debe permanecer única porque coordinador y sesiones están en memoria. La URL usa `nip.io`, un nombre temporal de terceros, no un dominio propiedad del proyecto. Las actualizaciones por GitHub Actions y sus requisitos de red están en [ADR-047](../../arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) e [infraestructura](../../operacion/infraestructura.md). Revisar también [seguridad](../../operacion/seguridad.md) y [costos](../../operacion/costos.md).
 
 ## Verificación y estado
 

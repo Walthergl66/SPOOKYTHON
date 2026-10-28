@@ -27,7 +27,7 @@ La decisión previa [ADR-045](0045-evaluacion-aws-privada.md) diseñó staging p
 
 Las sesiones son independientes en un único proceso y se destruyen al reiniciar. Los límites reducen consumo casual, pero la URL sigue siendo pública y solicitudes automatizadas pueden consumir los cupos. La primera publicación temporal usa una Lightsail VM `medium_3_0` en Ohio, Docker/Nginx y un nombre nip.io con certificado Let's Encrypt; `nip.io` es un servicio de terceros y no un dominio del proyecto. Debe supervisarse AWS y detener/eliminar la instancia al concluir; reservar Static IP o dejar recursos auxiliares puede conservar cargos. Varios visitantes detrás de una IP pueden compartir el límite de Nginx. Una sesión activa que exceda el máximo por inactividad pierde su mundo.
 
-La prueba ASGI cubre tres modos y aislamiento, pero la carga concurrente externa, autenticación administrativa, protección contra abuso a gran escala, durabilidad y recuperación continúan pendientes. La API conserva la key maestra en servidor; no se inyecta al bundle.
+La prueba ASGI cubre tres modos y aislamiento, pero la carga concurrente externa, autenticación administrativa, protección contra abuso a gran escala, durabilidad y recuperación continúan pendientes. La API conserva la key maestra en servidor; no se inyecta al bundle. La actualización de la VM se automatiza según [ADR-047](0047-despliegue-lightsail-desde-github-actions.md); eso no añade réplicas ni persistencia.
 
 ## Vínculos
 

@@ -1,3 +1,19 @@
+## CAM-129 — Automatizar la actualización de Lightsail desde GitHub Actions
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Solicitud o problema de origen: el usuario preguntó si podía haber una conexión con GitHub que actualice el despliegue y pidió implementarla.
+- Especificación, requisitos, criterios CA y tareas relacionados: SPEC-005, SPEC-011; P0-04/P5-02; ADR-047.
+- Motivo del cambio: reducir publicación manual y asegurar que el deploy solo ocurra después de CI en el commit exacto.
+- Alcance y comportamiento resultante: CI ahora ofrece job `Deploy to Lightsail` solo para `master` y `workflow_dispatch` en `master`, después de backend/frontend; imágenes por SHA; transferencia SSH con host key fijada; script remoto preserva env servidor, comprueba configuración del perfil público, hace health checks local y restaura imágenes anteriores si falla. Acción posterior valida salud/UI pública.
+- Archivos y documentos propietarios afectados: `.github/workflows/ci.yml`, `deploy/lightsail/deploy-release.sh`, ADR-047, infraestructura, seguridad, guía paso a paso, SPEC-005/SPEC-011, índices, plan y estado actual.
+- Decisiones/ADR relacionadas o motivo por el que no requiere ADR: ADR-047 registra la topología automatizada, seguridad del canal, rollback y límites de estado volátil.
+- Validación ejecutada: pendiente al cierre; ejecutar `bash -n deploy/lightsail/deploy-release.sh`, validador YAML/Actions disponible, suite frontend/backend y `check_docs.py`, `check_sdd.py`, `test_check_sdd.py`, `git diff --check`.
+- Validación no ejecutada y causa: no se ejecutó GitHub Actions ni Lightsail desde esta tarea; el usuario aún debe configurar secrets/variable y la regla Lightsail actual de SSH restringe entrada a IP administrativa, no a runners hospedados. No se abrió la regla del firewall.
+- Limitaciones, riesgos y pendientes con ID: P-21: confirmar método de conectividad segura para runner GitHub; primer run/rollback remoto; prueba de pérdida de partidas al reiniciar es comportamiento previsto por SPEC-011. No exponer SSH globalmente.
+- Estado real al cerrar: implementación local preparada; automatización remota no activa hasta configurar acceso y secrets en GitHub.
+- Siguiente acción concreta: configurar secrets/variable del repositorio y decidir una ruta de red compatible con firewall restringido; validar el fingerprint SSH desde un canal confiable y observar el primer workflow en `master`.
+- Commit o PR: ninguno creado.
+
 ## CAM-128 — Enrutar Jugar en el proxy y verificar los tres modos públicos
 
 - Fecha: 2026-10-28, America/Guayaquil.

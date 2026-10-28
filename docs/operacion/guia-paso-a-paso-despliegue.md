@@ -1,15 +1,15 @@
 # Guía paso a paso para completar Navira
 
-Actualizada: 2026-10-28. CAM-125 aplicó el runner efímero y completó R1/R2/R3 en Fargate, Ohio; **la app pública todavía no está desplegada**. App Runner recibió una denegación por política organizativa. Usar esta guía para el siguiente trayecto permitido y no presentar el runner como URL funcional. El estado vigente se contrasta con [estado actual](../seguimiento/estado-actual.md), [SPEC-005](../metodo/especificaciones/SPEC-005-aws-evaluacion.md), [plan](../seguimiento/plan-implementacion.md), [pendientes](../seguimiento/pendientes.md), [seguridad](seguridad.md) y [costos](costos.md).
+Actualizada: 2026-10-28, CAM-129. CAM-125 completó R1/R2/R3 en Fargate, Ohio; CAM-126..128 desplegaron la demo pública de tres modos en Lightsail con URL HTTPS. ADR-047 configura CD desde GitHub Actions, todavía sin primer run remoto y con conectividad SSH pendiente. Esta guía conserva el trayecto ECS como referencia de evaluación; para el servicio temporal consultar también [infraestructura](infraestructura.md), [ADR-047](../arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) y [estado actual](../seguimiento/estado-actual.md).
 
 ## Situación de partida comprobada
 
 - Las campañas R1/R2/R3 se han repetido tres veces localmente: nueve rondas de cinco minutos y 69.572 solicitudes HTTP exitosas. La evidencia está en [CAM-098](../calidad/resultados/campana-reto-cam098.md) y [CAM-099](../calidad/resultados/repeticiones-reto-cam099.md); todavía no mide RTT, disponibilidad o recursos de AWS.
-- La CI tiene jobs para pruebas backend y build frontend en [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), pero su ejecución remota no está comprobada.
+- La CI tiene jobs backend/frontend y un job CD a Lightsail en [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml). El CD espera los dos checks, corre solo para `master` y aún no se ha comprobado remotamente.
 - CAM-125 mantiene stack de campaña en AWS con ECR, ECS, CloudWatch, roles IAM, security group y task definition. Imagen inmutable por digest; campaña AWS R1/R2/R3 exitosa y escaneo del digest sin hallazgos. El stack no contiene frontend, ALB, servicio web persistente, URL, TLS ni DynamoDB.
 - El control de demo de Simulador/Jugar exige opt-in y conexión loopback. No se debe habilitar `NAVIRA_LOCAL_DEMO_CONTROL=1` detrás de una URL pública. La API key falla cerrada en rutas protegidas cuando no está configurada.
 - Los snapshots, sesiones y coordinación son volátiles y de un proceso. Reiniciar el proceso pierde el mundo; añadir réplicas no es seguro con la coordinación actual.
-- El usuario eligió `us-east-2` (Ohio). CAM-117 confirma por APIs específicas un Budget mensual de US$10 y alertas ACTUAL a 50/80/100 %; el correo está `Inactive` y el usuario autorizó monitoreo manual. CAM-125 estima Fargate del runner (~US$0,051 con tarifas indicativas), pero el gasto real, créditos y elegibilidad no se han verificado. La cuenta denegó App Runner; URL pública, dominio y certificados siguen pendientes.
+- El usuario eligió `us-east-2` (Ohio). CAM-117 confirma Budget mensual US$10 y alertas ACTUAL a 50/80/100 %; el usuario acepta supervisión manual. CAM-125 estima Fargate del runner (~US$0,051), no es factura. La cuenta denegó App Runner; la app web alternativa sí está en Lightsail, pero dominio propio y gasto real siguen pendientes.
 
 ## Fase 0 — Congelar y verificar el candidato
 
@@ -68,6 +68,8 @@ Referencias oficiales: [usar AWS Budgets](https://docs.aws.amazon.com/cost-manag
 **Estado CAM-125:** stack de campaña, imagen Alpine por digest, task definition y campaña completa en Fargate están en AWS; detalles en [reporte](../calidad/resultados/campana-aws-cam125.md). No hay tarea activa. Para publicar la aplicación, elegir un hosting permitido, completar staging privado con TLS/autenticación y hacer una prueba remota; no abrir el control local como workaround de la denegación de App Runner.
 
 ## Fase 4 — Publicar a staging una sola versión
+
+La demo web temporal ya está publicada en Lightsail; no es el staging privado descrito en la arquitectura objetivo. Su proceso de actualización automático se implementa en CAM-129 y ADR-047. Para activarlo, configurar los cuatro Actions secrets y la variable `NAVIRA_PUBLIC_URL` descritos en [infraestructura](infraestructura.md), y resolver la conectividad SSH restringida. No abrir SSH globalmente. En `master`, el workflow construye imágenes desde el SHA, despliega después de CI y verifica endpoints; el primer run debe observarse desde Actions y registrarse antes de declarar el CD operativo.
 
 1. Ejecutar la CI de GitHub sobre el SHA candidato y exigir backend tests + frontend build verdes.
 2. Construir y publicar la imagen con etiqueta inmutable asociada al SHA; desplegar el frontend del mismo SHA. Mantener `desiredCount=1` para el coordinador.
