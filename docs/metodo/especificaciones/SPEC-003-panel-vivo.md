@@ -5,7 +5,7 @@ Estado: lista
 Requisitos: PRD-04, PRD-06, PRD-14, TRD-05, TRD-06, TRD-07, TRD-09, TRD-20
 Tareas: P0-04, P4-01, P4-02
 Pruebas: T-04, T-15, T-16, T-19, T-41, T-44, T-45, T-65
-Cambio: CAM-150
+Cambio: CAM-154
 Evidencia: pruebas locales descritas abajo; criterios de panel integral aún no verificados.
 
 ## Objetivo y alcance
@@ -26,7 +26,7 @@ El panel de esta SPEC sigue siendo de solo lectura. Los controles de inicio/paus
 | CA-003-02 | Cada turno confirmado actualiza posiciones y fase; una transición animada continúa durante snapshots intermedios sin movimientos nuevos y termina en la posición confirmada. Desconexión queda visible y reconexión recupera snapshot sin huecos o datos de otra partida. Un socket abierto también sigue el contexto cuando el control local inicia otro run. | T-15 y T-41 — CAM-032/052/079; despliegue/recovery multi-proceso no cubiertos. |
 | CA-003-03 | Panel distingue modo y métricas automáticas/humanas; espectador no inicia, mueve o termina partidas. | T-16 |
 | CA-003-04 | Selección y controles permitidos funcionan con teclado, foco visible y señales distintas del color; sin animación obligatoria para entender estado. | T-19 |
-| CA-003-05 | Al confirmarse un incidente, el mapa avisa con turno/causa en una alerta de jerarquía visual clara: superficie azul marino opaca, acento ámbar, causa destacada y turno en una etiqueta compacta; conserva el marcador amarillo parpadeante en el segmento cerrado. La alerta desaparece sin borrar el marcador; con movimiento reducido, el marcador se mantiene visible sin parpadeo. | T-44 |
+| CA-003-05 | Al confirmarse un incidente, el mapa avisa con turno/causa en una alerta de jerarquía visual clara: superficie azul marino opaca, acento ámbar, causa destacada y turno en una etiqueta compacta; ofrece un botón accesible para cerrarla y desaparece automáticamente tras ocho segundos. Cerrar o agotar la alerta no borra el marcador amarillo del segmento cerrado; con movimiento reducido, el marcador se mantiene visible sin parpadeo. | T-44 |
 | CA-003-06 | Al seleccionar un habitante desde su marcador, su ruta recomendada del snapshot vigente se resalta en el mapa. La selección no modifica el mundo ni presenta una ruta obsoleta como confirmada. | T-45 |
 | CA-003-07 | Cuando existe perfil, el panel lateral muestra únicamente sus datos ficticios: nombre, edad, ocupación y descripción. No muestra allí estado, control, nodos, destino, pasos de ruta ni otra ficha operativa. El contrato se valida en el borde; perfiles ausentes de snapshots legados no rompen el panel. La selección solo afecta presentación y nunca se incorpora a la lógica de decisión. | T-65 |
 

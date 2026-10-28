@@ -1,6 +1,10 @@
 # Estado actual y punto de reanudación
 
-Última actualización: 2026-10-28, CAM-150. La alerta de incidente ahora separa visualmente tipo/turno, causa y efecto del cierre sobre un panel azul marino opaco con acento ámbar; es responsive y usa entrada breve, compatible con movimiento reducido. Eventos y marcadores continúan sin cambios. Build frontend pasa con la advertencia conocida del chunk cartográfico >500 kB; `check_docs.py`, `check_sdd.py` y `git diff --check` pasan; no se ejecutan tests. Vite reiniciado en `http://127.0.0.1:5173/` y HTTP 200; backend `/salud` HTTP 200 y no se reinició.
+Última actualización: 2026-10-28, CAM-155. El pulido visual agrega transiciones cortas a controles, realce suave de selección/métricas y una entrada breve para paneles laterales. El botón de alerta vial de CAM-154 se conserva. El rollback del rediseño de mapa CAM-153 sigue vigente. No se modifican reglas; falta revisar visualmente los estados de interacción.
+
+## Reanudación exacta
+
+CAM-155: build frontend, validadores docs/SDD y `git diff --check` pasan; frontend/backend loopback responden 200. Siguiente paso: recorrer con puntero y teclado los estados de botones y paneles en escritorio/móvil; no alterar la partida para forzar eventos. Si vuelve `Failed to fetch`, comprobar Vite en `5173` y su proxy `/salud` antes de reiniciar backend. No se creó commit ni despliegue.
 
 ## Hechos verificados
 

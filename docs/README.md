@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-150. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
+Actualizado: 2026-10-28, CAM-155. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
 
 ## Dónde está cada cosa
 

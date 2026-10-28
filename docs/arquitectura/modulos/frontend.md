@@ -25,6 +25,12 @@ CAM-135 proyecta el tipo visible del zombie como clase de marcador: corredor mor
 
 CAM-142 añade `features/map/addStreetNameLayers.ts`: etiquetas de calles sobre el vector `transportation_name` de OpenMapTiles/OpenFreeMap. Avenidas y vías principales aparecen desde el zoom de vista urbana; calles locales esperan al zoom cercano. MapLibre administra colisiones y usa texto claro con halo oscuro; las etiquetas se mantienen en ambas instancias cartográficas (partida y selector de refugios). No se proyectan calles como marcadores ni se modifica la red/ruta del dominio. El build pasa; la inspección visual T-64 queda pendiente.
 
+CAM-153 revierte el ajuste visual temporal de CAM-151 en `CityMap.tsx` y `styles.css`; el mapa conserva el tratamiento previo, incluido el cambio de cámara instantáneo y las capas originales de calles/ruta. La reversión no afecta a nombres de calles, datos, snapshots ni reglas.
+
+CAM-154 añade a la alerta vial un botón accesible «Cerrar alerta vial» en la esquina superior derecha. Cierra solo la notificación actual; el marcador del cierre permanece y la alerta conserva su expiración automática de ocho segundos.
+
+CAM-155 homogeneiza en `styles.css` las transiciones de controles y botones entre modos, destaca de forma leve métricas y opciones seleccionadas, y aplica una entrada corta a los paneles laterales. La animación se limita a transformaciones/opacidad y estados de interacción; no anima continuamente el mapa y la regla global de movimiento reducido la minimiza.
+
 CAM-145/146 añade `features/map/refugeSectors.ts`: la lista del panel muestra el sector oficial para los cuatro nodos base; una ubicación personalizada se asigna al sector del anclaje oficial más cercano por distancia geográfica y queda rotulada «Sector cercano» para dejar claro que es una aproximación, no una frontera parroquial.
 
 CAM-136 reemplaza los controles visibles de reinicio por «Detener simulación»/«Detener mundo». La acción espera la confirmación del backend, limpia selección/avisos y devuelve la navegación a Reto/R1; no fabrica un run vacío ni un snapshot local. Jugar conserva «Iniciar nueva partida» para su operación específica.

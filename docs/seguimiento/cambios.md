@@ -1,3 +1,56 @@
+## CAM-155 — Pulir interacciones visuales de Navira
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de embellecer la interfaz y añadir animaciones sutiles a botones y controles.
+- Alcance/criterios: mantener la paleta y estructura del tablero; unificar transiciones cortas de interacción, respuesta de pulsación/hover donde hay puntero preciso, estados seleccionados con realce discreto y entrada breve de paneles; respetar `prefers-reduced-motion` y no añadir animación continua al mapa.
+- Resultado: transiciones coordinadas para botones de modos, operación, reto, juego y selección; realce suave de métricas y controles seleccionados; paneles laterales entran con desplazamiento de 5 px y breve desfase. No cambia estado, contratos ni reglas del mapa.
+- Archivos: `frontend/src/styles.css`, módulo frontend, README, estado e historial.
+- Verificación: `cd frontend && npm run build` pasa con el aviso conocido de chunk cartográfico >500 kB; `python3 backend/scripts/check_docs.py` pasa (148 Markdown/150 archivos), `python3 backend/scripts/check_sdd.py` pasa (11 SPEC) y `git diff --check` pasa. Frontend y backend loopback responden HTTP 200. No se ejecutaron pruebas automatizadas. La inspección visual de todos los estados interactivos queda pendiente.
+- ADR: no aplica; el cambio es de presentación reversible y no modifica arquitectura ni comportamiento de dominio.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-154 — Cerrar manualmente la alerta vial
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario para quitar la notificación del mapa con un control en la esquina superior derecha.
+- Relación: PRD-04, SPEC-003 CA-003-05; no cambia el evento, el cierre de calle ni la persistencia del marcador.
+- Cambio: botón «Cerrar alerta vial» con etiqueta accesible y foco visible; al activarlo desaparece la notificación actual. Se conserva la expiración automática de ocho segundos y el punto de incidente sigue en el mapa.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, SPEC-003, módulo frontend, README, estado e historial.
+- Verificación: `cd frontend && npm run build`, `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` y `git diff --check`; no se ejecutan tests automatizados. La app no mostraba un incidente activo para inspección visual.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-153 — Retirar el rediseño visual reciente del mapa
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario pidió descartar los cambios de diseño del mapa si estaban relacionados con que la página dejara de cargar tras una recarga.
+- Diagnóstico causal: `Failed to fetch` ocurrió porque Vite no escuchaba en el puerto 5173; el backend estaba sano. La capa visual de MapLibre no causa por sí misma el fallo de red. La indisponibilidad se presentó después del reinicio de Vite de la tarea CAM-151; el motivo exacto de terminación del proceso quedó sin determinar.
+- Cambio: se revirtió únicamente el código visual de CAM-151 en `CityMap.tsx` y `styles.css`, restaurando su estado previo. Se conservan el backend/run, el frontend base, cambios anteriores y el diagnóstico/restablecimiento CAM-152.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, SPEC-008, módulo frontend, README, estado e historial.
+- Verificación: `cd frontend && npm run build`, `python3 backend/scripts/check_docs.py` (148 Markdown/150 archivos), `python3 backend/scripts/check_sdd.py` (11 SPEC) y `git diff --check` pasan. HTTP frontend `5173`, proxy `/salud` y backend `8000` responden 200; se abrió una pestaña nueva que cargó el modo Reto. No se reinició backend ni la partida. El aspecto base se confirma por restauración del código y compilación; no se hizo una inspección visual comparativa del mapa ya iniciado.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-152 — Recuperar el frontend local tras `Failed to fetch`
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario reportó que al recargar la página el tablero dejó de cargar y el control de pausa mostraba `Failed to fetch`.
+- Diagnóstico: Vite no escuchaba en `127.0.0.1:5173`, aunque el backend seguía activo en `127.0.0.1:8000`. Por ello, las solicitudes same-origin del navegador y el proxy Vite no llegaban a las rutas del backend. La causa por la que terminó el proceso Vite anterior no se determinó.
+- Acción: se levantó Vite de nuevo. Sin reiniciar backend, partida o cambiar código.
+- Archivos: `docs/README.md`, estado actual e historial.
+- Verificación: Vite `/`, proxy `/salud`, proxy `/panel/estado` y backend `/salud` responden HTTP 200; navegador volvió a presentar R2 en vivo. No se ejecutaron tests porque no hubo cambio de código.
+- Siguiente paso: ante otra falla, comprobar por separado ambos puertos y el proxy; mantener backend intacto si hay un run que conservar.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-151 — Dar más jerarquía y respuesta visual al mapa
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de hacer el mapa más dinámico y mejorar su diseño.
+- Relación: PRD-04, SPEC-008; mejora de presentación sin modificar cartografía, rutas, snapshots ni reglas del servidor.
+- Cambio: el lienzo combina una retícula cartográfica tenue con mayor contraste de calles; la ruta recomendada seleccionada gana separación mediante un halo; los controles se agrupan en una barra flotante con estado de vista activo, estado en vivo/pausa y turno. «Vista urbana» y «Ver partida» ahora encuadran con transición breve, y las transiciones respetan `prefers-reduced-motion`.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, SPEC-008, módulo frontend, estado e historial.
+- Validación: `cd frontend && npm run build` pasa; persiste la advertencia conocida del bundle cartográfico mayor a 500 kB. El navegador local mostró calles, costa, barra de herramientas y turno en la vista Reto activa. No se reinició el backend ni se alteró el run activo; no se ejecutaron tests automatizados.
+- Límite: la ruta resaltada aparece solo cuando se selecciona un habitante con ruta disponible. La verificación visual se hizo en escritorio; el responsive se cubre con estilos pero no se inspeccionó en un viewport móvil. La SPEC-008/T-64 continúa parcial.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-150 — Mejorar la jerarquía visual de la alerta vial
 
 - Fecha: 2026-10-28, America/Guayaquil.

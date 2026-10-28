@@ -48,7 +48,7 @@ function getStreetIndex(map: PanelMap): StreetIndex {
 }
 
 /** Projects changing public panel data. Immutable OSM streets use createStreetFeatures once per map. */
-export function createSimulationFeatures(map: PanelMap, state: PanelState, selectedSurvivorId: string | undefined, pointById = indexMapPositions(map)): FeatureCollection {
+export function createSimulationFeatures(map: PanelMap, state: PanelState, selectedSurvivorId: string | undefined, pointById = indexMapPositions(map), selectedRefugeId?: string): FeatureCollection {
   const features: Feature[] = []
   const blocked = new Set(state.segmentosBloqueados ?? [])
   const streetIndex = getStreetIndex(map)
@@ -79,7 +79,7 @@ export function createSimulationFeatures(map: PanelMap, state: PanelState, selec
   }
   for (const refuge of map.refugios) {
     const coordinates = pointById.get(refuge.nodo)
-    if (coordinates) features.push({ type: 'Feature', id: refuge.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'refuge', label: refuge.id } })
+    if (coordinates) features.push({ type: 'Feature', id: refuge.id, geometry: { type: 'Point', coordinates }, properties: { kind: 'refuge', label: refuge.id, selected: refuge.id === selectedRefugeId } })
   }
   for (const event of state.eventosCiudad ?? []) {
     if (typeof event.lat !== 'number' || typeof event.lng !== 'number') continue

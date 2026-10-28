@@ -29,6 +29,7 @@ const SurvivorRoutePanel = lazy(() => import('../features/map/SurvivorRoutePanel
 export function App() {
   const [mode, setMode] = useState<NaviraMode>('challenge')
   const [selectedSurvivorId, setSelectedSurvivorId] = useState<string | undefined>()
+  const [selectedRefugeId, setSelectedRefugeId] = useState<string | undefined>()
   const [selectedRoute, setSelectedRoute] = useState<PanelRoute | null>(null)
   const [challengeRound, setChallengeRound] = useState<1 | 2 | 3>(1)
   const [challengeBusy, setChallengeBusy] = useState(false)
@@ -51,6 +52,7 @@ export function App() {
     if (next === mode) return
     setMode(next)
     setSelectedSurvivorId(undefined)
+    setSelectedRefugeId(undefined)
     setSelectedRoute(null)
     setChallengeBusy(false)
     setChallengeError(null)
@@ -297,7 +299,7 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={active && map ? map : EMPTY_MAP} state={active && visibleState ? stateWithSelectedRoute ?? visibleState : EMPTY_MAP_STATE} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} paused={simulator?.estado === 'pausada'} operatorTool={mode === 'game' && active && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense>
+            <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={active && map ? map : EMPTY_MAP} state={active && visibleState ? stateWithSelectedRoute ?? visibleState : EMPTY_MAP_STATE} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} selectedRefugeId={selectedRefugeId} animationSpeed={simulator?.velocidad ?? 4} paused={simulator?.estado === 'pausada'} operatorTool={mode === 'game' && active && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense>
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{modeRunMatches ? map?.version ?? 'AÚN SIN SNAPSHOT' : 'NUEVO MUNDO PENDIENTE DE INICIAR'}</div>
           </div>
@@ -318,7 +320,11 @@ export function App() {
           </section>
           <section className="stats-panel refuge-panel">
             <div className="panel-section-heading"><span className="panel-overline">DESTINOS DEL MAPA</span><h2>Refugios representados</h2></div>
-            {modeRunMatches && map?.refugios.length ? <ul className="refuge-list">{map.refugios.map((refuge) => <li key={refuge.id}><span className="refuge-mark" aria-hidden="true">⌂</span><span><strong>{refuge.id}</strong><small>{refugeLabels.get(refuge.id) ?? (sectorDataFailed ? 'Sector no disponible' : 'Identificando sector…')}</small></span></li>)}</ul> : <p className="empty-note">Se mostrarán al iniciar una partida.</p>}
+            {modeRunMatches && map?.refugios.length ? <ul className="refuge-list">{map.refugios.map((refuge) => {
+              const sector = refugeLabels.get(refuge.id) ?? (sectorDataFailed ? 'Sector no disponible' : 'Identificando sector…')
+              const selected = selectedRefugeId === refuge.id
+              return <li key={refuge.id}><button className="refuge-select" type="button" aria-pressed={selected} aria-label={`${refuge.id}, ${sector}. Mostrar en el mapa`} onClick={() => setSelectedRefugeId(refuge.id)}><span className="refuge-mark" aria-hidden="true">⌂</span><span><strong>{refuge.id}</strong><small>{sector}</small></span></button></li>
+            })}</ul> : <p className="empty-note">Se mostrarán al iniciar una partida.</p>}
           </section>
         </aside>
       </section>

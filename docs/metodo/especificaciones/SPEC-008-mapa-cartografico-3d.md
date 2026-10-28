@@ -5,8 +5,8 @@ Estado: en-revision
 Requisitos: PRD-01, PRD-04, TRD-07, TRD-09, TRD-15
 Tareas: P1-01, P4-04
 Pruebas: T-27, T-38, T-39, T-59, T-61, T-64, T-66
-Cambio: CAM-148
-Evidencia: [límite jugable CAM-077](../../calidad/resultados/limite-jugable-cam077.md), [ventana urbana CAM-076](../../calidad/resultados/ventana-urbana-cam076.md), [cobertura CAM-073](../../calidad/resultados/cobertura-manta-cam073.md), [margen de navegación CAM-074](../../calidad/resultados/margen-navegacion-5km-cam074.md), [mar visible CAM-075](../../calidad/resultados/mar-visible-cam075.md), [reportes CAM-051..056](../../calidad/resultados/). CAM-142 agrega nombres viales y compila; T-64 visual aún no está comprobada.
+Cambio: CAM-156
+Evidencia: [límite jugable CAM-077](../../calidad/resultados/limite-jugable-cam077.md), [ventana urbana CAM-076](../../calidad/resultados/ventana-urbana-cam076.md), [cobertura CAM-073](../../calidad/resultados/cobertura-manta-cam073.md), [margen de navegación CAM-074](../../calidad/resultados/margen-navegacion-5km-cam074.md), [mar visible CAM-075](../../calidad/resultados/mar-visible-cam075.md), [reportes CAM-051..056](../../calidad/resultados/). CAM-142 agrega nombres viales y compila; el ajuste visual temporal CAM-151 se revirtió en CAM-153. T-64 visual integral sigue sin comprobarse.
 
 ## Objetivo y alcance
 
@@ -30,6 +30,7 @@ La primera implementación ofrece estilo oscuro, edificios extruidos cuando los 
 | CA-008-10 | En partidas Manta, el grafo de juego excluye nodos fuera de la ventana y calles que crucen su borde; inicios, zombies, rutas y movimientos solo usan ese subgrafo. El selector encuadra la misma ventana, solo ofrece nodos internos y el endpoint rechaza una selección exterior. El fixture fuente ampliado permanece intacto. | T-39 |
 | CA-008-11 | Al entrar a la app, el componente MapLibre monta el mapa vacío y la cartografía base comienza a cargar mientras se configura una partida, sin esperar al snapshot de actores. La geometría del juego se conserva en caché de módulo por `mapVersion`, limitada a las dos versiones recientes e incluida cuando un snapshot indique `sin_partida`; los actores, eventos y rutas dinámicos solo proceden del snapshot vigente. El shell y controles siguen montados durante la carga. Cambiar de modo o `runId` no debe borrar ni volver a descargar una geometría válida. Una carga fallida debe informar el estado y permitir recuperación. | T-59 |
 | CA-008-12 | Mostrar nombres de calles del vector tile `transportation_name` siguiendo la línea de la vía: avenidas/calles principales desde el zoom de vista urbana y calles locales al acercarse. MapLibre controla la colisión; texto y halo mantienen contraste con el estilo oscuro, y las etiquetas quedan por debajo de actores y eventos. El mapa de selección de refugios conserva los nombres. No crear marcadores DOM/GeoJSON por calle ni modificar el grafo o las decisiones del motor. | T-64 |
+| CA-008-13 | Al activar un refugio desde la lista «Refugios representados», la cámara centra ese nodo y lo resalta; la selección se puede hacer con ratón o teclado, respeta movimiento reducido y no modifica el estado de partida. | T-27 |
 
 ## Plan y límites
 
@@ -38,6 +39,8 @@ CAM-073 amplió el fixture fuente a la envolvente OSM. CAM-077 fija la ventana e
 P4-04 sustituye la capa SVG por un componente MapLibre. Las transiciones visuales usan snapshots públicos consecutivos; no cambian el dominio, el contrato de `/paso`, el grafo versionado ni el estado autoritativo. El WebSocket vuelve a resolver el proveedor del panel durante la observación para seguir una partida local recién creada. Para calzar rutas curvas con la red real, una evolución debe conservar geometría completa OSM en el grafo público; esta versión conecta los nodos seleccionados con las coordenadas actuales.
 
 CAM-134 monta `CityMap`/MapLibre desde la entrada de la app sobre un mapa vacío, mientras la cartografía base se carga durante la configuración. La geometría del mapa de juego queda en caché de módulo indexada por versión y limitada a las dos versiones recientes; `usePanel` la conserva al recibir `sin_partida`, sin conservar por ello capas de actores/rutas/eventos de una sesión anterior. Esta separación debe seguir asociando datos dinámicos al snapshot vigente. No se midió el tiempo hasta mapa visible, no se ejecutó smoke visual ni se comprobó recuperación del proveedor; la reducción de espera permanece sin verificar. La precarga no conserva estado de partida ni sustituye las comprobaciones de mapVersion/runId.
+
+CAM-151 probó temporalmente una jerarquía de calles/ruta y controles cartográficos revisados; CAM-153 retiró esa capa visual. El incidente `Failed to fetch` se diagnosticó como Vite no disponible, con el backend activo, no como fallo de las capas MapLibre. No se cambia el contrato ni la fuente de verdad cartográfica.
 
 CAM-073 conserva la envolvente OSM amplia en el artefacto fuente. CAM-076 introdujo la ventana urbana visual; CAM-077 la aplica también a la zona jugable derivada y al selector. La caja se estima desde la referencia del usuario y no equivale a límite administrativo; los tiles siguen dependiendo de OpenFreeMap.
 
