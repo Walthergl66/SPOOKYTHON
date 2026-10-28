@@ -98,6 +98,7 @@ class CampoRutasTests(unittest.TestCase):
             for nodo in grafo.mapa.nodos:
                 with self.subTest(opciones=opciones, origen=nodo.id):
                     self.assertEqual(campo.desde(nodo.id), seleccionar_refugio(grafo, nodo.id, **opciones))
+                    self.assertEqual(campo.tiene_ruta(nodo.id), campo.desde(nodo.id) is not None)
 
     def test_equivale_en_redes_dirigidas_con_empates_y_ciclos(self) -> None:
         rng = random.Random(73)
@@ -119,6 +120,8 @@ class CampoRutasTests(unittest.TestCase):
             RutasHaciaRefugios(grafo_rutas(), refugio_objetivo="desconocido")
         with self.assertRaises(KeyError):
             RutasHaciaRefugios(grafo_rutas()).desde("desconocido")
+        with self.assertRaises(KeyError):
+            RutasHaciaRefugios(grafo_rutas()).tiene_ruta("desconocido")
 
 
 if __name__ == "__main__":

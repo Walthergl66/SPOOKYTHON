@@ -256,7 +256,10 @@ class _SesionDemoPublica:
     @property
     def unirse_juego(self):
         self._activar_juego()
-        return self._app_juego.state.unirse_juego
+        return _UnirsePublicoConReloj(
+            self._app_juego.state.unirse_juego,
+            self._app_juego.state.reloj_juego,
+        )
 
     @property
     def consultar_sesion_juego(self):
@@ -280,14 +283,25 @@ class _SesionDemoPublica:
                 ruta_mapa=self._ruta_mapa,
                 seguridad=self._seguridad,
             )
-        reloj = self._app_juego.state.reloj_juego
-        if reloj is not None:
-            reloj.iniciar()
 
     def cerrar(self) -> None:
         if self._app_juego is not None:
             self._app_juego.state.reloj_juego.detener()
         self._simulador.cerrar()
+
+
+class _UnirsePublicoConReloj:
+    """Arranca el reloj del juego solo después de que el jugador aparece."""
+
+    def __init__(self, servicio, reloj) -> None:
+        self._servicio = servicio
+        self._reloj = reloj
+
+    def ejecutar(self, token: str | None):
+        resultado = self._servicio.ejecutar(token)
+        if self._reloj is not None:
+            self._reloj.iniciar()
+        return resultado
 
 
 def _leer_parametros_demo() -> tuple[str, int | None, str, int]:

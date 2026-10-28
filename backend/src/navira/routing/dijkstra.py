@@ -270,3 +270,10 @@ class RutasHaciaRefugios:
             calles.append(calle)
             nodo = calle.destino
         return Ruta(origen, destino, tuple(calles), costo, refugio_id)
+
+    def tiene_ruta(self, origen: str) -> bool:
+        """Indica en tiempo constante si el campo contiene una ruta al refugio."""
+
+        if origen not in self._grafo.mapa.nodos_por_id:
+            raise KeyError(f"Nodo de origen desconocido: {origen}.")
+        return origen in self._mejor

@@ -21,7 +21,7 @@ from navira.domain.modelo import (
     ModoPartida,
     Sobreviviente,
 )
-from navira.routing.dijkstra import seleccionar_refugio
+from navira.routing.dijkstra import RutasHaciaRefugios
 from navira.domain.snapshot import SnapshotMundo
 
 
@@ -267,17 +267,17 @@ class UnirseAJuego:
         zombies_visibles = {
             item.nodo for item in partida.zombies if item.estado is EstadoZombie.ACTIVO
         }
+        rutas_viables = RutasHaciaRefugios(
+            grafo,
+            aristas_cerradas=cerradas,
+            segmentos_cerrados=snapshot.segmentos_cerrados,
+            nodos_bloqueados=frozenset(nodos_bloqueados),
+        )
         candidatos = []
         for nodo in sorted(grafo.mapa.nodos_por_id):
             if nodo in refugios or nodo in ocupados or nodo in zombies_visibles or nodo in nodos_bloqueados:
                 continue
-            if seleccionar_refugio(
-                grafo,
-                nodo,
-                aristas_cerradas=cerradas,
-                segmentos_cerrados=snapshot.segmentos_cerrados,
-                nodos_bloqueados=frozenset(nodos_bloqueados),
-            ) is not None:
+            if rutas_viables.tiene_ruta(nodo):
                 candidatos.append(nodo)
         if not candidatos:
             raise AparicionNoDisponible("No hay nodos elegibles con ruta vigente a un refugio.")
