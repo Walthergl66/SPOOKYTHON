@@ -1772,5 +1772,16 @@ Usar [plantilla de cambio](../metodo/plantillas/cambio.md). Cada entrada signifi
 - Archivos: `backend/src/navira/simulation/resolver.py`, `backend/tests/test_resolver.py`, `backend/tests/test_control_simulador_demo.py`, SPEC-002, pruebas T-62, módulo backend, algoritmos, estado, pendientes e historial.
 - Pruebas: `test_resolver.py` (18/18), coordinador + juego (9/9), órdenes de juego (12/12), `test_demo.py` (19/19), caso de pausa del control (1/1) y suite backend completa (254/254, 180.378 s) pasan. El caso de pausa se ajustó para aceptar los dos estados documentados: `pausando` mientras concluye una ronda iniciada y `pausada` cuando ya no corre ninguna. `compileall`, `check_docs.py` (144 Markdown/146 archivos), `check_sdd.py` (11 SPEC), `git diff --check`, `npm test` (99/99) y `npm run build` pasan; el bundle MapLibre conserva su aviso >500 kB.
 - Límites: la mordida en nodos intermedios no se aplica conforme a R-09/R-10; dormidos/hordas y selección de objetivo del corredor conservan supuestos documentados. T-62 mejora cobertura, no verifica toda SPEC-001/002/004 ni rondas de evaluación completas.
-- Siguiente paso: actualizar validadores documentales después de este registro; luego commit CAM-136 por separado y CAM-137 aparte. Actualizar Lightsail si los checks finales pasan y el acceso SSH permite la transferencia.
-- Commit o PR: pendiente de los subagentes secuenciales solicitados por el usuario.
+- Siguiente paso: autorizar la clave pública válida para `ec2-user` y reintentar la publicación desde el origen administrativo. Los commits CAM-136/137 ya están separados y en `origin/master`; Lightsail no se modificó.
+- Commit: CAM-136 `8a88681`; CAM-137 `81212bc`.
+
+## CAM-138 — Despliegue no aplicado por rechazo de clave SSH
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de desplegar tras comprobar turnos, roles y mordidas.
+- Alcance: actualización de evidencia operativa/transferencia; no cambia código ni la instancia.
+- Revisión solicitada: `81212bc` (`origin/master`); la revisión instalada permanece `ddfa843f81c9cb87732d56b4a1f5b59cf0ee466`.
+- Resultado: el puerto SSH y host key fijado respondieron desde el origen administrativo, pero `ec2-user` rechazó la identidad privada configurada (`Permission denied (publickey,...)`). No se transfirieron imágenes, no se ejecutó `deploy-release.sh` y no se modificaron contenedores, instancia ni firewall. Se preservó el servicio actual.
+- Siguiente paso: instalar/autorizar en Lightsail la clave pública pareja al secreto `LIGHTSAIL_SSH_PRIVATE_KEY` para `ec2-user`, o configurar una identidad SSH válida; probar autenticación y reintentar el script de despliegue documentado. No abrir SSH a todo Internet. El CD hospedado conserva además el bloqueo de origen descrito en P-21.
+- Estado de verificación: despliegue fallido antes de transferir; no afirmar que CAM-136/137 estén publicados en la URL pública.
+- Commit o PR: registro documental del intento; sin commit todavía.
