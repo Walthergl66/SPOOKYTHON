@@ -5,8 +5,8 @@ Estado: en-revision
 Requisitos: PRD-06, PRD-07, TRD-02, TRD-10, TRD-11
 Tareas: P4-05, P5-01, P5-03
 Pruebas: T-11, T-18, T-47, T-48, T-49, T-50
-Cambio: CAM-098
-Evidencia: campaña local secuencial 3×5 minutos en [reporte CAM-098](../../calidad/resultados/campana-reto-cam098.md); AWS pendiente.
+Cambio: CAM-099
+Evidencia: campañas locales secuenciales 3×5 minutos con tres semillas en [CAM-098](../../calidad/resultados/campana-reto-cam098.md) y [CAM-099](../../calidad/resultados/repeticiones-reto-cam099.md); AWS pendiente.
 
 ## Objetivo y alcance
 

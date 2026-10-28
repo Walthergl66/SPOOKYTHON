@@ -2,6 +2,18 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-099 — Repetir campaña local Reto con tres semillas
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: continuar la validación de T-11 después de CAM-098 y medir si el comportamiento se mantiene entre semillas.
+- Especificación/requisitos: SPEC-005 CA-005-02, SPEC-009 CA-009-11, P2-03/P4-05/P5-01/P5-03 y T-11/T-50.
+- Método: tres campañas secuenciales completas con semillas base 20261026, 20261027 y 20261028, 150 turnos/300 s por ronda, cadencia objetivo 2 s, máximo 200 workers, cliente y Uvicorn en loopback. CAM-098 contiene la primera campaña; esta CAM agrega las otras dos, sin carga paralela.
+- Resultado: nueve rondas completaron 150 turnos activos, sin slots ociosos, fuera de período ni fallas. Total 69.572 solicitudes HTTP 200. p95 `/paso` entre 10,625 y 64,313 ms, máximo individual 127,566 ms; ciclo p95 máximo 1.378,374 ms, duración máxima 1.676,531 ms. Puente R2 y dos cierres R3 se aplicaron en cada campaña. Los números de evacuados/mordidos variaron por semilla.
+- Archivos: [reporte de repeticiones](../calidad/resultados/repeticiones-reto-cam099.md), T-11/T-50, SPEC-005/009, trazabilidad, plan, índices, estado e historial.
+- Validación: `python3 backend/scripts/check_docs.py` (129 Markdown/131 archivos), `python3 backend/scripts/check_sdd.py` (9 SPEC), `python3 -m unittest discover -s backend/tests -p 'test_check_sdd.py'` (8/8) y `git diff --check` pasan. La suite backend 231/231, compileall y smoke CLI están registrados en CAM-098; CAM-099 no cambia código.
+- Límites: tres semillas son evidencia repetible local, no prueba de variabilidad estadística amplia o AWS. Configuración de densidad y turnos de eventos continúa provisional. T-11 y las SPEC no se marcan completas; la evaluación oficial/entorno AWS sigue pendiente.
+- Siguiente acción: ejecutar la misma campaña en el entorno oficial/AWS luego de comprobar permisos, presupuesto, seguridad y endpoint; conservar versión, mapa y reporte.
+
 ## CAM-098 — Ejecutar campaña local Reto R1/R2/R3 con ventana completa
 
 - Fecha: 2026-10-27, Ecuador continental.
