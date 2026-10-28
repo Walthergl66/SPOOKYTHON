@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
@@ -12,6 +13,7 @@ from navira.adapters.sesiones_demo_memoria import (
 )
 from navira.api.seguridad import ConfiguracionSeguridad
 from navira.main import crear_app
+from navira.application.juego import EstadoSesion
 
 
 class _ControlFalso:
@@ -20,6 +22,7 @@ class _ControlFalso:
         self.consultar_panel = None
         self.cerrado = False
         self.partida_iniciada = False
+        self.unirse_juego = _UnirseFalso(self.run_id)
 
     def estado(self):
         return {
@@ -34,6 +37,22 @@ class _ControlFalso:
 
     def cerrar(self):
         self.cerrado = True
+
+
+class _UnirseFalso:
+    def __init__(self, run_id: str) -> None:
+        self.run_id = run_id
+
+    def ejecutar(self, _token):
+        return SimpleNamespace(
+            token=f"token-{self.run_id}",
+            sesion=SimpleNamespace(
+                run_id=self.run_id,
+                sobreviviente_id=f"jugador-{self.run_id}",
+                estado=EstadoSesion.ACTIVO,
+                nodo="nodo-1",
+            ),
+        )
 
 
 class RegistroSesionesDemoTests(unittest.TestCase):
@@ -92,6 +111,29 @@ class RegistroSesionesDemoTests(unittest.TestCase):
 
         self.assertEqual(saturada.status_code, 429)
         self.assertEqual(saturada.headers["retry-after"], "30")
+
+    def test_modo_juego_resuelve_su_servicio_por_cookie_publica(self) -> None:
+        creados: list[_ControlFalso] = []
+        registro = RegistroSesionesDemoMemoria(
+            lambda: creados.append(_ControlFalso(f"run-{len(creados) + 1}")) or creados[-1],
+            max_sesiones=2,
+        )
+        app = crear_app(
+            sesiones_demo_publicas=registro,
+            seguridad=ConfiguracionSeguridad(control_demo_publico=True, cookie_segura=False),
+        )
+        with TestClient(app, base_url="http://navira.test") as primero, TestClient(app, base_url="http://navira.test") as segundo:
+            respuesta_primero = primero.post("/juego/unirse", headers={"Origin": "http://navira.test"})
+            respuesta_segundo = segundo.post("/juego/unirse", headers={"Origin": "http://navira.test"})
+
+        self.assertEqual(respuesta_primero.status_code, 200, respuesta_primero.text)
+        self.assertEqual(respuesta_segundo.status_code, 200, respuesta_segundo.text)
+        self.assertNotEqual(respuesta_primero.json()["runId"], respuesta_segundo.json()["runId"])
+        self.assertNotEqual(
+            respuesta_primero.headers["set-cookie"],
+            respuesta_segundo.headers["set-cookie"],
+        )
+        registro.cerrar()
 
     def test_expira_y_cierra_sesiones_inactivas(self) -> None:
         ahora = [10.0]

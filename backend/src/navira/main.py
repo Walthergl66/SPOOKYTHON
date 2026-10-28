@@ -73,6 +73,7 @@ def crear_app(
     aplicacion.state.consultar_panel = consultar_panel
     aplicacion.state.consultar_sesion_juego = consultar_sesion_juego
     aplicacion.state.control_simulador_demo = control_simulador_demo
+    aplicacion.state.reloj_juego = reloj_juego
     aplicacion.state.sesiones_demo_publicas = sesiones_demo_publicas
     if sesiones_demo_publicas is not None:
         ttl_cookie = int(os.environ.get("NAVIRA_PUBLIC_SESSION_COOKIE_SECONDS", "86400"))
@@ -81,7 +82,7 @@ def crear_app(
         async def asignar_sesion_demo(request, call_next):
             """Asigna cada petición pública a su mundo y cookie independientes."""
 
-            if not request.url.path.startswith(("/panel/", "/demo/", "/reto/", "/paso")):
+            if not request.url.path.startswith(("/panel/", "/demo/", "/reto/", "/juego/", "/paso")):
                 return await call_next(request)
             try:
                 control, token_nuevo = sesiones_demo_publicas.obtener_o_crear(
@@ -204,6 +205,91 @@ def crear_control_simulador_demo(
     )
 
 
+class _SesionDemoPublica:
+    """Mundo anónimo por navegador con simulador y juego aislados entre sí."""
+
+    _OPERACIONES_SIMULADOR = frozenset({
+        "iniciar", "reiniciar", "iniciar_mundo_operador", "colocar_elemento",
+        "iniciar_ronda_reto", "reiniciar_ronda_reto", "pausar", "reanudar",
+        "fijar_velocidad",
+    })
+
+    def __init__(self, ruta_mapa: str, seguridad: ConfiguracionSeguridad) -> None:
+        self._simulador = crear_control_simulador_demo(ruta_mapa)
+        self._ruta_mapa = ruta_mapa
+        self._seguridad = seguridad
+        self._app_juego: FastAPI | None = None
+        self._modo_activo = "simulador"
+
+    @property
+    def mapa(self):
+        return self._simulador.mapa
+
+    def estado(self):
+        return self._simulador.estado()
+
+    def __getattr__(self, nombre: str):
+        """Delega acciones del tablero y marca qué modo alimenta sus paneles."""
+
+        if nombre not in self._OPERACIONES_SIMULADOR:
+            raise AttributeError(nombre)
+        operacion = getattr(self._simulador, nombre)
+
+        def ejecutar(*args, **kwargs):
+            self._activar_simulador()
+            return operacion(*args, **kwargs)
+
+        return ejecutar
+
+    @property
+    def consultar_panel(self):
+        if self._modo_activo == "juego" and self._app_juego is not None:
+            return self._app_juego.state.consultar_panel
+        return self._simulador.consultar_panel
+
+    @property
+    def decidir_paso(self):
+        if self._modo_activo == "juego" and self._app_juego is not None:
+            return self._app_juego.state.decidir_paso
+        return self._simulador.decidir_paso
+
+    @property
+    def unirse_juego(self):
+        self._activar_juego()
+        return self._app_juego.state.unirse_juego
+
+    @property
+    def consultar_sesion_juego(self):
+        self._activar_juego()
+        return self._app_juego.state.consultar_sesion_juego
+
+    @property
+    def registrar_orden_juego(self):
+        self._activar_juego()
+        return self._app_juego.state.registrar_orden_juego
+
+    def _activar_simulador(self) -> None:
+        if self._modo_activo == "juego" and self._app_juego is not None:
+            self._app_juego.state.reloj_juego.detener()
+        self._modo_activo = "simulador"
+
+    def _activar_juego(self) -> None:
+        self._modo_activo = "juego"
+        if self._app_juego is None:
+            self._app_juego = crear_app_juego_demo(
+                ruta_mapa=self._ruta_mapa,
+                seguridad=self._seguridad,
+            )
+        reloj = self._app_juego.state.reloj_juego
+        if reloj is not None:
+            reloj.iniciar()
+
+    def cerrar(self) -> None:
+        if self._app_juego is not None:
+            self._app_juego.state.reloj_juego.detener()
+        self._simulador.cerrar()
+
+
 def _leer_parametros_demo() -> tuple[str, int | None, str, int]:
     """Lee mapa, semilla opcional, escenario y sobrevivientes de la demo desde el entorno."""
 
@@ -234,7 +320,7 @@ def _crear_app_configurada() -> FastAPI:
         max_sesiones = int(os.environ.get("NAVIRA_PUBLIC_MAX_SESSIONS", "3"))
         ttl_sesion = float(os.environ.get("NAVIRA_PUBLIC_SESSION_IDLE_SECONDS", "10800"))
         sesiones = RegistroSesionesDemoMemoria(
-            lambda: crear_control_simulador_demo(mapa),
+            lambda: _SesionDemoPublica(mapa, seguridad),
             max_sesiones=max_sesiones,
             inactividad_segundos=ttl_sesion,
         )

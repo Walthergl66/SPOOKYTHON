@@ -10,14 +10,23 @@ from navira.application.ordenes import RegistrarOrdenHumana
 
 
 def unirse_juego(request: Request) -> UnirseAJuego | None:
+    sesion = getattr(request.state, "control_demo_publico", None)
+    if sesion is not None:
+        return sesion.unirse_juego
     return getattr(request.app.state, "unirse_juego", None)
 
 
 def consultar_sesion_juego(request: Request) -> ConsultarSesionJuego | None:
+    sesion = getattr(request.state, "control_demo_publico", None)
+    if sesion is not None:
+        return sesion.consultar_sesion_juego
     return getattr(request.app.state, "consultar_sesion_juego", None)
 
 
 def registrar_orden_juego(request: Request) -> RegistrarOrdenHumana | None:
+    sesion = getattr(request.state, "control_demo_publico", None)
+    if sesion is not None:
+        return sesion.registrar_orden_juego
     return getattr(request.app.state, "registrar_orden_juego", None)
 
 
