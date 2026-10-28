@@ -5,8 +5,9 @@ Estado: en-revision
 Requisitos: PRD-13, TRD-19  
 Tareas: P4-07, P5-02  
 Pruebas: T-58  
-Cambio: CAM-126  
+Cambio: CAM-127  
 Decisión: [ADR-046](../../arquitectura/decisiones/0046-demo-publica-multisesion.md)
+Evidencia: [CAM-126 y CAM-127](../../seguimiento/cambios.md#cam-127-habilitar-los-tres-modos-en-la-demo-pública-y-publicar-la-revisión); suite externa completa pendiente.
 
 ## Objetivo y alcance
 

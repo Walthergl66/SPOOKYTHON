@@ -1,3 +1,27 @@
+## CAM-127 — Habilitar los tres modos en la demo pública y publicar la revisión
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario quiere que cualquier visitante pueda probar Reto, Simulador y Jugar; mantuvo autorización para modificar, hacer commit y desplegar públicamente.
+- Relación: PRD-13, TRD-19, SPEC-011; P4-07/P5-02; ADR-046; CAM-126.
+- Resultado: las sesiones públicas crean un contexto Jugar aislado de forma diferida y los endpoints de Juego/panel/órdenes resuelven servicios por cookie; el reloj empieza tras la aparición y se detiene al cambiar al modo automático. El smoke ASGI recorrió Juego → Reto y dejó otro navegador en Simulador con un `runId` distinto. La aparición humana usa un campo inverso de rutas para evitar una búsqueda Dijkstra completa por cada nodo candidato; los tests del campo y de la sesión pasan. Lightsail VM `navira-public-demo` responde en [https://3.17.253.59.nip.io](https://3.17.253.59.nip.io) con certificado Let's Encrypt. La revisión desplegada antes del cierre de esta CAM aún debe reemplazarse con la imagen backend construida desde el commit que incluye Juego público; registrar digest y smoke externo después del reemplazo.
+- Archivos: `backend/src/navira/main.py`, `backend/src/navira/application/juego.py`, `backend/src/navira/routing/dijkstra.py`, pruebas de rutas/sesiones; SPEC-011/README, ADR-046, matriz T-58, seguridad, infraestructura, costos, plan y estado.
+- Verificación: pruebas focalizadas Dijkstra (10) y sesión humana (12) pasan; prueba ASGI pública de inicio Jugar, cambio a Reto, Simulador en segundo navegador y `runId` aislados pasa; build de imagen/backend y suites completas en ejecución. Primer smoke de HTTPS comprobó índice y `/salud`; falta repetir con la nueva imagen, validar cookie segura y probar WebSocket/modos remotos y revisión visual.
+- Límites: la instancia es un proceso único con memoria volátil, límite configurado de tres sesiones y nombre nip.io de tercero; no hay persistencia, bot protection, carga concurrente externa ni métricas CloudWatch validadas. La cuenta deniega `lightsail:GetInstance` a AWS CLI; no se puede confirmar el estado actual desde control plane. El costo sigue siendo aproximado y el Budget es solo alerta.
+- Siguiente paso exacto: publicar imagen backend de `3b2efce`, sustituir el contenedor, ejecutar smoke HTTPS de cookie/3 modos/WebSocket y confirmar que Docker/Nginx se recuperan tras reinicio; luego revisar visualmente la URL y preparar retirada de la VM tras los tres días.
+- Commit o PR: `dfb630c` y `3b2efce`; publicación de imagen/contendor pendiente de confirmación.
+
+## CAM-126 — Preparar aislamiento anónimo para la demo pública
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario autorizó que personas externas prueben los tres modos con partidas independientes.
+- Relación: PRD-13, TRD-19, SPEC-011; P4-07/P5-02; ADR-046.
+- Resultado: se implementó registro efímero por token anónimo, hash SHA-256 en servidor, cookie `HttpOnly`/`SameSite=Strict`/`Secure` según HTTPS, máximo configurable de sesiones, TTL, validación Origin y bootstrap frontend. El perfil público mantiene `/paso` cerrado sin API key.
+- Archivos: backend sesión/seguridad/dependencias, frontend bootstrap/estado de capacidad, imágenes Docker/Nginx y documentación de SPEC-011/ADR-046.
+- Verificación: pruebas focalizadas de aislamiento, límite, TTL y cierre; pruebas previas del control local; suite frontend y build; imágenes construidas con Podman, `nginx -t`, smoke local de salud y dos controles simulador con `runId` independientes. Las evidencias no incluían aún Jugar público ni un smoke HTTPS externo.
+- Límites: el primer perfil público enrutaba solo los controles de simulación; Jugar público se completa en CAM-127. La sesión es temporal de un proceso, y no había una URL pública hasta el despliegue Lightsail de CAM-127.
+- Siguiente paso exacto: conectar el servicio de Jugar a la sesión anónima antes de ofrecer los tres modos públicamente; ejecutado parcialmente en CAM-127.
+- Commit o PR: `1186c4d`, `4be7659`, `20bf1e3`, `5bfdca1`, `b3bd38a`.
+
 ## CAM-125 — Desplegar y ejecutar campaña efímera de evaluación en Ohio
 
 - Fecha: 2026-10-28, America/Guayaquil.
