@@ -81,7 +81,7 @@ def crear_app(
         async def asignar_sesion_demo(request, call_next):
             """Asigna cada petición pública a su mundo y cookie independientes."""
 
-            if not request.url.path.startswith(("/panel/", "/demo/", "/reto/")):
+            if not request.url.path.startswith(("/panel/", "/demo/", "/reto/", "/paso")):
                 return await call_next(request)
             try:
                 control, token_nuevo = sesiones_demo_publicas.obtener_o_crear(
