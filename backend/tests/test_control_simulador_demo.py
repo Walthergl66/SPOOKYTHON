@@ -57,6 +57,34 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertEqual(status.status_code, 200, status.text)
         self.assertEqual(status.json()["metricas"]["sobrevivientesActivos"], 1)
 
+    def test_operador_puede_iniciar_nueva_partida_mientras_otra_esta_activa(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        headers = {"Origin": "http://localhost:5173"}
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43130)) as client:
+            primera = client.post("/demo/operador/iniciar", headers=headers)
+            snapshot_primera = control._snapshot()
+            grafo = control._contexto.mapas.obtener(snapshot_primera.partida.map_version)
+            nodo = next(n.id for n in grafo.mapa.nodos if grafo.calles_desde(n.id))
+            colocado = client.post(
+                "/demo/operador/elementos",
+                headers=headers,
+                json={"tipo": "habitante", "nodo": nodo},
+            )
+
+            nueva = client.post("/demo/operador/iniciar", headers=headers)
+            snapshot_nuevo = control._snapshot()
+            control.cerrar()
+
+        self.assertEqual(primera.status_code, 200, primera.text)
+        self.assertEqual(colocado.status_code, 200, colocado.text)
+        self.assertEqual(nueva.status_code, 200, nueva.text)
+        self.assertNotEqual(nueva.json()["runId"], primera.json()["runId"])
+        self.assertEqual(nueva.json()["estado"], "activa")
+        self.assertEqual(snapshot_nuevo.partida.sobrevivientes, ())
+        self.assertEqual(snapshot_nuevo.partida.zombies, ())
+        self.assertEqual(snapshot_nuevo.eventos_programados, ())
+
     def test_operador_coloca_habitante_refugio_e_incidente_en_el_mundo_activo(self) -> None:
         control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         app = crear_app(control_simulador_demo=control, seguridad=LOCAL)

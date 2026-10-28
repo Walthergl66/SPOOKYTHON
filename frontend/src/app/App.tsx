@@ -160,6 +160,10 @@ export function App() {
     setOperatorNotice(null)
     try {
       acceptStatus(await startOperatorWorldRequest())
+      setOperatorTool('habitante')
+      setSelectedSurvivorId(undefined)
+      setSelectedRoute(null)
+      setOperatorNotice('Nueva partida vacía iniciada.')
       await refreshPanel()
     } catch (error) {
       setOperatorError(error instanceof Error ? error.message : 'No se pudo iniciar un mundo vacío.')
@@ -192,6 +196,8 @@ export function App() {
             disabled={operatorBusy || simulator?.rondaReto != null}
             busy={operatorBusy || simulatorBusy}
             canRun={!operatorRunBlocked && simulator?.estado !== 'activa' && simulator?.estado !== 'pausada'}
+            canStartNew={!operatorRunBlocked}
+            hasRun={Boolean(simulator?.runId && simulator?.rondaReto == null && (simulator.estado === 'activa' || simulator.estado === 'pausada'))}
             runState={simulator?.estado}
             onStart={startOperatorWorld}
             onPause={() => void runControl('pausar')}
