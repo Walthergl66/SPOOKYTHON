@@ -10,7 +10,7 @@ import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
 import { useGameSession } from '../application/useGameSession'
 import { joinGame, restoreGameSession, sendGameOrder } from '../infrastructure/http/game'
 import { loadPanelMap, loadPanelRoute, loadPanelSnapshot } from '../infrastructure/http/panel'
-import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, setSimulatorSpeed, startChallengeRound } from '../infrastructure/http/simulator'
+import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, restartChallengeRound, setSimulatorSpeed, startChallengeRound } from '../infrastructure/http/simulator'
 import { subscribePanel } from '../infrastructure/realtime/panel'
 import { checkHealth } from '../infrastructure/http/health'
 import { BrandMark } from '../shared/ui/BrandMark'
@@ -36,7 +36,11 @@ export function App() {
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
-  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, changeSpeed } = useSimulator(simulatorPort, refreshPanel)
+  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, changeSpeed, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
+
+  useEffect(() => {
+    if (simulator?.rondaReto) setChallengeRound(simulator.rondaReto)
+  }, [simulator?.rondaReto])
 
   const game = useGameSession(gamePort, { modeSelected: mode === 'game', state: snapshot?.state ?? null, map: snapshot?.map ?? null, onJoined: setSelectedSurvivorId })
 
@@ -125,10 +129,22 @@ export function App() {
     setChallengeBusy(true)
     setChallengeError(null)
     try {
-      await startChallengeRound(challengeRound)
+      acceptStatus(await startChallengeRound(challengeRound))
       await refreshPanel()
     } catch (error) {
       setChallengeError(error instanceof Error ? error.message : 'No se pudo iniciar la ronda del reto.')
+    } finally {
+      setChallengeBusy(false)
+    }
+  }
+  const restartChallenge = async () => {
+    setChallengeBusy(true)
+    setChallengeError(null)
+    try {
+      acceptStatus(await restartChallengeRound())
+      await refreshPanel()
+    } catch (error) {
+      setChallengeError(error instanceof Error ? error.message : 'No se pudo reiniciar la ronda del reto.')
     } finally {
       setChallengeBusy(false)
     }
@@ -167,6 +183,9 @@ export function App() {
             <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorIsRunning || simulator?.estado === 'pausada' || simulatorUnavailable}>
               {challengeBusy ? 'Preparando…' : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
             </button>
+            {!challengeBusy && simulator?.rondaReto && simulator.runId ? <button className="sim-action sim-reset challenge-start" type="button" onClick={() => void restartChallenge()} disabled={simulatorBusy || simulatorUnavailable}>
+              {`Reiniciar R${simulator.rondaReto}`}
+            </button> : null}
             {challengeError ? <div className="control-notice is-error" role="alert">{challengeError}</div> : null}
           </section> : <>
           <div className="sim-action-row">

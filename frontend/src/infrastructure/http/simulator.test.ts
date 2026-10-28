@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SimulatorUnavailableError } from '../../domain/simulator'
-import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, SimulatorApiError, startChallengeRound } from './simulator'
+import { controlSimulator, getSimulatorCandidates, getSimulatorStatus, SimulatorApiError, restartChallengeRound, startChallengeRound } from './simulator'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -72,5 +72,15 @@ describe('startChallengeRound', () => {
       method: 'POST',
       body: JSON.stringify({ ronda: 2 }),
     }))
+  })
+})
+
+describe('restartChallengeRound', () => {
+  it('reinicia el reto actual mediante el endpoint protegido', async () => {
+    const estado = { habilitado: true, estado: 'activa', runId: 'nuevo', turno: 0, escenario: 'reto_medianoche', sobrevivientesIniciales: 80, intensidad: 'media', eventosCiudad: false, velocidad: 1, error: null, rondaReto: 2 }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(estado)))
+    vi.stubGlobal('fetch', fetchMock)
+    expect((await restartChallengeRound()).rondaReto).toBe(2)
+    expect(fetchMock).toHaveBeenCalledWith('/reto/reiniciar', expect.objectContaining({ method: 'POST' }))
   })
 })

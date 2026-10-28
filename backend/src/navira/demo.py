@@ -60,6 +60,11 @@ SECTORES_SPAWN_RETO: tuple[tuple[str, float, float], ...] = (
     ("Jocay", -0.9598756, -80.7161161),
 )
 RADIO_ZONA_SPAWN_RETO_M = 1_500.0
+# Centro urbano aproximado en La Dolorosa; zona de concentración de amenazas
+# para el Reto. No es un límite administrativo ni una fuente de riesgo oficial.
+CENTRO_URBANO_RETO = (-0.9522745219919659, -80.72726572846808)
+RADIO_FOCO_AMENAZAS_RETO_M = 3_500.0
+PROPORCION_AMENAZAS_FOCO_RETO = 0.8
 
 IntensidadDemo = IntensidadEscenario
 ESCENARIOS_DEMO = ESCENARIOS
@@ -159,9 +164,24 @@ def crear_contexto_demo(
         coordenadas,
         intensidad,
         rng,
+        nodos_foco=(
+            _nodos_en_foco_urbano(grafo, nodos_zombie_elegibles)
+            if ronda_reto is not None and grafo.mapa.version.startswith("manta-osm-")
+            else None
+        ),
+        proporcion_foco=PROPORCION_AMENAZAS_FOCO_RETO,
     )
     eventos = (
-        crear_eventos_reto(grafo, ronda_reto, rng)
+        crear_eventos_reto(
+            grafo,
+            ronda_reto,
+            rng,
+            segmentos_foco=(
+                _segmentos_en_foco_urbano(grafo)
+                if grafo.mapa.version.startswith("manta-osm-")
+                else None
+            ),
+        )
         if ronda_reto is not None
         else crear_eventos_ciudad(grafo, intensidad, rng) if eventos_ciudad else ()
     )
@@ -326,6 +346,42 @@ def _posiciones_iniciales_reto(
             )
         posiciones.extend(rng.sample(candidatos, cuota))
     return tuple(posiciones)
+
+
+def _nodos_en_foco_urbano(grafo: Grafo, nodos: tuple[str, ...]) -> tuple[str, ...]:
+    """Elige intersecciones jugables dentro del radio central provisional."""
+
+    return tuple(
+        nodo
+        for nodo in nodos
+        if _distancia_metros(
+            (grafo.mapa.nodos_por_id[nodo].lat, grafo.mapa.nodos_por_id[nodo].lng),
+            CENTRO_URBANO_RETO,
+        ) <= RADIO_FOCO_AMENAZAS_RETO_M
+    )
+
+
+def _segmentos_en_foco_urbano(grafo: Grafo) -> tuple[str, ...]:
+    """Devuelve calles cuyo punto medio cae en el radio central del Reto."""
+
+    puntos: dict[str, list[tuple[float, float]]] = {}
+    for calle in grafo.mapa.calles:
+        origen = grafo.mapa.nodos_por_id[calle.origen]
+        destino = grafo.mapa.nodos_por_id[calle.destino]
+        puntos.setdefault(calle.segmento_id, []).append(
+            ((origen.lat + destino.lat) / 2, (origen.lng + destino.lng) / 2)
+        )
+    return tuple(
+        segmento
+        for segmento, coordenadas in puntos.items()
+        if _distancia_metros(
+            (
+                sum(lat for lat, _ in coordenadas) / len(coordenadas),
+                sum(lng for _, lng in coordenadas) / len(coordenadas),
+            ),
+            CENTRO_URBANO_RETO,
+        ) <= RADIO_FOCO_AMENAZAS_RETO_M
+    )
 
 
 def _distancia_metros(

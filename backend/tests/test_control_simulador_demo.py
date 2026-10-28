@@ -15,6 +15,31 @@ LOCAL = ConfiguracionSeguridad(control_demo_local=True)
 
 
 class ControlSimuladorDemoTests(unittest.TestCase):
+    def test_ruta_reto_reinicia_la_ronda_actual_en_un_run_nuevo(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43123)) as client:
+            headers = {"Origin": "http://localhost:5173"}
+            original = client.post("/reto/iniciar", headers=headers, json={"ronda": 2, "semilla": 44})
+            client.post("/demo/simulador/pausar", headers=headers)
+            reiniciada = client.post("/reto/reiniciar", headers=headers)
+            nuevo_snapshot = control._snapshot()
+            control.cerrar()
+
+        self.assertEqual(original.status_code, 200, original.text)
+        self.assertEqual(reiniciada.status_code, 200, reiniciada.text)
+        self.assertNotEqual(reiniciada.json()["runId"], original.json()["runId"])
+        self.assertEqual(reiniciada.json()["rondaReto"], 2)
+        self.assertEqual(reiniciada.json()["sobrevivientesIniciales"], 80)
+        self.assertEqual(nuevo_snapshot.partida.escenario, "reto-ronda-2-reto_medianoche")
+
+    def test_reiniciar_reto_sin_ronda_devuelve_conflicto(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43124)) as client:
+            response = client.post("/reto/reiniciar", headers={"Origin": "http://localhost:5173"})
+        self.assertEqual(response.status_code, 409)
+
     def test_ruta_reto_inicia_preset_sin_alterar_preferencia_de_demo(self) -> None:
         control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         app = crear_app(control_simulador_demo=control, seguridad=LOCAL)

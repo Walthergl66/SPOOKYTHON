@@ -121,6 +121,20 @@ async def iniciar_ronda_reto(
         raise _error(422, error) from error
 
 
+@router.post("/reto/reiniciar", tags=["reto local"])
+async def reiniciar_ronda_reto(request: Request) -> dict[str, object]:
+    """Reinicia la ronda Reto actual con un mundo aleatorio nuevo."""
+
+    gestor = _control_demo_local(request)
+    exigir_operador_local(request)
+    try:
+        return gestor.reiniciar_ronda_reto()
+    except RuntimeError as error:
+        raise _error(409, error) from error
+    except (OSError, ValueError) as error:
+        raise _error(422, error) from error
+
+
 @router.post("/demo/simulador/iniciar", tags=["demo local"])
 async def iniciar_demo_simulador(
     solicitud: SolicitudIniciarDemoSchema,

@@ -50,6 +50,15 @@ export async function startChallengeRound(ronda: 1 | 2 | 3): Promise<SimulatorSt
   return parseStatus(await readJson(response), response.status)
 }
 
+/** Reinicia la ronda Reto activa conservando su preset y generando otro mundo. */
+export async function restartChallengeRound(): Promise<SimulatorStatus> {
+  const response = await fetch('/reto/reiniciar', {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+  })
+  return parseStatus(await readJson(response), response.status)
+}
+
 /** El dominio lanza Error; aquí se conserva el mensaje y se añade el status HTTP. */
 function parseStatus(value: unknown, status: number): SimulatorStatus {
   try {

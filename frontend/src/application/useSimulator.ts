@@ -68,6 +68,13 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
     }
   }
 
+  /** Sincroniza de inmediato operaciones de Reto externas al puerto de demo libre. */
+  const acceptStatus = (next: SimulatorStatus) => {
+    setStatus(next)
+    setUnavailable(false)
+    setMessage(null)
+  }
+
   /** Asigna el nodo a la ranura en modo "colocar" o a la primera libre. Devuelve false si no hay ranura o el nodo ya está usado. */
   const pickNode = (nodo: string): boolean => {
     const target = placing ?? slots.indexOf(null)
@@ -79,5 +86,5 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
   const clearSlot = (index: number) => { setSlots(slots.map((s, i) => (i === index ? null : s))); setPlacing(null) }
   const resetRefuges = () => { setSlots(emptySlots()); setPlacing(null) }
 
-  return { status, unavailable, message, busy, setup, setSetup, run, changeSpeed, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges }
+  return { status, unavailable, message, busy, setup, setSetup, run, changeSpeed, acceptStatus, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges }
 }

@@ -165,6 +165,20 @@ class ControlSimuladorDemoLocal:
             ronda_reto=ronda,
         )
 
+    def reiniciar_ronda_reto(self) -> dict[str, object]:
+        """Recrea la ronda Reto actual como un run nuevo con semilla aleatoria."""
+
+        with self._lock:
+            ronda = self._configuracion.get("ronda_reto")
+            if ronda not in (1, 2, 3) or self._contexto is None:
+                raise RuntimeError("No hay una ronda del reto para reiniciar.")
+            return self.iniciar(
+                escenario={1: "caminantes", 2: "reto_medianoche", 3: "mixto"}[ronda],
+                cantidad_sobrevivientes={1: 20, 2: 80, 3: 200}[ronda],
+                intensidad="media",
+                ronda_reto=ronda,
+            )
+
     def pausar(self) -> dict[str, object]:
         with self._lock:
             if self._reloj is None or not self._reloj.ejecutandose:

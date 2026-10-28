@@ -52,6 +52,9 @@ def crear_zombies(
     coordenadas: dict[str, tuple[float, float]],
     intensidad: IntensidadEscenario,
     rng: random.Random,
+    *,
+    nodos_foco: tuple[str, ...] | None = None,
+    proporcion_foco: float = 0.8,
 ) -> tuple[Zombie, ...]:
     """Escala y dispersa amenazas en la red disponible con RNG privado.
 
@@ -71,14 +74,21 @@ def crear_zombies(
     if not disponibles:
         raise ValueError("El mapa demo requiere nodos elegibles para ubicar zombies.")
 
+    if not 0 < proporcion_foco <= 1:
+        raise ValueError("La proporción del foco debe estar entre 0 y 1.")
     total = min(
         len(disponibles),
         max(1, round(len(disponibles) * FRACCION_NODOS_POR_INTENSIDAD[intensidad])),
     )
     cantidad_por_tipo = _repartir_composicion(perfil, total)
-    nodos = _seleccionar_nodos_estratificados(disponibles, total, coordenadas, rng)
+    nodos_restantes = list(disponibles)
+    nodos_globales = (
+        _seleccionar_nodos_estratificados(disponibles, total, coordenadas, rng)
+        if not nodos_foco
+        else ()
+    )
+    posicion_global = 0
     zombies: list[Zombie] = []
-    posicion = 0
     prefijos = {
         TipoZombie.CAMINANTE: "CAM",
         TipoZombie.CORREDOR: "COR",
@@ -86,18 +96,50 @@ def crear_zombies(
         TipoZombie.DORMIDO: "DOR",
     }
     for tipo, cantidad in cantidad_por_tipo:
+        if nodos_foco:
+            nodos_tipo = _seleccionar_nodos_focalizados(
+                tuple(nodos_restantes), cantidad, nodos_foco, proporcion_foco, rng
+            )
+        else:
+            # Conserva exactamente el muestreo global del Simulador libre.
+            nodos_tipo = nodos_globales[posicion_global : posicion_global + cantidad]
+            posicion_global += cantidad
+        nodos_restantes = [nodo for nodo in nodos_restantes if nodo not in set(nodos_tipo)]
         for indice in range(1, cantidad + 1):
             zombies.append(
                 Zombie(
                     f"Z-{prefijos[tipo]}-{indice:03d}",
                     tipo,
-                    nodos[posicion],
+                    nodos_tipo[indice - 1],
                     estado=(EstadoZombie.DORMIDO if tipo is TipoZombie.DORMIDO else EstadoZombie.ACTIVO),
                     fase_movimiento=rng.randrange(2) if tipo is TipoZombie.CAMINANTE else 0,
                 )
             )
-            posicion += 1
     return tuple(zombies)
+
+
+def _seleccionar_nodos_focalizados(
+    disponibles: tuple[str, ...],
+    cantidad: int,
+    nodos_foco: tuple[str, ...],
+    proporcion_foco: float,
+    rng: random.Random,
+) -> tuple[str, ...]:
+    """Muestrea una cuota de cada tipo de amenaza dentro del foco urbano.
+
+    El remanente mantiene amenazas por el resto del mapa. Si un área no tiene
+    candidatos suficientes, la cuota se completa con nodos de la otra área.
+    """
+
+    foco = set(nodos_foco)
+    centrales = [nodo for nodo in disponibles if nodo in foco]
+    exteriores = [nodo for nodo in disponibles if nodo not in foco]
+    cantidad_central = min(len(centrales), round(cantidad * proporcion_foco))
+    cantidad_exterior = min(len(exteriores), cantidad - cantidad_central)
+    cantidad_central = min(len(centrales), cantidad - cantidad_exterior)
+    elegidos = rng.sample(centrales, cantidad_central) + rng.sample(exteriores, cantidad_exterior)
+    rng.shuffle(elegidos)
+    return tuple(elegidos)
 
 
 def _repartir_composicion(
@@ -194,7 +236,13 @@ def crear_eventos_ciudad(
     )
 
 
-def crear_eventos_reto(grafo: Grafo, ronda: int, rng: random.Random) -> tuple[EventoCierre, ...]:
+def crear_eventos_reto(
+    grafo: Grafo,
+    ronda: int,
+    rng: random.Random,
+    *,
+    segmentos_foco: tuple[str, ...] | None = None,
+) -> tuple[EventoCierre, ...]:
     """Genera el evento exigido por ronda; selección reproducible y turnos provisionales.
 
     El reto no especifica ubicación ni turno. Se usa turno 50 (100 s) para el
@@ -211,6 +259,9 @@ def crear_eventos_reto(grafo: Grafo, ronda: int, rng: random.Random) -> tuple[Ev
             for segmento_id, calle in segmentos_por_id.items()
             if calle.tipo is TipoCalle.PUENTE
         )
+        puentes_en_foco = [segmento for segmento in puentes if segmento in set(segmentos_foco or ())]
+        if puentes_en_foco:
+            puentes = puentes_en_foco
         if not puentes:
             raise ValueError("El mapa de la ronda 2 no contiene un segmento etiquetado como puente.")
         return (
@@ -223,6 +274,9 @@ def crear_eventos_reto(grafo: Grafo, ronda: int, rng: random.Random) -> tuple[Ev
         )
     if ronda == 3:
         segmentos = sorted(segmentos_por_id)
+        segmentos_en_foco = [segmento for segmento in segmentos if segmento in set(segmentos_foco or ())]
+        if len(segmentos_en_foco) >= 2:
+            segmentos = segmentos_en_foco
         if len(segmentos) < 2:
             raise ValueError("El mapa de la ronda 3 requiere dos segmentos distintos para bloquear.")
         elegidos = rng.sample(segmentos, 2)

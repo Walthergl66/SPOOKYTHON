@@ -14,6 +14,8 @@ from fastapi.testclient import TestClient
 from navira.application.decidir_paso import SolicitudPaso
 from navira.api.seguridad import ConfiguracionSeguridad
 from navira.demo import (
+    CENTRO_URBANO_RETO,
+    RADIO_FOCO_AMENAZAS_RETO_M,
     RADIO_ZONA_SPAWN_RETO_M,
     SECTORES_SPAWN_RETO,
     _distancia_metros,
@@ -166,6 +168,67 @@ class DemoBootstrapTests(unittest.TestCase):
             all(persona.nodo in nodos_elegibles for persona in habitantes)
         )
         self.assertEqual(_conteos_por_sector(contexto.grafo, habitantes), (50, 50, 50, 50))
+
+    def test_reto_concentra_cada_tipo_de_zombie_y_eventos_en_el_centro(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        for ronda in (1, 2, 3):
+            contexto = crear_contexto_demo(
+                ruta_manta, semilla=900 + ronda, ronda_reto=ronda, preparar_inicial=False
+            )
+            snapshot = contexto.snapshots.obtener(contexto.run_id)
+            coordenadas = {
+                nodo.id: (nodo.lat, nodo.lng) for nodo in contexto.grafo.mapa.nodos
+            }
+            por_tipo: dict[str, list] = {}
+            for zombie in snapshot.partida.zombies:
+                por_tipo.setdefault(zombie.tipo.value, []).append(zombie)
+            for zombies in por_tipo.values():
+                centrales = sum(
+                    _distancia_metros(coordenadas[zombie.nodo], CENTRO_URBANO_RETO)
+                    <= RADIO_FOCO_AMENAZAS_RETO_M
+                    for zombie in zombies
+                )
+                self.assertGreaterEqual(centrales, round(len(zombies) * 0.8))
+
+            for evento in snapshot.eventos_programados:
+                for segmento in evento.segmentos:
+                    puntos = [
+                        (
+                            (coordenadas[calle.origen][0] + coordenadas[calle.destino][0]) / 2,
+                            (coordenadas[calle.origen][1] + coordenadas[calle.destino][1]) / 2,
+                        )
+                        for calle in contexto.grafo.mapa.calles
+                        if calle.segmento_id == segmento
+                    ]
+                    centro_segmento = (
+                        sum(lat for lat, _ in puntos) / len(puntos),
+                        sum(lng for _, lng in puntos) / len(puntos),
+                    )
+                    self.assertLessEqual(
+                        _distancia_metros(centro_segmento, CENTRO_URBANO_RETO),
+                        RADIO_FOCO_AMENAZAS_RETO_M,
+                    )
+
+    def test_simulador_libre_no_usa_el_foco_urbano_de_reto(self) -> None:
+        ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
+        contexto = crear_contexto_demo(
+            ruta_manta,
+            semilla=44,
+            escenario="mixto",
+            cantidad_sobrevivientes=20,
+            intensidad="alta",
+            preparar_inicial=False,
+        )
+        coordenadas = {nodo.id: (nodo.lat, nodo.lng) for nodo in contexto.grafo.mapa.nodos}
+        zombies = contexto.snapshots.obtener(contexto.run_id).partida.zombies
+
+        self.assertTrue(
+            any(
+                _distancia_metros(coordenadas[zombie.nodo], CENTRO_URBANO_RETO)
+                > RADIO_FOCO_AMENAZAS_RETO_M
+                for zombie in zombies
+            )
+        )
 
     def test_simulador_libre_conserva_spawn_en_toda_la_zona_jugable(self) -> None:
         ruta_manta = Path(__file__).resolve().parents[1] / "data/maps/manta-hackathon-v1.json"
