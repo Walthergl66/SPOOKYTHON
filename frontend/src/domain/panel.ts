@@ -49,8 +49,6 @@ export interface PanelRoute {
 export type PanelConnection = 'connecting' | 'live' | 'reconnecting' | 'stale'
 export type PanelCursor = { runId: string | null; sequence: number }
 
-export type PanelLog = { id: string; label: string; detail: string }
-
 /** 'stale': secuencia anterior del mismo run; 'same': repetida; 'new': primera o de otro run. */
 export function classifyCursor(previous: PanelCursor | null, next: PanelCursor): 'stale' | 'same' | 'new' {
   if (previous?.runId !== next.runId) return 'new'
@@ -61,22 +59,6 @@ export function classifyCursor(previous: PanelCursor | null, next: PanelCursor):
 /** Devuelve el mapa solo si coincide con la versión del estado; si no, el cacheado con esa versión, o null. */
 export function pickMap(nextMap: PanelMap | null | undefined, cached: PanelMap | null, version: string | undefined): PanelMap | null {
   return nextMap && nextMap.version === version ? nextMap : cached?.version === version ? cached : null
-}
-
-/** Añade al registro los incidentes y el turno del snapshot (más reciente primero), sin duplicados, máximo 5. */
-export function nextPanelLog(current: PanelLog[], state: PanelState): PanelLog[] {
-  const logId = `${state.runId}:${state.snapshotVersion}`
-  const phase = (state.fase ?? 'fase desconocida').replaceAll('_', ' ')
-  const incidentes = (state.eventosCiudad ?? []).map((evento) => ({
-    id: `${state.runId}:${evento.id}`,
-    label: `Incidente vial · Turno ${evento.turno}`,
-    detail: `${evento.causa}; el cierre ya fue aplicado.`,
-  }))
-  return [
-    ...incidentes,
-    { id: logId, label: `Turno ${state.turno} · ${phase}`, detail: `${state.metricas?.sobrevivientesActivos ?? 0} personas activas · ${state.zombies?.length ?? 0} amenazas visibles` },
-    ...current.filter((item) => item.id !== logId && !incidentes.some((evento) => evento.id === item.id)),
-  ].slice(0, 5)
 }
 
 export function parsePanelMap(value: unknown): PanelMap {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classifyCursor, nextPanelLog, parsePanelMap, parsePanelRoute, parsePanelState, pickMap, type PanelLog } from './panel'
+import { classifyCursor, parsePanelMap, parsePanelRoute, parsePanelState, pickMap } from './panel'
 
 const mapa = {
   version: 'm1',
@@ -105,21 +105,5 @@ describe('pickMap', () => {
     expect(pickMap(m('v2'), cached, 'v1')).toBe(cached)
     expect(pickMap(undefined, cached, 'v9')).toBeNull()
     expect(pickMap(null, null, undefined)).toBeNull()
-  })
-})
-
-describe('nextPanelLog', () => {
-  const activo = () => parsePanelState(estadoActivo)
-  it('antepone incidente y turno, y deduplica por id', () => {
-    const first = nextPanelLog([], activo())
-    expect(first.map((l) => l.id)).toEqual(['run:e', 'run:7'])
-    expect(first[0].label).toBe('Incidente vial · Turno 1')
-    expect(nextPanelLog(first, activo())).toEqual(first)
-  })
-  it('limita a 5 entradas conservando las más recientes', () => {
-    const viejo: PanelLog[] = Array.from({ length: 6 }, (_, i) => ({ id: `o${i}`, label: 'l', detail: 'd' }))
-    const log = nextPanelLog(viejo, activo())
-    expect(log).toHaveLength(5)
-    expect(log.map((l) => l.id)).toEqual(['run:e', 'run:7', 'o0', 'o1', 'o2'])
   })
 })

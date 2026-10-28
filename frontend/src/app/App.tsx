@@ -41,7 +41,7 @@ export function App() {
   const [sectorData, setSectorData] = useState<SectorCollection | null>(null)
   const [sectorDataFailed, setSectorDataFailed] = useState(false)
   const panel = usePanel(panelPort)
-  const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
+  const { snapshot, connection, loading, error: panelError, refresh: refreshPanel } = panel
   const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, clearMessage: clearSimulatorMessage, busy: simulatorBusy, pendingAction, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
 
   const modeRunMatches = statusMatchesMode(simulator, mode)
@@ -319,10 +319,6 @@ export function App() {
           <section className="stats-panel refuge-panel">
             <div className="panel-section-heading"><span className="panel-overline">DESTINOS DEL MAPA</span><h2>Refugios representados</h2></div>
             {modeRunMatches && map?.refugios.length ? <ul className="refuge-list">{map.refugios.map((refuge) => <li key={refuge.id}><span className="refuge-mark" aria-hidden="true">⌂</span><span><strong>{refuge.id}</strong><small>{refugeLabels.get(refuge.id) ?? (sectorDataFailed ? 'Sector no disponible' : 'Identificando sector…')}</small></span></li>)}</ul> : <p className="empty-note">Se mostrarán al iniciar una partida.</p>}
-          </section>
-          <section className="stats-panel event-panel">
-            <div className="panel-section-heading"><span className="panel-overline">SECUENCIA DEL PANEL</span><h2>Últimas actualizaciones</h2></div>
-            {modeRunMatches && eventLog.length ? <ol className="event-list">{eventLog.map((event) => <li key={event.id}><strong>{event.label}</strong><span>{event.detail}</span></li>)}</ol> : <p className="empty-note">El registro aparecerá con los primeros snapshots confirmados.</p>}
           </section>
         </aside>
       </section>

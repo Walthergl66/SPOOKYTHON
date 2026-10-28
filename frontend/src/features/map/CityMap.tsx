@@ -296,7 +296,11 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
       <div ref={containerRef} className="maplibre-canvas" />
       {incidentAlert ? <div className="map-incident-alert" role="alert" aria-live="assertive">
         <span className="map-incident-alert-mark" aria-hidden="true">!</span>
-        <span><strong>ALERTA VIAL · TURNO {incidentAlert.turno}</strong><small>{incidentAlert.causa}. Vía cerrada; rutas de evacuación actualizadas.</small></span>
+        <div className="map-incident-alert-content">
+          <div className="map-incident-alert-heading"><strong>Alerta vial</strong><span className="map-incident-alert-turn">Turno {incidentAlert.turno}</span></div>
+          <p>{incidentAlert.causa}</p>
+          <span className="map-incident-alert-status"><i aria-hidden="true" />Vía cerrada · rutas actualizadas</span>
+        </div>
       </div> : null}
       <div className="map-view-controls" role="group" aria-label="Vista del mapa">
       <button className="map-view-toggle" type="button" onClick={showArea} disabled={!ready}>Vista urbana</button>

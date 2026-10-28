@@ -1,3 +1,25 @@
+## CAM-150 — Mejorar la jerarquía visual de la alerta vial
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de mejorar visualmente la alerta vial mostrada sobre el mapa.
+- Relación: PRD-04, SPEC-003 CA-003-05, T-44; no cambia eventos, reglas, duración ni protocolo del mapa.
+- Diseño: superficie azul marino opaca con borde/acento ámbar para distinguir la alerta de la cartografía; icono de advertencia separado; encabezado conciso, turno en chip y causa como contenido principal; estado secundario «Vía cerrada · rutas actualizadas». El contenedor se adapta a móvil y usa una entrada de 180 ms con `prefers-reduced-motion` global ya respetado. El marcador amarillo persistente no cambia.
+- Archivos: `frontend/src/features/map/CityMap.tsx`, `frontend/src/styles.css`, SPEC-003, T-44, módulo frontend, estado, índice e historial.
+- Validación: `cd frontend && npm run build` correcto (permanece advertencia del chunk cartográfico >500 kB); `python3 backend/scripts/check_docs.py` correcto (148 Markdown/150 archivos), `python3 backend/scripts/check_sdd.py` correcto (11 SPEC) y `git diff --check` correcto. No se ejecutan tests automatizados. La inspección inicial del navegador mostró la app en espera, sin alerta activa; no se alteró la partida para forzar un evento. La revisión visual de la alerta en pantalla sigue pendiente.
+- Siguiente paso: validar visualmente la alerta cuando ocurra el próximo incidente; Vite sirve HTTP 200 y backend `/salud` responde 200.
+- Commit o PR: no solicitado ni creado.
+
+## CAM-149 — Quitar la secuencia de actualizaciones del panel
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de retirar del panel la sección «Secuencia del panel / Últimas actualizaciones».
+- Relación: PRD-04, SPEC-003, panel de observación. No cambia contratos HTTP/WS ni reglas.
+- Cambio: eliminada la tarjeta visual y su presentación; retirado el buffer local y el helper de secuencia que solo servían a esa tarjeta. Se conservan los eventos aplicados en snapshots porque alimentan las alertas y los marcadores amarillos del mapa. Métricas, refugios y panel del habitante permanecen.
+- Archivos: `frontend/src/app/App.tsx`, `frontend/src/application/usePanel.ts`, `frontend/src/domain/panel.ts`, `frontend/src/domain/panel.test.ts` (se quitan las verificaciones del helper retirado), `frontend/src/styles.css`, SPEC-003, módulo frontend, estado, índice e historial.
+- Validación: `cd frontend && npm run build` correcto (permanece advertencia del chunk cartográfico >500 kB); `python3 backend/scripts/check_docs.py` correcto (148 Markdown/150 archivos); `python3 backend/scripts/check_sdd.py` correcto (11 SPEC); `git diff --check` correcto tras quitar una línea vacía final. No se ejecutan tests automatizados ni revisión visual. Vite reiniciado en `http://127.0.0.1:5173/` y HTTP 200; backend `/salud` HTTP 200 y sin reinicio.
+- Siguiente paso: confirmar frontend local HTTP 200 tras reiniciar y revisar visualmente que no haya tarjeta de secuencia. Alertas del mapa y controles siguen en el código.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-148 — Evitar que un polígono degenerado asigne el mismo barrio a todos los refugios
 
 - Fecha: 2026-10-28, America/Guayaquil.
