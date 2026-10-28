@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-157. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
+Actualizado: 2026-10-28, CAM-158. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
 
 ## Dónde está cada cosa
 
@@ -186,6 +186,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/repeticiones-reto-cam099.md](calidad/resultados/repeticiones-reto-cam099.md) | Tres campañas locales R1/R2/R3 con semillas distintas; nueve rondas, carga y variación de resultados | Nueva repetición comparable o ejecución AWS; no sustituye prueba oficial. |
 | [resultados/campana-aws-cam125.md](calidad/resultados/campana-aws-cam125.md) | Una campaña completa R1/R2/R3 en ECS Fargate, Ohio; identifica digest, métricas loopback, eventos y límites | Nueva ejecución AWS o cambio de imagen; no acredita endpoint público, ALB ni evaluación oficial. |
 | [resultados/auditoria-latencia-cam157.md](calidad/resultados/auditoria-latencia-cam157.md) | Auditoría local de `/paso`, `/panel/mapa`, compresión, revalidación y límites de tiempo hasta mapa visible | Nueva medición comparable o prueba desde el entorno desplegado; no acredita 150 ms globales. |
+| [resultados/smoke-despliegue-cam158.md](calidad/resultados/smoke-despliegue-cam158.md) | Despliegue Lightsail, salud HTTPS, capacidad pública y TTL configurado para cuatro sesiones | Nueva publicación o prueba concurrente limpia; no sustituye campaña de carga ni expiración real esperada. |
 | [resultados/verificacion-sdd.md](calidad/resultados/verificacion-sdd.md) | Evidencia de incorporación metodológica | Conservar resultados de CAM-004; nuevas ejecuciones se registran sin alterar resultados históricos. |
 
 ## operacion/

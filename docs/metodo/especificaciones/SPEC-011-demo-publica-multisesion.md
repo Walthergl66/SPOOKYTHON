@@ -7,13 +7,13 @@ Tareas: P4-07, P5-02
 Pruebas: T-58  
 Cambio: CAM-129
 Decisión: [ADR-046](../../arquitectura/decisiones/0046-demo-publica-multisesion.md)
-Evidencia: [CAM-126 a CAM-131](../../seguimiento/cambios.md#cam-131-desplegar-ddfa843-en-lightsail-y-diagnosticar-cd); el release `ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665` está desplegado manualmente y `/` y `/salud` responden 200. El run #50 de Actions pasó CI/build y falló por timeout SSH desde runner hospedado; P-21 sigue pendiente. Carga concurrente, revisión visual de Jugar y validación de estado/factura AWS también pendientes.
+Evidencia: [CAM-126 a CAM-131](../../seguimiento/cambios.md#cam-131-desplegar-ddfa843-en-lightsail-y-diagnosticar-cd) y [CAM-158](../../seguimiento/cambios.md#cam-158-desplegar-cuatro-sesiones-y-ttl-de-inactividad-de-15-minutos); `7046ebcf89e7550569ecb8a2bcf1fa7d081ae1ee` está desplegado manualmente. Smoke público: `/` y `/salud` HTTP 200; tres cookies nuevas distintas aceptadas, capacidad ocupada con 429 y `Retry-After: 30`; los valores activos del contenedor son 4 y 900 s. El smoke no logró crear cuatro sesiones nuevas porque ya había un cupo ocupado antes de la prueba y no esperó el TTL real; expiración está cubierta localmente con reloj controlado. Ver [reporte CAM-158](../../calidad/resultados/smoke-despliegue-cam158.md). P-21, prueba concurrente limpia, revisión visual de Jugar, carga/abuso y validación de estado/factura AWS siguen pendientes.
 
 ## Objetivo y alcance
 
 Permitir que una URL pública temporal deje a cualquier visitante usar Reto, Simulador y Jugar como operador, cada uno con un mundo aislado por cookie anónima. El backend conserva un único proceso/coordinador; la multisesión significa varios mundos independientes dentro del mismo proceso, no varias réplicas ni multijugador.
 
-Las sesiones se guardan en memoria, con máximo por instancia, expiración tras tres horas inactivas y límites adicionales del proxy. Reinicio o despliegue elimina las partidas. No hay cuentas, persistencia, recuperación, escalado horizontal, SLA ni protección absoluta contra abuso automatizado. `/paso` conserva su API key y no se inserta una clave en el frontend.
+Las sesiones se guardan en memoria, con máximo por instancia, expiración tras tres horas inactivas por defecto y límites adicionales del proxy. La instancia pública actual sobreescribe esos valores con cuatro sesiones y 900 segundos inactivos. Reinicio o despliegue elimina las partidas. No hay cuentas, persistencia, recuperación, escalado horizontal, SLA ni protección absoluta contra abuso automatizado. `/paso` conserva su API key y no se inserta una clave en el frontend.
 
 ## Criterios de aceptación
 
@@ -22,8 +22,8 @@ Las sesiones se guardan en memoria, con máximo por instancia, expiración tras 
 | CA-011-01 | Cada navegador recibe un token opaco distinto en cookie `HttpOnly`, `Secure` por HTTPS, `SameSite=Strict`; no se guarda en localStorage ni se retorna en JSON. | T-58 |
 | CA-011-02 | Reto, Simulador y Jugar resuelven controles/panel/decisiones con el mundo asociado a esa cookie. Un visitante no puede reemplazar, pausar, leer ni colocar sobre el mundo de otro. | T-58 |
 | CA-011-03 | Las operaciones mutables del navegador exigen `Origin` same-host; falta o discordancia se rechaza. El WebSocket de panel valida origen y resuelve sesión desde cookie. | T-58 |
-| CA-011-04 | El límite concurrente por instancia es configurable y por defecto 3. Sin cupo, el bootstrap devuelve 429 con `Retry-After`; la sesión más antigua no se expulsa. | T-58 |
-| CA-011-05 | El registro elimina y cierra controles inactivos tras 10.800 s. La cookie dura como máximo 24 h y es opaca; después de expirar el estado no se recupera. | T-58 |
+| CA-011-04 | El límite concurrente por instancia es configurable y por defecto 3; Lightsail público está overrideado a 4. Sin cupo, el bootstrap devuelve 429 con `Retry-After`; la sesión más antigua no se expulsa. | T-58 |
+| CA-011-05 | El registro elimina y cierra controles inactivos tras 10.800 s por defecto; Lightsail público está overrideado a 900 s. La cookie dura como máximo 24 h y es opaca; después de expirar el estado no se recupera. | T-58 |
 | CA-011-06 | En Lightsail, frontend y backend se comunican internamente; solo el frontend expone HTTPS. Nginx limita peticiones de demo/panel por IP y conserva Upgrade para WebSocket. | T-58 |
 | CA-011-07 | Dos sesiones simultáneas pueden iniciar mundos de Juego distintos y cada una sigue leyendo su propio `runId`. | T-58 |
 | CA-011-08 | Se documenta la volatilidad, concurrencia limitada, costos temporales y eliminación del servicio AWS tras la demostración. | T-58 |

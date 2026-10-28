@@ -1,3 +1,15 @@
+## CAM-158 — Desplegar cuatro sesiones y TTL de inactividad de 15 minutos
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de desplegar Navira y habilitar acceso desde cuatro dispositivos simultáneos con expiración tras 15 minutos de inactividad.
+- Relación: PRD-13, TRD-19, SPEC-011 CA-011-04/05, T-58, P4-07/P5-02, ADR-046/047.
+- Cambio operativo: `/etc/navira/public.env` queda con `NAVIRA_PUBLIC_MAX_SESSIONS=4` y `NAVIRA_PUBLIC_SESSION_IDLE_SECONDS=900`; el contenedor backend carga ambos valores. Se desplegaron backend y frontend del commit `7046ebcf89e7550569ecb8a2bcf1fa7d081ae1ee`; los valores por defecto del código para otras instalaciones no se cambiaron.
+- Verificación: estado Lightsail `Running`, ambos contenedores etiquetados con el SHA desplegado; `/` y `/salud` devolvieron HTTP 200. El host y el contenedor reportan 4/900. Prueba HTTPS creó tres cookies distintas y recibió 429 con `Retry-After: 30` al llenarse el cupo; el primer intento de cuarta cookie recibió el mismo límite, indicando un cupo que ya estaba ocupado antes del smoke. La solicitud de control siguió en 429. Los tests locales `test_public_demo.py` pasan 5/5, incluidos aislamiento, rechazo sobre el límite y expiración con reloj controlado. No se esperaron 900 segundos en producción ni se pudo atribuir el cupo previo a un dispositivo concreto. `/` tardó 612,9 ms y `/salud` 562,3 ms en una medición externa única: no es p95 ni latencia interna; tres inicializaciones de sesión midieron 1,9–8,1 s, por lo que se debe investigar tiempo de bootstrap y no declarar el requisito de 150 ms cumplido. Reporte: [smoke de despliegue](../calidad/resultados/smoke-despliegue-cam158.md).
+- Límite operativo: las tres sesiones de prueba se dejaron sin actividad y deben liberar cupo al cumplirse su TTL de 900 s. No se reinició de nuevo el backend para no invalidar sesiones que pudieran pertenecer a visitantes reales.
+- Archivos documentales: infraestructura, seguridad, SPEC-011, plan, estado, índice y reporte de smoke. No se cambió código de aplicación.
+- CD: el workflow GitHub aún no despliega automáticamente; se usó la ruta administrativa SSH ya autorizada. P-21 sigue pendiente.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-157 — Optimizar transferencia y validación del mapa
 
 - Fecha: 2026-10-28, America/Guayaquil.
