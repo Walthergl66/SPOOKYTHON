@@ -16,6 +16,12 @@ La caja se estimó de la captura con coordenadas estables de refugios; no es un 
 
 CAM-078 añade a la simulación Manta un búfer de una cuadra topológica alrededor de cada refugio: el nodo refugio y sus intersecciones conectadas por una calle, entrante o saliente. El muestreo inicial y el movimiento de zombies respetan el búfer. Esta regla es una abstracción del juego, no una validación de seguridad territorial; una arista no tiene longitud uniforme de cuadra. Véanse [reglas](reglas-juego.md) y [ADR-031](../arquitectura/decisiones/0031-perimetro-refugios-manta.md).
 
+## Zonas iniciales del modo Reto
+
+El enunciado del reto establece cuatro lugares de origen: Tarqui, Los Esteros, Barbasquillo y Jocay. CAM-094 implementa para el modo Reto zonas circulares aproximadas de 1.500 m alrededor de referencias OSM: [Tarqui](https://www.openstreetmap.org/relation/18354318), [Los Esteros](https://www.openstreetmap.org/relation/18354316), [Barbasquillo](https://www.openstreetmap.org/node/12066773600) y [Jocay](https://www.openstreetmap.org/node/13111139050). La red asigna cada nodo al centro más cercano para evitar contar un nodo en dos sectores.
+
+Estos círculos son zonas locales de spawn para la partida, no límites oficiales de barrios. La cantidad por sector no la especifica el reto; la implementación reparte el total con diferencia máxima de una persona. Para las cohortes actuales esto equivale a 5/20/50 habitantes por sector en R1/R2/R3. Las ubicaciones exactas son aleatorias por semilla, distintas entre sí y solo se eligen nodos conectados por una ruta dirigida a refugio. Simulador libre mantiene el muestreo en toda la zona jugable. Si se publican polígonos o cuotas oficiales, reemplazar radios y balance conforme a [ADR-037](../arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md); el hueco queda en [P-15](../seguimiento/pendientes.md#p-15-distribuciones-estocasticas-de-evaluacion).
+
 Cuatro destinos se transcribieron de las capas “Zonas Seguras” de los mapas de evacuación por tsunami publicados por la Dirección de Ambiente y Riesgos del GAD Manta:
 
 | ID | Lugar | Parroquia | Ajuste a red vial |

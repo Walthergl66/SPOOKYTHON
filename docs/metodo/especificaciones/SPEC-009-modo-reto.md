@@ -3,7 +3,7 @@
 ID: SPEC-009
 Estado: en-revision
 Requisitos: PRD-06, PRD-07, TRD-02, TRD-10, TRD-11
-Tareas: P5-01, P5-03
+Tareas: P4-05, P5-01, P5-03
 Pruebas: T-11, T-18, T-47
 Cambio: pendiente
 Evidencia: pendiente
@@ -25,10 +25,11 @@ La demo libre conserva sus perfiles, intensidad, refugios y control actuales. El
 | CA-009-03 | La ronda 2 programa un colapso de un segmento etiquetado como puente; la ronda 3 programa dos segmentos distintos; sus turnos y segmentos reproducen con la misma semilla. Ronda 1 no agrega eventos de reto. | T-18, T-47 |
 | CA-009-04 | La operación de reto no cambia los defaults, eventos ni controles del endpoint de demo libre; humano y automáticos conservan el mismo resolutor. | T-47 |
 | CA-009-05 | La UI distingue configuración/reporte de evaluación y advierte que densidad y calendario exacto son provisionales. No afirma que una medición local sea AWS, T-11 completa o evaluación aprobada. | T-47 |
+| CA-009-06 | En el fixture Manta, las personas de cada ronda aparecen solo en las zonas de Tarqui, Los Esteros, Barbasquillo y Jocay; el reparto es equilibrado, usa nodos viales alcanzables por ruta dirigida a un refugio y se reproduce con la semilla. Simulador libre mantiene su muestreo general. Las áreas y el reparto se declaran aproximaciones configurables porque el reto no da polígonos ni cupos por sector. | T-47 |
 
 ## Plan y módulos
 
-PRD-07 y P5-03 son propietarios del requisito de tres rondas; P5-01 cubre medición. El flujo de interfaz vive en frontend; la preparación de escenarios/eventos, en aplicación y simulación backend; la API solo adapta solicitudes. El dominio continúa con dos modos según [ADR-002](../../arquitectura/decisiones/0002-dos-modos.md). Contratos de evaluación y límites: [SPEC-005](SPEC-005-aws-evaluacion.md), [reglas](../../dominio/reglas-juego.md) y [pendientes](../../seguimiento/pendientes.md).
+PRD-07 y P5-03 son propietarios del requisito de tres rondas; P5-01 cubre medición. El flujo de interfaz vive en frontend; la preparación de escenarios/eventos y la selección aleatoria de inicios por sector, en aplicación/simulación backend; la API solo adapta solicitudes. La aproximación de sectores está registrada en [ADR-037](../../arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md). El dominio continúa con dos modos según [ADR-002](../../arquitectura/decisiones/0002-dos-modos.md). Contratos de evaluación y límites: [SPEC-005](SPEC-005-aws-evaluacion.md), [reglas](../../dominio/reglas-juego.md) y [pendientes](../../seguimiento/pendientes.md).
 
 ## Riesgos y verificación
 

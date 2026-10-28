@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-094 — Iniciar habitantes del Reto en los cuatro sectores establecidos
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: continuación del usuario para ubicar el spawn de habitantes del Reto en los lugares establecidos por el enunciado. La fuente original nombra Tarqui, Los Esteros, Barbasquillo y Jocay.
+- Especificación/tareas: SPEC-009 CA-009-06, P4-05 parcial, T-47; ADR-037. No completa toda SPEC-009, la campaña consecutiva ni T-11.
+- Rama: `master`; código `d327c5a` (`feat: spawn reto survivors in four Manta sectors`) y documentación en commit individual separado.
+- Motivo: antes del cambio, el preset del Reto sorteaba habitantes por toda la zona jugable, sin respetar las cuatro zonas del enunciado.
+- Archivos: `backend/src/navira/demo.py`, `backend/tests/test_demo.py`; documentación de contexto, modos, mapa Manta, SPEC-009, T-47, trazabilidad, plan, pendientes, ADR-037, índices, estado e historial.
+- Resultado: para partidas Reto sobre el mapa Manta, el servidor asigna cada nodo a su referencia sectorial OSM más cercana dentro de un radio local de 1.500 m, distribuye cohortes casi igual por las cuatro áreas y muestrea nodos viales distintos con el RNG privado. Las rondas 20/80/200 quedan en 5/20/50 personas por sector. Los nodos tienen ruta dirigida hacia refugios y excluyen los propios refugios. La misma semilla reproduce las posiciones; otra semilla altera la muestra. El Simulador libre y mapas sintéticos mantienen su algoritmo anterior.
+- Verificación: `cd backend && PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_demo tests.test_control_simulador_demo -v` (26 OK) y suite backend completa `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest discover -s tests -p 'test_*.py'` (223 OK); incluye balance R1/R2/R3, elegibilidad, nodos únicos, replay/variación por semilla, continuidad del spawn libre y contrato `/reto/iniciar`. También pasan `compileall`, `python3 backend/scripts/check_docs.py` (121 Markdown/123 archivos), `python3 backend/scripts/check_sdd.py` (9 SPEC), ocho pruebas de `test_check_sdd.py` y `git diff --check`. API reiniciada; Vite proxió `/salud` con HTTP 200 y se inició R2 por `/reto/iniciar` con 80 habitantes; el mismo run quedó activo en turno 8. La comprobación espacial HTTP se hizo después de que avanzó el mundo y un habitante ya se había alejado de su zona inicial; la ubicación al inicio se valida desde el snapshot inicial mediante pruebas, no desde el snapshot posterior. No se midió supervivencia ni ronda completa.
+- Límites: el enunciado no define polígonos o cuotas por barrio. Los radios de 1.500 m y reparto igual son una aproximación explícita basada en referencias OSM; no son límites administrativos/catastrales ni distribución oficial. Actualizar si la organización comparte polígonos o cantidades por sector.
+- Siguiente paso: inspeccionar una partida Reto en el frontend y confirmar visualmente que los marcadores iniciales se muestran en las cuatro zonas; luego seguir la campaña de tres rondas y reporte.
+
 ## CAM-093 — Calcular bajo demanda la ruta del habitante seleccionado
 
 - Fecha: 2026-10-27, Ecuador continental.

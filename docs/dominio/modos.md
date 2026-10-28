@@ -11,7 +11,7 @@ Estado: los modos de dominio `simulador` y `juego` se mantienen; la interfaz ofr
 | Resultado | Reporte de ronda | Evacuado, mordido o partida interrumpida. |
 | Medición | Métricas oficiales automáticas | Métricas de juego separadas. |
 
-La interfaz añade **Reto** con presets de Anochecer (20), Medianoche (80) y Apocalipsis (200). Se preparan partidas automáticas con el mismo motor, mapa y resolutor. La demo libre conserva sus controles y eventos. El selector inicia cada ronda individualmente; aún no automatiza la campaña consecutiva de 15 minutos. Densidad media, proporciones de tipos y turnos de evento son provisionales porque el enunciado no los especifica.
+La interfaz añade **Reto** con presets de Anochecer (20), Medianoche (80) y Apocalipsis (200). En el fixture Manta sus habitantes aparecen aleatoriamente en las zonas aproximadas de Tarqui, Los Esteros, Barbasquillo y Jocay, con un reparto equilibrado y reproducible por semilla. Simulador libre conserva sus apariciones en toda la zona jugable. Se usan el mismo motor, mapa y resolutor; el selector inicia cada ronda individualmente y aún no automatiza la campaña consecutiva de 15 minutos. Densidad media, proporciones de tipos, geometría/cuota exacta de sectores y turnos de evento son provisionales porque el enunciado no los especifica. Véase [ADR-037](../arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md).
 
 ## Invariantes
 
