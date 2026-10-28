@@ -1,6 +1,6 @@
 # ADR-040 — Reemplazar una ronda Reto pausada al iniciar otro preset
 
-- Estado: Aceptada e implementada localmente — CAM-097.
+- Estado: Sustituida por [ADR-044](0044-reemplazo-explicito-al-cambiar-de-modo.md) — CAM-106.
 - Fecha: 2026-10-27.
 - Contexto: el panel debe permitir continuar o sustituir una ronda Reto pausada por otro preset seleccionado. Una ronda activa no debe ser interrumpida y un simulador libre pausado no debe desaparecer al iniciar Reto.
 - Decisión: `POST /reto/iniciar` puede reemplazar una partida previa únicamente si pertenece al modo Reto y está pausada. La operación crea un mundo y `runId` nuevos para el preset solicitado. Si hay una partida activa o una demo libre pausada, responde HTTP 409. `POST /reto/reiniciar` mantiene su función de recrear el mismo preset.

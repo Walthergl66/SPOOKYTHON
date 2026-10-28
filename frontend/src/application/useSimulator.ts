@@ -75,6 +75,9 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
     setMessage(null)
   }
 
+  /** Limpia avisos de interfaz al pasar a otra experiencia, sin alterar el run remoto. */
+  const clearMessage = () => setMessage(null)
+
   /** Asigna el nodo a la ranura en modo "colocar" o a la primera libre. Devuelve false si no hay ranura o el nodo ya está usado. */
   const pickNode = (nodo: string): boolean => {
     const target = placing ?? slots.indexOf(null)
@@ -86,5 +89,5 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
   const clearSlot = (index: number) => { setSlots(slots.map((s, i) => (i === index ? null : s))); setPlacing(null) }
   const resetRefuges = () => { setSlots(emptySlots()); setPlacing(null) }
 
-  return { status, unavailable, message, busy, setup, setSetup, run, changeSpeed, acceptStatus, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges }
+  return { status, unavailable, message, busy, setup, setSetup, run, changeSpeed, acceptStatus, clearMessage, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges }
 }

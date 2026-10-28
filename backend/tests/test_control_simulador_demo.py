@@ -216,7 +216,7 @@ class ControlSimuladorDemoTests(unittest.TestCase):
         self.assertFalse(respuesta.json()["eventosCiudad"])
         self.assertEqual(len(snapshot.eventos_programados), 1)
 
-    def test_reto_no_interrumpe_una_partida_activa(self) -> None:
+    def test_reto_inicia_run_nuevo_al_cambiar_desde_una_partida_libre_pausada(self) -> None:
         control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
         app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
         with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43118)) as client:
@@ -224,9 +224,33 @@ class ControlSimuladorDemoTests(unittest.TestCase):
             libre = client.post("/demo/simulador/iniciar", headers=headers, json={"escenario": "libre", "sobrevivientes": 1})
             client.post("/demo/simulador/pausar", headers=headers)
             reto = client.post("/reto/iniciar", headers=headers, json={"ronda": 1})
+            snapshot = control._snapshot()
             control.cerrar()
         self.assertEqual(libre.status_code, 200)
-        self.assertEqual(reto.status_code, 409)
+        self.assertEqual(reto.status_code, 200, reto.text)
+        self.assertNotEqual(reto.json()["runId"], libre.json()["runId"])
+        self.assertEqual(reto.json()["rondaReto"], 1)
+        self.assertEqual(reto.json()["sobrevivientesIniciales"], 20)
+        self.assertEqual(snapshot.partida.run_id, reto.json()["runId"])
+
+    def test_reto_reemplaza_partida_jugar_activa_con_run_nuevo(self) -> None:
+        control = crear_control_simulador_demo(str(RAIZ / "data/maps/manta-hackathon-v1.json"))
+        app = crear_app(control_simulador_demo=control, seguridad=LOCAL)
+        headers = {"Origin": "http://localhost:5173"}
+        with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 43117)) as client:
+            operador = client.post("/demo/operador/iniciar", headers=headers)
+            reto = client.post("/reto/iniciar", headers=headers, json={"ronda": 2, "semilla": 44})
+            snapshot = control._snapshot()
+            control.cerrar()
+
+        self.assertEqual(operador.status_code, 200, operador.text)
+        self.assertEqual(reto.status_code, 200, reto.text)
+        self.assertNotEqual(reto.json()["runId"], operador.json()["runId"])
+        self.assertEqual(reto.json()["estado"], "activa")
+        self.assertEqual(reto.json()["rondaReto"], 2)
+        self.assertEqual(reto.json()["sobrevivientesIniciales"], 80)
+        self.assertEqual(len(snapshot.partida.sobrevivientes), 80)
+        self.assertEqual(snapshot.partida.run_id, reto.json()["runId"])
 
     def test_selector_publica_limites_y_rechaza_refugio_fuera_del_recorte(self) -> None:
         mapa_path = RAIZ / "data/maps/manta-hackathon-v1.json"

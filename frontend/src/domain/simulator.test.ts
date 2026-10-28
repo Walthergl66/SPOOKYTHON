@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { nodoMasCercano, puntoDentroLimites, refugiosParaEnviar, parseSimulatorCandidatos, parseSimulatorStatus } from './simulator'
+import { nodoMasCercano, puntoDentroLimites, refugiosParaEnviar, parseSimulatorCandidatos, parseSimulatorStatus, statusMatchesMode, type SimulatorStatus } from './simulator'
 
-const estado = {
+const estado: SimulatorStatus = {
   habilitado: true, estado: 'activa', runId: 'run', turno: 5, escenario: 'mixto',
   sobrevivientesIniciales: 10, zombiesIniciales: 12, intensidad: 'media', eventosCiudad: true, velocidad: 1, error: null,
 }
@@ -25,6 +25,23 @@ describe('parseSimulatorStatus', () => {
   it('rechaza una intensidad desconocida', () => {
     expect(() => parseSimulatorStatus({ ...estado, intensidad: 'extrema' }))
       .toThrow('El backend devolvió un estado de simulador incompleto.')
+  })
+})
+
+describe('run visible par mode', () => {
+  it('solo asocia un run Reto con Reto y un mundo vacío con Jugar', () => {
+    const reto = { ...estado, rondaReto: 2 as const }
+    const jugar = { ...estado, sobrevivientesIniciales: 0, zombiesIniciales: 0 }
+    expect(statusMatchesMode(reto, 'challenge')).toBe(true)
+    expect(statusMatchesMode(reto, 'simulator')).toBe(false)
+    expect(statusMatchesMode(jugar, 'game')).toBe(true)
+    expect(statusMatchesMode(jugar, 'challenge')).toBe(false)
+  })
+
+  it('asocia el simulador libre con población inicial y oculta runs de otro modo', () => {
+    expect(statusMatchesMode(estado, 'simulator')).toBe(true)
+    expect(statusMatchesMode(estado, 'game')).toBe(false)
+    expect(statusMatchesMode(null, 'simulator')).toBe(false)
   })
 })
 

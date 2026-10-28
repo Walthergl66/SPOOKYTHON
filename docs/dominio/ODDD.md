@@ -45,7 +45,7 @@ El código implementa `Partida`, `Sobreviviente`, `Zombie` e `IntencionMovimient
 
 ## Invariantes
 
-1. Un `runId` no cambia de modo; un turno no se aplica dos veces.
+1. Un `runId` no cambia de modo y un turno no se aplica dos veces. El control local mantiene un solo run; una acción explícita de inicio en otro modo crea otro `runId` y sustituye el anterior, nunca migra su estado.
 2. Una intención pertenece a partida, personaje, turno y fase compatibles.
 3. Un destino topológico es vecino habilitado o el propio nodo; la mordida se resuelve aparte.
 4. Solo un coordinador modifica posiciones; aceptar orden no las cambia.

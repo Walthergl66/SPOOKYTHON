@@ -14,7 +14,7 @@ La interfaz añade **Reto** con presets de Anochecer (20), Medianoche (80) y Apo
 
 ## Invariantes
 
-Una partida tiene un modo fijo y un `runId`. Cambiar de modo inicia otra partida y no puede interrumpir una prueba por iniciativa de un visitante. Primera versión: una partida activa y un jugador humano; no prometer sesiones independientes concurrentes.
+Cada partida conserva un modo fijo y un `runId`. Cambiar de pestaña limpia la selección/configuración local y oculta el snapshot de otro modo, pero no detiene ni reemplaza el mundo por sí solo. Al confirmar «Iniciar» en el modo destino, el coordinador local sustituye el único run anterior por un mundo nuevo compatible con ese modo. Iniciar otro preset Reto no pisa un Reto activo; primero hay que pausarlo. La política solo cubre el control local opt-in/loopback. Primera versión: una partida activa y un jugador humano; no prometer sesiones independientes concurrentes.
 
 Ambos modos comparten grafo, reloj, zombies, cierres, reglas de mordida y refugios. El cliente anima posiciones confirmadas; no determina colisiones ni acelera el mundo. Los dormidos permanecen ocultos para jugador, panel y motor mientras corresponda.
 

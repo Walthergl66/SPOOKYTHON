@@ -95,6 +95,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-040](arquitectura/decisiones/0040-reemplazo-reto-pausado.md) | Reemplazo de un run Reto pausado por otro preset | Cambie cuándo una partida local puede sustituirse por otro preset Reto. |
 | [ADR-042](arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md) | «Jugar» como modo de operador que interviene un mundo automático vivo | Cambie la experiencia de Jugar o sus límites de intervención local. |
 | [ADR-043](arquitectura/decisiones/0043-filtros-de-riesgo-y-rutas-comprometidas.md) | Filtros compartidos para incidentes, hordas, zombies próximos y rutas comprometidas | Cambie las reglas de transitabilidad o la política de riesgo alrededor de amenazas. |
+| [ADR-044](arquitectura/decisiones/0044-reemplazo-explicito-al-cambiar-de-modo.md) | Inicio explícito desde el modo destino reemplaza el run local con un mundo nuevo | Cambie el ciclo de vida o transición de runs entre Reto, Simulador y Jugar. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
 ## metodo/
@@ -179,6 +180,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | Documento | Fuente principal de | Actualizar cuando |
 |---|---|---|
 | [infraestructura.md](operacion/infraestructura.md) | Despliegue y operación AWS | Cambie un recurso o procedimiento. |
+| [guia-paso-a-paso-despliegue.md](operacion/guia-paso-a-paso-despliegue.md) | Guía interactiva de preparación para despliegue | Cambien sus pasos o requisitos previos. |
 | [seguridad.md](operacion/seguridad.md) | Autenticación y límites de confianza | Cambien accesos o secretos. |
 | [costos.md](operacion/costos.md) | Estimación y gasto real | Cambie infraestructura o consumo. |
 

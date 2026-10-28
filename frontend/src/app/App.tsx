@@ -4,7 +4,7 @@ import type { OperatorTool } from '../domain/operator'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { RefugeDialog } from '../features/map/RefugeDialog'
 import type { PanelConnection, PanelRoute } from '../domain/panel'
-import type { SimulatorSetup } from '../domain/simulator'
+import { statusMatchesMode, type SimulatorSetup } from '../domain/simulator'
 import type { PanelPort, SimulatorPort } from '../application/ports'
 import { usePanel } from '../application/usePanel'
 import { REFUGE_SLOTS, useSimulator } from '../application/useSimulator'
@@ -39,7 +39,31 @@ export function App() {
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
-  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
+  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, clearMessage: clearSimulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
+
+  const modeRunMatches = statusMatchesMode(simulator, mode)
+
+  /** Cambiar de pestaña limpia la interacción local; el mundo solo se sustituye al iniciar el modo destino. */
+  const selectMode = (next: NaviraMode) => {
+    if (next === mode) return
+    setMode(next)
+    setSelectedSurvivorId(undefined)
+    setSelectedRoute(null)
+    setSelectedRouteError(null)
+    setSelectedRouteLoading(false)
+    setChallengeBusy(false)
+    setChallengeError(null)
+    clearSimulatorMessage()
+    setOperatorTool('habitante')
+    setOperatorBusy(false)
+    setOperatorError(null)
+    setOperatorNotice(null)
+    setRefugeDialogOpen(false)
+    setSetupStage('refuges')
+    resetRefuges()
+    if (next === 'challenge') setChallengeRound(1)
+    if (next === 'simulator') setSetup({ escenario: 'mixto', sobrevivientes: 20, zombies: 42, intensidad: 'media' })
+  }
 
   useEffect(() => {
     if (simulator?.rondaReto) setChallengeRound(simulator.rondaReto)
@@ -57,9 +81,11 @@ export function App() {
 
   const state = snapshot?.state ?? null
   const map = snapshot?.map ?? null
-  const active = state?.estado === 'activa'
+  const modeSnapshotMatches = modeRunMatches && state?.runId === simulator?.runId
+  const active = modeSnapshotMatches && state?.estado === 'activa'
+  const visibleState = modeSnapshotMatches ? state : null
   const cityName = map?.version.includes('manta') ? 'Manta, Manabí' : map ? 'Mapa sintético de prueba' : 'Manta, Ecuador'
-  const statusLabel = active ? `Turno ${state.turno} · ${(state.fase ?? 'fase desconocida').replaceAll('_', ' ')}` : state?.estado === 'sin_partida' ? 'Sin partida activa' : loading ? 'Conectando con el panel' : 'Datos no disponibles'
+  const statusLabel = active ? `Turno ${state?.turno} · ${(state?.fase ?? 'fase desconocida').replaceAll('_', ' ')}` : modeRunMatches && state?.estado === 'sin_partida' ? 'Sin partida activa' : modeRunMatches && loading ? 'Conectando con el panel' : modeRunMatches ? 'Datos no disponibles' : 'Modo listo · inicia para crear una partida limpia'
   const allSurvivors = active ? state.sobrevivientes ?? [] : []
   const selectedRouteOwner = allSurvivors.some(({ id }) => id === selectedSurvivorId) ? selectedSurvivorId : undefined
   const selectedSurvivor = allSurvivors.find(({ id }) => id === selectedRouteOwner)
@@ -107,6 +133,8 @@ export function App() {
     return { ...state, rutasPrevistas: [...(state.rutasPrevistas ?? []), { sobrevivienteId: selectedRoute.sobrevivienteId, trayecto: selectedRoute.trayecto }] }
   }, [state, selectedSnapshotRoute, selectedRoute, selectedRouteOwner, selectedSurvivor?.estado])
   const simulatorIsRunning = simulator?.estado === 'activa'
+  const challengeIsRunning = simulatorIsRunning && simulator?.rondaReto != null
+  const challengeIsPaused = simulator?.estado === 'pausada' && simulator?.rondaReto != null
   const pickerLockedReason = simulatorBusy ? 'Se está actualizando la simulación. Espera un momento.' : null
   const placedRefuges = slots.filter((slot) => slot !== null).length
   const confirmRefuges = () => setSetupStage('population')
@@ -153,7 +181,7 @@ export function App() {
       setOperatorBusy(false)
     }
   }
-  const operatorRunBlocked = simulatorUnavailable || simulator?.rondaReto != null
+  const operatorRunBlocked = simulatorUnavailable
   const startOperatorWorld = async () => {
     setOperatorBusy(true)
     setOperatorError(null)
@@ -177,32 +205,32 @@ export function App() {
       <a className="skip-link" href="#main-content">Saltar al contenido</a>
       <header className="topbar dashboard-topbar">
         <a className="brand" href="#main-content" aria-label="Navira, inicio"><BrandMark /><span className="brand-name">navira</span></a>
-        <div className="topbar-context"><span className={`context-pulse${simulatorIsRunning ? '' : ' is-idle'}`} aria-hidden="true" /><strong>{simulatorIsRunning ? 'SIMULACIÓN EN VIVO' : 'CENTRO DE SIMULACIÓN'}</strong><span className="context-divider" aria-hidden="true" /><span>{cityName}</span></div>
+        <div className="topbar-context"><span className={`context-pulse${active ? '' : ' is-idle'}`} aria-hidden="true" /><strong>{active ? 'SIMULACIÓN EN VIVO' : 'CENTRO DE SIMULACIÓN'}</strong><span className="context-divider" aria-hidden="true" /><span>{cityName}</span></div>
         <nav className="mode-tabs" aria-label="Modo de Navira" role="group">
-          <ModeCard mode="challenge" selected={mode === 'challenge'} onSelect={setMode} />
-          <ModeCard mode="simulator" selected={mode === 'simulator'} onSelect={setMode} />
-          <ModeCard mode="game" selected={mode === 'game'} onSelect={setMode} />
+          <ModeCard mode="challenge" selected={mode === 'challenge'} onSelect={selectMode} />
+          <ModeCard mode="simulator" selected={mode === 'simulator'} onSelect={selectMode} />
+          <ModeCard mode="game" selected={mode === 'game'} onSelect={selectMode} />
         </nav>
       </header>
 
       <section className="dashboard-grid" id="main-content" tabIndex={-1} aria-label="Panel de Navira">
         <aside className="sim-control-panel" aria-labelledby="simulation-control-title">
           <div className="panel-section-heading"><span className="panel-overline">OPERACIÓN LOCAL</span><h1 id="simulation-control-title">{mode === 'game' ? 'Panel del operador' : 'Control de simulación'}</h1></div>
-          <div className="control-status" role="status"><span className={`context-pulse${simulatorIsRunning ? '' : ' is-idle'}`} aria-hidden="true" /><span>{simulator?.estado === 'activa' ? 'En curso' : simulator?.estado === 'pausada' ? 'Pausada' : simulator?.estado === 'finalizada' ? 'Finalizada' : simulator?.estado === 'error' ? 'Detenida por error' : 'Lista para iniciar'}</span></div>
+          <div className="control-status" role="status"><span className={`context-pulse${active ? '' : ' is-idle'}`} aria-hidden="true" /><span>{!modeRunMatches ? 'Partida nueva al iniciar' : simulator?.estado === 'activa' ? 'En curso' : simulator?.estado === 'pausada' ? 'Pausada' : simulator?.estado === 'finalizada' ? 'Finalizada' : simulator?.estado === 'error' ? 'Detenida por error' : 'Lista para iniciar'}</span></div>
 
           {mode === 'game' ? <OperatorControls
             tool={operatorTool}
             onToolChange={(next) => { setOperatorTool(next); setOperatorError(null); setOperatorNotice(null) }}
-            disabled={operatorBusy || simulator?.rondaReto != null}
+            disabled={operatorBusy || (mode === 'game' && simulator?.rondaReto != null)}
             busy={operatorBusy || simulatorBusy}
-            canRun={!operatorRunBlocked && simulator?.estado !== 'activa' && simulator?.estado !== 'pausada'}
+            canRun={!operatorRunBlocked}
             canStartNew={!operatorRunBlocked}
-            hasRun={Boolean(simulator?.runId && simulator?.rondaReto == null && (simulator.estado === 'activa' || simulator.estado === 'pausada'))}
-            runState={simulator?.estado}
+            hasRun={Boolean(modeRunMatches && simulator?.runId && (simulator.estado === 'activa' || simulator.estado === 'pausada'))}
+            runState={modeRunMatches ? simulator?.estado : 'sin_partida'}
             onStart={startOperatorWorld}
             onPause={() => void runControl('pausar')}
             onContinue={() => void runControl('reanudar')}
-            error={operatorError ?? (simulator?.rondaReto != null ? 'Pausa o termina el Reto antes de usar el modo operador.' : simulatorUnavailable ? 'El control requiere NAVIRA_LOCAL_DEMO_CONTROL=1 en el backend local.' : null)}
+            error={operatorError ?? (simulatorUnavailable ? 'El control requiere NAVIRA_LOCAL_DEMO_CONTROL=1 en el backend local.' : null)}
             notice={operatorNotice}
           /> : mode === 'challenge' ? <section className="challenge-setup" aria-labelledby="challenge-title">
             <div className="panel-section-heading"><span className="panel-overline">PRUEBA DE FUEGO · TRACK A</span><h2 id="challenge-title">Selecciona una ronda</h2></div>
@@ -211,15 +239,15 @@ export function App() {
                 { id: 1 as const, name: 'Anochecer', details: '20 sobrevivientes · solo caminantes' },
                 { id: 2 as const, name: 'Medianoche', details: '80 sobrevivientes · caminantes, corredores y hordas · 1 puente' },
                 { id: 3 as const, name: 'Apocalipsis', details: '200 sobrevivientes · todos los tipos · 2 calles bloqueadas' },
-              ]).map((round) => <button key={round.id} type="button" className={`challenge-round${challengeRound === round.id ? ' is-selected' : ''}`} aria-pressed={challengeRound === round.id} onClick={() => setChallengeRound(round.id)} disabled={simulatorIsRunning || challengeBusy}>
+              ]).map((round) => <button key={round.id} type="button" className={`challenge-round${challengeRound === round.id ? ' is-selected' : ''}`} aria-pressed={challengeRound === round.id} onClick={() => setChallengeRound(round.id)} disabled={challengeIsRunning || challengeBusy}>
                 <strong>R{round.id} · {round.name}</strong><span>{round.details}</span>
               </button>)}
             </div>
             <p className="challenge-note">Densidad media provisional. Puente, calles y turnos de evento se sortearán de forma reproducible; el reto no define esos parámetros. Cada ronda se inicia por separado.</p>
-            <button className={`sim-action ${simulatorIsRunning ? 'sim-pause' : 'sim-start'} challenge-start`} type="button" onClick={() => simulatorIsRunning && simulator?.rondaReto ? void runControl('pausar') : simulator?.estado === 'pausada' && simulator?.rondaReto ? void runControl('reanudar') : void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable || (simulatorIsRunning && !simulator?.rondaReto) || (simulator?.estado === 'pausada' && !simulator?.rondaReto)}>
-              {challengeBusy ? 'Preparando…' : simulatorIsRunning && simulator?.rondaReto ? `Pausar R${simulator.rondaReto}` : simulator?.estado === 'pausada' && simulator?.rondaReto ? `Continuar R${simulator.rondaReto}` : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
+            <button className={`sim-action ${challengeIsRunning ? 'sim-pause' : 'sim-start'} challenge-start`} type="button" onClick={() => challengeIsRunning ? void runControl('pausar') : challengeIsPaused ? void runControl('reanudar') : void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
+              {challengeBusy ? 'Preparando…' : challengeIsRunning ? `Pausar R${simulator?.rondaReto}` : challengeIsPaused ? `Continuar R${simulator?.rondaReto}` : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
             </button>
-            {!challengeBusy && simulator?.rondaReto && simulator.runId && simulator?.estado === 'pausada' ? <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
+            {!challengeBusy && challengeIsPaused ? <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
               {`Nueva simulación R${challengeRound}`}
             </button> : null}
             {!challengeBusy && simulator?.rondaReto && simulator.runId ? <button className="sim-action sim-reset challenge-start" type="button" onClick={() => void restartChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
@@ -228,21 +256,21 @@ export function App() {
             {challengeError ? <div className="control-notice is-error" role="alert">{challengeError}</div> : null}
           </section> : mode === 'simulator' ? <section className="simulator-start-panel" aria-label="Iniciar simulador">
             <div className="sim-action-row">
-              {simulatorIsRunning ? <button className="sim-action sim-pause" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy}>Pausar</button>
-                : simulator?.estado === 'pausada' ? <button className="sim-action sim-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy}>Continuar</button>
+              {modeRunMatches && simulatorIsRunning ? <button className="sim-action sim-pause" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy}>Pausar</button>
+                : modeRunMatches && simulator?.estado === 'pausada' ? <button className="sim-action sim-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy}>Continuar</button>
                   : <button className="sim-action sim-start simulator-primary-start" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>{simulatorBusy ? 'Preparando…' : simulator?.runId ? 'Nueva simulación' : 'Iniciar simulación'}</button>}
-              {simulator?.runId && (simulatorIsRunning || simulator?.estado === 'pausada') ? <button className="sim-action sim-reset" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>Nueva simulación</button> : null}
+              {modeRunMatches && simulator?.runId && (simulatorIsRunning || simulator?.estado === 'pausada') ? <button className="sim-action sim-reset" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>Nueva simulación</button> : null}
             </div>
             <p className="simulator-fixed-speed">Velocidad fija: <strong>4×</strong></p>
-            {simulator?.runId ? <p className="simulator-run-population">Población de esta partida: {simulator.sobrevivientesIniciales ?? '—'} habitantes · {simulator.zombiesIniciales ?? '—'} zombies</p> : null}
+            {modeRunMatches && simulator?.runId ? <p className="simulator-run-population">Población de esta partida: {simulator.sobrevivientesIniciales ?? '—'} habitantes · {simulator.zombiesIniciales ?? '—'} zombies</p> : null}
           </section> : null}
 
           {simulatorUnavailable ? <div className="control-notice" role="status"><strong>Control local deshabilitado</strong><span>Inicia el backend con <code>NAVIRA_LOCAL_DEMO_CONTROL=1</code> para operar una demo desde esta pantalla.</span></div> : null}
           {simulatorMessage ? <div className="control-notice is-error" role="alert"><strong>No se pudo completar la acción</strong><span>{simulatorMessage}</span></div> : null}
-          {simulator?.error ? <div className="control-notice is-error" role="alert"><strong>El reloj se detuvo</strong><span>{simulator.error}</span></div> : null}
+          {modeRunMatches && simulator?.error ? <div className="control-notice is-error" role="alert"><strong>El reloj se detuvo</strong><span>{simulator.error}</span></div> : null}
 
-          <div className="run-details"><span>Modo de vista</span><strong>{mode === 'challenge' ? `Reto · ronda ${challengeRound}` : mode === 'simulator' ? 'Simulador · demo libre' : 'Juego · operador'}</strong><span>Turno observado</span><strong>{state?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
-          {active && allSurvivors.length > 0 && map ? <Suspense fallback={<div className="survivor-route-loading" role="status">Cargando información del habitante…</div>}><SurvivorRoutePanel state={stateWithSelectedRoute ?? state} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} routeLoading={selectedRouteLoading} routeError={selectedRouteError} /></Suspense> : null}
+          <div className="run-details"><span>Modo de vista</span><strong>{mode === 'challenge' ? `Reto · ronda ${challengeRound}` : mode === 'simulator' ? 'Simulador · demo libre' : 'Juego · operador'}</strong><span>Turno observado</span><strong>{visibleState?.turno ?? '—'}</strong><span>Conexión del panel</span><strong>{connectionLabel(connection)}</strong></div>
+          {active && allSurvivors.length > 0 && map ? <Suspense fallback={<div className="survivor-route-loading" role="status">Cargando información del habitante…</div>}><SurvivorRoutePanel state={stateWithSelectedRoute ?? state!} map={map} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} routeLoading={selectedRouteLoading} routeError={selectedRouteError} /></Suspense> : null}
         </aside>
 
         <section className="city-panel dashboard-map-panel" aria-label="Mapa y estado de Manta">
@@ -251,9 +279,9 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            {map && state?.estado === 'activa' ? <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={map} state={stateWithSelectedRoute ?? state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} operatorTool={mode === 'game' && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense> : <MapPlaceholder mode={mode} />}
+            {map && active && state ? <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={map} state={stateWithSelectedRoute ?? state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} operatorTool={mode === 'game' && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense> : <MapPlaceholder mode={mode} />}
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
-            <div className="map-coordinate">{map?.version ?? (simulatorUnavailable ? 'BACKEND SIN CONTROL LOCAL' : 'AÚN SIN SNAPSHOT')}</div>
+            <div className="map-coordinate">{modeRunMatches ? map?.version ?? 'AÚN SIN SNAPSHOT' : 'NUEVO MUNDO PENDIENTE DE INICIAR'}</div>
           </div>
           <div className="map-legend" aria-label="Leyenda del mapa"><span><i className="legend-refuge" /> Refugio</span><span><i className="legend-survivor" /> Sobreviviente</span><span><i className="legend-zombie" /> Zombie visible</span><span><i className="legend-route" /> Ruta prevista</span><span><i className="legend-trail" /> Movimiento confirmado</span><span><i className="legend-closure" /> Calle cerrada</span></div>
         </section>
@@ -262,21 +290,21 @@ export function App() {
           <section className="stats-panel">
             <div className="panel-section-heading"><span className="panel-overline">DATOS CONFIRMADOS</span><h2>Estado en tiempo real</h2></div>
             <div className="stats-grid">
-              <Metric label="Activos" value={state?.metricas?.sobrevivientesActivos} />
-              <Metric label="Evacuados" value={state?.metricas?.evacuados} />
-              <Metric label="Mordidos acumulados" value={state?.metricas?.mordidos} />
-              <Metric label="Amenazas visibles" value={state?.metricas?.zombiesVisibles} />
-              <Metric label="Rutas previstas" value={state?.rutasPrevistas?.length} />
-              <Metric label="Turno" value={state?.turno} />
+              <Metric label="Activos" value={visibleState?.metricas?.sobrevivientesActivos} />
+              <Metric label="Evacuados" value={visibleState?.metricas?.evacuados} />
+              <Metric label="Mordidos acumulados" value={visibleState?.metricas?.mordidos} />
+              <Metric label="Amenazas visibles" value={visibleState?.metricas?.zombiesVisibles} />
+              <Metric label="Rutas previstas" value={visibleState?.rutasPrevistas?.length} />
+              <Metric label="Turno" value={visibleState?.turno} />
             </div>
           </section>
           <section className="stats-panel refuge-panel">
             <div className="panel-section-heading"><span className="panel-overline">DESTINOS DEL MAPA</span><h2>Refugios representados</h2></div>
-            {map?.refugios.length ? <ul className="refuge-list">{map.refugios.map((refuge) => <li key={refuge.id}><span className="refuge-mark" aria-hidden="true">⌂</span><span><strong>{refuge.id}</strong><small>Nodo {refuge.nodo}</small></span></li>)}</ul> : <p className="empty-note">Se mostrarán al iniciar una partida.</p>}
+            {modeRunMatches && map?.refugios.length ? <ul className="refuge-list">{map.refugios.map((refuge) => <li key={refuge.id}><span className="refuge-mark" aria-hidden="true">⌂</span><span><strong>{refuge.id}</strong><small>Nodo {refuge.nodo}</small></span></li>)}</ul> : <p className="empty-note">Se mostrarán al iniciar una partida.</p>}
           </section>
           <section className="stats-panel event-panel">
             <div className="panel-section-heading"><span className="panel-overline">SECUENCIA DEL PANEL</span><h2>Últimas actualizaciones</h2></div>
-            {eventLog.length ? <ol className="event-list">{eventLog.map((event) => <li key={event.id}><strong>{event.label}</strong><span>{event.detail}</span></li>)}</ol> : <p className="empty-note">El registro aparecerá con los primeros snapshots confirmados.</p>}
+            {modeRunMatches && eventLog.length ? <ol className="event-list">{eventLog.map((event) => <li key={event.id}><strong>{event.label}</strong><span>{event.detail}</span></li>)}</ol> : <p className="empty-note">El registro aparecerá con los primeros snapshots confirmados.</p>}
           </section>
         </aside>
       </section>
@@ -309,7 +337,7 @@ export function App() {
       <footer className="system-strip" aria-label="Estado técnico">
         <div><span className={`status-dot is-${health === 'online' ? 'live' : health === 'offline' ? 'stale' : 'connecting'}`} /><span>API</span><strong>{health === 'online' ? 'Disponible' : health === 'offline' ? 'Sin conexión' : 'Comprobando'}</strong></div>
         <div><span className={`status-dot is-${connection}`} /><span>Panel vivo</span><strong>{connectionLabel(connection)}</strong></div>
-        <div><span className={`status-dot is-${simulatorIsRunning ? 'live' : 'idle'}`} /><span>Simulador</span><strong>{simulator?.estado ?? (simulatorUnavailable ? 'Control no habilitado' : 'Sin partida')}</strong></div>
+        <div><span className={`status-dot is-${active ? 'live' : 'idle'}`} /><span>{mode === 'challenge' ? 'Reto' : mode === 'game' ? 'Juego' : 'Simulador'}</span><strong>{modeRunMatches ? simulator?.estado ?? 'Sin partida' : 'Listo para iniciar'}</strong></div>
       </footer>
     </main>
   )

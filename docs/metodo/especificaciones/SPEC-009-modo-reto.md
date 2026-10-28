@@ -4,7 +4,7 @@ ID: SPEC-009
 Estado: en-revision
 Requisitos: PRD-06, PRD-07, TRD-02, TRD-10, TRD-11
 Tareas: P4-05, P5-01, P5-03
-Pruebas: T-11, T-18, T-47, T-48, T-49, T-50
+Pruebas: T-11, T-18, T-47, T-48, T-49, T-50, T-57
 Cambio: CAM-099
 Evidencia: campañas locales secuenciales 3×5 minutos con tres semillas en [CAM-098](../../calidad/resultados/campana-reto-cam098.md) y [CAM-099](../../calidad/resultados/repeticiones-reto-cam099.md); AWS pendiente.
 
@@ -29,12 +29,13 @@ La demo libre conserva sus perfiles, intensidad, refugios y control actuales. En
 | CA-009-07 | Desde una partida Reto existente se puede reiniciar la misma ronda. El servidor crea un `runId` y mundo nuevos, conserva el preset de población y no sustituye una ronda distinta o una partida libre. Si no hay ronda Reto para reiniciar, el endpoint responde 409. | T-47 |
 | CA-009-08 | En las rondas Reto del fixture Manta, al menos la cuota redondeada del 80% de cada tipo de zombie queda dentro de 3.500 m del ancla urbana documentada; los eventos R2/R3 prefieren segmentos en esa zona si hay candidatos. Simulador libre conserva su muestreo global y el conteo/composición provisional no cambian. | T-47 |
 | CA-009-09 | Un botón principal unifica los estados del run: «Iniciar» sin ronda en ejecución, «Pausar» activa y «Continuar» pausada. Pausar/continuar conserva `runId`, ronda y mundo; «Reiniciar Rn» permanece disponible para recrear el preset actual. | T-48 |
-| CA-009-10 | Si una ronda Reto está pausada, se puede iniciar un preset nuevo —incluida otra ronda seleccionada— y el servidor lo reemplaza con nuevo `runId`. Una ronda activa y una demo libre pausada no se reemplazan desde este flujo. | T-49 |
+| CA-009-10 | Un preset Reto nuevo puede reemplazar explícitamente un run Reto pausado o un run activo/pausado de Simulador o Jugar. Un Reto activo no se reemplaza por otro inicio Reto; debe pausarse antes. Cada reemplazo crea mundo y `runId` nuevos. | T-49, T-57 |
+| CA-009-12 | Al entrar a Reto desde otra experiencia, la UI reinicia la ronda seleccionada a R1, limpia selecciones/avisos del modo previo y oculta snapshot, actores y métricas que no correspondan al run activo. El mundo se sustituye solo al pulsar iniciar. | T-57 |
 | CA-009-11 | El evaluador local ejecuta R1, R2 y R3 en ese orden, con un run/preset/semilla por ronda y una ventana de 150 slots de 2 s (cinco minutos). Registra solicitudes reales, turnos activos, slots ociosos, resultados, eventos programados/aplicados y errores; al terminar el mundo no fabrica actividad. | T-50, T-11 |
 
 ## Plan y módulos
 
-PRD-07 y P5-03 son propietarios del requisito de tres rondas; P5-01 cubre medición. El flujo de interfaz vive en frontend; la preparación de escenarios/eventos y la selección aleatoria de inicios por sector, en aplicación/simulación backend; la API solo adapta solicitudes. La aproximación de sectores está registrada en [ADR-037](../../arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md), la concentración de amenazas en [ADR-038](../../arquitectura/decisiones/0038-foco-amenazas-reto.md), el reinicio de ronda en [ADR-039](../../arquitectura/decisiones/0039-reinicio-ronda-reto.md) y la sustitución de una ronda Reto pausada en [ADR-040](../../arquitectura/decisiones/0040-reemplazo-reto-pausado.md). El dominio continúa con dos modos según [ADR-002](../../arquitectura/decisiones/0002-dos-modos.md). Contratos de evaluación y límites: [SPEC-005](SPEC-005-aws-evaluacion.md), [reglas](../../dominio/reglas-juego.md) y [pendientes](../../seguimiento/pendientes.md).
+PRD-07 y P5-03 son propietarios del requisito de tres rondas; P5-01 cubre medición. El flujo de interfaz vive en frontend; la preparación de escenarios/eventos y la selección aleatoria de inicios por sector, en aplicación/simulación backend; la API solo adapta solicitudes. La aproximación de sectores está registrada en [ADR-037](../../arquitectura/decisiones/0037-spawn-reto-cuatro-sectores.md), la concentración de amenazas en [ADR-038](../../arquitectura/decisiones/0038-foco-amenazas-reto.md), el reinicio de ronda en [ADR-039](../../arquitectura/decisiones/0039-reinicio-ronda-reto.md) y el reemplazo explícito al cambiar de modo en [ADR-044](../../arquitectura/decisiones/0044-reemplazo-explicito-al-cambiar-de-modo.md), que sustituye la política anterior de [ADR-040](../../arquitectura/decisiones/0040-reemplazo-reto-pausado.md). El dominio continúa con dos modos según [ADR-002](../../arquitectura/decisiones/0002-dos-modos.md). Contratos de evaluación y límites: [SPEC-005](SPEC-005-aws-evaluacion.md), [reglas](../../dominio/reglas-juego.md) y [pendientes](../../seguimiento/pendientes.md).
 
 ## Riesgos y verificación
 

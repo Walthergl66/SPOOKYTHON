@@ -17,6 +17,17 @@ export type SimulatorStatus = {
   rondaReto?: 1 | 2 | 3 | null
 }
 
+export type SimulatorViewMode = 'challenge' | 'simulator' | 'game'
+
+/** Evita presentar un snapshot de un run anterior como si perteneciera al modo seleccionado. */
+export function statusMatchesMode(status: SimulatorStatus | null, mode: SimulatorViewMode): boolean {
+  if (!status?.runId) return false
+  if (mode === 'challenge') return status.rondaReto != null
+  if (status.rondaReto != null) return false
+  if (mode === 'game') return (status.sobrevivientesIniciales ?? 0) === 0 && (status.zombiesIniciales ?? 0) === 0
+  return (status.sobrevivientesIniciales ?? 0) > 0
+}
+
 export type SimulatorSetup = {
   escenario: 'libre' | 'caminantes' | 'mixto' | 'horda'
   sobrevivientes: number

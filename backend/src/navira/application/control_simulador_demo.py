@@ -273,16 +273,20 @@ class ControlSimuladorDemoLocal:
             return {"aceptado": True, "elementoId": elemento_id, "tipo": tipo, "runId": partida.run_id, "snapshotVersion": snapshot_siguiente.version}
 
     def iniciar_ronda_reto(self, ronda: int, semilla: int | None = None) -> dict[str, object]:
-        """Inicia un preset Reto; solo reemplaza otra ronda Reto si está pausada."""
+        """Inicia un preset Reto y reemplaza explícitamente cualquier run de otro modo.
+
+        Una ronda Reto activa no se pisa por un segundo inicio Reto; el control de
+        pausa/continuación conserva ese ciclo. El run anterior solo se sustituye
+        cuando la interfaz solicita iniciar otro modo/preset.
+        """
 
         if ronda not in (1, 2, 3):
             raise ValueError("La ronda del reto debe ser 1, 2 o 3.")
         with self._lock:
             actual = self.estado()
-            if actual["estado"] == "activa":
+            ronda_actual = self._configuracion.get("ronda_reto")
+            if actual["estado"] == "activa" and ronda_actual in (1, 2, 3):
                 raise RuntimeError("Pausa la ronda actual antes de iniciar otra ronda del reto.")
-            if actual["estado"] == "pausada" and self._configuracion.get("ronda_reto") not in (1, 2, 3):
-                raise RuntimeError("No se puede reemplazar una partida libre pausada desde el modo Reto.")
             return self.iniciar(
                 escenario={1: "caminantes", 2: "reto_medianoche", 3: "mixto"}[ronda],
                 cantidad_sobrevivientes={1: 20, 2: 80, 3: 200}[ronda],

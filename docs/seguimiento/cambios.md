@@ -1,3 +1,15 @@
+## CAM-106 — Cambio limpio entre modos
+
+- Fecha: 2026-10-28, Ecuador continental.
+- Origen: el usuario reportó que una partida en Jugar impedía iniciar Reto y pidió que cada modo nuevo comience desde cero.
+- Requisitos/criterios/tareas: PRD-06; SPEC-009 CA-009-10/12; SPEC-010 CA-010-09; P4-05/P4-06; T-49/T-57. ADR-044 sustituye la restricción de ADR-040.
+- Rama: `master`; cambios locales sin commit ni publicación.
+- Resultado: cambiar pestaña reinicia controles/selección locales y oculta el snapshot, mapa con actores y métricas que no correspondan al modo seleccionado; no detiene ni elimina la partida por sí mismo. El inicio explícito del destino sustituye el run anterior por uno nuevo. Reto puede reemplazar una partida Simulador/Jugar activa o pausada, pero no pisa otra ronda Reto activa; Jugar inicia mundo vacío al salir de Reto; Simulador conserva su asistente.
+- Archivos: `backend/src/navira/application/control_simulador_demo.py`, `backend/tests/test_control_simulador_demo.py`, `frontend/src/app/App.tsx`; SPEC-009/010, ODDD, modos, contratos API, módulo frontend, calidad, trazabilidad, plan, ADR-040/044 e índices.
+- Verificación: `PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_control_simulador_demo -v` (19/19); `cd frontend && npm test -- --run` (99/99) y `npm run build` pasan. `python3 backend/scripts/check_docs.py` (135 Markdown), `python3 backend/scripts/check_sdd.py` (10 SPEC), regresiones `test_check_sdd.py` (8/8) y `git diff --check` pasan. El bundle mantiene la advertencia conocida de `mapArea` (~1,066 kB). Se reinició backend `8001` preservando su configuración y se confirmó `/salud` y `/demo/simulador` por Vite `5173`; el smoke API inició R2 y la reemplazó por Jugar vacío con otro `runId` y cero actores. En el navegador, el árbol accesible muestra R2 habilitado, mapa/estadísticas limpias y Jugar activo en el backend; falta pulsar los controles visuales para verificar el ciclo completo desde UI.
+- Límites: un solo run local en memoria; iniciar otro modo descarta el run anterior tras la acción confirmada. No se prueba persistencia, concurrencia entre procesos o un despliegue público. La prueba de reinicio de refugios que usa cero zombies reportada previamente sigue sin estar corregida y es independiente.
+- Siguiente paso: en el navegador, pulsar «Iniciar R2», comprobar el nuevo `runId` y luego iniciar Jugar desde Reto; cambiar de pestaña sin iniciar y confirmar que el mundo del servidor permanece. El smoke API ya verificó esos endpoints y dejó Jugar activo/vacío. No crear commits ni publicar.
+
 # Historial de cambios y contexto
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
