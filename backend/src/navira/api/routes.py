@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from time import monotonic
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, WebSocket, WebSocketDisconnect, status
+from starlette.concurrency import run_in_threadpool
 
 from navira.api import dependencias as deps
 from navira.api.auth import validar_api_key
@@ -85,7 +86,7 @@ async def estado_demo_simulador(request: Request) -> dict[str, object]:
 
     gestor = _control_demo_local(request)
     exigir_control_demo(request, exigir_origen=False)
-    return gestor.estado()
+    return await run_in_threadpool(gestor.estado)
 
 
 @router.get("/demo/simulador/candidatos", tags=["demo local"])
@@ -170,7 +171,7 @@ async def pausar_demo_simulador(request: Request) -> dict[str, object]:
     gestor = _control_demo_local(request)
     exigir_control_demo(request)
     try:
-        return gestor.pausar()
+        return await run_in_threadpool(gestor.pausar)
     except RuntimeError as error:
         raise _error(409, error) from error
 

@@ -150,6 +150,47 @@ class DecidirPasoTests(unittest.TestCase):
         with self.assertRaises(PartidaNoDisponible):
             sin_mapa.ejecutar(self.solicitud())
 
+    def test_rechaza_partida_cuyo_mapa_no_coincide_con_el_grafo(self) -> None:
+        partida = Partida(
+            run_id=self.partida.run_id,
+            modo=self.partida.modo,
+            escenario=self.partida.escenario,
+            map_version="mapa-obsoleto",
+            sobrevivientes=self.partida.sobrevivientes,
+            estado=self.partida.estado,
+            turno=self.partida.turno,
+            fase=self.partida.fase,
+        )
+        servicio = DecidirPaso(
+            SnapshotStub(SnapshotMundo(partida, version=1)),
+            CatalogoMapasMemoria((self.grafo,)),
+        )
+
+        with self.assertRaises(PartidaNoDisponible):
+            servicio.ejecutar(self.solicitud())
+
+    def test_valida_nodo_y_refugio_del_actor_solicitado_sin_recorrer_la_cohorte(self) -> None:
+        for nodo, refugio in (("N-404", "R-0004"), ("N-0001", "R-404")):
+            with self.subTest(nodo=nodo, refugio=refugio):
+                persona = Sobreviviente("S-1", nodo, refugio_objetivo=refugio)
+                partida = Partida(
+                    run_id=self.partida.run_id,
+                    modo=self.partida.modo,
+                    escenario=self.partida.escenario,
+                    map_version=self.grafo.mapa.version,
+                    sobrevivientes=(persona,),
+                    estado=self.partida.estado,
+                    turno=self.partida.turno,
+                    fase=self.partida.fase,
+                )
+                servicio = DecidirPaso(
+                    SnapshotStub(SnapshotMundo(partida, version=1)),
+                    CatalogoMapasMemoria((self.grafo,)),
+                )
+
+                with self.assertRaises(PartidaNoDisponible):
+                    servicio.ejecutar(self.solicitud(nodo=nodo))
+
     def test_ruta_temporal_prefiere_menos_exposicion_antes_que_distancia(self) -> None:
         grafo = Grafo(
             Mapa(

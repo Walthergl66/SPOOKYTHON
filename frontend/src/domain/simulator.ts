@@ -4,7 +4,7 @@ export const SIMULATOR_SPEEDS: readonly SimulatorSpeed[] = [1, 2, 4]
 
 export type SimulatorStatus = {
   habilitado: true
-  estado: 'sin_partida' | 'activa' | 'pausada' | 'finalizada' | 'error'
+  estado: 'sin_partida' | 'activa' | 'pausando' | 'pausada' | 'finalizada' | 'error'
   runId: string | null
   turno: number | null
   escenario: string | null
@@ -55,7 +55,7 @@ export type SimulatorAction = 'iniciar' | 'pausar' | 'reanudar' | 'reiniciar'
 
 export function parseSimulatorStatus(value: unknown): SimulatorStatus {
   if (!isRecord(value) || value.habilitado !== true ||
-    !['sin_partida', 'activa', 'pausada', 'finalizada', 'error'].includes(String(value.estado)) ||
+    !['sin_partida', 'activa', 'pausando', 'pausada', 'finalizada', 'error'].includes(String(value.estado)) ||
     !(typeof value.runId === 'string' || value.runId === null) ||
     !(typeof value.turno === 'number' || value.turno === null) ||
     !(typeof value.escenario === 'string' || value.escenario === null) ||

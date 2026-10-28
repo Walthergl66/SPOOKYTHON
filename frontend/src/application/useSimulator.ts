@@ -13,6 +13,7 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
   const [unavailable, setUnavailable] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [pendingAction, setPendingAction] = useState<SimulatorAction | null>(null)
   const [setup, setSetup] = useState<SimulatorSetup>({ escenario: 'mixto', sobrevivientes: 20, zombies: 42, intensidad: 'media' })
 
   const [candidates, setCandidates] = useState<SimulatorCandidatos | null>(null)
@@ -28,22 +29,27 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
 
   useEffect(() => {
     const controller = new AbortController()
-    const refreshControl = () => port.getStatus(controller.signal)
-      .then((next) => {
-        setStatus(next)
-        setUnavailable(false)
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        if (error instanceof SimulatorUnavailableError) setUnavailable(true)
-      })
+    let timer: number | undefined
+    const refreshControl = async () => {
+      try {
+        const next = await port.getStatus(controller.signal)
+        if (!controller.signal.aborted) {
+          setStatus(next)
+          setUnavailable(false)
+        }
+      } catch (error: unknown) {
+        if (!controller.signal.aborted && error instanceof SimulatorUnavailableError) setUnavailable(true)
+      } finally {
+        if (!controller.signal.aborted) timer = window.setTimeout(() => void refreshControl(), status?.estado === 'pausando' ? 250 : pollIntervalMs)
+      }
+    }
     void refreshControl()
-    const timer = window.setInterval(() => void refreshControl(), pollIntervalMs)
-    return () => { controller.abort(); window.clearInterval(timer) }
-  }, [port])
+    return () => { controller.abort(); if (timer !== undefined) window.clearTimeout(timer) }
+  }, [port, status?.estado])
 
   const run = async (action: SimulatorAction, configuredSetup: SimulatorSetup = setup) => {
     setBusy(true)
+    setPendingAction(action)
     setMessage(null)
     try {
       const refugios = refugiosParaEnviar(action, slots, REFUGE_SLOTS)
@@ -56,6 +62,7 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
       if (error instanceof SimulatorUnavailableError) setUnavailable(true)
     } finally {
       setBusy(false)
+      setPendingAction(null)
     }
   }
 
@@ -89,5 +96,5 @@ export function useSimulator(port: SimulatorPort, onChanged: () => void) {
   const clearSlot = (index: number) => { setSlots(slots.map((s, i) => (i === index ? null : s))); setPlacing(null) }
   const resetRefuges = () => { setSlots(emptySlots()); setPlacing(null) }
 
-  return { status, unavailable, message, busy, setup, setSetup, run, changeSpeed, acceptStatus, clearMessage, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges }
+  return { status, unavailable, message, busy, pendingAction, setup, setSetup, run, changeSpeed, acceptStatus, clearMessage, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges }
 }

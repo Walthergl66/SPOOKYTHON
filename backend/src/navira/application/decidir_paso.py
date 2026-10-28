@@ -508,7 +508,22 @@ class DecidirPaso:
         grafo = self._mapas.obtener(partida.map_version)
         if grafo is None:
             raise PartidaNoDisponible("No está disponible la versión de mapa de la partida.")
-        partida.validar_mapa(grafo.mapa)
+        # El snapshot es inmutable y sus transiciones completas validan el mapa
+        # al preparar y resolver el turno. No recorras a toda la cohorte por cada
+        # POST /paso; valida aquí la versión y el contexto del único actor pedido.
+        if partida.map_version != grafo.mapa.version:
+            raise PartidaNoDisponible("La versión de mapa no coincide con la partida.")
+        if sobreviviente.nodo not in grafo.mapa.nodos_por_id:
+            raise PartidaNoDisponible(
+                f"{sobreviviente.id} referencia el nodo inexistente {sobreviviente.nodo}."
+            )
+        if sobreviviente.refugio_objetivo is not None and not any(
+            refugio.id == sobreviviente.refugio_objetivo for refugio in grafo.mapa.refugios
+        ):
+            raise PartidaNoDisponible(
+                f"{sobreviviente.id} referencia el refugio inexistente "
+                f"{sobreviviente.refugio_objetivo}."
+            )
 
         return snapshot, sobreviviente, grafo
 

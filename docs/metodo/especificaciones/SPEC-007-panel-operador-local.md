@@ -4,8 +4,8 @@ ID: SPEC-007
 Estado: en-revision
 Requisitos: PRD-02, PRD-06, TRD-06, TRD-07, TRD-17
 Tareas: P4-03
-Pruebas: T-26, T-37, T-41, T-43, T-44, T-51
-Cambio: CAM-100
+Pruebas: T-26, T-37, T-41, T-43, T-44, T-51, T-60
+Cambio: CAM-134
 Evidencia: ../../calidad/resultados/incidentes-siempre-activos-cam081.md
 
 ## Objetivo y alcance
@@ -30,11 +30,12 @@ Quedan fuera: control administrativo público, autenticación productiva de oper
 | CA-007-08 | Cada partida local sortea entre 1 y 10 cierres, y el tablero alerta al aplicarse, marca el punto y actualiza las rutas sin mostrar eventos futuros. | T-44 |
 | CA-007-09 | Sin partida, la vista de Simulador muestra solo la acción «Iniciar simulación». Al activarla abre el paso de refugios; solo después de asignar los cuatro puntos seguros permite pasar a habitantes/zombies y comenzar. | T-51 |
 | CA-007-10 | El operador puede definir conteos enteros de 1–200 habitantes y zombies; la partida respeta el conteo de zombies configurado en el mundo. La cadencia local es fija en 4× y la UI no ofrece selector de velocidad. | T-51 |
+| CA-007-11 | Al solicitar pausa, la interfaz muestra `pausando` inmediatamente y conserva el `runId`; si ya hay un turno en curso, espera ese límite antes de emitir/confirmar la pausa. Solo muestra `pausado` tras reconciliar el estado informado por el servidor. Mientras el acuse está pendiente no ofrece reanudar sobre ese estado. Tras confirmar la pausa, el servidor no inicia turnos nuevos y la interpolación visual se cancela; continuar reanuda la misma partida. Un error o timeout se presenta como estado no confirmado y permite reconciliar con el estado del servidor. | T-60 |
 
 ## Plan, módulos y verificación
 
 Tarea nueva P4-03: ensamblar control local, runner de simulador, rutas same-origin, controles de configuración y tablero visual. CAM-050 cubre el panel y control inicial; CAM-063 fija intensidad media como valor inicial según comparación documentada, manteniendo los controles. Módulos propietarios: [backend](../../arquitectura/modulos/backend.md), [frontend](../../arquitectura/modulos/frontend.md), [API](../../arquitectura/contratos/api.md), [arquitectura](../../arquitectura/arquitectura.md) y [seguridad](../../operacion/seguridad.md). Ver también [evidencia original de CAM-050](../../calidad/resultados/panel-operador-local-cam050.md).
 
-T-26 cubre rutas locales, opt-in, creación de partida, snapshots, pausa y validación de entrada. T-41 cubre duración/interpolación y cadencia 4× fija de la demo. T-43 verifica el campo legado falso en inicio/reinicio y que la solicitud frontend no envíe una opción de incidentes. T-44 comprueba cierres, aplicación y marcador. T-51 cubre el orden del asistente, el contrato de conteos y la cantidad generada. `frontend/npm run build` valida compilación/TypeScript. La suite no prueba despliegue, seguridad productiva, duración de cinco minutos o rendimiento de AWS. Si el cálculo de una ronda tarda más que el periodo objetivo, el reloj la completa y continúa sin descartar turnos; 4× es una cadencia objetivo, no una garantía de rendimiento.
+T-26 cubre rutas locales, opt-in, creación de partida, snapshots, pausa y validación de entrada. T-41 cubre duración/interpolación y cadencia 4× fija de la demo. T-43 verifica el campo legado falso en inicio/reinicio y que la solicitud frontend no envíe una opción de incidentes. T-44 comprueba cierres, aplicación y marcador. T-51 cubre el orden del asistente, el contrato de conteos y la cantidad generada. T-60 debe comprobar estado pendiente, límite con turno en curso, ausencia de turnos posteriores a la confirmación, conservación del run y reconciliación ante error/timeout; CAM-134 implementa el flujo, pero aún no ejecuta estas pruebas. `frontend/npm run build` valida compilación/TypeScript. La suite no prueba despliegue, seguridad productiva, duración de cinco minutos o rendimiento de AWS. Si el cálculo de una ronda tarda más que el periodo objetivo, el reloj la completa y continúa sin descartar turnos; 4× es una cadencia objetivo, no una garantía de rendimiento.
 
 Límite operativo: el mundo, el reloj y el administrador local viven en memoria del proceso. Al reiniciarlo la partida se pierde. No definir `NAVIRA_LOCAL_DEMO_CONTROL=1` en un despliegue.

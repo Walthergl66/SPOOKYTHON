@@ -1,5 +1,10 @@
 import { parsePanelMap, parsePanelRoute, parsePanelState, type PanelMap, type PanelRoute, type PanelSnapshot } from '../../domain/panel'
 
+// Una versión del grafo es inmutable; conservar su parseo evita volver a
+// descargar y validar decenas de miles de calles al reiniciar el mismo mapa.
+const mapCache = new Map<string, PanelMap>()
+const MAX_CACHED_MAP_VERSIONS = 2
+
 export async function loadPanelSnapshot(signal?: AbortSignal): Promise<PanelSnapshot> {
   const stateResponse = await fetch('/panel/estado', { signal, headers: { Accept: 'application/json' } })
   if (!stateResponse.ok) {
@@ -8,23 +13,22 @@ export async function loadPanelSnapshot(signal?: AbortSignal): Promise<PanelSnap
   const state = parsePanelState(await stateResponse.json())
   if (state.estado === 'sin_partida') return { map: null, state }
 
-  const mapResponse = await fetch('/panel/mapa', { signal, headers: { Accept: 'application/json' } })
-  if (!mapResponse.ok) {
-    throw new Error('No se pudo obtener una proyección activa del panel.')
-  }
-
-  const map = parsePanelMap(await mapResponse.json())
-  if (state.mapVersion !== map.version) {
-    throw new Error('La versión del mapa no coincide con el snapshot recibido.')
-  }
+  const map = await loadPanelMap(state.mapVersion!, signal)
   return { map, state }
 }
 
 export async function loadPanelMap(expectedVersion: string, signal?: AbortSignal): Promise<PanelMap> {
+  const cached = mapCache.get(expectedVersion)
+  if (cached) return cached
   const response = await fetch('/panel/mapa', { signal, headers: { Accept: 'application/json' } })
   if (!response.ok) throw new Error('No se pudo obtener una proyección activa del panel.')
   const map = parsePanelMap(await response.json())
   if (map.version !== expectedVersion) throw new Error('La versión del mapa no coincide con el snapshot recibido.')
+  if (mapCache.size >= MAX_CACHED_MAP_VERSIONS && !mapCache.has(map.version)) {
+    const oldestVersion = mapCache.keys().next().value
+    if (oldestVersion) mapCache.delete(oldestVersion)
+  }
+  mapCache.set(map.version, map)
   return map
 }
 

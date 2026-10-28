@@ -33,7 +33,8 @@ export function usePanel(port: PanelPort) {
     cursorRef.current = cursor
 
     if (nextState.estado === 'sin_partida') {
-      mapRef.current = null
+      // El snapshot queda vacío, pero la geometría inmutable puede reutilizarse
+      // cuando el usuario inicie otra partida con la misma versión de mapa.
       setSnapshot({ map: null, state: nextState })
       setEventLog([])
     } else {
@@ -88,7 +89,7 @@ export function usePanel(port: PanelPort) {
     applyPanelState(nextState, cursor, emittedAt)
   }, setConnection), [applyPanelState, port])
 
-  useEffect(() => { mapRef.current = snapshot?.map ?? null }, [snapshot?.map])
+  useEffect(() => { if (snapshot?.map) mapRef.current = snapshot.map }, [snapshot?.map])
 
   return { snapshot, connection, loading, error, updatedAt, eventLog, refresh }
 }

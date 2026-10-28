@@ -54,6 +54,11 @@ class RelojSimuladorLocal:
         self._continuar_sin_sobrevivientes = continuar_sin_sobrevivientes
         self._detener = Event()
         self._pausado = Event()
+        # La sección crítica solo protege la transición entre «listo» e
+        # «iniciado». El turno se marca antes de adquirir el lock del mundo,
+        # de modo que una pausa pueda acusarse sin esperar el cálculo completo.
+        self._guardia_inicio = RLock()
+        self._ronda_en_curso = Event()
         self._hilo: Thread | None = None
         self._error: str | None = None
 
@@ -67,9 +72,10 @@ class RelojSimuladorLocal:
         self._hilo.start()
 
     def pausar(self) -> None:
-        """Evita el inicio de nuevos turnos."""
+        """Evita nuevos turnos; la guardia cierra la carrera con su inicio."""
 
-        self._pausado.set()
+        with self._guardia_inicio:
+            self._pausado.set()
 
     def reanudar(self) -> None:
         """Permite que el siguiente turno automático continúe."""
@@ -97,6 +103,12 @@ class RelojSimuladorLocal:
         return self._pausado.is_set()
 
     @property
+    def ronda_en_curso(self) -> bool:
+        """Indica si un turno ya comenzó y debe terminar antes de la pausa efectiva."""
+
+        return self._ronda_en_curso.is_set()
+
+    @property
     def error(self) -> str | None:
         return self._error
 
@@ -114,8 +126,12 @@ class RelojSimuladorLocal:
             ahora = monotonic()
             if ahora < siguiente_inicio and self._detener.wait(siguiente_inicio - ahora):
                 return
-            if self._pausado.is_set():
-                continue
+            # La ronda queda considerada iniciada de forma atómica respecto
+            # a pausar(): después del ACK no se abrirá otra ronda.
+            with self._guardia_inicio:
+                if self._pausado.is_set():
+                    continue
+                self._ronda_en_curso.set()
             inicio_ronda = monotonic()
             try:
                 # El snapshot y su versión se leen junto con el mismo lock que
@@ -137,6 +153,8 @@ class RelojSimuladorLocal:
                 self._error = str(error)
                 _LOG.exception("Se detuvo el simulador local para run %s", self._run_id)
                 return
+            finally:
+                self._ronda_en_curso.clear()
             # Cede la CPU entre rondas: si una ronda tarda más que el periodo, sin esta pausa
             # el hilo acapara el GIL y la API responde con retraso.
             if self._detener.wait(_PAUSA_MINIMA_S):

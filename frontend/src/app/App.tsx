@@ -3,7 +3,7 @@ import { OperatorControls } from '../features/operator/OperatorControls'
 import type { OperatorTool } from '../domain/operator'
 import { ModeCard, type NaviraMode } from '../features/mode/ModeCard'
 import { RefugeDialog } from '../features/map/RefugeDialog'
-import type { PanelConnection, PanelRoute } from '../domain/panel'
+import type { PanelConnection, PanelMap, PanelRoute, PanelState } from '../domain/panel'
 import { statusMatchesMode, type SimulatorSetup } from '../domain/simulator'
 import type { PanelPort, SimulatorPort } from '../application/ports'
 import { usePanel } from '../application/usePanel'
@@ -18,6 +18,8 @@ import { BrandMark } from '../shared/ui/BrandMark'
 // Puertos de módulo: identidad estable entre renders, que los efectos de los hooks usan como dependencia.
 const panelPort: PanelPort = { loadSnapshot: loadPanelSnapshot, loadMap: loadPanelMap, loadRoute: loadPanelRoute, subscribe: subscribePanel }
 const simulatorPort: SimulatorPort = { getStatus: getSimulatorStatus, getCandidates: getSimulatorCandidates, control: controlSimulator, setSpeed: setSimulatorSpeed }
+const EMPTY_MAP: PanelMap = { version: 'manta-base-pending', nodos: [], calles: [], refugios: [] }
+const EMPTY_MAP_STATE: PanelState = { estado: 'sin_partida' }
 
 const RefugePicker = lazy(() => import('../features/map/RefugePicker').then(({ RefugePicker: Component }) => ({ default: Component })))
 const CityMap = lazy(() => import('../features/map/CityMap').then(({ CityMap: Component }) => ({ default: Component })))
@@ -39,7 +41,7 @@ export function App() {
   const [health, setHealth] = useState<'checking' | 'online' | 'offline'>('checking')
   const panel = usePanel(panelPort)
   const { snapshot, connection, loading, error: panelError, eventLog, refresh: refreshPanel } = panel
-  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, clearMessage: clearSimulatorMessage, busy: simulatorBusy, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
+  const { status: simulator, unavailable: simulatorUnavailable, message: simulatorMessage, clearMessage: clearSimulatorMessage, busy: simulatorBusy, pendingAction, setup, setSetup, run: runControl, candidates, slots, placing, setPlacing, pickNode, clearSlot, resetRefuges, acceptStatus } = useSimulator(simulatorPort, refreshPanel)
 
   const modeRunMatches = statusMatchesMode(simulator, mode)
 
@@ -134,6 +136,7 @@ export function App() {
   }, [state, selectedSnapshotRoute, selectedRoute, selectedRouteOwner, selectedSurvivor?.estado])
   const simulatorIsRunning = simulator?.estado === 'activa'
   const challengeIsRunning = simulatorIsRunning && simulator?.rondaReto != null
+  const challengeIsPausing = simulator?.estado === 'pausando' && simulator?.rondaReto != null
   const challengeIsPaused = simulator?.estado === 'pausada' && simulator?.rondaReto != null
   const pickerLockedReason = simulatorBusy ? 'Se está actualizando la simulación. Espera un momento.' : null
   const placedRefuges = slots.filter((slot) => slot !== null).length
@@ -216,7 +219,7 @@ export function App() {
       <section className="dashboard-grid" id="main-content" tabIndex={-1} aria-label="Panel de Navira">
         <aside className="sim-control-panel" aria-labelledby="simulation-control-title">
           <div className="panel-section-heading"><span className="panel-overline">OPERACIÓN LOCAL</span><h1 id="simulation-control-title">{mode === 'game' ? 'Panel del operador' : 'Control de simulación'}</h1></div>
-          <div className="control-status" role="status"><span className={`context-pulse${active ? '' : ' is-idle'}`} aria-hidden="true" /><span>{!modeRunMatches ? 'Partida nueva al iniciar' : simulator?.estado === 'activa' ? 'En curso' : simulator?.estado === 'pausada' ? 'Pausada' : simulator?.estado === 'finalizada' ? 'Finalizada' : simulator?.estado === 'error' ? 'Detenida por error' : 'Lista para iniciar'}</span></div>
+          <div className="control-status" role="status"><span className={`context-pulse${active ? '' : ' is-idle'}`} aria-hidden="true" /><span>{!modeRunMatches ? 'Partida nueva al iniciar' : pendingAction === 'pausar' ? 'Pausando…' : pendingAction === 'reanudar' ? 'Reanudando…' : simulator?.estado === 'activa' ? 'En curso' : simulator?.estado === 'pausando' ? 'Pausando · cerrando turno actual' : simulator?.estado === 'pausada' ? 'Pausada' : simulator?.estado === 'finalizada' ? 'Finalizada' : simulator?.estado === 'error' ? 'Detenida por error' : 'Lista para iniciar'}</span></div>
 
           {import.meta.env.VITE_PUBLIC_DEMO === '1' ? <p className="public-session-note">Tu sesión es independiente. Los datos se borran al reiniciar el servicio y tras 3 horas sin actividad.</p> : null}
 
@@ -225,6 +228,7 @@ export function App() {
             onToolChange={(next) => { setOperatorTool(next); setOperatorError(null); setOperatorNotice(null) }}
             disabled={operatorBusy || (mode === 'game' && simulator?.rondaReto != null)}
             busy={operatorBusy || simulatorBusy}
+            pausePending={pendingAction === 'pausar'}
             canRun={!operatorRunBlocked}
             canStartNew={!operatorRunBlocked}
             hasRun={Boolean(modeRunMatches && simulator?.runId && (simulator.estado === 'activa' || simulator.estado === 'pausada'))}
@@ -245,8 +249,8 @@ export function App() {
                 <strong>R{round.id} · {round.name}</strong><span>{round.details}</span>
               </button>)}
             </div>
-            <button className={`sim-action ${challengeIsRunning ? 'sim-pause' : 'sim-start'} challenge-start`} type="button" onClick={() => challengeIsRunning ? void runControl('pausar') : challengeIsPaused ? void runControl('reanudar') : void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
-              {challengeBusy ? 'Preparando…' : challengeIsRunning ? `Pausar R${simulator?.rondaReto}` : challengeIsPaused ? `Continuar R${simulator?.rondaReto}` : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
+            <button className={`sim-action ${challengeIsRunning || challengeIsPausing ? 'sim-pause' : 'sim-start'} challenge-start`} type="button" onClick={() => challengeIsRunning ? void runControl('pausar') : challengeIsPaused ? void runControl('reanudar') : void startChallenge()} disabled={simulatorBusy || challengeBusy || challengeIsPausing || simulatorUnavailable}>
+              {pendingAction === 'pausar' || challengeIsPausing ? `Pausando R${simulator?.rondaReto}…` : pendingAction === 'reanudar' ? 'Continuando…' : challengeBusy ? 'Preparando…' : challengeIsRunning ? `Pausar R${simulator?.rondaReto}` : challengeIsPaused ? `Continuar R${simulator?.rondaReto}` : `Iniciar R${challengeRound} · ${challengeRound === 1 ? 'Anochecer' : challengeRound === 2 ? 'Medianoche' : 'Apocalipsis'}`}
             </button>
             {!challengeBusy && challengeIsPaused ? <button className="sim-action sim-start challenge-start" type="button" onClick={() => void startChallenge()} disabled={simulatorBusy || challengeBusy || simulatorUnavailable}>
               {`Nueva simulación R${challengeRound}`}
@@ -257,7 +261,8 @@ export function App() {
             {challengeError ? <div className="control-notice is-error" role="alert">{challengeError}</div> : null}
           </section> : mode === 'simulator' ? <section className="simulator-start-panel" aria-label="Iniciar simulador">
             <div className="sim-action-row">
-              {modeRunMatches && simulatorIsRunning ? <button className="sim-action sim-pause" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy}>Pausar</button>
+              {modeRunMatches && simulatorIsRunning ? <button className="sim-action sim-pause" type="button" onClick={() => void runControl('pausar')} disabled={simulatorBusy}>{pendingAction === 'pausar' ? 'Pausando…' : 'Pausar'}</button>
+                : modeRunMatches && simulator?.estado === 'pausando' ? <button className="sim-action sim-pause" type="button" disabled>Pausando…</button>
                 : modeRunMatches && simulator?.estado === 'pausada' ? <button className="sim-action sim-start" type="button" onClick={() => void runControl('reanudar')} disabled={simulatorBusy}>Continuar</button>
                   : <button className="sim-action sim-start simulator-primary-start" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>{simulatorBusy ? 'Preparando…' : simulator?.runId ? 'Nueva simulación' : 'Iniciar simulación'}</button>}
               {modeRunMatches && simulator?.runId && (simulatorIsRunning || simulator?.estado === 'pausada') ? <button className="sim-action sim-reset" type="button" onClick={() => { setSetupStage('refuges'); setRefugeDialogOpen(true) }} disabled={simulatorBusy || simulatorUnavailable}>Nueva simulación</button> : null}
@@ -280,7 +285,7 @@ export function App() {
             <button className="refresh-button" type="button" onClick={refreshPanel} disabled={loading}><span aria-hidden="true">↻</span> Actualizar</button>
           </div>
           <div className="map-stage" aria-label="Mapa de la partida">
-            {map && active && state ? <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={map} state={stateWithSelectedRoute ?? state} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} operatorTool={mode === 'game' && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense> : <MapPlaceholder mode={mode} />}
+            <Suspense fallback={<MapPlaceholder mode={mode} />}><CityMap map={active && map ? map : EMPTY_MAP} state={active && visibleState ? stateWithSelectedRoute ?? visibleState : EMPTY_MAP_STATE} selectedSurvivorId={selectedRouteOwner} onSelectSurvivor={setSelectedSurvivorId} animationSpeed={simulator?.velocidad ?? 4} paused={simulator?.estado === 'pausada'} operatorTool={mode === 'game' && active && simulator?.estado === 'activa' && simulator?.rondaReto == null && !operatorBusy && !simulatorBusy ? operatorTool : null} onOperatorPlacement={placeOperatorItem} /></Suspense>
             <div className={`map-status${panelError ? ' is-error' : ''}`} aria-live="polite"><span className={`status-dot is-${connection}`} /><span>{panelError ?? `${statusLabel} · ${connectionLabel(connection)}`}</span></div>
             <div className="map-coordinate">{modeRunMatches ? map?.version ?? 'AÚN SIN SNAPSHOT' : 'NUEVO MUNDO PENDIENTE DE INICIAR'}</div>
           </div>
@@ -349,7 +354,7 @@ function Metric({ label, value }: { label: string; value?: number | null }) {
 }
 
 function MapPlaceholder({ mode }: { mode: NaviraMode }) {
-  return <div className="map-placeholder" role="img" aria-label="No hay un mapa de partida activo"><span className="placeholder-orbit" aria-hidden="true"><span /><span /><span /></span><strong>{mode === 'game' ? 'Inicia un mundo operador para activar el mapa.' : 'Inicia una simulación para cargar el mapa.'}</strong><span>El panel mostrará únicamente el estado publicado por el servidor.</span></div>
+  return <div className="map-placeholder" role="img" aria-label="Preparando el mapa de Manta"><span className="placeholder-orbit" aria-hidden="true"><span /><span /><span /></span><strong>Preparando el mapa de Manta…</strong><span>{mode === 'game' ? 'El mundo sigue vacío hasta que inicies una nueva partida.' : 'La cartografía se prepara mientras configuras la simulación.'}</span></div>
 }
 
 function connectionLabel(connection: PanelConnection) {

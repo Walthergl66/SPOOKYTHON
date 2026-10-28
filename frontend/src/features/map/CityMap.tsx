@@ -16,6 +16,7 @@ interface CityMapProps {
   selectedSurvivorId: string | undefined
   onSelectSurvivor: (survivorId: string) => void
   animationSpeed: SimulatorSpeed
+  paused?: boolean
   operatorTool?: OperatorTool | null
   onOperatorPlacement?: (placement: { tipo: OperatorTool; nodo?: string; segmentoId?: string }) => void
 }
@@ -26,7 +27,7 @@ const MAP_CENTER: Position = [-80.714, -0.9895]
 
 setWorkerUrl(mapWorkerUrl)
 
-export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, animationSpeed, operatorTool = null, onOperatorPlacement }: CityMapProps) {
+export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, animationSpeed, paused = false, operatorTool = null, onOperatorPlacement }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const latestDataRef = useRef<FeatureCollection>(emptyCollection())
@@ -204,6 +205,13 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
     const actorSource = instance.getSource('navira-actors') as GeoJSONSource | undefined
     staticSource?.setData(latestDataRef.current as never)
     if (!actorSource) return
+    if (paused) {
+      activeAnimationsRef.current.clear()
+      if (animationFrameRef.current !== null) window.cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
+      actorSource.setData(latestActorsRef.current as never)
+      return
+    }
     const changedRun = previous !== null && previous.runId !== state.runId
     const now = performance.now()
     if (changedRun || cadenceRef.current.runId !== state.runId || cadenceRef.current.startedAt === null) {
@@ -261,7 +269,7 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
       if (activeAnimationsRef.current.size > 0) animationFrameRef.current = window.requestAnimationFrame(animate)
     }
     if (animationFrameRef.current === null) animationFrameRef.current = window.requestAnimationFrame(animate)
-  }, [ready, map, state, selectedSurvivorId, points, animationSpeed])
+  }, [ready, map, state, selectedSurvivorId, points, animationSpeed, paused])
 
   const togglePitch = () => {
     const instance = mapRef.current

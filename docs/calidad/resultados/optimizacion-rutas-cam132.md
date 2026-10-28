@@ -24,7 +24,7 @@ PYTHONPATH=backend/src /tmp/navira-perf-env/bin/python -m navira.evaluacion_loca
 
 En otra corrida de la versión actual solo con 200 habitantes, p95 total fue 198.250 ms y p99 224.296 ms; por turno, p95 222.535/110.039/159.238 ms y ciclos de 1.620/1.908/2.100 s. La medición actual muestra variabilidad y p95 por encima de 150 ms en R3; la meta aún no se cumple de forma reproducible.
 
-Las pruebas focalizadas `test_dijkstra`, `test_decidir_paso` y `test_prediccion_rutas` pasaron 37/37 después de los últimos cambios; las regresiones cubren el campo compartido y la equivalencia del índice de corredores con la búsqueda directa. La suite backend pasó 247/247 en 370.878 s antes de las optimizaciones posteriores del pronóstico y de los campos; repetirla antes de integrar. El perfil previo atribuyó 26.75 s a las rutas estáticas. La primera medición tras compartirlas redujo los ciclos de 200 que habían llegado a 25–27 s a alrededor de 1.5–2.3 s, aunque las rondas actuales todavía exceden a veces el período de dos segundos.
+Las pruebas focalizadas `test_dijkstra`, `test_decidir_paso` y `test_prediccion_rutas` pasaron 37/37; las regresiones cubren el campo compartido y la equivalencia del índice de corredores con la búsqueda directa. Después de todos los cambios, la suite completa pasó 248/248 en 383.471 s con `PYTHONPATH=backend/src /tmp/navira-perf-env/bin/python -m unittest discover -s backend/tests -p 'test_*.py'`. El perfil previo atribuyó 26.75 s a las rutas estáticas. La primera medición tras compartirlas redujo los ciclos de 200 que habían llegado a 25–27 s a alrededor de 1.5–2.3 s, aunque las rondas actuales todavía exceden a veces el período de dos segundos.
 
 ## Límites y siguiente paso
 

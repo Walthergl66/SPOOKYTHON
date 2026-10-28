@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-132. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
+Actualizado: 2026-10-28, CAM-134. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
 
 ## Dónde está cada cosa
 
@@ -116,8 +116,8 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [SPEC-004](metodo/especificaciones/SPEC-004-juego-humano.md) | Personaje humano | Cambie el modo juego. |
 | [SPEC-005](metodo/especificaciones/SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Cambie la infraestructura o la entrega. |
 | [SPEC-006](metodo/especificaciones/SPEC-006-metodologia.md) | PRD, TRD, ODDD y SDD | Cambie el método documental. |
-| [SPEC-007](metodo/especificaciones/SPEC-007-panel-operador-local.md) | Criterios del tablero y control local de demo | Cambie el flujo local de operación; no autoriza control administrativo público. |
-| [SPEC-008](metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial y vista 3D | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
+| [SPEC-007](metodo/especificaciones/SPEC-007-panel-operador-local.md) | Criterios del tablero y control local de demo, incluida pausa confirmada por servidor (CAM-134/T-60) | Cambie el flujo local de operación; no autoriza control administrativo público. |
+| [SPEC-008](metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial, vista 3D y precarga de geometría por versión (CAM-134/T-59) | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
 | [SPEC-009](metodo/especificaciones/SPEC-009-modo-reto.md) | Presets de la prueba de fuego, separados de demo libre y juego | Cambien las rondas, sus presets o la campaña de evaluación. |
 | [SPEC-010](metodo/especificaciones/SPEC-010-juego-operador.md) | Paleta de operador, nueva partida e intervención del mapa en un mundo vivo | Cambien herramientas, ciclo de partida, validaciones o colocación local de entidades/eventos. |
 | [SPEC-011](metodo/especificaciones/SPEC-011-demo-publica-multisesion.md) | Demo pública multisesión para Reto, Simulador y Jugar | Cambien aislamiento por navegador, límites, expiración o topología pública temporal. |
@@ -166,6 +166,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/fluidez-turnos-cam079.md](calidad/resultados/fluidez-turnos-cam079.md) | Evidencia de velocidad local 4× e interpolación continua de movimientos confirmados CAM-079. | Cambie la cadencia, la política de animación o se ejecute una medición visual/de carga. |
 | [resultados/fluidez-pronostico-cam086.md](calidad/resultados/fluidez-pronostico-cam086.md) | Optimización del pronóstico de amenazas mediante agregación lineal y caché del grafo; registra pruebas y límites de medición en CAM-086. | Cambie el algoritmo de pronóstico o se mida cadencia comparable bajo carga. |
 | [resultados/optimizacion-rutas-cam132.md](calidad/resultados/optimizacion-rutas-cam132.md) | Perfil de Dijkstra repetido, optimización del plan de rutas por cohorte y medición local p95 CAM-132. | Cambie la agrupación de rutas o se repita T-11; la muestra local no demuestra latencia pública ni p95 sostenido. |
+| [resultados/optimizacion-validacion-paso-cam133.md](calidad/resultados/optimizacion-validacion-paso-cam133.md) | Quita la validación lineal de toda la cohorte de cada solicitud `/paso` y registra muestras posteriores. | Cambie la validación de snapshots o se repita T-11; la evidencia local no acredita el objetivo sostenido ni latencia pública. |
 | [resultados/incidentes-siempre-activos-cam081.md](calidad/resultados/incidentes-siempre-activos-cam081.md) | Campo legado ignorado y ausencia del selector de incidentes en la demo local. | Cambie el comportamiento o los controles de incidentes. |
 | [resultados/alerta-incidentes-cam082.md](calidad/resultados/alerta-incidentes-cam082.md) | Sorteo de 1–10 cierres, alerta cartográfica y recálculo de rutas tras aplicar. | Cambie el generador, la proyección o el marcador; no representa choques reales ni uso de emergencia. |
 | [resultados/generador-amenazas-cam057.md](calidad/resultados/generador-amenazas-cam057.md) | Verificación del generador sintético de amenazas y cierres viales CAM-057 | Repetir pruebas de densidad espacial, semilla, privacidad de dormidos y aplicación de incidentes; no acredita parámetros oficiales. |

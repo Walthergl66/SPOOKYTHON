@@ -88,23 +88,28 @@ class ControlSimuladorDemoLocal:
             ):
                 self._estado = "finalizada"
             elif self._reloj is not None and self._reloj.pausado:
-                self._estado = "pausada"
+                self._estado = "pausando" if self._reloj.ronda_en_curso else "pausada"
             elif self._reloj is not None and self._reloj.ejecutandose and self._reloj.error is None:
                 self._estado = "activa"
-            return {
-                "habilitado": True,
-                "estado": self._estado,
-                "runId": snapshot.partida.run_id if snapshot is not None else None,
-                "turno": snapshot.partida.turno if snapshot is not None else None,
-                "escenario": self._configuracion.get("escenario"),
-                "sobrevivientesIniciales": self._configuracion.get("cantidad_sobrevivientes"),
-                "zombiesIniciales": self._configuracion.get("cantidad_zombies"),
-                "intensidad": self._configuracion.get("intensidad"),
-                "eventosCiudad": self._configuracion.get("eventos_ciudad"),
-                "rondaReto": self._configuracion.get("ronda_reto"),
-                "velocidad": 1.0 if self._configuracion.get("ronda_reto") is not None else self._velocidad,
-                "error": self._reloj.error if self._reloj is not None else None,
-            }
+            return self._proyectar_estado(snapshot)
+
+    def _proyectar_estado(self, snapshot: SnapshotMundo | None) -> dict[str, object]:
+        """Construye el contrato de estado desde una referencia inmutable."""
+
+        return {
+            "habilitado": True,
+            "estado": self._estado,
+            "runId": snapshot.partida.run_id if snapshot is not None else None,
+            "turno": snapshot.partida.turno if snapshot is not None else None,
+            "escenario": self._configuracion.get("escenario"),
+            "sobrevivientesIniciales": self._configuracion.get("cantidad_sobrevivientes"),
+            "zombiesIniciales": self._configuracion.get("cantidad_zombies"),
+            "intensidad": self._configuracion.get("intensidad"),
+            "eventosCiudad": self._configuracion.get("eventos_ciudad"),
+            "rondaReto": self._configuracion.get("ronda_reto"),
+            "velocidad": 1.0 if self._configuracion.get("ronda_reto") is not None else self._velocidad,
+            "error": self._reloj.error if self._reloj is not None else None,
+        }
 
     def iniciar(
         self,
@@ -310,12 +315,17 @@ class ControlSimuladorDemoLocal:
             )
 
     def pausar(self) -> dict[str, object]:
-        with self._lock:
-            if self._reloj is None or not self._reloj.ejecutandose:
-                raise RuntimeError("No hay una simulación local activa para pausar.")
-            self._reloj.pausar()
-            self._estado = "pausada"
-            return self.estado()
+        # El reloj y el snapshot son referencias estables durante una ronda.
+        # No tomamos el lock del mundo: el turno en curso puede tardar, pero
+        # el ACK de pausa debe llegar inmediatamente y ese turno no abrirá otro.
+        reloj = self._reloj
+        contexto = self._contexto
+        if reloj is None or contexto is None or not reloj.ejecutandose:
+            raise RuntimeError("No hay una simulación local activa para pausar.")
+        reloj.pausar()
+        snapshot = contexto.snapshots.obtener(contexto.run_id)
+        self._estado = "pausando" if reloj.ronda_en_curso else "pausada"
+        return self._proyectar_estado(snapshot)
 
     def fijar_velocidad(self, velocidad: float) -> dict[str, object]:
         with self._lock:
