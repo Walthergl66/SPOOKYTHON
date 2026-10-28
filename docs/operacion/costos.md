@@ -1,6 +1,8 @@
 # Costos y evidencias de presupuesto
 
-Estado: estimación de diseño, no factura. El usuario mostró en consola el Budget `Hackathon-Budget` de US$10. La captura prueba su creación y monto listado; no muestra período, umbrales de alerta/destinatarios ni una notificación de prueba. No hay gasto real comprobado.
+Estado: estimación de diseño, no factura. CAM-117 verificó el Budget `Hackathon-Budget` de US$10 mensuales y tres alertas ACTUAL (50/80/100 %). La captura más reciente del usuario muestra destinatario `Inactive` y ninguna acción asociada; el usuario acepta continuar y monitorear manualmente, pero la entrega por correo no está verificada. El panel del Free Plan compartido por el usuario muestra US$120 en créditos, US$0 por pagar, 177 días y fin 2027-04-21; tratarlo como evidencia visual de esa fecha, no como saldo auditado por CLI. No hay gasto real comprobado.
+
+AWS describe el Free Plan como limitado a servicios/características seleccionados, con fin a los seis meses o al agotarse créditos, lo que ocurra primero. El acceso a una familia de servicio no confirma que cada operación/feature esté permitida ni que cada costo esté cubierto. Confirmar saldo elegible, funciones permitidas y fecha en Billing antes de provisionar; los créditos no deben descontarse automáticamente de la estimación bruta de uso. La documentación de AWS sobre el Free Plan y servicios admitidos se enlaza al final de este apartado.
 
 ## Referencia mensual inicial
 
@@ -62,8 +64,11 @@ Fuentes: [Fargate](https://aws.amazon.com/fargate/pricing/), [ALB](https://aws.a
 
 | Evidencia | Ubicación prevista | Estado |
 |---|---|---|
-| Budget configurado desde el inicio | Captura de consola aportada por el usuario en esta conversación (no archivada en el repositorio) | Creado: `Hackathon-Budget`, US$10 listados. Período y configuración/entrega de alertas pendientes de confirmar. |
+| Budget configurado desde el inicio | Consultas AWS Budgets CAM-115/CAM-117 y captura aportada CAM-120 | `Hackathon-Budget`, US$10 mensual; alertas ACTUAL 50/80/100 %. El usuario acepta monitoreo manual; la captura indica email `Inactive`, sin acciones, y no prueba entrega. AWS Budget alerta, no bloquea gastos. |
+| Plan y créditos disponibles | Captura compartida por el usuario CAM-120; consultar AWS Billing al provisionar | Free Plan, saldo visual US$120, US$0 por pagar, 177 días restantes y fin 2027-04-21. Saldo/servicios elegibles no verificados por API; revisar en el momento de la ejecución. |
 | Cálculo completo mensual | Este archivo o exportación enlazada | Pendiente de dimensionamiento. |
 | Gasto real del evento | Resumen comprobado sin datos sensibles | No verificado. |
 
 Un Budget con alerta no garantiza un tope automático de gasto. Mantener revisión durante pruebas y no retirar recursos antes del pitch sin instrucción correspondiente.
+
+Referencias oficiales del plan: [comparación Free/Paid](https://docs.aws.amazon.com/us_en/awsaccountbilling/latest/aboutv2/free-tier-plans.html), [servicios admitidos en la nueva experiencia](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html), [estado de verificación de emails Budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-email-recipients.html).

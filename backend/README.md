@@ -23,6 +23,22 @@ En fish, `source .venv/bin/activate.fish` activa el entorno y `env VAR=valor com
 
 La salud local se consulta en `GET /salud`.
 
+### Imagen de contenedor
+
+Desde la raíz del repositorio, construye y prueba la imagen del backend con Docker:
+
+```bash
+backend/scripts/smoke_docker.sh
+```
+
+El smoke valida `GET /salud`, la inclusión del fixture Manta, la ejecución como usuario no root y el apagado por `SIGTERM`. La imagen base se fija por digest y las dependencias runtime por versión en `requirements-container.lock`; actualizar ambas de forma deliberada. Para usar Podman en una máquina donde Docker Engine no esté activo:
+
+```bash
+CONTAINER_ENGINE=podman backend/scripts/smoke_docker.sh
+```
+
+La imagen mantiene un worker Uvicorn y no habilita `NAVIRA_LOCAL_DEMO_CONTROL`, `NAVIRA_DEMO` ni `NAVIRA_GAME_DEMO`. La configuración de ECS deberá inyectar `NAVIRA_API_KEY` desde Secrets Manager y definir la salud de la tarea. La imagen local no constituye un despliegue AWS ni configura TLS/red.
+
 ### Modos de arranque
 
 | Variable | Efecto |

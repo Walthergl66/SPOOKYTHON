@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Navira ephemeral R1/R2/R3 evaluation runner. Creates no public listener or
+  ECS service; the campaign task is launched explicitly with one run-task call.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Existing VPC that contains the selected public subnets.
+  PublicSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: >-
+      Public subnets with an Internet Gateway route. Run the task with a public
+      IP; its security group allows outbound HTTPS only and has no ingress.
+  Cpu:
+    Type: String
+    Default: '1024'
+    AllowedValues: ['1024']
+    Description: One vCPU; matches the provisional three-day cost model.
+  Memory:
+    Type: String
+    Default: '2048'
+    AllowedValues: ['2048']
+    Description: Two GiB; matches the provisional three-day cost model.
+  LogRetentionDays:
+    Type: Number
+    Default: 7
+    AllowedValues: [1, 3, 5, 7, 14, 30]
+  CampaignImageUri:
+    Type: String
+    Default: ''
+    Description: >-
+      Optional immutable ECR image URI using @sha256:<digest>. Leave empty on
+      foundation creation; set after pushing the built image to create the task
+      definition in a second stack update.
+    AllowedPattern: '^$|^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/navira-campaign@sha256:[a-f0-9]{64}$'
+    ConstraintDescription: Use an ECR URI pinned to a sha256 digest, or leave empty.
+
+Conditions:
+  HasCampaignImage: !Not [!Equals [!Ref CampaignImageUri, '']]
+
+Resources:
+  CampaignRepository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      RepositoryName: navira-campaign
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep the three most recent campaign images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 3
+                },
+                "action": {"type": "expire"}
+              }
+            ]
+          }
+
+  CampaignLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /navira/evaluation/campaign
+      RetentionInDays: !Ref LogRetentionDays
+
+  CampaignCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: navira-evaluation
+
+  CampaignTaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Navira campaign task; no inbound, HTTPS egress only.
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Project
+          Value: Navira
+        - Key: Environment
+          Value: evaluation
+
+  CampaignExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PullCampaignImageAndWriteCampaignLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: EcrAuthorization
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Sid: PullOnlyCampaignRepository
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                Resource: !GetAtt CampaignRepository.Arn
+              - Sid: WriteOnlyCampaignLogGroup
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub '${CampaignLogGroup.Arn}:*'
+
+  CampaignTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+
+  CampaignTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Condition: HasCampaignImage
+    Properties:
+      Family: navira-campaign
+      Cpu: !Ref Cpu
+      Memory: !Ref Memory
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      ExecutionRoleArn: !GetAtt CampaignExecutionRole.Arn
+      TaskRoleArn: !GetAtt CampaignTaskRole.Arn
+      ContainerDefinitions:
+        - Name: navira-campaign
+          Image: !Ref CampaignImageUri
+          Essential: true
+          Command: [python, -m, navira.evaluacion_local, --campana-reto]
+          ReadonlyRootFilesystem: true
+          User: '10001'
+          StopTimeout: 120
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref CampaignLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: campaign
+
+Outputs:
+  CampaignRepositoryUri:
+    Description: Push the image here, then update CampaignImageUri with its digest.
+    Value: !GetAtt CampaignRepository.RepositoryUri
+  CampaignClusterName:
+    Value: !Ref CampaignCluster
+  CampaignExecutionRoleArn:
+    Value: !GetAtt CampaignExecutionRole.Arn
+  CampaignTaskRoleArn:
+    Value: !GetAtt CampaignTaskRole.Arn
+  CampaignSecurityGroupId:
+    Value: !GetAtt CampaignTaskSecurityGroup.GroupId
+  CampaignPublicSubnetIds:
+    Value: !Join [',', !Ref PublicSubnetIds]
+  CampaignTaskDefinitionArn:
+    Condition: HasCampaignImage
+    Value: !Ref CampaignTaskDefinition

@@ -1,3 +1,131 @@
+## CAM-124 — Autenticar AWS CLI y preparar Change Set de campaña
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario confirmó que inició sesión en AWS y mantiene la autorización previa para continuar la preparación del despliegue.
+- Relación: SPEC-005, P0-05/P5-02; P-06; CAM-118/121/123.
+- Resultado: el perfil local `navira` en `us-east-2` quedó autenticado mediante `aws login`. `aws sts get-caller-identity` confirmó acceso sin registrar identidad, cuenta ni ARN. AWS aceptó `cloudformation:ValidateTemplate` para `infra/aws/campaign.yml`; se creó el Change Set `navira-foundation-review-20261028c` en estado `CREATE_COMPLETE` / `AVAILABLE`. Propone seis altas: repositorio ECR, cluster ECS, grupo de logs CloudWatch, dos roles IAM y un security group. No contiene tarea Fargate porque aún no hay URI inmutable de imagen. `list-stack-resources` devolvió una lista vacía: no se han creado recursos de aplicación. La preparación no incluyó `execute-change-set` ni otras operaciones de creación.
+- Configuración auxiliar: el instalador configuró el servidor global `aws-mcp` para Codex. No se instalaron los paquetes de skills opcionales. Esta configuración no sustituye la revisión del Change Set ni equivale a despliegue.
+- Archivos: estado actual, pendientes, guía de despliegue, infraestructura e historial.
+- Verificación: AWS CLI 2.37.0; `sts get-caller-identity` exitoso sin divulgar resultado sensible; `cloudformation validate-template` exitoso; Change Set consultado y sus seis acciones revisadas; `list-stack-resources` vacío. No hay medición de costo real ni creación de recursos.
+- Límites: el Change Set solo describe el runner efímero; no publica la app, no crea API/ALB/frontend, no lanza tareas ni resuelve TLS/dominio. Al ejecutarlo sí se crearían los seis recursos descritos; revisar su compatibilidad con las restricciones/cuotas del Free Plan y presupuesto. La sesión temporal de `aws login` vence; no compartir tokens o archivos de credenciales.
+- Siguiente paso: revisar con el usuario el diff de esos seis recursos y el costo/alcance; solo después de aprobación explícita ejecutar este Change Set. Luego construir/publicar una imagen con digest y actualizar la plantilla para registrar la definición Fargate.
+- Commit o PR: no creado; evidencia local y AWS documentada, pendiente de revisión.
+
+## CAM-123 — Usar inicio CLI de la nueva experiencia AWS
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario aclaró que su cuenta AWS Free/Blank Canvas no permite entrar a IAM Identity Center ni obtener un Start URL; pidió un medio para conectar AWS y continuar la configuración.
+- Relación: SPEC-005, P0-05/P5-02; P-06; CAM-122.
+- Resultado: la nueva experiencia AWS no requiere configurar un perfil IAM Identity Center para iniciar CLI. La CLI local es `aws-cli/2.37.0`; se inició `aws login --profile navira --region us-east-2` en un perfil nuevo para preservar `default`. El sign-in completado y el acceso posterior se registran en CAM-124.
+- Archivos: `docs/seguimiento/estado-actual.md`, `docs/seguimiento/pendientes.md`, guía de despliegue e historial.
+- Verificación: versión local AWS CLI 2.37.0; AWS requiere mínimo 2.32.0 para `aws login`. Fuente oficial: [inicio de sesión CLI con credenciales de consola](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html) y [comparación de experiencias de cuenta](https://docs.aws.amazon.com/accounts/latest/reference/sign-up-for-aws.html). CAM-122 queda corregido: no buscar IAM Identity Center Start URL para la nueva experiencia.
+- Límites: el inicio de sesión requiere interacción y autorización del usuario en el navegador; AWS indica que credenciales temporales pueden durar hasta 12 horas. La disponibilidad de acciones AWS seguirá sujeta a permisos de proyecto/SCP.
+- Siguiente paso: continuar desde CAM-124; no compartir la URL temporal ni datos de identidad.
+- Commit o PR: no creado; preparación local sin publicación.
+
+## CAM-122 — Diagnosticar configuración SSO ausente en el perfil CLI
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario intentó renovar la sesión SSO siguiendo CAM-121; AWS CLI reportó ausencia de `sso_start_url` y `sso_region`.
+- Relación: SPEC-005, P0-05/P5-02; P-06; CAM-119/CAM-121.
+- Resultado: inspección local de `~/.aws/config` confirma que el perfil `default` no tiene configuración SSO ni hay secciones `sso-session`. Se consultó la guía oficial vigente: `aws configure sso --profile default` solicita URL de acceso/issuer, región de IAM Identity Center, cuenta/rol y región CLI. La región SSO corresponde al directorio Identity Center; la región de despliegue sigue siendo Ohio (`us-east-2`).
+- Archivos: `docs/seguimiento/estado-actual.md`, `docs/seguimiento/pendientes.md`, `docs/operacion/guia-paso-a-paso-despliegue.md` e historial.
+- Verificación: la configuración se inspeccionó mostrando solo presencia/ausencia de campos, sin imprimir URL, cuenta, rol o credenciales. Referencia: [configuración SSO oficial de AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html).
+- Límites: no se ejecutó `aws configure sso` porque requiere que el usuario provea el portal y elija cuenta/rol en su flujo interactivo. No se obtuvo una sesión nueva ni se reintentó CloudFormation.
+- Nota de vigencia: el consejo inicial de configurar IAM Identity Center se corrigió en CAM-123 tras la aclaración del usuario sobre la nueva experiencia Free/Blank Canvas; seguir `aws login` en CAM-123, no buscar un SSO Start URL para esta cuenta.
+- Commit o PR: no creado; guía/documentación local.
+
+## CAM-121 — Reintentar CloudFormation tras el permiso reportado
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario informó que concedió permiso a CloudFormation y pidió continuar.
+- Relación: SPEC-005, P0-05/P5-02; ADR-045; P-06/P-19; CAM-119/CAM-120.
+- Resultado: con el perfil CLI `default`, AWS volvió a denegar `cloudformation:DescribeStacks` y `cloudformation:CreateChangeSet` (`AccessDenied`), incluso al usar un nombre de stack nuevo. El usuario puede haber concedido la política en consola, pero el permiso efectivo en esta sesión no está demostrado. No se creó Change Set ni recurso AWS.
+- Archivos: `docs/seguimiento/estado-actual.md`, `docs/seguimiento/pendientes.md`, `docs/operacion/infraestructura.md`, guía de despliegue e historial.
+- Verificación: reintento de lectura de stack y solicitud de Change Set en `us-east-2`; ambos fueron rechazados por AWS. Ningún Change Set se ejecutó.
+- Límites: el resultado refleja el principal/sesión CLI actual; no prueba qué política fue editada en consola ni si una política superior (SCP/permissions boundary) bloquea la acción.
+- Siguiente paso: renovar la sesión SSO del perfil `default` (`aws sso logout --profile default` y `aws sso login --profile default`) y reintentar. Si persiste, pedir al administrador que compruebe `cloudformation:DescribeStacks`, `cloudformation:CreateChangeSet`, `cloudformation:DescribeChangeSet`, `cloudformation:ValidateTemplate` y la identidad/rol que usa ese perfil; revisar SCP y permissions boundary. Mantener separados la autorización de Change Set y cualquier ejecución posterior.
+- Commit o PR: no creado; preparación local sin publicación.
+
+## CAM-120 — Aceptar limitación de correo Budget y registrar plan gratuito
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: aclaración del usuario y captura de AWS Billing; solicita dar por aceptado el tema de confirmación de correo y continuar con despliegue en su cuenta Free Plan.
+- Relación: SPEC-005, P0-03/P0-05; P-06; CAM-117/CAM-119.
+- Resultado: para el plan del proyecto se acepta que el Budget y sus tres alertas están configurados; el usuario autoriza continuar sin confirmación de correo y con seguimiento manual del gasto. La captura actual muestra el destinatario con estado **Inactive**, tres alertas (50/80/100 %) y ninguna acción asociada; por ello no se declara el email verificado ni se presume entrega. La captura del panel de cuenta compartida por el usuario indica US$120 de créditos, US$0 por pagar, 177 días restantes y fin del plan el 2027-04-21. Es evidencia visual aportada por el usuario, no lectura directa de AWS CLI.
+- Archivos: `docs/seguimiento/estado-actual.md`, `docs/seguimiento/pendientes.md`, `docs/operacion/costos.md`, `docs/operacion/infraestructura.md`, guía de despliegue e historial.
+- Verificación: la documentación oficial indica que los destinatarios Budget `Inactive` aún no reciben notificaciones, que el Free Plan tiene acceso solo a servicios/características seleccionados y finaliza a los seis meses o al agotarse créditos, lo que ocurra primero. CloudFormation, ECS y ECR figuran entre servicios admitidos de la nueva experiencia, sujeto a sus límites y permisos. Referencias: [verificación de destinatarios Budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-email-recipients.html), [planes Free/Paid](https://docs.aws.amazon.com/us_en/awsaccountbilling/latest/aboutv2/free-tier-plans.html), [servicios admitidos en la nueva experiencia](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html).
+- Límites: un saldo de créditos no prueba que cada característica, cuota o recurso esté disponible ni garantiza cobertura universal; confirmar antes del Change Set. El usuario acepta monitoreo manual por falta de verificación del destinatario. No se crearon recursos.
+- Siguiente paso: continuar con el bloqueo IAM CloudFormation registrado en CAM-119; cuando el acceso funcione, validar la plantilla, generar y revisar el Change Set y contrastar el costo elegible restante con saldo/fin del plan. No ejecutar infraestructura sin revisión final.
+- Commit o PR: no creado; preparación local sin publicación.
+
+## CAM-119 — Revisar permisos AWS y preparar Change Set
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: continuación solicitada por el usuario para avanzar con el despliegue en `us-east-2`; la verificación del correo de alertas permanece pendiente y se mantiene el seguimiento manual autorizado.
+- Relación: SPEC-005, P0-05/P5-02; ADR-045; P-06/P-19/P-20.
+- Resultado: las consultas EC2 de solo lectura identifican una VPC predeterminada con tres subredes públicas candidatas distribuidas en tres zonas de disponibilidad. La identidad AWS no puede consultar el stack de revisión (`cloudformation:DescribeStacks`) ni crear el Change Set (`cloudformation:CreateChangeSet`, AccessDenied). No se creó Change Set ni recurso AWS. No se guardan identificadores de cuenta, VPC o subredes en la documentación.
+- Archivos: `docs/seguimiento/estado-actual.md`, `docs/seguimiento/pendientes.md`, `docs/seguimiento/plan-implementacion.md`, `docs/operacion/infraestructura.md`, `docs/operacion/guia-paso-a-paso-despliegue.md` e historial.
+- Verificación: lecturas EC2 confirmaron las subredes candidatas; `DescribeStacks` y `CreateChangeSet` fueron denegados. `cfn-lint` local de CAM-118 sigue siendo la única validación de la plantilla; AWS no evaluó el Change Set. Ningún stack fue ejecutado.
+- Límites: falta permiso para inspeccionar y revisar infraestructura en CloudFormation. El Change Set requiere revisión previa a cualquier creación. Staging público/TLS/dominio/red siguen pendientes y el Budget no detiene gastos.
+- Siguiente paso: el administrador de la cuenta debe habilitar la lectura de stacks y Change Sets, `cloudformation:ValidateTemplate`, y `cloudformation:CreateChangeSet` sobre el stack dedicado con `CAPABILITY_IAM`; después revisar el plan y costos. No ejecutar el plan hasta presentarlo al usuario como revisión concreta.
+- Commit o PR: no creado; preparación local sin publicación.
+
+## CAM-116 — Empaquetar backend para smoke local
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: continuación de la preparación de despliegue Fase 3; el usuario autorizó avanzar aunque la verificación del correo de alertas Budget siga pendiente.
+- Relación: SPEC-005, P0-05/P5-02; ADR-045; P-20.
+- Resultado: se añadió imagen backend Python 3.12 con imagen base fijada por digest, dependencias runtime fijadas en lock, usuario no root, un worker Uvicorn, `/salud` como health check y mapa de Manta incluido. El script de smoke construye, ejecuta, comprueba salud/fixture/usuario y detención SIGTERM; admite Docker o Podman. El frontend sigue como build estático y no necesita Dockerfile. Docker Engine no estaba activo; la verificación se hizo con Podman.
+- Archivos: `backend/Dockerfile`, `backend/.dockerignore`, `backend/requirements-container.lock`, `backend/scripts/smoke_docker.sh`, `backend/README.md`, infraestructura, guía de despliegue, pendientes, estado e historial.
+- Decisiones/ADR: aplica ADR-045 sin exponer controles locales; no cambia topología/contrato y no requiere ADR.
+- Validación ejecutada: `CONTAINER_ENGINE=podman backend/scripts/smoke_docker.sh` — build correcto, `GET /salud` HTTP 200, mapa Manta presente, usuario `navira`, apagado SIGTERM correcto. El segundo build usó formato Docker para que Podman no omitiera la instrucción HEALTHCHECK.
+- Validación no ejecutada: CloudFormation no se valida porque no existe aún la plantilla; AWS/ECR no se usaron. No se ejecutó suite backend, pues no cambió código Python.
+- Límites/pendientes: el lock captura las dependencias runtime para el contenedor; el backend se ejecuta desde el código copiado por `PYTHONPATH` sin compilar un wheel en la imagen. No hay plantilla, TLS/dominio o recursos. El Budget no muestra alertas (CAM-115).
+- Estado real al cerrar: empaquetado local inicial probado; Fase 3 no completa. No se cambió AWS.
+- Siguiente acción: configurar alerta y confirmar destinatarios en Budgets; elaborar plantilla parametrizada con TLS/red obligatorios para revisión antes de cualquier creación.
+- Commit o PR: no creado; preparación local sin publicación.
+
+## CAM-118 — Preparar CloudFormation para campaña efímera
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: continuar el despliegue pese a la verificación pendiente del correo Budget, manteniendo la preparación local y revisable.
+- Relación: SPEC-005, P0-05/P5-02/P5-03; ADR-045; P-06/P-19.
+- Resultado: plantilla `infra/aws/campaign.yml` acotada a ECR, logs con retención, ECS cluster, roles, security group sin entrada y definición opcional de tarea Fargate R1/R2/R3 anclada por URI inmutable SHA256. No crea ALB, listener, servicio persistente, NAT o frontend. Requiere VPC/subredes públicas existentes; la tarea se lanzaría explícitamente con IP pública y salida HTTPS. La definición de tarea se activa tras subir imagen y pasar su digest al stack.
+- Archivos: `infra/aws/campaign.yml`, documentos de infraestructura/guía/pendientes/estado e historial.
+- Decisiones/ADR: materializa la tarea efímera sin listener de ADR-045; topología pública de staging queda aparte porque TLS/dominio/origen no están definidos.
+- Validación ejecutada: `/tmp/navira-cfnlint-env/bin/cfn-lint -r us-east-2 -t infra/aws/campaign.yml` sin diagnósticos. `CONTAINER_ENGINE=podman backend/scripts/smoke_docker.sh` ya validó la imagen referenciada como patrón del runner.
+- Validación no ejecutada: AWS `cloudformation:ValidateTemplate` denegado al perfil activo; no se creó Change Set ni stack. Las consultas EC2 de solo lectura sí encontraron una VPC predeterminada y tres subredes con ruta pública candidata; no se registran sus IDs. Falta revisar permisos y costos efectivos.
+- Límites/pendientes: el lint local no valida la cuenta, cuotas ni topología real. La plantilla crea un repo con política Retain y log group; revisar limpieza/retención antes de aplicar. Budget alerts están configuradas pero el usuario reporta correo pendiente de verificación (CAM-117). No hay staging web.
+- Estado real al cerrar: artefacto local revisable, no desplegado; no se modificó AWS.
+- Siguiente acción: conceder `cloudformation:ValidateTemplate`/permisos para crear Change Set e IAM PassRole necesarios; revisar costos y generar un Change Set con las subredes candidatas, sin ejecutar su creación hasta revisión final.
+- Commit o PR: no creado; preparación local sin publicación.
+
+## CAM-117 — Confirmar alertas y suscriptores del Budget
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario indicó que las alertas estaban configuradas y que solo faltaba verificar el correo; pidió continuar.
+- Relación: SPEC-005, P0-03; P-06.
+- Resultado: las APIs dedicadas `DescribeNotificationsForBudget` y `DescribeSubscribersForNotification` muestran tres notificaciones ACTUAL con umbrales 50 %, 80 % y 100 %, y un suscriptor EMAIL por cada una. `DescribeBudgets.NotificationsWithSubscribers` había devuelto lista vacía, por lo que se registró la discrepancia entre operaciones. El usuario reporta que la verificación del correo sigue pendiente; la API consultada no expone el estado de verificación/entrega.
+- Archivos: `docs/seguimiento/estado-actual.md`, `docs/seguimiento/pendientes.md`, `docs/operacion/infraestructura.md`, `docs/operacion/costos.md`, guía de despliegue e historial.
+- Verificación: consultas de solo lectura STS, `describe-notifications-for-budget` y `describe-subscribers-for-notification`; salida resumida sin cuenta, ARN ni dirección de correo. Sin cambios al Budget ni a recursos AWS.
+- Límites: existencia de umbrales y suscriptores no demuestra que el destinatario haya confirmado el correo ni que las alertas estén llegando. El Budget mensual tampoco impide exceder el gasto.
+- Decisión operativa: el usuario autoriza continuar la preparación del despliegue mientras se verifica el correo. Mantener seguimiento manual del gasto; revisar el costo y el Change Set antes de cualquier creación de infraestructura.
+- Siguiente paso: preparar una plantilla CloudFormation revisable; no afirmar que el correo de alertas está verificado.
+- Commit o PR: no creado; preparación local sin publicación.
+
+## CAM-115 — Verificar detalle real del Budget de AWS
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario pidió leer y comprobar el Budget desde la sesión AWS recién configurada.
+- Relación: SPEC-005, P0-03; P-06.
+- Resultado inicial: la sesión SSO del perfil `default` consulta AWS Budgets en `us-east-2`. `Hackathon-Budget` existe con límite `10.0 USD`, período `MONTHLY`; la operación `DescribeBudgets` devolvió cero `NotificationsWithSubscribers`. La comprobación posterior de APIs específicas se registra en CAM-117.
+- Archivos: `docs/seguimiento/estado-actual.md`, `docs/seguimiento/pendientes.md`, `docs/operacion/infraestructura.md`, `docs/operacion/costos.md`, guía de despliegue e historial.
+- Verificación: `aws sts get-caller-identity` y `aws budgets describe-budgets` ejecutados mediante CLI; la salida se filtró para no registrar cuenta, ARN ni direcciones. `us-east-2` configurada. No se modificó el Budget ni se crearon recursos.
+- Límites: esa operación no confirmó el estado de alertas ni entrega de correos; CAM-117 verificó notificaciones mediante llamadas específicas. El presupuesto es mensual; no constituye límite de gasto.
+- Siguiente paso: consultar notificaciones y destinatarios por sus operaciones específicas, realizado en CAM-117.
+- Commit o PR: no creado; preparación local sin publicación.
+
 ## CAM-114 — Verificar perfil AWS y tarifa del ALB en Ohio
 
 - Fecha: 2026-10-28, America/Guayaquil.

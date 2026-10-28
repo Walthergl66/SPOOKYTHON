@@ -6,10 +6,10 @@ Actualizada: 2026-10-28. Es una guía de ejecución y verificación; no acredita
 
 - Las campañas R1/R2/R3 se han repetido tres veces localmente: nueve rondas de cinco minutos y 69.572 solicitudes HTTP exitosas. La evidencia está en [CAM-098](../calidad/resultados/campana-reto-cam098.md) y [CAM-099](../calidad/resultados/repeticiones-reto-cam099.md); todavía no mide RTT, disponibilidad o recursos de AWS.
 - La CI tiene jobs para pruebas backend y build frontend en [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), pero su ejecución remota no está comprobada.
-- En el repositorio revisado no hay Dockerfile ni plantilla de infraestructura. La documentación propone CloudFormation, S3/CloudFront, ALB, ECS Fargate, ECR, DynamoDB y CloudWatch; son diseño, no recursos existentes.
+- CAM-116 añade Dockerfile y smoke local del backend. Aún no existe plantilla de infraestructura ni se ha publicado imagen en ECR. La documentación propone CloudFormation, S3/CloudFront, ALB, ECS Fargate, ECR, DynamoDB y CloudWatch; son diseño, no recursos existentes.
 - El control de demo de Simulador/Jugar exige opt-in y conexión loopback. No se debe habilitar `NAVIRA_LOCAL_DEMO_CONTROL=1` detrás de una URL pública. La API key falla cerrada en rutas protegidas cuando no está configurada.
 - Los snapshots, sesiones y coordinación son volátiles y de un proceso. Reiniciar el proceso pierde el mundo; añadir réplicas no es seguro con la coordinación actual.
-- El usuario eligió `us-east-2` (Ohio). Aún no se verifican la cuenta, los permisos, el Budget, el dominio, certificados, URL pública ni gasto real. La estimación existente para `us-east-1` es una referencia incompleta y no es una cotización para Ohio.
+- El usuario eligió `us-east-2` (Ohio). CAM-117 confirma por APIs específicas un Budget mensual de US$10 y alertas ACTUAL a 50/80/100 %, con un suscriptor email cada una; según el usuario, falta verificar el correo. La identidad SSO está verificada, pero permisos de creación, dominio, certificados, URL pública y gasto real no. El usuario autorizó continuar preparación con revisión manual de gasto; la estimación para Ohio sigue provisional, no una cotización de la cuenta.
 
 ## Fase 0 — Congelar y verificar el candidato
 
@@ -36,14 +36,14 @@ Actualizada: 2026-10-28. Es una guía de ejecución y verificación; no acredita
 
 ## Fase 1 — Preparar cuenta, región y presupuesto
 
-1. La región elegida por el usuario es `us-east-2` (Ohio). Una captura aportada el 2026-10-28 muestra `Hackathon-Budget` creado por US$10. Confirmar en su detalle período, umbrales y destinatarios de alertas; la captura no identifica la región de recursos, la cuenta de despliegue ni los permisos.
+1. La región elegida por el usuario es `us-east-2` (Ohio). CAM-117 verificó `Hackathon-Budget` de US$10 mensual y tres alertas (50/80/100 %). CAM-120: el usuario acepta continuar aunque la captura muestre el destinatario email `Inactive`; revisar gasto manualmente y no tratar Budget como límite duro. El panel compartido indica Free Plan con US$120 de crédito y 177 días restantes; verificar en Billing saldo/fecha y elegibilidad de cada recurso. AWS limita servicios/features en Free Plan y el acceso IAM sigue siendo un control separado. La lectura de identidad no concede permisos de creación de recursos.
 2. La ventana prevista por el usuario es de tres días en `us-east-2`. En AWS Pricing Calculator especificar el tiempo real de cada recurso: por ejemplo, Fargate 1 vCPU/2 GB suma 36 horas si corre 12 h/día, o 72 horas si debe permanecer disponible toda la ventana. Estimar por separado ALB, IPv4, S3, CloudFront, ECR, CloudWatch, datos y persistencia; los servicios de red pueden seguir cobrando mientras la tarea está detenida. Configurar alertas de gasto/uso con destinatarios comprobados. La alerta de AWS Budgets puede llegar con retraso y no detiene automáticamente el gasto; mantener vigilancia y una lista explícita de recursos que se crearán.
-3. Confirmar permisos mínimos para desplegar y leer métricas. No copiar claves a Git, Markdown, JavaScript, comandos guardados, tickets o logs. Usar el mecanismo de credenciales aprobado para la cuenta.
+3. Autenticación de la nueva experiencia Free/Blank Canvas: no requiere obtener SSO Start URL de IAM Identity Center. CAM-124 confirma `aws login --profile navira --region us-east-2`, identidad consultada sin guardar su salida, y validación CloudFormation. La sesión CLI es temporal. Si una cuenta usa IAM Identity Center tradicional, configurar SSO por separado. No copiar claves a Git, Markdown, JavaScript, comandos guardados, tickets o logs.
 4. Usar `us-east-2` en AWS Pricing Calculator y registrar región, fecha, supuestos y cálculo real en [costos](costos.md); guardar evidencia sin datos sensibles. La tarifa pública del ALB de Ohio fue confirmada en CAM-114; falta la exportación final con las opciones reales de la cuenta.
 
 Referencias oficiales: [usar AWS Budgets](https://docs.aws.amazon.com/cost-management/latest/userguide/bcm-lite-use-budget.html) y [seguridad de red de Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-network.html). AWS actualiza los datos de Budgets varias veces al día y las alertas pueden retrasarse; por eso una alerta no equivale a un tope inmediato de gasto.
 
-**Salida de fase:** región y permisos aprobados, Budget con período/alertas comprobados y costo estimado para la ventana de tres días que se pueda comparar con los US$10 listados. Si falta cualquiera, detener creación de infraestructura. Un Budget con alertas no es un tope automático de gasto.
+**Salida de fase:** región y Budget configurados; el correo no está acreditado como activo y el usuario autoriza continuar con seguimiento manual. Contrastar costo de tres días con US$10 de umbral y saldo/servicios elegibles del Free Plan. Antes de crear recursos se revisará el costo/Change Set y deben confirmarse permisos mínimos. Un Budget con alertas no es un tope automático de gasto.
 
 ## Fase 2 — Cerrar los bloqueos de publicación
 
@@ -57,13 +57,15 @@ Referencias oficiales: [usar AWS Budgets](https://docs.aws.amazon.com/cost-manag
 
 ## Fase 3 — Crear empaquetado e infraestructura reproducibles
 
-1. Añadir un Dockerfile del backend y una comprobación local de arranque, salud, mapa incluido y apagado limpio. Añadir el comando de imagen para la tarea de campaña efímera. Añadir Dockerfile separado solo si el frontend necesita servidor dinámico; si es estático, producir el build de Vite y publicarlo en S3 privado detrás de CloudFront.
-2. Añadir plantilla versionada de CloudFormation para los recursos elegidos. Parametrizar entorno, región, tamaños y retención; revisar el plan/cambios de la plantilla antes de crear recursos.
+1. Dockerfile del backend y comprobación local de arranque, `/salud`, fixture Manta, ejecución no root y apagado limpio están implementados en CAM-116. La prueba local usa Podman porque Docker Engine no está activo en esta máquina. Falta evaluar el comando de imagen de la tarea efímera. El frontend produce build estático; no requiere Dockerfile.
+2. Existe una plantilla CloudFormation acotada al runner efímero en [`infra/aws/campaign.yml`](../../infra/aws/campaign.yml). `cfn-lint` y `cloudformation:ValidateTemplate` pasan. CAM-124 creó el Change Set `navira-foundation-review-20261028c`: seis altas de recursos base (ECR, cluster ECS, grupo de logs, roles IAM y security group), sin task definition, tarea, listener o servicio. La lista del stack está vacía porque no se ejecutó. Revisar los recursos, cuotas y costos reales del cambio y confirmar su ejecución antes de aplicarlo. Completar topología de staging/publicación por separado cuando se definan TLS/dominio y restricción de acceso.
 3. Aplicar la topología documentada: frontend S3/CloudFront; API y WebSocket hacia ALB/ECS Fargate; imágenes en ECR; estado durable en DynamoDB si su contrato queda implementado; logs/métricas en CloudWatch. No crear un recurso solo porque aparece en el diseño: justificarlo y actualizar costos.
 4. Configurar roles IAM separados, Secrets Manager/configuración segura, TLS en navegador y origen, cabeceras de origen y security groups mínimos. Para Fargate, asignar security group a la tarea y restringir su entrada al security group del ALB, conforme a las [recomendaciones de red de ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-network.html). Validar el tramo CDN–origen antes de enviar credenciales.
 5. Configurar health check y `GET /salud`; verificar que rutas API no caigan en fallback HTML de la SPA y que la política de caché no almacene respuestas del estado ni del juego.
 
 **Salida de fase:** imagen arrancable y plantilla revisada en un entorno de pruebas; el diff de infraestructura, permisos y costos queda documentado. No existe hoy un comando de despliegue confirmado.
+
+**Estado parcial CAM-124:** imagen base, digest/lock runtime y plantilla del runner tienen validación local; AWS validó la plantilla y hay un Change Set revisable. Ningún recurso fue creado. El usuario acepta continuar sin correo activo y monitorear manualmente. El plan gratuito restringe servicios/funciones; consultar créditos y disponibilidad de cada recurso antes de ejecutar. Revisar/aprobar el Change Set antes de crear; después quedan la imagen inmutable, definición Fargate y prueba de campaña. TLS/red de staging sigue pendiente.
 
 ## Fase 4 — Publicar a staging una sola versión
 
