@@ -2,6 +2,24 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-098 — Ejecutar campaña local Reto R1/R2/R3 con ventana completa
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: el usuario decidió mantener la regla formal de horda (nodo y vecinos) y continuar cerrando las pruebas de las tres rondas de cinco minutos.
+- Especificación/requisitos: SPEC-009 CA-009-11, SPEC-005 CA-005-02, PRD-07, TRD-02/TRD-10, P2-03/P4-05/P5-01/P5-03 y T-11/T-50.
+- Motivo: el evaluador anterior medía cohortes `mixto` aisladas y no consumía los presets Reto R1/R2/R3 como una campaña secuencial. CAM-087 ya completaba la ventana luego de terminación con slots ociosos transparentes.
+- Resultado de implementación: `ejecutar_campana_reto_local()` ejecuta los presets existentes en orden 1→2→3, poblaciones 20/80/200, semilla derivada por ronda, 150 slots por defecto y cadencia objetivo de 2 s. Cada ronda usa HTTP loopback `/paso`, crea un run independiente y conserva ventana aunque el mundo termine. El reporte identifica run/mapa/semilla, latencias/errores, turnos activos, slots ociosos y eventos programados/aplicados; progreso de cada ronda va a stderr, JSON consolidado a stdout. La evaluación no genera movimiento o solicitudes ficticias tras estado terminal.
+- Regla de horda: el usuario aclaró que «Lo que el jurado va a buscar» lista errores comunes y no requisitos alternativos. Pasar por un vecino tras esquivar solo el nodo cuenta como error; R-06 (nodo y todos los vecinos bloqueados) es el criterio, P-18 queda resuelto, y el código/T-03 ya lo cumplen. No se altera código ni texto del reto original.
+- Archivos: `backend/src/navira/evaluacion_local.py`, `backend/tests/test_evaluacion_local.py`, `backend/README.md`, reglas, pendientes, SPEC-005/009, T-11/T-50, trazabilidad, plan, este historial, estado y [reporte CAM-098](../calidad/resultados/campana-reto-cam098.md).
+- Validación de código: campaña real 3×5 min con 150 turnos por ronda; R1/R2/R3 enviaron 1.420/5.741/15.394 solicitudes, total 22.555, todas HTTP 200 y 0 fallas. p95 de `/paso`: 10,625/26,184/64,313 ms; p95 de resolución de turno: 463,409/1.104,635/1.378,374 ms; ningún turno fuera del período de 2 s. Eventos de R2/R3 se aplicaron en turnos 50/100. Resultado: R1 19 evacuados/0 mordidos; R2 65/2; R3 167/7. La campaña tardó 913,964 s frente a 900 s objetivo. Backend completo 231/231, compileall y `git diff --check` pasan. Reporte: [campaña CAM-098](../calidad/resultados/campana-reto-cam098.md).
+- Validación documental: `check_docs.py` (128 Markdown/130 archivos), `check_sdd.py` (9 SPEC), pruebas del validador SDD (8/8) y `git diff --check` pasan. La primera ejecución de SDD reveló metadato T-50 faltante en SPEC-009; se corrigió y el validador final pasó. No se marcan SPEC-005/009 ni T-11 completas: se requiere repetición y AWS/entorno oficial.
+- Límites: loopback, no AWS, una campaña y semilla por ronda; no prueba latencia remota, sostenibilidad/repetibilidad estadística ni el entorno del jurado. El preset mantiene supuestos de densidad/eventos. Se alcanzaron 150 transiciones por ronda; no se afirma rendimiento o supervivencia general. P5-03 y evaluación AWS siguen pendientes.
+- Siguiente acción: repetir la campaña con varias semillas y medir en el entorno oficial/AWS cuando estén disponibles sus permisos y presupuesto.
+
+### Aclaración incorporada durante CAM-098 — regla de horda
+
+El usuario precisó que la sección «Lo que el jurado va a buscar» enumera errores comunes, no requisitos alternativos: pasar por un vecino de la horda tras esquivar solo su nodo cuenta como error. R-06 (nodo y vecinos intransitables) es el criterio oficial aplicable; P-18 queda resuelto, el código y T-03 ya lo implementan. No se edita la referencia original del reto.
+
 ## CAM-097 — Unificar controles y permitir nueva simulación desde Reto pausado
 
 - Fecha: 2026-10-27, Ecuador continental.

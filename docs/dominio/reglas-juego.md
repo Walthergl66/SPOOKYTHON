@@ -36,6 +36,7 @@ Estado: implementación parcial del grafo, movimiento zombie, cierres programado
 - El mundo usa una secuencia aleatoria privada por partida para seleccionar estados iniciales y decisiones que las reglas dejan al azar. Una modificación pequeña de la entrada puede desviar el recorrido y alterar rutas, encuentros, mordidas y evacuaciones siguientes.
 - La aleatoriedad no reemplaza las reglas: el corredor sigue persiguiendo según la regla configurada; la horda sigue bloqueando nodo y vecinos; sus movimientos quedan sometidos a P-07. El motor conserva respuesta estable para solicitudes repetidas sobre la misma instantánea.
 - La ruta automática completa se conserva en el snapshot después de cada movimiento confirmado. El sistema replantea por zombie visible a tres saltos topológicos o menos (parámetro provisional), por cierre que vuelva inválida la ruta o si la posición deja de coincidir con ella. Los zombies más lejanos no cambian por sí solos el recorrido; un camino candidato con nodos repetidos se descarta. El radio topológico es una decisión configurable del prototipo, no una distancia oficial.
+- Aclaración del usuario (2026-10-27): «Lo que el jurado va a buscar» enumera errores comunes, no requisitos alternativos; permitir una ruta por un vecino de la horda cuenta como error. Por tanto, R-06 —bloquear el nodo y todos sus vecinos— es también el criterio oficial aplicable, y el comportamiento existente permanece.
 
 ## Supuestos pendientes de confirmar
 

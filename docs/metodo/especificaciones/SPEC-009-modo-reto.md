@@ -4,9 +4,9 @@ ID: SPEC-009
 Estado: en-revision
 Requisitos: PRD-06, PRD-07, TRD-02, TRD-10, TRD-11
 Tareas: P4-05, P5-01, P5-03
-Pruebas: T-11, T-18, T-47, T-48, T-49
-Cambio: CAM-097
-Evidencia: [reporte CAM-097](../../calidad/resultados/reto-nueva-simulacion-pausada-cam097.md)
+Pruebas: T-11, T-18, T-47, T-48, T-49, T-50
+Cambio: CAM-098
+Evidencia: campaña local secuencial 3×5 minutos en [reporte CAM-098](../../calidad/resultados/campana-reto-cam098.md); AWS pendiente.
 
 ## Objetivo y alcance
 
@@ -30,6 +30,7 @@ La demo libre conserva sus perfiles, intensidad, refugios y control actuales. En
 | CA-009-08 | En las rondas Reto del fixture Manta, al menos la cuota redondeada del 80% de cada tipo de zombie queda dentro de 3.500 m del ancla urbana documentada; los eventos R2/R3 prefieren segmentos en esa zona si hay candidatos. Simulador libre conserva su muestreo global y el conteo/composición provisional no cambian. | T-47 |
 | CA-009-09 | Un botón principal unifica los estados del run: «Iniciar» sin ronda en ejecución, «Pausar» activa y «Continuar» pausada. Pausar/continuar conserva `runId`, ronda y mundo; «Reiniciar Rn» permanece disponible para recrear el preset actual. | T-48 |
 | CA-009-10 | Si una ronda Reto está pausada, se puede iniciar un preset nuevo —incluida otra ronda seleccionada— y el servidor lo reemplaza con nuevo `runId`. Una ronda activa y una demo libre pausada no se reemplazan desde este flujo. | T-49 |
+| CA-009-11 | El evaluador local ejecuta R1, R2 y R3 en ese orden, con un run/preset/semilla por ronda y una ventana de 150 slots de 2 s (cinco minutos). Registra solicitudes reales, turnos activos, slots ociosos, resultados, eventos programados/aplicados y errores; al terminar el mundo no fabrica actividad. | T-50, T-11 |
 
 ## Plan y módulos
 
@@ -37,4 +38,4 @@ PRD-07 y P5-03 son propietarios del requisito de tres rondas; P5-01 cubre medici
 
 ## Riesgos y verificación
 
-P-09/P-15 quedan abiertos hasta que la organización del reto confirme densidad y calendarios. El reloj local puede terminar antes si no quedan sobrevivientes activos; ello no acredita cinco minutos de actividad ni T-11. Persistencia, repetición de campaña, carga sostenida y AWS requieren evidencia independiente. No marcar verificada hasta completar CA y registrar reporte real.
+P-09/P-15 quedan abiertos hasta que la organización del reto confirme densidad y calendarios. CAM-098 demuestra que la semilla evaluada completó 150 turnos activos por ronda durante cinco minutos; con otras semillas el mundo aún puede terminar antes. Persistencia, repetición de campaña, entorno oficial/AWS y criterios externos requieren evidencia independiente. No marcar verificada hasta completar CA y registrar reporte real.

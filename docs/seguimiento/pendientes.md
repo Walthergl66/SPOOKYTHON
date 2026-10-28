@@ -1,6 +1,6 @@
 # Pendientes, supuestos y riesgos
 
-Estado al 2026-10-26. Ninguna aclaración externa confirmada todavía. Las respuestas se añaden con fecha y fuente; cerrar también reglas, contratos, ADR y pruebas afectados.
+Estado al 2026-10-27. No hay aclaraciones externas de la organización; P-18 sí quedó resuelto por aclaración directa del usuario. Las respuestas se añaden con fecha y fuente; cerrar también reglas, contratos, ADR y pruebas afectados.
 
 | ID | Asunto | Supuesto o siguiente paso | ¿Impide empezar local? |
 |---|---|---|---|
@@ -10,7 +10,7 @@ Estado al 2026-10-26. Ninguna aclaración externa confirmada todavía. Las respu
 | P-04 | Refugio seguro y mordida/llegada | Prototipo resuelve mordida antes de evacuar; no otorga inmunidad al refugio. Confirmar regla oficial. | No. |
 | P-05 | Fórmula de supervivencia y eficiencia | Registrar vivos/evacuados/pendientes, saltos, metros y costo temporal. | No. |
 | P-06 | Región, cuenta y permisos AWS | `us-east-1` propuesta; acceso y Budget no verificados. | No; sí afecta despliegue. |
-| P-07 | Movimiento exacto de horda «casi inmóvil» | Prototipo mantiene la horda estática; confirmar si debe moverse y en qué condiciones. | No. |
+| P-07 | Movimiento exacto de horda «casi inmóvil» | Prototipo mantiene la horda estática; confirmar si debe moverse y en qué condiciones. Transitabilidad resuelta: el usuario aclaró el 2026-10-27 que la sección del jurado enumera errores y confirma R-06 —bloquear nodo y vecinos—; véase P-18. | No para la regla actual; sí para confirmar movimiento. |
 | P-08 | Calles dirigidas, puentes y cierres | El núcleo acepta cierre por arista dirigida o segmento físico completo. Falta confirmar qué ID entrega cada evento oficial. | No. |
 | P-09 | Cantidad zombie y dificultad inicial | CAM-057 añade presets sintéticos baja/media/alta para demo. CAM-088 usa densidad media provisional en presets del reto; el enunciado no fija conteos ni proporciones. Confirmar cantidad/distribución antes de declarar configuración oficial. | No para demo/presets locales; sí para congelar evaluación oficial. |
 | P-10 | Tamaño del equipo y repositorio remoto | Supuesto dos/tres integrantes; no hay remoto verificado. | No. |
@@ -21,6 +21,7 @@ Estado al 2026-10-26. Ninguna aclaración externa confirmada todavía. Las respu
 | P-15 | Distribuciones estocásticas de evaluación | CAM-057 configura rangos sintéticos de cantidad por intensidad y ubicación por sectores; CAM-082 sortea 1–10 cierres de demo; CAM-088 crea eventos de reto por semilla (un puente R2, dos calles R3) en turnos provisionales 50/100. CAM-094 sitúa los inicios de Reto en radios aproximados de 1.500 m alrededor de Tarqui, Los Esteros, Barbasquillo y Jocay, balanceados por partes casi iguales. CAM-095 concentra por cada tipo el 80% aproximado de amenazas en un radio de 3.500 m del ancla R-03 y prioriza eventos allí; la ronda libre conserva su distribución global. Confirmar densidad, proporciones oficiales, centro/radio y cuota por tipo; geometrías/cuotas sectoriales y calendario oficial; P-07/P-09 siguen abiertos. | No para demo/presets; sí para congelar evaluación oficial. |
 | P-16 | Cierre de turno y concurrencia de órdenes | CAM-040 implementa puerta con deadline monotónico de 1,7 s, serialización entre `RegistrarOrdenHumana` y cierre/resolución, y rechazo de orden tardía en el runner local. `RLock` coordina solo un proceso; snapshots y órdenes no son durables ni multi-host. | Resuelto para demo de un proceso; sí antes de despliegue multi-worker/productivo. |
 | P-17 | Calibración física de una cuadra de protección | CAM-078 aproxima el radio pedido mediante una arista del grafo, considerando entrantes y salientes. La distancia física real de una cuadra varía; revisar la protección si se obtiene un polígono o radio geográfico validado para cada refugio. | No para la regla actual; sí para calibración cartográfica precisa. |
+| P-18 | Interpretación del texto del jurado sobre hordas | **Resuelto por aclaración del usuario (2026-10-27):** «Lo que el jurado va a buscar» lista errores comunes, no reglas alternativas; una ruta que solo evita el nodo pero pasa por un vecino es un error. La regla aplicable es R-06: horda bloquea su nodo y todos sus vecinos. El código y T-03 ya siguen este criterio; no cambiar. | Resuelto; conservar el historial de la aclaración. |
 
 ## Riesgos de ejecución
 

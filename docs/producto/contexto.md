@@ -32,6 +32,8 @@ Nombre oficial elegido por el usuario: **Navira**. Identificador técnico previs
 20. Aclaración para resolver CAM-092: el snapshot no debe recalcular rutas para toda la población en todas las fases; al seleccionar un habitante, calcular bajo demanda únicamente su ruta y reflejarla en la ficha y el mapa.
 21. Solicitud del usuario (2026-10-27): en el modo Reto, iniciar a los habitantes en los cuatro sectores nombrados por el enunciado: Tarqui, Los Esteros, Barbasquillo y Jocay. La semilla y los nodos concretos continúan aleatorios.
 22. Solicitud del usuario (2026-10-27): agregar reinicio para la ronda del Reto y concentrar zombies, hordas e incidentes alrededor del centro de Manta porque la vista actual se percibe vacía.
+23. Aclaración del usuario (2026-10-27): «Lo que el jurado va a buscar» lista errores comunes; si la ruta evita solo el nodo de una horda y pasa por un vecino, es un error. La regla oficial aplicable es R-06: bloquea el nodo y todos sus vecinos.
+24. Solicitud del usuario (2026-10-27): completar las pruebas de las tres rondas de cinco minutos y las brechas de carga asociadas.
 
 Documentos de producto y método: [PRD](PRD.md), [TRD](TRD.md), [ODDD](../dominio/ODDD.md), [SDD](../metodo/SDD.md). Criterios por funcionalidad: [especificaciones](../metodo/especificaciones/README.md).
 
