@@ -21,6 +21,7 @@ from navira.domain.modelo import (
     ModoPartida,
     Sobreviviente,
 )
+from navira.domain.perfiles_narrativos import perfil_narrativo_disponible
 from navira.routing.dijkstra import RutasHaciaRefugios
 from navira.domain.snapshot import SnapshotMundo
 
@@ -289,6 +290,11 @@ class UnirseAJuego:
             nodo,
             control=ControlSobreviviente.HUMANO,
             estado=EstadoSobreviviente.ACTIVO,
+            perfil_narrativo=perfil_narrativo_disponible(
+                partida.sobrevivientes,
+                run_id=partida.run_id,
+                sobreviviente_id=sobreviviente_id,
+            ),
         )
         actualizado = replace(
             snapshot,

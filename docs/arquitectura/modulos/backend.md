@@ -13,6 +13,7 @@ Lenguaje, contextos e invariantes: [ODDD](../../dominio/ODDD.md). Requisitos té
 | Módulo | Responsabilidad | No debe hacer | Verificación |
 |---|---|---|---|
 | `domain/` | Grafo, entidades, compromisos de ruta versionados, transitabilidad, mordidas y llegadas | Importar FastAPI/boto3, usar HTTP o decidir permisos web | `test_mapa.py` y `test_modelo.py` validan mapa, estado y contexto de intención. |
+| `domain/perfiles_narrativos.py` | Catálogo ficticio de 500 perfiles y elección determinista sin reemplazo, aislada de RNG del mundo | Contener PII real, participar en planificación/reglas o consumir el RNG de amenazas | Cardinalidad, unicidad, semilla y aislamiento pendientes de prueba T-65. |
 | `routing/` | Dijkstra dirigido de respaldo, pronóstico observable, presión vecinal blanda y selección temporal de rutas/refugios | Modificar mundo, leer dormidos/estado RNG o convertir puntaje de exposición en probabilidad real | `test_dijkstra.py`, `test_ruta_temporal.py`, `test_prediccion_rutas.py`, `test_decidir_paso.py` y T-30/T-55 cubren componentes/criterio de riesgo. |
 | `routing/temporal.py` | Búsqueda acotada `(nodo, turnos)`, espera, exposición de nodo/cruce y presupuesto; separa cruces peligrosos del turno actual de cierres persistentes | Leer RNG/dormidos o llamar a la mordida real; un fallback no hereda afirmaciones de seguridad | `test_ruta_temporal.py` cubre ruta/espera/cierre/horizonte/presupuesto/cruce; CAM-059 integra exposición de cruces y CAM-058 el respaldo Dijkstra. |
 | `routing/prediccion.py` | Estimar ocupación y cruces futuros de amenazas observables y devolver condiciones con supuestos declarados | Recibir `Partida`, fase privada, RNG o dormidos; afirmar movimiento oficial de horda o supervivencia calibrada | `test_prediccion_rutas.py` cubre caminantes, corredores, horda, cruces, validación y rechazo de dormidos. |
@@ -58,6 +59,8 @@ Las credenciales de sesión se validan en el borde y producen una identidad simp
 6. Consultar proyección y exportar resultado.
 
 No crear un servicio por entidad ni extraer microservicios inicialmente. Los comentarios y docstrings explican invariantes, unidades, fase del turno y motivos difíciles de deducir; no repiten cada línea. Un cambio de responsabilidad requiere actualizar este documento y el historial.
+
+CAM-143 agrega `PerfilNarrativo` como valor del dominio, un catálogo compacto de 500 registros generados desde vocabulario ficticio y asignación pseudoaleatoria reproducible, sin reemplazo dentro del run. El asignador usa un digest derivado de la semilla/identidad del run y no consume `random.Random` de la simulación. `crear_contexto_demo` asigna habitantes iniciales en los tres flujos automáticos; `ControlSimuladorDemoLocal` y `UnirseAJuego` asignan perfiles no usados a nuevas incorporaciones. `ConsultarPanel` proyecta el objeto opcional y `api/schemas.py` valida su forma. El panel no recibe más estado privado y el motor de rutas/resolución ignora el perfil.
 
 
 CAM-137 corrige `_nodos_bloqueados_por_horda()` para obtener vecinos de la topología completa, sin filtrar por cierres viales, igual que `domain/visibilidad.py`; añade pruebas del resolutor para la excepción de cierre y de mordidas al despertar/paridad/terminalidad. El conjunto focalizado `test_resolver.py` pasa; la suite completa sigue en ejecución.

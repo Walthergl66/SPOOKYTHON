@@ -14,6 +14,7 @@ from navira.application.simulacion_automatica import EjecutarRondaAutomatica
 from navira.application.snapshots import RepositorioSnapshots
 from navira.domain.mapa import Grafo, Mapa, Refugio, nodos_protegidos_refugios
 from navira.domain.modelo import EstadoPartida, EstadoSobreviviente, EstadoZombie, ModoPartida, Sobreviviente, TipoZombie, Zombie
+from navira.domain.perfiles_narrativos import perfil_narrativo_disponible
 from navira.domain.snapshot import EventoCierre, SnapshotMundo
 
 
@@ -238,7 +239,15 @@ class ControlSimuladorDemoLocal:
                 if tipo == "habitante":
                     if len(partida.sobrevivientes) >= 200:
                         raise ValueError("El mundo alcanzó el límite local de 200 habitantes.")
-                    persona = Sobreviviente(elemento_id, nodo)
+                    persona = Sobreviviente(
+                        elemento_id,
+                        nodo,
+                        perfil_narrativo=perfil_narrativo_disponible(
+                            partida.sobrevivientes,
+                            run_id=partida.run_id,
+                            sobreviviente_id=elemento_id,
+                        ),
+                    )
                     partida_siguiente = replace(partida, sobrevivientes=(*partida.sobrevivientes, persona))
                 elif tipo in {item.value for item in TipoZombie}:
                     if len(partida.zombies) >= 200:

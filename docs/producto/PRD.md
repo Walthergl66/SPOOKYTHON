@@ -60,6 +60,10 @@ Permitir iniciar/continuar un mundo automático local y elegir una herramienta p
 
 Permitir que visitantes anónimos usen Reto, Simulador y Juego de operador en una URL pública. Cada navegador recibe una partida independiente y temporal; iniciar, pausar, cambiar de modo o colocar elementos solo afecta su propia sesión. Los controles del servidor aplican límites de concurrencia, población y frecuencia. Las sesiones y partidas son volátiles: expiran por inactividad o se pierden al reiniciar la instancia. No incluye cuentas permanentes, persistencia de partida ni garantía de disponibilidad. Detalle: [SPEC-011](../metodo/especificaciones/SPEC-011-demo-publica-multisesion.md), [ADR-046](../arquitectura/decisiones/0046-demo-publica-multisesion.md).
 
+### PRD-14 — Identidad narrativa de habitantes
+
+Asignar a cada habitante un perfil ficticio, elegido aleatoriamente al crear el run, y mostrarlo en la ficha del habitante seleccionado. El catálogo inicial contiene 500 perfiles compactos (nombre, edad adulta aproximada, ocupación y descripción breve); no se repiten dentro del mismo run y una semilla fija reproduce la asignación. Los habitantes colocados durante Jugar o incorporados como jugador también reciben un perfil libre del catálogo. La narración no representa personas reales ni cambia movimiento, decisiones, rutas, encuentros, resultados o datos de seguridad. Detalle: [SPEC-001](../metodo/especificaciones/SPEC-001-mundo-simulacion.md), [SPEC-003](../metodo/especificaciones/SPEC-003-panel-vivo.md) y [datos](../dominio/datos.md).
+
 ## Alcance y exclusiones
 
 Comprometido: los requisitos anteriores, implementados de forma incremental. Fuera del mínimo: múltiples partidas concurrentes, multijugador simultáneo, cuentas permanentes, movimiento libre continuo, LLM para decidir pasos y app móvil. Capacidad de refugios y camionetas son extras condicionados, no requisitos activos nuevos.

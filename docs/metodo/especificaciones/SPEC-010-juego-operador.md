@@ -2,9 +2,9 @@
 
 ID: SPEC-010  
 Estado: en-revision  
-Requisitos: PRD-06, PRD-12, TRD-06, TRD-07, TRD-12, TRD-18  
+Requisitos: PRD-06, PRD-12, PRD-14, TRD-06, TRD-07, TRD-12, TRD-18, TRD-20
 Tareas: P4-06  
-Pruebas: T-52, T-53, T-54, T-55, T-56, T-57
+Pruebas: T-52, T-53, T-54, T-55, T-56, T-57, T-65
 Cambio: CAM-136
 Decisión: [ADR-042](../../arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md)
 Evidencia: validación API y recorrido parcial del modo en [CAM-101](../../seguimiento/cambios.md#cam-101-juego-como-modo-de-operador-interactivo); inicio vacío cubierto por [CAM-102](../../seguimiento/cambios.md#cam-102-juego-inicia-con-el-mapa-vacío); cierre de calle por clic en mapa cubierto por [CAM-103](../../seguimiento/cambios.md#cam-103-identificador-estable-al-colocar-incidente); paridad del planificador con incidentes, hordas y zombies cubierta en [CAM-104](../../seguimiento/cambios.md#cam-104-reglas-de-riesgo-y-rutas-compartidas-en-juego). Faltan otros criterios de T-53.
@@ -29,6 +29,7 @@ La superficie local requiere `NAVIRA_LOCAL_DEMO_CONTROL=1`, conexión loopback y
 | CA-010-08 | Mientras Jugar tiene un mundo operador activo o pausado, ofrece «Iniciar nueva partida». La acción reemplaza el run por otro vacío, activa el reloj y limpia la selección local; Pausar/Continuar permanecen disponibles para el mundo actual. | T-56 |
 | CA-010-09 | Al entrar a Jugar desde Reto o Simulador, la interfaz oculta el mundo anterior y presenta el inicio de un mundo operador vacío. Al iniciar, el servidor crea un run nuevo aun si el run anterior estaba activo o pausado; la paleta solo se habilita sobre el nuevo mundo operador. | T-57 |
 | CA-010-10 | «Detener mundo» termina el turno ya iniciado, cancela el reloj, limpia el run publicado y devuelve la app a su entrada inicial; «Iniciar nueva partida» conserva la función de reemplazar el mundo operador por otro vacío. | T-56 |
+| CA-010-11 | Al colocar un habitante, el servidor le asigna un perfil narrativo no usado por ningún habitante del run; la elección no altera ubicación, reloj, rutas ni resolución. | T-65 |
 
 ## Modelo y fronteras
 

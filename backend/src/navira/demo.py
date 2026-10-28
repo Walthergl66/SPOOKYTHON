@@ -33,6 +33,7 @@ from navira.domain.modelo import (
     Partida,
     Sobreviviente,
 )
+from navira.domain.perfiles_narrativos import asignar_perfiles_narrativos
 from navira.simulation.coordinador import (
     crear_snapshot_inicial,
     preparar_turno_versionado,
@@ -100,7 +101,7 @@ def crear_contexto_demo(
     """Crea una partida con estado inicial aleatorio y expone dependencias.
 
     Sin semilla explícita, obtiene una semilla de la entropía del sistema.
-    Los perfiles son fixtures; no representan distribuciones oficiales.
+    Los perfiles narrativos son ficticios y no representan distribuciones oficiales.
     """
 
     cantidad_sobrevivientes_valida = (
@@ -204,15 +205,19 @@ def crear_contexto_demo(
         else crear_eventos_ciudad(grafo, intensidad, rng) if eventos_ciudad else ()
     )
     run_id = f"navira-demo-{uuid.uuid4().hex}"
+    sobrevivientes_iniciales = asignar_perfiles_narrativos(
+        (
+            Sobreviviente(f"S-DEMO-{indice:03d}", nodo)
+            for indice, nodo in enumerate(posiciones, start=1)
+        ),
+        semilla_real,
+    )
     partida = Partida(
         run_id=run_id,
         modo=modo,
         escenario=(f"reto-ronda-{ronda_reto}-{escenario}" if ronda_reto is not None else f"demo-sintetico-{escenario}"),
         map_version=grafo.mapa.version,
-        sobrevivientes=tuple(
-            Sobreviviente(f"S-DEMO-{indice:03d}", nodo)
-            for indice, nodo in enumerate(posiciones, start=1)
-        ),
+        sobrevivientes=sobrevivientes_iniciales,
         zombies=zombies,
         estado=EstadoPartida.ACTIVA,
         turno=0,

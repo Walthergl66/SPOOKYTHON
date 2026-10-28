@@ -16,13 +16,21 @@ export interface PanelState {
   snapshotVersion?: number
   zombies?: Array<{ id: string; tipo: string; nodo: string }>
   movimientosZombies?: Array<{ id: string; trayecto: string[] }>
-  sobrevivientes?: Array<{ id: string; nodo: string; estado: string; control: string }>
+  sobrevivientes?: Array<{ id: string; nodo: string; estado: string; control: string; perfilNarrativo?: NarrativeProfile | null }>
   rutasPrevistas?: Array<{ sobrevivienteId: string; trayecto: string[] }>
   aristasBloqueadas?: string[]
   segmentosBloqueados?: string[]
   nodosHorda?: string[]
   eventosCiudad?: Array<{ id: string; turno: number; causa: string; segmentoId?: string; lat?: number; lng?: number }>
   metricas?: { sobrevivientesActivos: number; mordidos: number; mordidosUltimoTurno: number | null; evacuados: number; zombiesVisibles: number }
+}
+
+export interface NarrativeProfile {
+  id: string
+  nombre: string
+  edad: number
+  ocupacion: string
+  descripcion: string
 }
 
 export interface PanelSnapshot {
@@ -123,7 +131,25 @@ export function parsePanelState(value: unknown): PanelState {
   })
   const sobrevivientes = value.sobrevivientes.map((item) => {
     if (!isRecord(item) || typeof item.id !== 'string' || typeof item.nodo !== 'string' || typeof item.estado !== 'string' || typeof item.control !== 'string') throw new Error('El servicio devolvió un sobreviviente con un formato no válido.')
-    return { id: item.id, nodo: item.nodo, estado: item.estado, control: item.control }
+    let perfilNarrativo: NarrativeProfile | null | undefined
+    if (item.perfilNarrativo === null) {
+      perfilNarrativo = null
+    } else if (item.perfilNarrativo !== undefined) {
+      const profile = item.perfilNarrativo
+      if (!isRecord(profile) || typeof profile.id !== 'string' || typeof profile.nombre !== 'string'
+        || typeof profile.edad !== 'number' || !Number.isInteger(profile.edad) || profile.edad < 18 || profile.edad > 90
+        || typeof profile.ocupacion !== 'string' || typeof profile.descripcion !== 'string') {
+        throw new Error('El servicio devolvió un perfil narrativo con un formato no válido.')
+      }
+      perfilNarrativo = {
+        id: profile.id,
+        nombre: profile.nombre,
+        edad: profile.edad,
+        ocupacion: profile.ocupacion,
+        descripcion: profile.descripcion,
+      }
+    }
+    return { id: item.id, nodo: item.nodo, estado: item.estado, control: item.control, ...(perfilNarrativo !== undefined ? { perfilNarrativo } : {}) }
   })
   const movimientosZombies = value.movimientosZombies.map((item) => {
     if (!isRecord(item) || typeof item.id !== 'string' || !Array.isArray(item.trayecto) || !item.trayecto.every((node) => typeof node === 'string')) throw new Error('El servicio devolvió un movimiento zombie con un formato no válido.')

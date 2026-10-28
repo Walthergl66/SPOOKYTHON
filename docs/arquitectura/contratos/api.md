@@ -128,8 +128,10 @@ Rechazar órdenes tardías o de otra partida sin trasladarlas al turno siguiente
   "zombies":[{"id":"Z-01","tipo":"corredor","nodo":"N-0120"}],
   "aristasBloqueadas":["E-034"],
   "movimientosZombies":[{"id":"Z-01","trayecto":["N-0118","N-0119","N-0120"]}],
-  "sobrevivientes":[{"id":"S-0089","nodo":"N-0117","estado":"activo"}]
+  "sobrevivientes":[{"id":"S-0089","nodo":"N-0117","estado":"activo","perfilNarrativo":{"id":"NAV-P0001","nombre":"Ana Acosta","edad":29,"ocupacion":"comerciante","descripcion":"Perfil ficticio de ambientación."}}]
 }
 ```
 
 Todos los IDs del ejemplo son ilustrativos. `movimientosZombies` amplía el estado mínimo para resolver cruces; nunca publica trayectos de dormidos que sigan ocultos. En implementación, fijar esquemas de solicitudes, respuestas y errores mediante OpenAPI y pruebas, sin romper el contrato obligatorio.
+
+`sobrevivientes[].perfilNarrativo` es opcional para compatibilidad con snapshots antiguos y puede ser `null`. Si existe, contiene solo `id`, `nombre`, `edad`, `ocupacion` y `descripcion` ficticios. El catálogo actual se genera de forma determinista a partir de vocabulario local y contiene 500 perfiles; una partida selecciona hasta 200 distintos con una semilla derivada por separado para no alterar la aleatoriedad del mundo. El panel valida el objeto antes de renderizarlo. No usarlo como input de rutas, decisiones o puntuación.

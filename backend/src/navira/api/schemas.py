@@ -201,6 +201,16 @@ class MovimientoZombiePanelSchema(BaseModel):
     trayecto: list[str]
 
 
+class PerfilNarrativoPanelSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    nombre: str
+    edad: int = Field(ge=18, le=90)
+    ocupacion: str
+    descripcion: str
+
+
 class SobrevivientePanelSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -208,6 +218,7 @@ class SobrevivientePanelSchema(BaseModel):
     nodo: str
     estado: str
     control: str
+    perfilNarrativo: PerfilNarrativoPanelSchema | None = None
 
 
 class RutaPrevistaPanelSchema(BaseModel):

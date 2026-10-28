@@ -2,10 +2,10 @@
 
 ID: SPEC-001
 Estado: implementada
-Requisitos: PRD-01, PRD-02, PRD-11, TRD-03, TRD-04, TRD-05, TRD-09, TRD-11, TRD-12, TRD-16
+Requisitos: PRD-01, PRD-02, PRD-11, PRD-14, TRD-03, TRD-04, TRD-05, TRD-09, TRD-11, TRD-12, TRD-16, TRD-20
 Tareas: P1-01, P1-02, P1-03, P1-04, P1-05
-Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18, T-24, T-28, T-29, T-40, T-42, T-43, T-44
-Cambio: CAM-082
+Pruebas: T-01, T-02, T-03, T-04, T-05, T-06, T-07, T-09, T-10, T-17, T-18, T-24, T-28, T-29, T-40, T-42, T-43, T-44, T-65
+Cambio: CAM-143
 Evidencia: parcial; ver reporte de generador espacial en resultados.
 
 ## Objetivo y alcance
@@ -29,6 +29,7 @@ Ejecutar un único mundo de Manta con reglas comunes para humano/automáticos, c
 | CA-001-11 | La demo local sortea al iniciar de 1 a 10 segmentos distintos, independientemente de la intensidad zombie, y agenda un cierre cada tres turnos desde el 2. El coordinador lo aplica antes de decisiones; las rutas recomendadas en ese snapshot evitan todos los segmentos cerrados. El panel publica solo los eventos aplicados, con punto geográfico para alerta/marcador amarillo; nunca revela el calendario futuro. Los generadores/evaluaciones directos conservan su configuración explícita. No se simulan ni atribuyen amenazas sísmicas/tsunami. | T-29, T-43, T-44 |
 | CA-001-12 | En partidas Manta ningún zombie aparece ni ejecuta un tramo hacia el nodo refugio o una intersección enlazada directamente; el conjunto no depende de dirección de calle ni cierres. Una entidad ya dentro solo puede permanecer o salir. Mapas sintéticos no se alteran. | T-40 |
 | CA-001-13 | Cada resolución conserva de forma única quién fue mordido; el panel separa el acumulado de estados terminales de las mordidas de la última resolución confirmada. | T-42 |
+| CA-001-14 | Todo habitante generado en Simulador/Reto y toda incorporación humana recibe un perfil narrativo ficticio; en un run no se repiten perfiles, y la misma semilla reproduce la selección. La selección usa RNG aislado y no cambia ninguna variable del mundo. La paleta de Jugar asigna uno libre al añadir habitantes. | T-65 |
 
 ## Plan y módulos
 
@@ -39,3 +40,5 @@ P1-01 valida mapa/fixture; P1-02 define entidades e intenciones; P1-03 implement
 Probar nodos sin salida, segmentos paralelos, bloqueo de puentes, múltiples mordidas, snapshot incompleto y repetición de eventos. P-01 a P-05 y P-07 a P-09 siguen pendientes: pruebas deben explicitar configuración provisional. Ejecutar T indicadas antes de cerrar; no hay resultados actuales. Validar también tiempo completo con SPEC-005.
 
 P1-01 sigue parcial en cuanto a validación territorial y reglas oficiales. CAM-021 creó el fixture OSM inicial (300 nodos/599 sentidos); CAM-073 amplió el fixture fuente a 44.590 nodos y 94.146 sentidos en una envolvente rectangular con margen del cantón; CAM-077 deriva para partidas Manta un subgrafo de 35.518/75.548 dentro de la ventana urbana solicitada. CAM-025 prueba integración del motor; CAM-073 comprueba integridad/cobertura fuente, CAM-077 el recorte jugable y CAM-078 la exclusión zombie topológica de una cuadra. No se certifican todas las calles, rutas peatonales, el límite municipal ni seguridad real. Seguridad ante sismos no evaluada (P-14). P1-02 añade entidades, modos e intenciones con siete pruebas. P1-03 contiene un resolutor puro de turno con once pruebas (CAM-009); las reglas siguen parcialmente provisionales. P1-04 añade coordinación por fases, cierres programados, snapshots versionados, plazo monotónico, CAS en memoria y CLI local JSONL. CAM-018 agregó perfiles reducidos; CAM-022 documentó el requisito estocástico; CAM-023 aleatoriza estado inicial de demo y usa semilla impredecible por defecto con replay explícito; CAM-024 prueba replay multi-turno y estabilidad de decisión por snapshot. P1-05 queda parcial: composición sintética fija, corredores deterministas, hordas estáticas, P-07/P-09, durabilidad y evaluación integral pendientes. Reloj continuo y transporte/publicación siguen pendientes; la SPEC no está verificada.
+
+CAM-143 añade identidades narrativas no funcionales al estado del sobreviviente, con selección reproducible independiente del RNG del mundo. La ficha observable se define en [SPEC-003](SPEC-003-panel-vivo.md); el perfil no cambia CA-001-01..13 ni la regla de movimiento.

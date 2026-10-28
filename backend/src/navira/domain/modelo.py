@@ -40,6 +40,23 @@ class EstadoSobreviviente(StrEnum):
     EVACUADO = "evacuado"
 
 
+@dataclass(frozen=True, slots=True)
+class PerfilNarrativo:
+    """Identidad ficticia de presentación, sin efectos sobre reglas del mundo."""
+
+    id: str
+    nombre: str
+    edad: int
+    ocupacion: str
+    descripcion: str
+
+    def __post_init__(self) -> None:
+        if not all(valor.strip() for valor in (self.id, self.nombre, self.ocupacion, self.descripcion)):
+            raise ValueError("El perfil narrativo requiere campos de texto no vacíos.")
+        if isinstance(self.edad, bool) or not isinstance(self.edad, int) or not 18 <= self.edad <= 90:
+            raise ValueError("La edad narrativa debe estar entre 18 y 90 años.")
+
+
 class TipoZombie(StrEnum):
     CAMINANTE = "caminante"
     CORREDOR = "corredor"
@@ -61,6 +78,7 @@ class Sobreviviente:
     control: ControlSobreviviente = ControlSobreviviente.AUTOMATICO
     estado: EstadoSobreviviente = EstadoSobreviviente.ACTIVO
     refugio_objetivo: str | None = None
+    perfil_narrativo: PerfilNarrativo | None = None
 
     def __post_init__(self) -> None:
         if not self.id.strip() or not self.nodo.strip():
@@ -71,6 +89,8 @@ class Sobreviviente:
             raise ValueError("Estado de sobreviviente no reconocido.")
         if self.refugio_objetivo is not None and not self.refugio_objetivo.strip():
             raise ValueError("El refugio objetivo no puede ser vacío.")
+        if self.perfil_narrativo is not None and not isinstance(self.perfil_narrativo, PerfilNarrativo):
+            raise ValueError("El perfil narrativo no es válido.")
 
 
 @dataclass(frozen=True, slots=True)

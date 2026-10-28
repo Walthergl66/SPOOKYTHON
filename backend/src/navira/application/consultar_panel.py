@@ -91,6 +91,17 @@ class ConsultarPanel:
                 "nodo": personaje.nodo,
                 "estado": personaje.estado.value,
                 "control": personaje.control.value,
+                "perfilNarrativo": (
+                    {
+                        "id": personaje.perfil_narrativo.id,
+                        "nombre": personaje.perfil_narrativo.nombre,
+                        "edad": personaje.perfil_narrativo.edad,
+                        "ocupacion": personaje.perfil_narrativo.ocupacion,
+                        "descripcion": personaje.perfil_narrativo.descripcion,
+                    }
+                    if personaje.perfil_narrativo is not None
+                    else None
+                ),
             }
             for personaje in partida.sobrevivientes
         )

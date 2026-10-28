@@ -80,6 +80,10 @@ Las colocaciones requieren opt-in local/loopback o el perfil demo público con s
 
 En el perfil público, el servidor asigna un identificador aleatorio en cookie `HttpOnly`, `Secure` en HTTPS y `SameSite=Strict`; conserva únicamente el hash del token. Cada token resuelve a un único control/mundo; ninguna consulta, mutación o WebSocket puede leer o modificar otro. Las mutaciones exigen `Origin` igual a `Host`; `/paso` conserva su API key. El registro limita sesiones concurrentes y cada una expira por inactividad; una nueva sesión no recupera el mundo anterior. El estado no es durable y se elimina al reiniciar el proceso. Detalle: [SPEC-011](../metodo/especificaciones/SPEC-011-demo-publica-multisesion.md) y [ADR-046](../arquitectura/decisiones/0046-demo-publica-multisesion.md).
 
+### TRD-20 — Catálogo y proyección de perfiles narrativos
+
+El dominio conserva un perfil narrativo opcional e inmutable por sobreviviente. El catálogo local contiene exactamente 500 perfiles ficticios identificados de forma estable; cada run asigna perfiles distintos sin reemplazo hasta su población máxima de 200. Una semilla reproducible produce la misma asignación y el RNG narrativo se deriva de manera independiente para no consumir ni alterar el RNG del mundo. Un habitante añadido después recibe un perfil que no está usado en ese run. El panel expone los campos acotados `id`, `nombre`, `edad`, `ocupacion` y `descripcion`; la UI valida el contrato antes de mostrarlo. No incluir información sensible, identidades reales, direcciones precisas ni usar el perfil para decisiones del simulador. Detalle: [datos](../dominio/datos.md) y [SPEC-003](../metodo/especificaciones/SPEC-003-panel-vivo.md).
+
 ## Riesgos y aceptación
 
 Reglas ambiguas, región, TLS y sesiones siguen en [pendientes](../seguimiento/pendientes.md); ningún documento nuevo las cierra por inferencia. Verificar con las especificaciones y pruebas correspondientes antes de marcar implementado/verificado. Una discrepancia con código se investiga, no se resuelve adaptando silenciosamente los requisitos al fallo.

@@ -30,6 +30,11 @@ export function SurvivorRoutePanel({ state, map, selectedSurvivorId, onSelectSur
           <div><span>Siguiente paso</span><strong>{details?.nextNode ?? (details?.destination ? 'En refugio' : 'Sin ruta')}</strong></div>
           <div><span>Destino</span><strong>{details?.destination ?? 'Sin ruta disponible'}</strong></div>
         </div>
+        {survivor.perfilNarrativo ? <article className="survivor-narrative-profile" aria-label="Perfil narrativo ficticio">
+          <span className="panel-overline">PERFIL NARRATIVO · FICTICIO</span>
+          <div><strong>{survivor.perfilNarrativo.nombre}</strong><span>{survivor.perfilNarrativo.edad} años · {survivor.perfilNarrativo.ocupacion}</span></div>
+          <p>{survivor.perfilNarrativo.descripcion}</p>
+        </article> : null}
         {path.length > 0 ? <div className="survivor-route-path">
           <span>Ruta recomendada · {Math.max(0, path.length - 1)} pasos</span>
           <p>{compactPath(path).map((node, index) => <span key={`${node}-${index}`}>{index > 0 ? <b aria-hidden="true">›</b> : null}{node}</span>)}</p>

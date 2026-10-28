@@ -17,6 +17,7 @@ Representar reglas de Navira con conceptos del juego, independientes de FastAPI 
 | Observación | Proyección permitida del estado; no el mundo privado completo. |
 | Evacuado | Sobreviviente cuya llegada válida fue confirmada. |
 | Reserva | Cupo provisional solo si se implementa el extra de capacidad. |
+| Perfil narrativo | Valor ficticio inmutable usado solo por presentación; no participa en reglas, planificación ni identidad de personas reales. |
 
 ## Límites lógicos
 
@@ -35,6 +36,7 @@ Son límites dentro de un monolito modular, no servicios nuevos. Las identidades
 - Entidades con identidad: Partida, Zombie, Sobreviviente, Refugio y Orden humana.
 - Valor de aplicación: `SesionJugador` vincula un token opaco verificado a una partida y un sobreviviente; no se envía la sesión como entidad mutable al frontend.
 - Valores inmutables propuestos: NodeId, RunId, TurnNumber, SnapshotVersion, distancia en metros, velocidad y segmento dirigido. Validar unidades y valores antes de entrar al núcleo.
+- `PerfilNarrativo` es un valor opcional de `Sobreviviente`. La fábrica de demo lo asigna una vez al crear el run; la selección usa un flujo pseudoaleatorio derivado aparte de la semilla del mundo. Incorporaciones posteriores eligen un perfil libre; el panel recibe solo los campos narrativos necesarios. Nunca alimentar este valor a movimiento, rutas o resolución.
 - Partida es la frontera lógica de consistencia del turno; el coordinador autoriza transiciones. No obliga a cargar/guardar todo el mundo como un único item de base de datos.
 - Registro de órdenes es otra frontera de concurrencia: cada reemplazo tiene secuencia y versión; solo la sesión propietaria puede solicitarlo.
 - Intervención de operador no crea un agregado de mundo paralelo: modifica `Partida`/`SnapshotMundo` inmutables usando el grafo versionado y una escritura CAS. Reto queda fuera de este caso de uso.

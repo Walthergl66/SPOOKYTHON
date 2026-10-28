@@ -1,3 +1,18 @@
+## CAM-143 — Perfiles narrativos ficticios para habitantes
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: solicitud del usuario de dar a cada habitante una descripción ficticia aleatoria al iniciar Simulador, Reto o Jugar; la recomendación acordada fue 500 perfiles solo narrativos.
+- Especificación y trazabilidad: PRD-14/TRD-20; SPEC-001 CA-001-14, SPEC-003 CA-003-07, SPEC-004 CA-004-08, SPEC-010 CA-010-11; P4-09; T-65.
+- Motivo: distinguir a los habitantes visualmente sin usar su biografía para cambiar decisiones, rutas, encuentros o resultados.
+- Alcance implementado: `PerfilNarrativo` inmutable opcional en `Sobreviviente`; catálogo compacto de 500 registros ficticios estables; asignación sin reemplazo y reproducible a los habitantes iniciales usando un digest derivado de semilla aparte del RNG del mundo; perfil libre al colocar habitante en Jugar o cuando aparece el personaje humano; proyección HTTP opcional y validada; ficha lateral muestra nombre, edad, ocupación y descripción del habitante seleccionado.
+- Archivos: `backend/src/navira/domain/modelo.py`, nuevo `backend/src/navira/domain/perfiles_narrativos.py`, `backend/src/navira/demo.py`, `backend/src/navira/application/control_simulador_demo.py`, `backend/src/navira/application/juego.py`, `backend/src/navira/application/consultar_panel.py`, `backend/src/navira/api/schemas.py`, `frontend/src/domain/panel.ts`, `frontend/src/features/map/SurvivorRoutePanel.tsx`, `frontend/src/styles.css`; PRD/TRD, ODDD/datos, SPEC-001/003/004/010, contratos, módulos, pruebas, trazabilidad, índice ADR, plan y estado.
+- Decisión: ADR-052 documenta catálogo/semilla independientes y el alcance ficticio.
+- Validación ejecutada: `cd frontend && npm run build` correcto (advertencia de bundle >500 kB de MapLibre ya conocida); `PYTHONPATH=src python3 -m compileall -q src/navira` correcto; `python3 backend/scripts/check_docs.py` correcto (147 Markdown/149 archivos); `python3 backend/scripts/check_sdd.py` correcto (11 SPEC con trazabilidad estructural); `git diff --check` correcto. Reinicio local backend/Vite: `/salud` HTTP 200, `/panel/estado` HTTP 200 con `sin_partida`, frontend HTTP 200.
+- Validación no ejecutada: T-65 backend/frontend y recorrido visual; no se agregaron ni ejecutaron suites de aplicación en esta tarea.
+- Límites: los perfiles son ficción genérica de ambientación, no distribución demográfica ni personas de Manta; máximo 200 habitantes por run permite asignación única; cambiar el catálogo solo afecta a runs nuevos. El mundo previo del proceso no se modifica hasta que se reinicie la aplicación.
+- Siguiente acción: revisar visualmente la ficha con un habitante seleccionado y ejecutar pruebas T-65 dedicadas. No marcar T-65 verificada sin pruebas y smoke visual.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-142 — Mostrar nombres de calles en la cartografía
 
 - Fecha: 2026-10-28, America/Guayaquil.

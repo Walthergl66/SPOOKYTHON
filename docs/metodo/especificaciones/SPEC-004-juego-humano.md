@@ -2,9 +2,9 @@
 
 ID: SPEC-004
 Estado: implementada
-Requisitos: PRD-05, PRD-06, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12
+Requisitos: PRD-05, PRD-06, PRD-14, TRD-03, TRD-04, TRD-05, TRD-06, TRD-09, TRD-12, TRD-20
 Tareas: P4B-01, P4B-02, P4B-03, P5-04
-Pruebas: T-12, T-13, T-14, T-15, T-16, T-17, T-19, T-25
+Pruebas: T-12, T-13, T-14, T-15, T-16, T-17, T-19, T-25, T-65
 Cambio: CAM-047
 Evidencia: parcial en [CAM-036](../../seguimiento/cambios.md#cam-036-sesión-propietaria-y-aparición-humana), [CAM-037](../../seguimiento/cambios.md#cam-037-órdenes-humanas-idempotentes), [CAM-038](../../seguimiento/cambios.md#cam-038-controles-humanos-en-frontend), [CAM-039](../../seguimiento/cambios.md#cam-039-integración-local-del-ciclo-de-juego), [CAM-040](../../seguimiento/cambios.md#cam-040-reloj-y-juego-demo-local), [CAM-041](../../seguimiento/cambios.md#cam-041-contador-visual-del-deadline), [CAM-042](../../seguimiento/cambios.md#cam-042-sugerencia-de-radio-en-controles-humanos), [CAM-043](../../seguimiento/cambios.md#cam-043-recuperar-la-sesión-humana-al-reconectar), [CAM-045](../../seguimiento/cambios.md#cam-045-accesibilidad-de-navegación-y-tiempo-de-juego), [CAM-046](../../seguimiento/cambios.md#cam-046-expiración-local-de-sesión-humana) y [CAM-047](../../seguimiento/cambios.md#cam-047-recorrido-manual-de-teclado-parcial).
 
@@ -23,6 +23,7 @@ Un jugador entra a una partida habilitada, aparece aleatoriamente y decide cómo
 | CA-004-05 | Humano/automático comparten resolutor; no se admiten humanos en pruebas oficiales; radio solo sugiere con información permitida. | T-16, T-17 |
 | CA-004-06 | Elegir vecino/espera y entender confirmación/resultado funciona con mouse y teclado y cuenta atrás del servidor. | T-19 |
 | CA-004-07 | En demo, la sesión expira tras el TTL deslizante configurado; las rutas notifican 410 y el personaje/cupo no pasa a otra cookie. | T-25 |
+| CA-004-08 | El personaje humano recibe un perfil narrativo libre del catálogo del run al confirmarse su aparición; no repite el perfil de otro sobreviviente ni cambia las reglas o la decisión humana. | T-65 |
 
 ## Plan, límites y verificación
 

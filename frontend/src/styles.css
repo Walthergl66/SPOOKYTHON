@@ -133,6 +133,11 @@ h1 em { color: var(--sea-bright); font-style: normal; }
 .survivor-route-facts div { min-width: 0; display: grid; gap: 4px; padding: 8px 10px; border: 1px solid rgba(190, 207, 228, .1); background: rgba(29, 42, 59, .68); }
 .survivor-route-facts span, .survivor-route-path > span { color: var(--dim); font: 8px var(--mono); letter-spacing: .07em; text-transform: uppercase; }
 .survivor-route-facts strong { overflow: hidden; color: #e5edf8; font: 500 11px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.survivor-narrative-profile { display: grid; gap: 7px; padding: 10px 11px; border: 1px solid rgba(54, 215, 188, .16); background: rgba(24, 49, 56, .35); }
+.survivor-narrative-profile > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.survivor-narrative-profile strong { color: #e5edf8; font: 600 12px 'Manrope', sans-serif; }
+.survivor-narrative-profile > div span, .survivor-narrative-profile p { color: var(--muted); font-size: 10px; line-height: 1.5; }
+.survivor-narrative-profile p { margin: 0; }
 .survivor-route-path { display: grid; gap: 7px; }
 .survivor-route-path p { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 0; }
 .survivor-route-path p span { display: inline-flex; align-items: center; gap: 5px; padding: 5px 7px; border: 1px solid rgba(54, 215, 188, .2); color: #b9f1e5; background: rgba(34, 129, 116, .12); font: 9px var(--mono); }
