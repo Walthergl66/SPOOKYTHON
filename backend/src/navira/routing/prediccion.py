@@ -52,6 +52,51 @@ class ResultadoPronostico:
     supuestos: tuple[str, ...]
 
 
+def exposicion_vecinal_zombie(
+    grafo: Grafo,
+    exposicion_nodo: Mapping[str, float],
+    *,
+    aristas_cerradas: frozenset[str] = frozenset(),
+    segmentos_cerrados: frozenset[str] = frozenset(),
+    factor: float = 0.4,
+) -> dict[str, float]:
+    """Propaga presión estimada a un salto como preferencia blanda de ruta.
+
+    No bloquea el nodo ni declara mordida: una ruta puede pasar junto a un
+    zombie si los cierres y bloqueos eliminan las alternativas. Solo se
+    consideran vecinos conectados por calles actualmente abiertas.
+    """
+    if (
+        isinstance(factor, bool)
+        or not isinstance(factor, (int, float))
+        or not 0 <= factor <= 1
+    ):
+        raise ValueError("El factor de exposición vecinal debe estar entre 0 y 1.")
+    presion_vecinal: dict[str, float] = {}
+    entrantes = grafo.entrantes_habilitadas(aristas_cerradas, segmentos_cerrados)
+    for nodo, exposicion in exposicion_nodo.items():
+        presion = exposicion * factor
+        if presion <= 0:
+            continue
+        vecinos = {
+            *(calle.destino for calle in grafo.calles_desde(
+                nodo, aristas_cerradas=aristas_cerradas, segmentos_cerrados=segmentos_cerrados
+            )),
+            *entrantes.get(nodo, ()),
+        }
+        for vecino in vecinos:
+            presion_vecinal[vecino] = presion_vecinal.get(vecino, 0.0) + presion
+    nodos_expuestos = set(exposicion_nodo) | set(presion_vecinal)
+    return {
+        nodo: round(
+            min(1.0, exposicion_nodo.get(nodo, 0.0) + presion_vecinal.get(nodo, 0.0)),
+            12,
+        )
+        for nodo in nodos_expuestos
+        if exposicion_nodo.get(nodo, 0.0) + presion_vecinal.get(nodo, 0.0) > 0
+    }
+
+
 def pronosticar_zombies_visibles(
     grafo: Grafo,
     zombies: tuple[ZombieObservable, ...],
@@ -102,16 +147,8 @@ def pronosticar_zombies_visibles(
         if zombie.tipo is TipoZombie.HORDA:
             supuestos.add("horda_estatica_provisional")
             footprint = {zombie.nodo}
-            footprint.update(
-                calle.destino for calle in grafo.calles_desde(
-                    zombie.nodo,
-                    aristas_cerradas=aristas_cerradas,
-                    segmentos_cerrados=segmentos_cerrados,
-                )
-            )
-            footprint.update(
-                grafo.entrantes_habilitadas(aristas_cerradas, segmentos_cerrados)[zombie.nodo]
-            )
+            footprint.update(calle.destino for calle in grafo.salientes(zombie.nodo))
+            footprint.update(grafo.entrantes_habilitadas(frozenset(), frozenset())[zombie.nodo])
             for bloqueados in bloqueos:
                 bloqueados.update(footprint)
             continue

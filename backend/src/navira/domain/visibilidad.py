@@ -13,7 +13,8 @@ def peligros_visibles(
     """Proyecta ocupación/horda y cruces visibles para decisión y panel.
 
     Solo considera zombies activos para no filtrar dormidos ocultos. Las hordas
-    también bloquean vecinos entrantes/salientes según cierres vigentes.
+    también bloquean todos sus vecinos topológicos, incluso si el tramo que
+    los conecta está cerrado por un incidente.
     """
 
     partida = snapshot.partida
@@ -45,17 +46,8 @@ def nodos_horda_visibles(snapshot: SnapshotMundo, grafo: Grafo) -> frozenset[str
         if zombie.estado is not EstadoZombie.ACTIVO or zombie.tipo is not TipoZombie.HORDA:
             continue
         bloqueados.add(zombie.nodo)
-        bloqueados.update(
-            calle.destino
-            for calle in grafo.calles_desde(
-                zombie.nodo,
-                aristas_cerradas=snapshot.aristas_cerradas,
-                segmentos_cerrados=snapshot.segmentos_cerrados,
-            )
-        )
-        bloqueados.update(
-            grafo.entrantes_habilitadas(
-                snapshot.aristas_cerradas, snapshot.segmentos_cerrados
-            )[zombie.nodo]
-        )
+        bloqueados.update(calle.destino for calle in grafo.salientes(zombie.nodo))
+        # La regla de horda es topológica: los cierres de incidentes no reducen
+        # el perímetro que bloquea. La tabla entrante vacía se calcula una vez.
+        bloqueados.update(grafo.entrantes_habilitadas(frozenset(), frozenset())[zombie.nodo])
     return frozenset(bloqueados)

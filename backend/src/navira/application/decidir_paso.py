@@ -20,6 +20,7 @@ from navira.routing.dijkstra import PerfilCostos, Ruta, RutasHaciaRefugios, sele
 from navira.routing.prediccion import (
     SobrevivienteObservable,
     ZombieObservable,
+    exposicion_vecinal_zombie,
     pronosticar_zombies_visibles,
 )
 from navira.routing.temporal import CondicionTurno, buscar_ruta_temporal
@@ -238,6 +239,17 @@ class DecidirPaso:
         actual = CondicionTurno(
             nodos_bloqueados=frozenset(nodos), aristas_cerradas=snapshot.aristas_cerradas,
             segmentos_cerrados=snapshot.segmentos_cerrados,
+            exposicion_nodo=exposicion_vecinal_zombie(
+                grafo,
+                {
+                    zombie.nodo: 1.0
+                    for zombie in snapshot.partida.zombies
+                    if zombie.estado is EstadoZombie.ACTIVO
+                    and zombie.tipo not in {TipoZombie.DORMIDO, TipoZombie.HORDA}
+                },
+                aristas_cerradas=snapshot.aristas_cerradas,
+                segmentos_cerrados=snapshot.segmentos_cerrados,
+            ),
             aristas_cruce_peligroso=cruces,
         )
         actual, futuras = self._pronostico_compartido(snapshot, grafo, actual, zombies, observables)
@@ -371,7 +383,7 @@ class DecidirPaso:
         ):
             return None
         bloqueados, cruces = peligros_visibles(snapshot, grafo)
-        if compromiso.nodos[1] in bloqueados:
+        if set(compromiso.nodos[1:]) & bloqueados:
             return None
         for indice, (origen, destino) in enumerate(zip(compromiso.nodos, compromiso.nodos[1:])):
             cierres = snapshot.aristas_cerradas | (cruces if indice == 0 else frozenset())
@@ -474,6 +486,17 @@ class DecidirPaso:
             nodos_bloqueados=frozenset(nodos_bloqueados),
             aristas_cerradas=aristas_cerradas,
             segmentos_cerrados=snapshot.segmentos_cerrados,
+            exposicion_nodo=exposicion_vecinal_zombie(
+                grafo,
+                {
+                    zombie.nodo: 1.0
+                    for zombie in snapshot.partida.zombies
+                    if zombie.estado is EstadoZombie.ACTIVO
+                    and zombie.tipo not in {TipoZombie.DORMIDO, TipoZombie.HORDA}
+                },
+                aristas_cerradas=aristas_cerradas,
+                segmentos_cerrados=snapshot.segmentos_cerrados,
+            ),
             aristas_cruce_peligroso=cruces_peligrosos,
         )
         zombies = tuple(

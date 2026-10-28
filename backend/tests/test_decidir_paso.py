@@ -25,6 +25,8 @@ from navira.domain.modelo import (
     TipoZombie,
     Zombie,
 )
+from navira.domain.snapshot import CompromisoRuta
+from navira.domain.visibilidad import nodos_horda_visibles
 from navira.simulation.coordinador import MovimientoZombie, SnapshotMundo
 from navira.routing.temporal import CondicionTurno
 
@@ -102,6 +104,28 @@ class DecidirPasoTests(unittest.TestCase):
         resultado_cruce = self.servicio(movimientos=(movimiento,)).ejecutar(self.solicitud())
         self.assertEqual(resultado_horda.siguiente_nodo, "N-0001")
         self.assertEqual(resultado_cruce.siguiente_nodo, "N-0001")
+
+    def test_horda_conserva_todos_sus_vecinos_aunque_sus_calles_estan_cerradas(self) -> None:
+        partida = Partida(
+            run_id="run-horda-cierres",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=self.grafo.mapa.version,
+            sobrevivientes=self.partida.sobrevivientes,
+            zombies=(Zombie("Z-H", TipoZombie.HORDA, "N-0002"),),
+            estado=EstadoPartida.ACTIVA,
+            turno=4,
+            fase=FaseTurno.DECISIONES,
+        )
+        snapshot = SnapshotMundo(
+            partida,
+            version=1,
+            segmentos_cerrados=frozenset({"S-0001", "S-0002"}),
+        )
+
+        bloqueados = nodos_horda_visibles(snapshot, self.grafo)
+
+        self.assertEqual(bloqueados, frozenset({"N-0001", "N-0002", "N-0003"}))
 
     def test_estado_turno_fase_posicion_y_personaje_se_validan(self) -> None:
         servicio = self.servicio()
@@ -311,7 +335,7 @@ class DecidirPasoTests(unittest.TestCase):
         self.assertEqual(segunda, ("N-0001", "N-0003"))
         self.assertEqual(seleccionar.call_count, 2)
 
-    def test_sin_ruta_completa_escapa_de_zombie_si_hay_vecino_libre(self) -> None:
+    def test_sin_ruta_completa_espera_si_la_unica_salida_esta_junto_a_zombie(self) -> None:
         grafo = Grafo(
             Mapa(
                 version="escape-inmediato-v1",
@@ -342,8 +366,81 @@ class DecidirPasoTests(unittest.TestCase):
         decision = servicio.ejecutar(SolicitudPaso("S-escape", "A", 1))
         ruta = servicio.prever_ruta(SolicitudPaso("S-escape", "A", 1))
 
-        self.assertEqual(decision.siguiente_nodo, "B")
-        self.assertEqual(ruta[:2], ("A", "B"))
+        self.assertEqual(decision.siguiente_nodo, "A")
+        self.assertEqual(ruta[:2], ("A", "A"))
+
+    def test_rodea_vecino_de_zombie_si_hay_una_alternativa(self) -> None:
+        grafo = Grafo(
+            Mapa(
+                version="riesgo-vecinal-v1",
+                nodos=tuple(Nodo(node, 0, index) for index, node in enumerate(("S", "A", "B", "C", "R", "Z"))),
+                calles=(
+                    Calle("E-SA", "SA", "S", "A", 10, TipoCalle.CALLE, 20),
+                    Calle("E-AS", "SA", "A", "S", 10, TipoCalle.CALLE, 20),
+                    Calle("E-AR", "AR", "A", "R", 10, TipoCalle.CALLE, 20),
+                    Calle("E-RA", "AR", "R", "A", 10, TipoCalle.CALLE, 20),
+                    Calle("E-SB", "SB", "S", "B", 10, TipoCalle.CALLE, 20),
+                    Calle("E-BS", "SB", "B", "S", 10, TipoCalle.CALLE, 20),
+                    Calle("E-BC", "BC", "B", "C", 10, TipoCalle.CALLE, 20),
+                    Calle("E-CB", "BC", "C", "B", 10, TipoCalle.CALLE, 20),
+                    Calle("E-CR", "CR", "C", "R", 10, TipoCalle.CALLE, 20),
+                    Calle("E-RC", "CR", "R", "C", 10, TipoCalle.CALLE, 20),
+                    Calle("E-ZA", "ZA", "Z", "A", 10, TipoCalle.CALLE, 20),
+                    Calle("E-AZ", "ZA", "A", "Z", 10, TipoCalle.CALLE, 20),
+                ),
+                refugios=(Refugio("R-1", "R"),),
+            )
+        )
+        partida = Partida(
+            run_id="run-riesgo-vecinal",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(Sobreviviente("S-1", "S"),),
+            zombies=(Zombie("Z-1", TipoZombie.CAMINANTE, "Z"),),
+            estado=EstadoPartida.ACTIVA,
+            turno=1,
+            fase=FaseTurno.DECISIONES,
+        )
+        servicio = DecidirPaso(
+            SnapshotStub(SnapshotMundo(partida, version=1)),
+            CatalogoMapasMemoria((grafo,)),
+        )
+
+        ruta = servicio.prever_ruta(SolicitudPaso("S-1", "S", 1))
+
+        self.assertEqual(ruta[1], "B")
+
+    def test_invalida_compromiso_si_un_zombie_ocupa_un_nodo_mas_adelante(self) -> None:
+        nodos = tuple(Nodo(node, 0, index) for index, node in enumerate("ABCDEFG"))
+        calles = tuple(
+            calle
+            for origen, destino in zip("ABCDEF", "BCDEFG")
+            for calle in (
+                Calle(f"E-{origen}{destino}", f"S-{origen}{destino}", origen, destino, 10, TipoCalle.CALLE, 20),
+                Calle(f"E-{destino}{origen}", f"S-{origen}{destino}", destino, origen, 10, TipoCalle.CALLE, 20),
+            )
+        )
+        grafo = Grafo(Mapa("compromiso-peligro-v1", nodos, calles, (Refugio("R-G", "G"),)))
+        persona = Sobreviviente("S-1", "A", refugio_objetivo="R-G")
+        partida = Partida(
+            run_id="run-compromiso-peligro",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=grafo.mapa.version,
+            sobrevivientes=(persona,),
+            zombies=(Zombie("Z-lejano", TipoZombie.CAMINANTE, "E"),),
+            estado=EstadoPartida.ACTIVA,
+            turno=1,
+            fase=FaseTurno.DECISIONES,
+        )
+        compromiso = CompromisoRuta("S-1", "R-G", tuple("ABCDEFG"))
+        snapshot = SnapshotMundo(partida, version=1, rutas_comprometidas=(compromiso,))
+        servicio = DecidirPaso(SnapshotStub(snapshot), CatalogoMapasMemoria((grafo,)))
+
+        retenida = servicio._ruta_comprometida_vigente(snapshot, grafo, persona, compromiso)
+
+        self.assertIsNone(retenida)
 
 
 if __name__ == "__main__":
