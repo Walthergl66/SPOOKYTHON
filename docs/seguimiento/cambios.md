@@ -2,6 +2,19 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-100 — Asistente de inicio y configuración del Simulador
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: el usuario pidió que Simulador muestre al inicio solo «Iniciar simulación»; tras el clic, primero escoger puntos seguros y luego cantidades de habitantes/zombies. La velocidad queda fija en 4× y desaparece su selector.
+- Especificación/requisitos/tarea: SPEC-007 CA-007-09/10; PRD-02, TRD-17; P4-03 parcial; T-51. ADR-041 conserva la decisión.
+- Rama: `master`; commits separados de código y documentación según instrucción previa del usuario, aún no creados en este registro.
+- Motivo: el panel anterior abría refugios automáticamente y mostraba escenario, población, intensidad y velocidad antes de iniciar; zombies se configuraban por intensidad y no por conteo exacto.
+- Archivos de código: `frontend/src/app/App.tsx`, `frontend/src/application/useSimulator.ts`, `frontend/src/domain/simulator.ts`, `frontend/src/features/map/RefugePicker.tsx`, `frontend/src/styles.css`, `backend/src/navira/api/schemas.py`, `backend/src/navira/api/routes.py`, `backend/src/navira/application/control_simulador_demo.py`, `backend/src/navira/demo.py`, `backend/src/navira/simulation/escenarios.py`; pruebas frontend/backend relevantes.
+- Resultado: el panel inicial presenta inicio explícito; un asistente obliga asignar los cuatro refugios antes de abrir los campos 1–200 de habitantes y zombies. Al confirmar, se envían en la misma solicitud con escenario mixto, se genera el conteo solicitado en el servidor (si hay nodos disponibles) y el estado del control expone la cantidad inicial. El valor inicial del tablero es 20 habitantes/42 zombies; la aleatoriedad de semilla, composición y ubicaciones continúa. El panel informa 4× fijo. El campo `zombies` es opcional para clientes existentes, que conservan intensidad como fallback; `/paso`, Reto y Jugar no cambian.
+- Verificación: `cd frontend && npm test -- --run` (96 pruebas) y `npm run build` pasan; build conserva advertencia de bundle MapLibre grande. Backend focalizado `cd backend && PYTHONPATH=src /tmp/navira-env/bin/python -m unittest tests.test_demo tests.test_control_simulador_demo` (33 pruebas) pasa; `PYTHONPATH=src /tmp/navira-env/bin/python -m compileall -q src/navira` pasa. `python3 backend/scripts/check_docs.py`, `python3 backend/scripts/check_sdd.py` y `python3 -m unittest discover -s backend/tests -p 'test_check_sdd.py'` pasan (8 pruebas de regresión SDD). `git diff --check` pasa. T-51 fue recorrido visualmente hasta el paso de cantidades; no se confirmó la creación del run porque el usuario debe seleccionar los refugios y confirmar.
+- Límite operativo: durante la verificación, el proceso backend anterior dejó de responder y el run Reto pausado ya no estaba disponible; no se terminó manualmente. Se levantó el código actual en loopback `127.0.0.1:8001` con `NAVIRA_LOCAL_DEMO_CONTROL=1` y el mapa Manta. `/salud` respondió 200 y `GET /demo/simulador` confirmó `sin_partida` y velocidad 4×; `zombiesIniciales: null` es correcto mientras no exista run. Vite responde en `localhost:5173`; no se creó una partida real porque falta que el usuario elija los cuatro refugios y confirme las cantidades. No hay despliegue.
+- Siguiente paso: cerrar commits separados de código/documentación. El smoke de creación final queda para cuando el usuario seleccione sus cuatro refugios y pulse «Iniciar simulación».
+
 ## CAM-099 — Repetir campaña local Reto con tres semillas
 
 - Fecha: 2026-10-27, Ecuador continental.

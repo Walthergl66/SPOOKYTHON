@@ -68,6 +68,10 @@ Las partidas sobre el fixture Manta usan una proyección del grafo dentro de la 
 
 En partidas Manta, el servidor calcula al inicio de cada preparación el conjunto formado por cada refugio y los nodos enlazados directamente a él, considerando calles dirigidas en ambos sentidos y sin depender de cierres temporales. El generador no coloca zombies en ese conjunto y el resolutor descarta cualquier paso zombie cuyo destino esté dentro. Una entidad preexistente dentro del búfer puede permanecer o salir, pero no avanzar a otro nodo protegido. Mapas sintéticos conservan sus reglas sin este búfer. Detalle: [reglas](../dominio/reglas-juego.md), [SPEC-001](../metodo/especificaciones/SPEC-001-mundo-simulacion.md).
 
+### TRD-17 — Configuración del simulador local
+
+El panel local inicia con una sola acción principal. Al elegirla, solicita primero los cuatro puntos seguros y después conteos enteros de 1 a 200 para habitantes y zombies; el servidor aplica ambos conteos al mundo sintético. La interfaz fija la velocidad de demo en 4× y no ofrece selector. Estos campos pertenecen a la superficie de desarrollo local y no modifican `POST /paso`, Reto ni el modo humano. Detalle: [SPEC-007](../metodo/especificaciones/SPEC-007-panel-operador-local.md), [contrato API](../arquitectura/contratos/api.md).
+
 ## Riesgos y aceptación
 
 Reglas ambiguas, región, TLS y sesiones siguen en [pendientes](../seguimiento/pendientes.md); ningún documento nuevo las cierra por inferencia. Verificar con las especificaciones y pruebas correspondientes antes de marcar implementado/verificado. Una discrepancia con código se investiga, no se resuelve adaptando silenciosamente los requisitos al fallo.
