@@ -54,7 +54,7 @@ En partidas del mapa Manta, impedir que los zombies aparezcan o avancen a menos 
 
 ### PRD-12 — Juego de operador en mundo vivo
 
-Permitir iniciar/continuar un mundo automático local y elegir una herramienta para colocar habitantes, caminantes, corredores, hordas, zombies dormidos, refugios o incidentes sobre el mapa. El reloj continúa mientras se usa la paleta. Cada acción se valida y confirma en el servidor; un incidente bloquea el segmento y actualiza el planificador. El modo comparte las reglas del simulador, aplica el perímetro de refugios y no permite editar rondas Reto. La superficie actual es solo desarrollo local con opt-in/loopback. Detalle: [operador](../dominio/flujos/operador.md), [API](../arquitectura/contratos/api.md) y [SPEC-010](../metodo/especificaciones/SPEC-010-juego-operador.md).
+Permitir iniciar/continuar un mundo automático local y elegir una herramienta para colocar habitantes, caminantes, corredores, hordas, zombies dormidos, refugios o incidentes sobre el mapa. Cada mundo nuevo conserva las calles de Manta, pero comienza sin actores, refugios ni eventos colocados; la simulación acepta el mundo vacío y mantiene el reloj disponible para las acciones del operador. El reloj continúa mientras se usa la paleta. Cada acción se valida y confirma en el servidor; un incidente bloquea el segmento y actualiza el planificador. El modo comparte las reglas del simulador, aplica el perímetro de refugios y no permite editar rondas Reto. La superficie actual es solo desarrollo local con opt-in/loopback. Detalle: [operador](../dominio/flujos/operador.md), [API](../arquitectura/contratos/api.md) y [SPEC-010](../metodo/especificaciones/SPEC-010-juego-operador.md).
 
 ## Alcance y exclusiones
 

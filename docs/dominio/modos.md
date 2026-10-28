@@ -6,7 +6,7 @@ Estado: los modos de dominio `simulador` y `juego` se mantienen; la interfaz ofr
 |---|---|---|
 | Reto | Automático, presets R1/R2/R3; sin intervenciones humanas | Probar el motor y reportar resultados por separado. Usa el dominio `simulador`. |
 | Simulador | Demo libre automática, con configuración local | Explorar perfiles y refugios; no es una evaluación oficial. Usa `simulador`. |
-| Juego | Operador agrega entidades/eventos al mapa mientras el reloj automático avanza | Intervención lúdica local; no equivale a control de un personaje ni a métricas oficiales. Usa `simulador`. |
+| Juego | Inicia con el mapa de Manta sin entidades, refugios ni incidentes; el operador agrega piezas/eventos mientras el reloj automático queda disponible | Intervención lúdica local; no equivale a control de un personaje ni a métricas oficiales. Usa `simulador`. |
 
 El modo de dominio `juego` sigue disponible en componentes/APIs humanas anteriores, pero no está conectado a la tarjeta Jugar actual.
 

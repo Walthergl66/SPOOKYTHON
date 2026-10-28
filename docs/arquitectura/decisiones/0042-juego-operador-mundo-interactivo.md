@@ -14,6 +14,8 @@ La navegación tenía Reto, Simulador y Jugar humano. La solicitud del usuario r
 
 «Jugar» presenta un modo operador que controla un mundo automático local: iniciar/pausar/continuar, escoger habitante, caminante, corredor, horda, dormido, refugio o incidente y colocarlo con un clic en nodo/calle. El servidor valida la acción y actualiza el snapshot; los incidentes cierran la vía para que el motor comparta el nuevo estado. Las acciones se bloquean en Reto y en partidas pausadas.
 
+CAM-102 precisa el estado inicial: un nuevo mundo de operador muestra las calles de Manta sin habitantes, zombies, refugios ni eventos aleatorios. El reloj acepta el estado vacío y permite que el operador pueble la ciudad desde cero.
+
 Se conservan los dos modos de dominio. La demo de operador se ejecuta en `simulador`; Reto es un flujo de evaluación sobre el mismo modo automático. El modo de dominio `juego` y sus API humanas no se borran en esta fase, pero dejan de ser la experiencia principal vinculada a «Jugar».
 
 La implementación local sigue protegida por `NAVIRA_LOCAL_DEMO_CONTROL=1`, loopback y Origin same-host. No es un control productivo. Intervenciones de zombies respetan nodo y vecinos de refugio; un refugio nuevo crea una versión de mapa, y una calle con incidente se cierra en el snapshot.

@@ -46,6 +46,7 @@ Errores previstos: 401 por credencial ausente/incorrecta; 422 por esquema invál
 | `POST /admin/eventos` | Operador | Evento validado para un turno. |
 | `GET /demo/simulador` | Proceso local habilitado y loopback | Estado de una demo local. |
 | `POST /demo/simulador/{iniciar,pausar,reanudar,reiniciar}` | Proceso local habilitado, loopback y Origin same-host | Operación de un simulador sintético local; fuera del API público/productivo. |
+| `POST /demo/operador/iniciar` | Proceso local habilitado, loopback y Origin same-host | Inicia una partida de Juego con el mapa vial Manta vacío: 0 habitantes, zombies, refugios e incidentes. El reloj puede avanzar sin sobrevivientes para permitir la colocación posterior. Fuera del API público/productivo. |
 | `POST /demo/operador/elementos` | Proceso local habilitado, loopback y Origin same-host | Agrega actor/refugio en `nodo` o cierra un `segmentoId` en una demo automática activa que no sea Reto. CAS versionado; 409 si el run no admite intervención y 422 si el objetivo/regla es inválido. Fuera del API público/productivo. |
 | `POST /reto/iniciar` | Proceso local habilitado, loopback y Origin same-host | Inicia un preset de ronda del reto en el motor local; no disponible en API pública. |
 | `POST /reto/reiniciar` | Proceso local habilitado, loopback y Origin same-host | Reinicia el preset Reto de la partida actual, creando run y mundo aleatorios nuevos; 409 si la partida no pertenece a Reto. No disponible en API pública. |

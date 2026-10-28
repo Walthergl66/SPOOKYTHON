@@ -6,7 +6,7 @@ CAM-050 añade un tablero local de demo sintética con inicio, pausa, continuaci
 
 CAM-079 fija 4× como velocidad inicial de esta demo local. Desde CAM-100 el tablero no ofrece selector y mantiene la cadencia en 4×; no altera las acciones por turno ni salta rondas. Ver [flujo del simulador](simulador.md).
 
-CAM-101 redefine «Jugar» como modo operador: escoger habitante, caminante, corredor, horda, dormido, refugio o incidente y hacer clic en el mapa. El cliente encaja nodos o segmentos, pero el backend valida IDs/topología y confirma cada acción en el snapshot del servidor. El reloj sigue automático. Un run Reto se rechaza; un run pausado no permite colocar.
+CAM-101 redefine «Jugar» como modo operador: escoger habitante, caminante, corredor, horda, dormido, refugio o incidente y hacer clic en el mapa. El cliente encaja nodos o segmentos, pero el backend valida IDs/topología y confirma cada acción en el snapshot del servidor. CAM-102 define que cada mundo nuevo conserva la red de calles de Manta, pero inicia sin habitantes, zombies, refugios ni eventos. El reloj admite ese estado vacío y continúa en cuanto el operador lo inicia. Un run Reto se rechaza; un run pausado no permite colocar.
 
 CAM-081 elimina del menú el control de incidentes viales aleatorios y los deja siempre activos al iniciar o reiniciar la demo. El endpoint ignora el campo legado `eventosCiudad`; los eventos continúan siendo genéricos, aleatorios y visibles en el panel solo después de aplicarse. Ver [ADR-032](../../arquitectura/decisiones/0032-incidentes-viales-siempre-activos-en-demo.md).
 
@@ -14,7 +14,7 @@ CAM-081 elimina del menú el control de incidentes viales aleatorios y los deja 
 
 1. Autenticarse con credencial administrativa independiente.
 2. Comprobar salud, versión del mapa, recursos y que no haya otra partida activa.
-3. En Simulador, pulsar «Iniciar simulación», elegir los cuatro puntos seguros y después configurar entre 1 y 200 habitantes y entre 1 y 200 zombies. En Juego, «Iniciar mundo operador» inicia una demo automática local con la configuración por defecto y los refugios del mapa.
+3. En Simulador, pulsar «Iniciar simulación», elegir los cuatro puntos seguros y después configurar entre 1 y 200 habitantes y entre 1 y 200 zombies. En Juego, «Iniciar mundo operador» crea un mapa de Manta vacío de actores, refugios y eventos para que el operador lo pueble.
 4. Crear `runId` y estado inicial. Las cantidades libres pertenecen al perfil sintético y no alteran los presets de Reto.
 5. Iniciar reloj y habilitar observación. En juego, habilitar la incorporación de un humano.
 

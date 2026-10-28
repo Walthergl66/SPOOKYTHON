@@ -2,6 +2,18 @@
 
 Registro acumulativo. No reemplaza commits; al existir un repositorio operativo, enlazar revisión real sin inventarla. Las dos primeras entradas se reconstruyen de esta conversación, no de un historial Git comprobado.
 
+## CAM-102 — Juego inicia con el mapa vacío
+
+- Fecha: 2026-10-27, Ecuador continental.
+- Solicitud de origen: el usuario pidió que al empezar un nuevo juego el mapa aparezca vacío.
+- Especificación/requisitos/tarea: SPEC-010 CA-010-07; PRD-12, TRD-18; P4-06; T-54. ADR-042 amplía la decisión de operador.
+- Resultado: el botón de inicio de Jugar llama a un endpoint dedicado que conserva las calles/cartografía de Manta, pero no crea habitantes, zombies, refugios ni incidentes. El reloj local sigue avanzando con cero sobrevivientes, el estado permanece `activa` para admitir colocaciones posteriores y Simulador/Reto mantienen sus flujos.
+- Archivos: `backend/src/navira/demo.py`, `application/control_simulador_demo.py`, `application/reloj_simulador.py`, `api/routes.py` y prueba de integración; `frontend/src/app/App.tsx`, `features/operator/OperatorControls.tsx`, cliente y prueba HTTP; SPEC-010, ADR-042, PRD/TRD, flujo de operador, contrato API, módulo backend, calidad, trazabilidad, plan y estado.
+- Validación: prueba de módulo backend 17/17 y repetición focalizada T-54 tras corregir el estado vacío (turno y control continúan activos; colocación posterior de refugio/habitante); suite frontend 97/97, build, validadores docs/SDD y `git diff --check` pasan. Smoke en `localhost:5173` sobre API reiniciada confirmó Jugar en curso, mapa OSM de Manta cargado, 0 activos, 0 amenazas y sin marcadores iniciales. Build mantiene advertencia conocida del chunk MapLibre.
+- Límites: estado/reloj siguen en memoria y el endpoint solo se debe ensamblar para demo local, loopback y opt-in; esto no constituye despliegue público ni valida visualmente cartografía.
+- Commits: pendientes; crear commits independientes de código y documentación según la instrucción previa del usuario.
+- Siguiente acción: usar la paleta para colocar refugio/actores y probar incidente desde el mapa; la partida se dejó activa y vacía. T-53 aún requiere confirmar visualmente colocación de incidente antes de cerrar SPEC-010.
+
 ## CAM-101 — Juego como modo de operador interactivo
 
 - Fecha: 2026-10-27, Ecuador continental.
