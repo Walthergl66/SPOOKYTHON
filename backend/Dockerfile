@@ -1,4 +1,4 @@
-FROM python:3.12-slim@sha256:1148dbb014615300fa7e713b2f94f550c0d1c69780c0805f84f093ceee34dd0b
+FROM python:3.12-alpine3.24@sha256:69ebe56e2a764c399514a0a6117131cb730cc4d0e71e85c08deb9af74cbb9f41
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -11,7 +11,7 @@ COPY src ./src
 COPY data ./data
 
 RUN python -m pip install --no-cache-dir --requirement requirements-container.lock \
-    && useradd --system --uid 10001 --home-dir /nonexistent --shell /usr/sbin/nologin navira \
+    && adduser -D -H -u 10001 -s /sbin/nologin navira \
     && chown -R navira:navira /opt/navira
 
 USER navira
