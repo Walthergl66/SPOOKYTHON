@@ -25,7 +25,9 @@ export function createStreetFeatures(map: PanelMap, pointById = indexMapPosition
     features.push({
       type: 'Feature', id: street.segmentoId,
       geometry: { type: 'LineString', coordinates: [from, to] },
-      properties: { kind: 'street' },
+      // Keep the domain ID in properties as the stable hit-test contract;
+      // rendered feature IDs may be normalized by the map renderer.
+      properties: { kind: 'street', segmentoId: street.segmentoId },
     })
   }
   return { type: 'FeatureCollection', features }

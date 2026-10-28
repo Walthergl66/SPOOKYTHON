@@ -131,8 +131,8 @@ export function CityMap({ map, state, selectedSurvivorId, onSelectSurvivor, anim
         if (!tool || !place) return
         if (tool === 'incidente') {
           const street = instance.queryRenderedFeatures(event.point, { layers: ['navira-streets'] })[0]
-          const segmentId = street?.id
-          if (typeof segmentId === 'string' || typeof segmentId === 'number') place({ tipo: tool, segmentoId: String(segmentId) })
+          const segmentId = street?.properties?.segmentoId
+          if (typeof segmentId === 'string' && segmentId.length > 0) place({ tipo: tool, segmentoId: segmentId })
           return
         }
         const target = nearestNodeAtMapClick(instance, latestMapRef.current, event.lngLat.lng, event.lngLat.lat, event.point.x, event.point.y)
@@ -346,7 +346,7 @@ function addMapLayers(map: MapLibreMap, data: FeatureCollection, actors: Feature
       'fill-extrusion-opacity': 0.68,
     },
   }, firstSymbolLayer)
-  map.addSource('navira-streets', { type: 'geojson', data: streets as never })
+  map.addSource('navira-streets', { type: 'geojson', data: streets as never, promoteId: 'segmentoId' })
   map.addSource('navira-simulation', { type: 'geojson', data: data as never })
   map.addSource('navira-actors', { type: 'geojson', data: actors as never })
   map.addLayer({

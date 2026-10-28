@@ -87,6 +87,8 @@ describe('createSimulationFeatures', () => {
   const streets = () => createStreetFeatures(map).features
   it('indexa cada calle inmutable una vez y separa cierres por turno', () => {
     expect(streets()).toHaveLength(1)
+    expect(streets()[0].id).toBe('s1')
+    expect(streets()[0].properties.segmentoId).toBe('s1')
     for (const s of [state({ segmentosBloqueados: ['s1'] }), state({ aristasBloqueadas: ['b-a'] })]) {
       const blocked = createSimulationFeatures(map, s, undefined).features.filter((feature) => feature.properties.kind === 'blocked-street')
       expect(blocked).toHaveLength(1)
