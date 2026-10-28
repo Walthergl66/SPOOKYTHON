@@ -6,10 +6,10 @@
 - Motivo del cambio: R2 programaba el cierre para el turno 50 (aprox. 100 s); una ronda que terminara antes no publicaría el incidente ni calcularía rutas considerando el puente colapsado.
 - Resultado: R2 programa el puente determinístico en turno 0; la preparación inicial lo aplica antes de la primera decisión, movimiento de habitantes o proyección del panel. R3 conserva sus cierres provisionales en vivo en turnos 50/100. La UI describe ambos calendarios sin llamar oficial al turno.
 - Archivos: `backend/src/navira/simulation/escenarios.py`, `backend/tests/test_demo.py`, `backend/tests/test_panel.py`, `frontend/src/app/App.tsx`, SPEC-009, reglas, T-47, pendientes, ADR-048, índices, estado e historial.
-- Verificación ejecutada: dos pruebas focalizadas (`test_presets_de_reto_respetan_tipos_y_eventos_reproducibles`, que prueba turno 0 y aplicación, y `test_reto_r2_publica_el_puente_cerrado_desde_la_primera_decision`, que comprueba alerta de panel, tipo puente y segmento bloqueado) pasan (2/2, 31.874 s). `git diff --check` pasa antes de actualizar esta CAM.
-- Verificación pendiente: suites completas backend/frontend, build y validadores docs/SDD por ejecutar.
+- Verificación ejecutada: suite backend completa (246/246); frontend (99/99); `npm run build` correcto (con advertencia existente de bundle `mapArea` de 1,065.62 kB); `python3 backend/scripts/check_docs.py` (141 Markdown/143 archivos); `python3 backend/scripts/check_sdd.py` (11 SPEC); pruebas focalizadas de preset y panel (2/2) pasan. `git diff --check` pasa.
+- Verificación pendiente: revisar R2 en navegador después de reiniciar el backend o actualizar el despliegue; este cambio no se publicó.
 - Límites: la organización no define el turno del colapso. Turno 0 es la interpretación local de “puente colapsado” como condición inicial, documentada y revisable. No se ha desplegado ni reiniciado la demo pública.
-- Siguiente acción concreta: ejecutar las suites afectadas y validadores; luego actualizar el resultado en CAM/estado.
+- Siguiente acción concreta: cargar esta revisión reiniciando el backend local o desplegando el commit cuando se autorice; después iniciar R2 y comprobar que el puente aparece cerrado desde el primer turno y la ruta recomendada lo evita.
 - Commit o PR: ninguno creado.
 
 ## CAM-129 — Automatizar la actualización de Lightsail desde GitHub Actions
