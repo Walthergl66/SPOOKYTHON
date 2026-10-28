@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-130. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
+Actualizado: 2026-10-28, CAM-132. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias](referencias/).
 
 ## Dónde está cada cosa
 
@@ -165,6 +165,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [resultados/perimetro-refugios-cam078.md](calidad/resultados/perimetro-refugios-cam078.md) | Protección topológica de una cuadra alrededor de refugios Manta frente a generación y movimiento zombie. | Cambie el búfer, su alcance o la evidencia de verificación. |
 | [resultados/fluidez-turnos-cam079.md](calidad/resultados/fluidez-turnos-cam079.md) | Evidencia de velocidad local 4× e interpolación continua de movimientos confirmados CAM-079. | Cambie la cadencia, la política de animación o se ejecute una medición visual/de carga. |
 | [resultados/fluidez-pronostico-cam086.md](calidad/resultados/fluidez-pronostico-cam086.md) | Optimización del pronóstico de amenazas mediante agregación lineal y caché del grafo; registra pruebas y límites de medición en CAM-086. | Cambie el algoritmo de pronóstico o se mida cadencia comparable bajo carga. |
+| [resultados/optimizacion-rutas-cam132.md](calidad/resultados/optimizacion-rutas-cam132.md) | Perfil de Dijkstra repetido, optimización del plan de rutas por cohorte y medición local p95 CAM-132. | Cambie la agrupación de rutas o se repita T-11; la muestra local no demuestra latencia pública ni p95 sostenido. |
 | [resultados/incidentes-siempre-activos-cam081.md](calidad/resultados/incidentes-siempre-activos-cam081.md) | Campo legado ignorado y ausencia del selector de incidentes en la demo local. | Cambie el comportamiento o los controles de incidentes. |
 | [resultados/alerta-incidentes-cam082.md](calidad/resultados/alerta-incidentes-cam082.md) | Sorteo de 1–10 cierres, alerta cartográfica y recálculo de rutas tras aplicar. | Cambie el generador, la proyección o el marcador; no representa choques reales ni uso de emergencia. |
 | [resultados/generador-amenazas-cam057.md](calidad/resultados/generador-amenazas-cam057.md) | Verificación del generador sintético de amenazas y cierres viales CAM-057 | Repetir pruebas de densidad espacial, semilla, privacidad de dormidos y aplicación de incidentes; no acredita parámetros oficiales. |

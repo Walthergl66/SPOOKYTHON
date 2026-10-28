@@ -210,6 +210,7 @@ class DecidirPaso:
         compromisos = {ruta.sobreviviente_id: ruta for ruta in snapshot.rutas_comprometidas}
         asignados: dict[str, tuple[str, ...]] = {}
         pendientes: list[Sobreviviente] = []
+        rutas_estaticas: list[Sobreviviente] = []
         for survivor in activos:
             compromiso = compromisos.get(survivor.id)
             retenida = self._ruta_comprometida_vigente(snapshot, grafo, survivor, compromiso)
@@ -218,7 +219,47 @@ class DecidirPaso:
             elif compromiso is None or self._hay_zombie_cerca(snapshot, grafo, survivor.nodo):
                 pendientes.append(survivor)
             else:
-                asignados[survivor.id] = self._ruta_estatica(snapshot, grafo, survivor)
+                rutas_estaticas.append(survivor)
+
+        if rutas_estaticas:
+            # Invalidated commitments without nearby zombies use the same static
+            # snapshot. Share the reverse Dijkstra field for each refuge instead
+            # of traversing Manta once per resident.
+            bloqueados, cruces = peligros_visibles(snapshot, grafo)
+            por_refugio: dict[str | None, list[Sobreviviente]] = {}
+            for survivor in rutas_estaticas:
+                por_refugio.setdefault(survivor.refugio_objetivo, []).append(survivor)
+            refugios_por_id = {refugio.id: refugio for refugio in grafo.mapa.refugios}
+            for objetivo, grupo in por_refugio.items():
+                nodos_destino = (
+                    (refugios_por_id[objetivo].nodo,)
+                    if objetivo is not None
+                    else tuple(refugio.nodo for refugio in grafo.mapa.refugios)
+                )
+                # Keep the established selector for a blocked shelter: it has
+                # special origin-at-shelter behavior which a shared field does
+                # not encode. All other members can share one field.
+                compatibles = [
+                    survivor for survivor in grupo
+                    if not (set(nodos_destino) & bloqueados)
+                ]
+                individuales = [survivor for survivor in grupo if survivor not in compatibles]
+                for survivor in individuales:
+                    asignados[survivor.id] = self._ruta_estatica(snapshot, grafo, survivor)
+                if not compatibles:
+                    continue
+                campo = RutasHaciaRefugios(
+                    grafo, refugio_objetivo=objetivo,
+                    aristas_cerradas=snapshot.aristas_cerradas | cruces,
+                    segmentos_cerrados=snapshot.segmentos_cerrados,
+                    nodos_bloqueados=frozenset(bloqueados), perfil=self._perfil,
+                )
+                for survivor in compatibles:
+                    ruta = campo.desde(survivor.nodo)
+                    asignados[survivor.id] = (
+                        (ruta.origen, *(calle.destino for calle in ruta.calles))
+                        if ruta is not None else (survivor.nodo,)
+                    )
         activos = tuple(pendientes)
         if not activos:
             return asignados

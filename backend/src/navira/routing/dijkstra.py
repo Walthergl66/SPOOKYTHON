@@ -5,6 +5,7 @@ from __future__ import annotations
 import heapq
 import math
 from dataclasses import dataclass, field
+from functools import lru_cache
 from types import MappingProxyType
 from typing import Mapping
 
@@ -229,10 +230,7 @@ class RutasHaciaRefugios:
         self._destinos = {r.id: r.nodo for r in refugios}
         self._mejor: dict[str, tuple[float, str]] = {}
         self._siguiente: dict[str, Calle] = {}
-        entrantes: dict[str, list[Calle]] = {}
-        for calle in grafo.mapa.calles:
-            if calle.id not in aristas_cerradas and calle.segmento_id not in segmentos_cerrados:
-                entrantes.setdefault(calle.destino, []).append(calle)
+        entrantes = _indice_calles_entrantes(grafo)
         pendientes: list[tuple[float, str, str]] = []
         for refugio in sorted(refugios, key=lambda r: r.id):
             etiqueta = (0.0, refugio.id)
@@ -244,6 +242,8 @@ class RutasHaciaRefugios:
             if self._mejor.get(nodo) != (costo, refugio_id) or nodo in nodos_bloqueados:
                 continue
             for calle in entrantes.get(nodo, ()):
+                if calle.id in aristas_cerradas or calle.segmento_id in segmentos_cerrados:
+                    continue
                 candidato = (costo + perfil.costo(calle), refugio_id)
                 previo = self._mejor.get(calle.origen)
                 if previo is None or candidato < previo:
@@ -277,3 +277,16 @@ class RutasHaciaRefugios:
         if origen not in self._grafo.mapa.nodos_por_id:
             raise KeyError(f"Nodo de origen desconocido: {origen}.")
         return origen in self._mejor
+
+
+@lru_cache(maxsize=2)
+def _indice_calles_entrantes(grafo: Grafo) -> Mapping[str, tuple[Calle, ...]]:
+    """Cachea adyacencia inversa del grafo inmutable para varios campos Dijkstra.
+
+    Los cierres cambian por snapshot y se filtran al recorrer cada entrada; la
+    topología base sí es compartible entre campos y no requiere reconstruirse.
+    """
+    entrantes: dict[str, list[Calle]] = {nodo_id: [] for nodo_id in grafo.mapa.nodos_por_id}
+    for calle in grafo.mapa.calles:
+        entrantes[calle.destino].append(calle)
+    return MappingProxyType({nodo_id: tuple(calles) for nodo_id, calles in entrantes.items()})

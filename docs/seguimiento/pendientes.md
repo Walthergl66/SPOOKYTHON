@@ -1,6 +1,6 @@
 # Pendientes, supuestos y riesgos
 
-Estado al 2026-10-27. No hay aclaraciones externas de la organización; P-18 sí quedó resuelto por aclaración directa del usuario. Las respuestas se añaden con fecha y fuente; cerrar también reglas, contratos, ADR y pruebas afectados.
+Estado al 2026-10-28, CAM-132. No hay aclaraciones externas de la organización; P-18 sí quedó resuelto por aclaración directa del usuario. Las respuestas se añaden con fecha y fuente; cerrar también reglas, contratos, ADR y pruebas afectados.
 
 | ID | Asunto | Supuesto o siguiente paso | ¿Impide empezar local? |
 |---|---|---|---|
@@ -24,7 +24,8 @@ Estado al 2026-10-27. No hay aclaraciones externas de la organización; P-18 sí
 | P-18 | Interpretación del texto del jurado sobre hordas | **Resuelto por aclaración del usuario (2026-10-27):** «Lo que el jurado va a buscar» lista errores comunes, no reglas alternativas; una ruta que solo evita el nodo pero pasa por un vecino es un error. La regla aplicable es R-06: horda bloquea su nodo y todos sus vecinos. El código y T-03 ya siguen este criterio; no cambiar. | Resuelto; conservar el historial de la aclaración. |
 | P-19 | Alcance de evidencia de evaluación AWS | CAM-125 demuestra una campaña efímera en Fargate por loopback y documenta que no mide ALB/CloudFront. La medición HTTP remota y aceptación de este alcance por el jurado/organización siguen pendientes; no mezclar esas evidencias. | No para empaquetar; sí para declarar T-11/T-23 completas. |
 | P-20 | Reproducibilidad del artefacto contenedor | **Resuelto localmente en CAM-116:** la imagen base está fijada por digest y `requirements-container.lock` fija todas las dependencias runtime; rebuild/smoke pasan. Actualizar pins deliberadamente ante cambios de versión. El build Python del proyecto no se ejecuta dentro del contenedor. | Resuelto para artefacto local; publicar el digest construido que se evalúe. |
-| P-21 | Conectividad de GitHub Actions a Lightsail | El CD usa runners hospedados de GitHub por SSH; el firewall documentado de Lightsail solo permite el origen administrativo. Establecer un canal de red restringido (sin abrir 22 a `0.0.0.0/0`) antes del primer run; validar fingerprint del host y configurar los secrets/variable listados en ADR-047. | Sí, bloquea ejecutar el despliegue automático; no bloquea CI ni build. |
+| P-21 | Conectividad de GitHub Actions a Lightsail | Run #50 validó CI, build de imágenes y host key, pero agotó el tiempo al abrir SSH: el firewall Lightsail permite solo el origen administrativo. El release actual se desplegó manualmente desde ese origen; verificar `/` y `/salud` no resuelve acceso del runner. Establecer un canal de red restringido (sin abrir 22 a `0.0.0.0/0`) y probar el próximo run. | Sí, bloquea CD automático; no bloquea CI, build ni despliegue administrativo manual. |
+| P-22 | Latencia p95 y cadencia de `/paso` | CAM-132 comparte campos estáticos e índices inversos, pero la medición actual sigue variable: p95 loopback de 94,565/71,821/230,814 ms para 20/80/200; una corrida adicional solo con 200 dio p95 198,250 ms y un turno tardío de 2,100 s. Identificar por qué la planificación/concurrencia de R3 supera 150 ms; repetir las tres rondas y medir el endpoint público desde un cliente externo. Mantener TRD-02/T-11 parcial hasta contar con evidencia sostenida. | No para desarrollo local; sí para declarar cumplida la meta de rendimiento. |
 
 ## Riesgos de ejecución
 

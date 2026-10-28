@@ -1,6 +1,6 @@
 # Guía paso a paso para completar Navira
 
-Actualizada: 2026-10-28, CAM-129. CAM-125 completó R1/R2/R3 en Fargate, Ohio; CAM-126..128 desplegaron la demo pública de tres modos en Lightsail con URL HTTPS. ADR-047 configura CD desde GitHub Actions, todavía sin primer run remoto y con conectividad SSH pendiente. Esta guía conserva el trayecto ECS como referencia de evaluación; para el servicio temporal consultar también [infraestructura](infraestructura.md), [ADR-047](../arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) y [estado actual](../seguimiento/estado-actual.md).
+Actualizada: 2026-10-28, CAM-131. CAM-125 completó R1/R2/R3 en Fargate, Ohio; CAM-126..128 publicaron la demo en Lightsail. El release `ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665` se instaló manualmente y `/` y `/salud` responden 200. Actions #50 falló solo al conectar al SSH restringido; P-21 impide CD automático por ahora. Esta guía conserva el trayecto ECS como referencia de evaluación; para el servicio temporal consultar también [infraestructura](infraestructura.md), [ADR-047](../arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) y [estado actual](../seguimiento/estado-actual.md).
 
 ## Situación de partida comprobada
 
@@ -69,7 +69,7 @@ Referencias oficiales: [usar AWS Budgets](https://docs.aws.amazon.com/cost-manag
 
 ## Fase 4 — Publicar a staging una sola versión
 
-La demo web temporal ya está publicada en Lightsail; no es el staging privado descrito en la arquitectura objetivo. Su proceso de actualización automático se implementa en CAM-129 y ADR-047. Para activarlo, configurar los cuatro Actions secrets y la variable `NAVIRA_PUBLIC_URL` descritos en [infraestructura](infraestructura.md), y resolver la conectividad SSH restringida. No abrir SSH globalmente. En `master`, el workflow construye imágenes desde el SHA, despliega después de CI y verifica endpoints; el primer run debe observarse desde Actions y registrarse antes de declarar el CD operativo.
+La demo web temporal ya está publicada en Lightsail; no es el staging privado descrito en la arquitectura objetivo. El run #50 de Actions pasó CI/build, pero agotó el tiempo al conectar por SSH. La revisión `ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665` se desplegó manualmente desde el origen administrativo y `/` y `/salud` responden 200. Para activar CD automático, resolver la conectividad SSH restringida (P-21); no abrir SSH globalmente. En `master`, el workflow construye imágenes desde el SHA, despliega después de CI y verifica endpoints.
 
 1. Ejecutar la CI de GitHub sobre el SHA candidato y exigir backend tests + frontend build verdes.
 2. Construir y publicar la imagen con etiqueta inmutable asociada al SHA; desplegar el frontend del mismo SHA. Mantener `desiredCount=1` para el coordinador.

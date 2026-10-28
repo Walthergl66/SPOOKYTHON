@@ -7,9 +7,10 @@ probabilidades calibradas de mordida o supervivencia.
 
 from __future__ import annotations
 
+import heapq
 from collections import deque
 from dataclasses import dataclass
-from functools import cache, lru_cache
+from functools import lru_cache
 from typing import Callable, Mapping
 
 from navira.domain.mapa import Calle, Grafo
@@ -134,14 +135,15 @@ def pronosticar_zombies_visibles(
     estados_caminante: dict[tuple[str, int], float] = {}
     estados_corredor: dict[str, float] = {}
 
-    # Posiciones, cierres y alcance son fijos durante este pronóstico. Reusar
-    # destinos evita repetir la misma BFS por cada zombie y turno del horizonte.
-    @cache
+    # Resolver el alcance dirigido desde todos los sobrevivientes una sola vez
+    # evita una BFS por cada estado posible de cada corredor y turno futuro.
+    objetivos_visibles = _indice_objetivos_visibles(
+        grafo, sobrevivientes_por_nodo, alcance_corredor_hops,
+        aristas_cerradas, segmentos_cerrados,
+    )
+
     def objetivo_visible(origen: str) -> str | None:
-        return _objetivo_visible(
-            grafo, origen, sobrevivientes_por_nodo, alcance_corredor_hops,
-            aristas_cerradas, segmentos_cerrados,
-        )
+        return objetivos_visibles.get(origen)
 
     for zombie in sorted(zombies, key=lambda item: item.id):
         if zombie.tipo is TipoZombie.HORDA:
@@ -345,6 +347,51 @@ def _objetivo_visible(
                 candidatos.append((nueva_distancia, sobreviviente_id, calle.destino))
             cola.append(calle.destino)
     return min(candidatos)[2] if candidatos else None
+
+
+def _indice_objetivos_visibles(
+    grafo: Grafo,
+    sobrevivientes_por_nodo: Mapping[str, list[str]],
+    alcance: int,
+    aristas_cerradas: frozenset[str],
+    segmentos_cerrados: frozenset[str],
+) -> dict[str, str]:
+    """Indexa el sobreviviente visible más cercano para los posibles orígenes.
+
+    Una búsqueda inversa multi-origen conserva el mismo criterio del BFS
+    directo: menor número de saltos y luego el menor ID de sobreviviente.
+    Limitar la propagación al alcance del corredor impide recorrer el grafo
+    completo por estados que no podrían ver a nadie.
+    """
+    if alcance < 0:
+        return {}
+    entrantes: dict[str, list[str]] = {}
+    for calle in grafo.mapa.calles:
+        if calle.id in aristas_cerradas or calle.segmento_id in segmentos_cerrados:
+            continue
+        entrantes.setdefault(calle.destino, []).append(calle.origen)
+
+    mejores: dict[str, tuple[int, str, str]] = {}
+    pendientes: list[tuple[int, str, str, str]] = []
+    for nodo, ids in sobrevivientes_por_nodo.items():
+        if not ids:
+            continue
+        etiqueta = (0, min(ids), nodo)
+        mejores[nodo] = etiqueta
+        heapq.heappush(pendientes, (*etiqueta, nodo))
+
+    while pendientes:
+        distancia, sobreviviente_id, destino, nodo = heapq.heappop(pendientes)
+        etiqueta = (distancia, sobreviviente_id, destino)
+        if mejores.get(nodo) != etiqueta or distancia >= alcance:
+            continue
+        for origen in entrantes.get(nodo, ()):
+            candidato = (distancia + 1, sobreviviente_id, destino)
+            if candidato >= mejores.get(origen, (alcance + 1, "", "")):
+                continue
+            mejores[origen] = candidato
+            heapq.heappush(pendientes, (*candidato, origen))
+    return {nodo: etiqueta[2] for nodo, etiqueta in mejores.items()}
 
 
 def _primer_paso(

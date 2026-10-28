@@ -27,6 +27,7 @@ from navira.domain.modelo import (
 )
 from navira.domain.snapshot import CompromisoRuta
 from navira.domain.visibilidad import nodos_horda_visibles
+from navira.routing.dijkstra import RutasHaciaRefugios
 from navira.simulation.coordinador import MovimientoZombie, SnapshotMundo
 from navira.routing.temporal import CondicionTurno
 
@@ -441,6 +442,38 @@ class DecidirPasoTests(unittest.TestCase):
         retenida = servicio._ruta_comprometida_vigente(snapshot, grafo, persona, compromiso)
 
         self.assertIsNone(retenida)
+
+    def test_comparte_campo_estatico_entre_compromisos_invalidos_del_mismo_refugio(self) -> None:
+        personas = (
+            Sobreviviente("S-1", "N-0001", refugio_objetivo="R-0004"),
+            Sobreviviente("S-2", "N-0002", refugio_objetivo="R-0004"),
+        )
+        partida = Partida(
+            run_id="run-campo-compartido",
+            modo=ModoPartida.SIMULADOR,
+            escenario="fixture",
+            map_version=self.grafo.mapa.version,
+            sobrevivientes=personas,
+            estado=EstadoPartida.ACTIVA,
+            turno=4,
+            fase=FaseTurno.DECISIONES,
+        )
+        compromisos = (
+            CompromisoRuta("S-1", "R-0004", ("N-0002", "N-0003", "N-0004")),
+            CompromisoRuta("S-2", "R-0004", ("N-0001", "N-0002", "N-0003", "N-0004")),
+        )
+        snapshot = SnapshotMundo(partida, version=4, rutas_comprometidas=compromisos)
+        servicio = DecidirPaso(SnapshotStub(snapshot), CatalogoMapasMemoria((self.grafo,)))
+
+        with patch(
+            "navira.application.decidir_paso.RutasHaciaRefugios",
+            wraps=RutasHaciaRefugios,
+        ) as campos:
+            rutas = servicio._planificar_conjunto(snapshot, self.grafo)
+
+        self.assertEqual(campos.call_count, 1)
+        self.assertEqual(rutas["S-1"], ("N-0001", "N-0002", "N-0003", "N-0004"))
+        self.assertEqual(rutas["S-2"], ("N-0002", "N-0003", "N-0004"))
 
 
 if __name__ == "__main__":

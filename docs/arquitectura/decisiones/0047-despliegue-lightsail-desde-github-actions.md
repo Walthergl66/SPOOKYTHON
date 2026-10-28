@@ -1,7 +1,7 @@
 # ADR-047 — Actualizaciones de Lightsail desde GitHub Actions
 
 Fecha: 2026-10-28  
-Estado: aceptada para implementación; conectividad y primer despliegue automatizado pendientes  
+Estado: aceptada; CI y empaquetado comprobados; despliegue automático bloqueado por conectividad SSH (CAM-131)
 Origen: solicitud del usuario de automatizar la actualización de Navira tras cambios en el repositorio.
 
 ## Contexto
@@ -17,6 +17,10 @@ La demo temporal corre en una única instancia Lightsail. Backend, sesiones y co
 5. El script conserva los tags anteriores, reemplaza los contenedores y comprueba backend y frontend en loopback. Ante fallo local intenta restaurar las imágenes previas. El workflow verifica también salud y UI mediante HTTPS público.
 6. Aceptar una interrupción breve durante el reemplazo. No hay despliegue blue/green porque ambos contenedores comparten puertos y el mundo en memoria no soporta dos coordinadores.
 7. No abrir SSH a todo Internet ni modificar el firewall desde el workflow. La regla actual de Lightsail permite el origen administrativo; GitHub-hosted runners no tendrán acceso hasta establecer una ruta de red permitida y acotada. El primer despliegue de Actions debe esperar a resolver esa condición sin ampliar exposición indiscriminadamente.
+
+## Estado de verificación
+
+El run de GitHub Actions #50 pasó backend, build frontend, validación de configuración, construcción de imágenes e instalación/verificación de `known_hosts`; el job falló en la transferencia al agotar el tiempo de conexión al puerto 22. El runner hospedado no pertenece al origen permitido por la regla SSH de Lightsail. El commit `ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665` se aplicó manualmente desde el origen administrativo con el script de release y rollback local disponible; `GET /` y `/salud` devolvieron HTTP 200. La publicación manual no resuelve el CD automático. P-21 permanece abierta; no ampliar la regla a `0.0.0.0/0`.
 
 ## Alternativas
 

@@ -1,3 +1,30 @@
+## CAM-132 — Compartir rutas estáticas por cohorte para reducir latencia
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Origen: el usuario solicitó mejorar el rendimiento porque el sistema tarda en responder y el objetivo interno de `/paso` es p95 ≤150 ms.
+- Relación: SPEC-002, CA-002-04/11; TRD-02; T-11; P-22.
+- Hallazgo: un perfil local de 200 habitantes mostró 56 llamadas a `_ruta_estatica`/`seleccionar_refugio`, responsables de 26,75 s acumulados de 38,99 s bajo cProfile. Cada una recorría repetidamente el grafo para obtener un camino al refugio.
+- Resultado: `DecidirPaso._planificar_conjunto` agrupa sobrevivientes con compromiso inválido que no detectan zombie próximo y comparte un `RutasHaciaRefugios` por refugio objetivo/snapshot. El pronóstico de corredores consulta un índice inverso de objetivos con el mismo alcance/desempates que la búsqueda directa; los campos inversos reutilizan adyacencia de calles del mapa inmutable. Si un refugio de destino está bloqueado, conserva el selector previo y su semántica especial de origen en refugio. API y reglas de tránsito no cambian.
+- Archivos: `backend/src/navira/application/decidir_paso.py`, `backend/tests/test_decidir_paso.py`, algoritmo de rutas, SPEC-002, trazabilidad, pruebas, reporte CAM-132, estado y pendientes.
+- Verificación: los tests focalizados `test_dijkstra`, `test_decidir_paso` y `test_prediccion_rutas` pasan 37/37 después de las últimas optimizaciones. Suite backend 247/247 en 370,878 s pasó antes de los últimos cambios del índice predictor/calles; repetir antes de integrar. Una primera medición tras compartir rutas dio p95 49,355/73,834/147,181 ms; las muestras actuales de 20/80/200 variaron y la última midió 94,565/71,821/230,814 ms, cero fallas. Una corrida solo con 200 registró p95 198,250 ms/p99 224,296 ms. Véase [reporte](../calidad/resultados/optimizacion-rutas-cam132.md).
+- Límites: pocas corridas cortas, cliente y servidor loopback en el mismo host; el p95 actual de R3 sigue sobre 150 ms y no se demostró estabilidad. La duración por turno también supera a veces 2 s. No prueba Lightsail/red pública. No se despliega en este CAM.
+- Pendiente: P-22. Repetir la matriz en varias campañas y medir desde un cliente externo al Lightsail. No marcar TRD-02/T-11 como satisfechos hasta contar con evidencia sostenida.
+- Commit o PR: no creado.
+
+## CAM-131 — Desplegar ddfa843 en Lightsail y diagnosticar CD
+
+- Fecha: 2026-10-28, America/Guayaquil.
+- Solicitud o problema de origen: el usuario autorizó continuar el despliegue completo; GitHub Actions #50 falló durante el SSH con `Connection timed out`.
+- Relación: SPEC-011, P0-04/P5-02, ADR-047, P-21.
+- Motivo: publicar el candidato ya aprobado por los jobs de pruebas/build, identificar si el bloqueo era de aplicación o conectividad y mantener el firewall restringido.
+- Resultado: el run #50 pasó backend tests, frontend build, validación de configuración, build de imágenes y host key; el runner hospedado no pudo alcanzar el puerto 22 porque Lightsail solo permite el origen administrativo. Se usó la sesión SSH administrativa ya permitida para transferir e instalar el SHA `ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665`. El script remoto completó salud de ambos contenedores. Verificación pública: `/` y `/salud` HTTP 200. No se abrió SSH a `0.0.0.0/0`.
+- Archivos de aplicación: ninguno. Documentos propietarios: infraestructura, seguridad, guía de despliegue, ADR-047, SPEC-011, pendientes, estado e historial.
+- Validación ejecutada: el SHA exacto es el construido por Actions; logs del run confirmaron los checks/build y el error de red SSH. El despliegue remoto informó `Navira release ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665 is healthy`; las dos imágenes reportaron ese SHA. `curl` público devolvió HTTP 200 para `/` y `/salud`. El primer paquete incorrectamente etiquetado fue rechazado por el health check y rollback restauró los contenedores previos; corregido el archivo, el segundo despliegue pasó. Las sesiones/mundos se reiniciaron durante el reemplazo según el contrato volátil.
+- Límites: el estado actual de Lightsail no se consultó por AWS API debido a la denegación IAM; se comprobó desde SSH y HTTP. Actions sigue sin canal al host y el run #50 continúa fallido; el despliegue manual no prueba CD automático. Budget/email y cobro real no comprobados.
+- Pendiente: P-21. Resolver una ruta de red restringida y probar otro run; hasta entonces, actualizaciones manuales desde el origen administrativo. Nunca abrir SSH globalmente para acomodar runners hospedados.
+- Siguiente acción concreta: decidir la ruta restringida para Actions (por ejemplo, túnel privado con identidad de corta duración) y validar el workflow con un nuevo run; vigilar manualmente la demo hasta entonces.
+- Commit o PR: ninguno creado.
+
 ## CAM-130 — Aplicar el puente de R2 desde el inicio
 
 - Fecha: 2026-10-28, America/Guayaquil.

@@ -7,7 +7,7 @@ Tareas: P4-07, P5-02
 Pruebas: T-58  
 Cambio: CAM-129
 Decisión: [ADR-046](../../arquitectura/decisiones/0046-demo-publica-multisesion.md)
-Evidencia: [CAM-126 a CAM-129](../../seguimiento/cambios.md#cam-129-automatizar-la-actualizacion-de-lightsail-desde-github-actions); CD configurado localmente; primer run GitHub, conectividad del runner, carga concurrente, revisión visual de Jugar y validación de estado/factura AWS pendientes.
+Evidencia: [CAM-126 a CAM-131](../../seguimiento/cambios.md#cam-131-desplegar-ddfa843-en-lightsail-y-diagnosticar-cd); el release `ddfa843f81c9cb87732d56b4a1f5b59cf0ee4665` está desplegado manualmente y `/` y `/salud` responden 200. El run #50 de Actions pasó CI/build y falló por timeout SSH desde runner hospedado; P-21 sigue pendiente. Carga concurrente, revisión visual de Jugar y validación de estado/factura AWS también pendientes.
 
 ## Objetivo y alcance
 
@@ -36,4 +36,4 @@ El perfil público se activa solo con `NAVIRA_PUBLIC_DEMO_CONTROL=1`. `NAVIRA_PU
 
 ## Verificación y estado
 
-T-58 valida aislamiento por cookie, inicio de mundos distintos, origen, capacidad, expiración y limpieza; la prueba ASGI y el smoke HTTPS recorren Juego → Reto en un navegador y Simulador en otro, confirman tres `runId` distintos y Origin ajeno 403. `nginx -t`, el health check HTTPS y el estado del panel “En vivo” del navegador pasan. No hubo prueba de carga concurrente ni review visual del mapa dentro de Jugar; tampoco lectura del estado de recursos/costos vía AWS API. No marcar esta SPEC verificada por builds o pruebas locales solamente.
+T-58 valida aislamiento por cookie, inicio de mundos distintos, origen, capacidad, expiración y limpieza; la prueba ASGI y el smoke HTTPS recorren Juego → Reto en un navegador y Simulador en otro, confirman tres `runId` distintos y Origin ajeno 403. `nginx -t`, el health check HTTPS y el estado del panel “En vivo” del navegador pasan. CAM-131 actualizó por SSH administrativo las imágenes al SHA completo registrado y verificó HTTP 200 en `/` y `/salud`. No hubo prueba de carga concurrente ni revisión visual del mapa dentro de Jugar; el runner GitHub no pudo transferir por el firewall SSH restringido y tampoco hay lectura del estado de recursos/costos vía AWS API. No marcar esta SPEC verificada por builds o pruebas locales solamente.

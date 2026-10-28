@@ -9,6 +9,8 @@ from navira.domain.mapa import Calle, Grafo, Mapa, Nodo, Refugio, TipoCalle
 from navira.routing.prediccion import (
     SobrevivienteObservable,
     ZombieObservable,
+    _indice_objetivos_visibles,
+    _objetivo_visible,
     pronosticar_zombies_visibles,
 )
 from test_ruta_temporal import grafo_temporal
@@ -44,6 +46,33 @@ class PronosticoRutasTests(unittest.TestCase):
 
         self.assertEqual(dict(resultado.turnos[0].exposicion_nodo), {"N-2": 1.0, "N-4": 1.0})
         self.assertIn("corredor_objetivo_con_sobrevivientes_estaticos", resultado.supuestos)
+
+    def test_indice_inverso_de_objetivos_coincide_con_busqueda_directa(self) -> None:
+        sobrevivientes_por_nodo = {"N-3": ["S-2", "S-1"], "N-4": ["S-3"]}
+        aristas_cerradas = frozenset({"E-34"})
+        segmentos_cerrados = frozenset()
+
+        indice = _indice_objetivos_visibles(
+            self.grafo,
+            sobrevivientes_por_nodo,
+            3,
+            aristas_cerradas,
+            segmentos_cerrados,
+        )
+
+        for nodo in self.grafo.mapa.nodos_por_id:
+            self.assertEqual(
+                indice.get(nodo),
+                _objetivo_visible(
+                    self.grafo,
+                    nodo,
+                    sobrevivientes_por_nodo,
+                    3,
+                    aristas_cerradas,
+                    segmentos_cerrados,
+                ),
+                nodo,
+            )
 
     def test_pronostica_cruce_opuesto_del_caminante_sobre_calle_bidireccional(self) -> None:
         grafo = Grafo(
