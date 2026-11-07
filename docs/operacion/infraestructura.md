@@ -1,6 +1,8 @@
-# Infraestructura y operación AWS
+# Infraestructura y operación
 
 Estado al 2026-10-28 (CAM-158): además de la campaña de evaluación CAM-125, la demo pública temporal está en `us-east-2`, Lightsail instance `navira-public-demo`, IPv4 estática `3.17.253.59`, URL HTTPS [3.17.253.59.nip.io](https://3.17.253.59.nip.io). El código `7046ebcf89e7550569ecb8a2bcf1fa7d081ae1ee` está desplegado manualmente. `/` y `/salud` responden HTTP 200; el registro vivo confirma límite de 4 sesiones por instancia y TTL de inactividad de 900 s, con pruebas de concurrencia parcialmente restringidas por un cupo que ya estaba ocupado. Reporte: [smoke CAM-158](../calidad/resultados/smoke-despliegue-cam158.md). Se preparó CD con GitHub OIDC y apertura/cierre temporal de SSH desde la IP `/32` del runner; no se abrió firewall global. Falta configurar proveedor/rol y `LIGHTSAIL_DEPLOY_ROLE_ARN` y completar un despliegue desde Actions. Sesiones, mundos y coordinador continúan volátiles. El correo del Budget aparece `Inactive`; el usuario acepta supervisión manual. Evidencia de evaluación: [CAM-125](../calidad/resultados/campana-aws-cam125.md). Costos: [costos](costos.md). Accesos: [seguridad](seguridad.md).
+
+CAM-159 preparó localmente una segunda ruta de demo temporal con Vercel + Render Free ([ADR-054](../arquitectura/decisiones/0054-hosting-vercel-render-free.md)). No se ha autenticado en los proveedores ni creado un servicio. La URL de Render escrita en los rewrites y el dominio Vercel de producción deben confirmarse; el último debe establecerse como `NAVIRA_ALLOWED_ORIGINS` en el servicio backend. Esta preparación no reemplaza ni modifica Lightsail.
 
 ## Recursos iniciales
 
@@ -35,6 +37,14 @@ Configurar como GitHub Actions secrets `LIGHTSAIL_HOST`, `LIGHTSAIL_USER`, `LIGH
 **Estado del CD/despliegue:** CAM-158 desplegó manualmente `7046ebcf89e7550569ecb8a2bcf1fa7d081ae1ee` y comprobó health HTTPS. CAM-140 actualiza el workflow para autenticar por OIDC, permitir temporalmente TCP/22 desde el IPv4 `/32` de su runner y cerrar la regla tras el deploy. La plantilla IAM concede solo `OpenInstancePublicPorts`/`CloseInstancePublicPorts` sobre la instancia. La integración queda incompleta hasta configurar proveedor/rol y variable de Actions, y ejecutar el primer run hospedado. Nunca ampliar SSH a `0.0.0.0/0`. Cada reemplazo causa una interrupción breve y pierde mundos/sesiones en memoria.
 
 Las imágenes se construyen localmente con Podman y se transfieren a la VM mediante SSH; ECR tiene tags previos inmutables, pero Lightsail no pudo activar un rol image-puller y el artefacto desplegado debe quedar identificado por su digest/commit en CAM-127. El límite de tres sesiones acota memoria casual, no es una prueba de carga. Un solo proceso; reinicio destruye partidas. La tarifa estimada de la VM por 72 horas encendida es `24 × 72 / 730 = US$2,37`, antes de impuestos/uso adicional; al cerrar, detener/eliminar la instancia y revisar si se conserva la Static IP. Ver [costos](costos.md).
+
+## Ruta alternativa gratuita preparada (ADR-054; aún no desplegada)
+
+`render.yaml` declara un Web Service Python en Ohio, plan `free`, raíz `backend/`, un worker Uvicorn y health check `/salud`. Activa `NAVIRA_PUBLIC_DEMO_CONTROL=1`, `NAVIRA_COOKIE_SECURE=1`, un cupo simultáneo y expiración por inactividad a 900 s. Render genera `NAVIRA_API_KEY`; `NAVIRA_ALLOWED_ORIGINS` requiere el origen exacto de producción Vercel, sin comodines. El servicio no usa disco persistente y sus mundos/sesiones están en memoria.
+
+`frontend/vercel.json` envía las rutas HTTP del tablero y `/ws/*` al hostname `navira-api-walthergl66.onrender.com`. Antes de publicar, verificar que Render haya asignado ese hostname y reemplazarlo si fuera distinto; obtener el dominio Vercel de producción y guardarlo en `NAVIRA_ALLOWED_ORIGINS`. `frontend/.env.production` fija `VITE_PUBLIC_DEMO=1` para iniciar el bootstrap de cookie antes de las solicitudes paralelas del panel. No insertar `NAVIRA_API_KEY` en variables `VITE_*`.
+
+La instancia gratuita puede suspenderse tras 15 minutos sin tráfico, tardar aproximadamente un minuto en arrancar y reiniciarse; sus archivos locales son efímeros. El límite de una sesión es una elección conservadora para 512 MB/0,1 CPU, no una medición de consumo de este proceso. Medir memoria/latencia con el mapa cargado y comprobar arranque frío, cookie, mutaciones, WebSocket y cierre/reconexión antes de anunciar la URL. La cobertura de hosting, persistencia y disponibilidad de la demo sigue pendiente.
 
 ## Red propuesta para el evento
 

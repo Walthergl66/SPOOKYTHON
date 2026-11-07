@@ -1,3 +1,14 @@
+## CAM-159 — Preparar despliegue alternativo Vercel + Render Free
+
+- Fecha: 2026-11-06, America/Guayaquil.
+- Origen: solicitud del usuario de desplegar Navira en Vercel y usar un backend gratuito.
+- Relación: SPEC-011, P0-05/P4-07/P5-02, T-58, ADR-054 y P-24.
+- Cambio: `frontend/vercel.json` enruta REST y `/ws/*` a Render para conservar un origen de navegador; `frontend/.env.production` activa el bootstrap público; `render.yaml` describe un Web Service Python gratuito con un worker, un cupo concurrente y TTL de inactividad de 900 s. El backend acepta para mutaciones y WebSocket una allowlist exacta `NAVIRA_ALLOWED_ORIGINS` además del origen same-host. Render generará `NAVIRA_API_KEY`; no se añade al cliente. El hostname configurado en Vercel y el dominio Vercel de producción aún deben confirmarse.
+- Verificación local: `backend/tests/test_public_demo.py` 6/6, incluidos dominio permitido con Host Render y rechazo de sufijo atacante; frontend `npm test` 97/97; `npm run build`; `python -m compileall -q src/navira`; `python scripts/check_docs.py` (151 Markdown); `python scripts/check_sdd.py` (11 SPEC). El build conserva la advertencia previa de chunk de mapa >500 kB. Intento de `python -m unittest discover -s tests` con Python del sistema 3.14: emitió errores al inicio y siguió ejecutándose durante más de cuatro minutos; fue interrumpido sin resumen final. Resultado inconcluso y causa desconocida; no se confirma como falla de baseline. No se inició sesión en Vercel/Render ni se crearon servicios; no existen URLs o smoke remoto de esta alternativa. El plan Render Free puede dormir/reiniciar y destruir mundos efímeros; la memoria con el mapa cargado no está medida.
+- Archivos de implementación: `backend/src/navira/api/seguridad.py`, `backend/src/navira/main.py`, `backend/tests/test_public_demo.py`, `render.yaml`, `frontend/vercel.json`, `frontend/.env.production`. Documentación: ADR-054, arquitectura, infraestructura, seguridad, costos, SPEC-011, T-58, trazabilidad, plan, pendientes, estado e índices.
+- Siguiente paso: autenticar las cuentas ya existentes, provisionar Render desde `render.yaml`, verificar el hostname real y publicar el build Vercel que incluye `.env.production`; introducir el dominio Vercel exacto en `NAVIRA_ALLOWED_ORIGINS`, validar el destino del proxy, y ejecutar smoke de cookie, `/salud`, mutación, WebSocket y arranque frío antes de compartir la URL.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-158 — Desplegar cuatro sesiones y TTL de inactividad de 15 minutos
 
 - Fecha: 2026-10-28, America/Guayaquil.

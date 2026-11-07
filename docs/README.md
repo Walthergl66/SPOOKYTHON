@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-10-28, CAM-158. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
+Actualizado: 2026-11-06, CAM-159. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
 
 ## Dónde está cada cosa
 
@@ -12,7 +12,7 @@ Actualizado: 2026-10-28, CAM-158. Ubicación canónica: `docs/`. La antigua carp
 | [metodo/](metodo/) | Cómo trabajamos: SDD, especificaciones SPEC, trazabilidad, continuidad y plantillas. | [SDD](metodo/SDD.md) |
 | [seguimiento/](seguimiento/) | Estado actual, historial de cambios CAM, pendientes y plan de tareas. | [estado actual](seguimiento/estado-actual.md) |
 | [calidad/](calidad/) | Pruebas T-NN y evidencias de resultados (`resultados/`). | [pruebas](calidad/pruebas.md) |
-| [operacion/](operacion/) | Infraestructura AWS, seguridad y costos. | [infraestructura](operacion/infraestructura.md) |
+| [operacion/](operacion/) | Infraestructura AWS y alternativas temporales, seguridad y costos. | [infraestructura](operacion/infraestructura.md) |
 | [referencias/](referencias/) | Textos de origen: reto original y propuestas históricas. No son el plan vigente. | [reto original](referencias/reto-original.md) |
 
 ## Lectura de incorporación
@@ -103,6 +103,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-051](arquitectura/decisiones/0051-replanificacion-a-refugio-alternativo.md) | Elegir un refugio alcanzable cuando el objetivo asignado pierde toda ruta legal | Cambie la política de destino alternativo del planificador. |
 | [ADR-052](arquitectura/decisiones/0052-perfiles-narrativos-aislados.md) | Perfiles narrativos ficticios estables, sin alterar el RNG del mundo | Cambie catálogo, asignación o alcance narrativo. |
 | [ADR-053](arquitectura/decisiones/0053-sectores-por-poligonos-geomanta.md) | Asignar barrio/parroquia de refugios por polígonos GeoManta, con snapshot local | Cambie fuente, método espacial o cobertura de etiquetas territoriales. |
+| [ADR-054](arquitectura/decisiones/0054-hosting-vercel-render-free.md) | Hosting temporal Vercel + Render Free con proxy del mismo origen y un worker | Cambie proveedores, proxy, límites de sesión o supuesto de hosting gratuito. |
 | [ADR-048](arquitectura/decisiones/0048-puente-r2-como-condicion-inicial.md) | Aplicar el puente colapsado de R2 al inicio antes de la primera decisión | Cambie el calendario/semántica inicial del puente del Reto. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
@@ -193,7 +194,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 
 | Documento | Fuente principal de | Actualizar cuando |
 |---|---|---|
-| [infraestructura.md](operacion/infraestructura.md) | Despliegue y operación AWS | Cambie un recurso o procedimiento. |
+| [infraestructura.md](operacion/infraestructura.md) | Despliegue AWS y alternativa Vercel/Render preparada | Cambie un recurso o procedimiento de publicación. |
 | [guia-paso-a-paso-despliegue.md](operacion/guia-paso-a-paso-despliegue.md) | Guía interactiva de preparación para despliegue | Cambien sus pasos o requisitos previos. |
 | [seguridad.md](operacion/seguridad.md) | Autenticación y límites de confianza | Cambien accesos o secretos. |
 | [costos.md](operacion/costos.md) | Estimación y gasto real | Cambie infraestructura o consumo. |
