@@ -56,6 +56,30 @@ class _UnirseFalso:
 
 
 class RegistroSesionesDemoTests(unittest.TestCase):
+    def test_origen_proxy_solo_admite_dominios_configurados_exactamente(self) -> None:
+        registro = RegistroSesionesDemoMemoria(lambda: _ControlFalso("proxy"), max_sesiones=1)
+        app = crear_app(
+            sesiones_demo_publicas=registro,
+            seguridad=ConfiguracionSeguridad(
+                control_demo_publico=True,
+                cookie_segura=False,
+                origenes_permitidos=frozenset({"https://navira-demo.vercel.app"}),
+            ),
+        )
+        with TestClient(app, base_url="https://navira-api.onrender.com") as cliente:
+            permitido = cliente.post(
+                "/demo/operador/iniciar",
+                headers={"Origin": "https://navira-demo.vercel.app"},
+            )
+            rechazado = cliente.post(
+                "/demo/operador/iniciar",
+                headers={"Origin": "https://navira-demo.vercel.app.attacker.test"},
+            )
+
+        self.assertEqual(permitido.status_code, 200, permitido.text)
+        self.assertEqual(rechazado.status_code, 403)
+        registro.cerrar()
+
     def test_clientes_reciben_mundos_independientes_y_reutilizan_su_cookie(self) -> None:
         creados: list[_ControlFalso] = []
 
