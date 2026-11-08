@@ -1,29 +1,26 @@
 # Arquitectura del sistema
 
-Estado: diseño adoptado para la primera implementación; no desplegado. Decisiones: [ADR-001](decisiones/0001-arquitectura-base.md), [ADR-002](decisiones/0002-dos-modos.md) y [ADR-003](decisiones/0003-estado-y-turnos.md).
+Estado: aplicación desplegada parcialmente en Vercel + Render; ver estado operativo en [infraestructura](../operacion/infraestructura.md) y decisión [ADR-054](decisiones/0054-hosting-vercel-render-free.md). AWS queda como historial, no como destino operativo, según [ADR-055](decisiones/0055-retirar-aws-como-infraestructura-activa.md).
 
 La adopción de [PRD](../producto/PRD.md), [TRD](../producto/TRD.md), [ODDD](../dominio/ODDD.md) y [SDD](../metodo/SDD.md) complementa esta arquitectura sin cambiar stack o topología; decisión [ADR-005](decisiones/0005-prd-trd-oddd-sdd.md).
 
 ## Estructura y límites
 
-Un núcleo modular compartido resuelve el mundo y sus reglas. Las políticas automática y humana producen intenciones; el mismo validador aplica movimientos, mordidas y llegadas. FastAPI transforma HTTP/WebSocket en operaciones de aplicación. La infraestructura persiste y publica; no define las reglas.
+Un núcleo modular compartido resuelve el mundo y sus reglas. Las políticas automática y humana producen intenciones; el mismo validador aplica movimientos, mordidas y llegadas. FastAPI transforma HTTP/WebSocket en operaciones de aplicación. Vercel sirve el frontend y proxifica al backend Render; el estado runtime sigue en memoria y se pierde al reiniciar. El hosting no define reglas de dominio.
 
 ```mermaid
 flowchart TD
-    User[Navegador: juego o panel] --> CF[CloudFront HTTPS]
-    CF --> S3[S3 privado: frontend]
-    CF --> ALB[ALB: API y WebSocket]
-    ALB --> API[FastAPI: adaptadores HTTP]
-    subgraph Runtime[ECS Fargate: una tarea permanente]
+    User[Navegador: juego o panel] --> Vercel[Vercel: frontend + proxy same-origin]
+    Vercel --> API[Render Free: FastAPI, un worker]
+    subgraph Runtime[Un servicio / una instancia]
         API --> App[Casos de uso]
         App --> Core[Dominio y rutas]
         Sim[Coordinador único de simulación] --> Core
         Sim -->|HTTP con API key| API
         App --> Planner[Proceso de planificación]
     end
-    Sim --> Store[(DynamoDB: estados y órdenes)]
+    Sim --> Store[(Memoria volátil: estados y órdenes)]
     App --> Store
-    Runtime --> CW[CloudWatch]
 ```
 
 El diagrama describe flujo de ejecución. Las dependencias de código se definen en [módulos backend](modulos/backend.md): aplicación define los puertos de persistencia; los adaptadores los implementan. `RepositorioSnapshots` ya existe y su adaptador actual es solo local/en memoria; DynamoDB no está conectado. El dominio no importa FastAPI o boto3. La planificación CPU se aísla del servidor HTTP para no bloquearlo.
@@ -48,7 +45,7 @@ El diagrama describe flujo de ejecución. Las dependencias de código se definen
 | Navegador → proveedor cartográfico | Tiles vectoriales del área visible para la capa base del mapa | Solicitud externa de lectura; no envía estado de juego ni credenciales Navira; servicio público sin SLA. Véase [ADR-016](decisiones/0016-mapa-maplibre-openfreemap.md). |
 | Operador → simulador | Inicio/cierre/eventos | Credencial administrativa distinta en el futuro productivo. |
 | Tablero → demo sintética | Control/colocación de Reto, Simulador y Jugar operador | Local: opt-in/loopback; demo pública: cookie opaca por navegador, aislamiento en memoria, límite de sesiones y validación same-host o allowlist exacta para el proxy Vercel/Render propuesto. `/paso` conserva API key. Ver [SPEC-011](../metodo/especificaciones/SPEC-011-demo-publica-multisesion.md), [ADR-046](decisiones/0046-demo-publica-multisesion.md) y [ADR-054](decisiones/0054-hosting-vercel-render-free.md). |
-| Núcleo → almacenamiento | Puertos de aplicación | Rol IAM y adaptador de infraestructura. |
+| Núcleo → almacenamiento | Puertos de aplicación | Adaptador de memoria en la configuración actual; no hay almacenamiento durable. |
 
 Los contratos públicos previstos están en [API](contratos/api.md) y [eventos](contratos/eventos.md). Identidades y almacenamiento, en [datos](../dominio/datos.md).
 

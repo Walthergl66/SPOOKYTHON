@@ -1,6 +1,6 @@
 # Índice general de la documentación
 
-Actualizado: 2026-11-07, CAM-160. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
+Actualizado: 2026-11-07, CAM-161. Ubicación canónica: `docs/`. La antigua carpeta `doc/` ya no existe. Cada tema tiene su carpeta; este archivo dice dónde está cada documento. Vercel + Render es la infraestructura activa; referencias AWS se conservan como historia y recursos remotos no están verificados. El plan vigente es [plan de implementación](seguimiento/plan-implementacion.md); el anterior se conserva como referencia histórica en [referencias/](referencias/).
 
 ## Dónde está cada cosa
 
@@ -12,7 +12,7 @@ Actualizado: 2026-11-07, CAM-160. Ubicación canónica: `docs/`. La antigua carp
 | [metodo/](metodo/) | Cómo trabajamos: SDD, especificaciones SPEC, trazabilidad, continuidad y plantillas. | [SDD](metodo/SDD.md) |
 | [seguimiento/](seguimiento/) | Estado actual, historial de cambios CAM, pendientes y plan de tareas. | [estado actual](seguimiento/estado-actual.md) |
 | [calidad/](calidad/) | Pruebas T-NN y evidencias de resultados (`resultados/`). | [pruebas](calidad/pruebas.md) |
-| [operacion/](operacion/) | Infraestructura AWS y alternativas temporales, seguridad y costos. | [infraestructura](operacion/infraestructura.md) |
+| [operacion/](operacion/) | Vercel + Render activos, seguridad/costos; AWS está documentado solo como historial. | [infraestructura](operacion/infraestructura.md) |
 | [referencias/](referencias/) | Textos de origen: reto original y propuestas históricas. No son el plan vigente. | [reto original](referencias/reto-original.md) |
 
 ## Lectura de incorporación
@@ -96,14 +96,15 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [ADR-042](arquitectura/decisiones/0042-juego-operador-mundo-interactivo.md) | «Jugar» como modo de operador que interviene un mundo automático vivo | Cambie la experiencia de Jugar o sus límites de intervención local. |
 | [ADR-043](arquitectura/decisiones/0043-filtros-de-riesgo-y-rutas-comprometidas.md) | Filtros compartidos para incidentes, hordas, zombies próximos y rutas comprometidas | Cambie las reglas de transitabilidad o la política de riesgo alrededor de amenazas. |
 | [ADR-044](arquitectura/decisiones/0044-reemplazo-explicito-al-cambiar-de-modo.md) | Inicio explícito desde el modo destino reemplaza el run local con un mundo nuevo | Cambie el ciclo de vida o transición de runs entre Reto, Simulador y Jugar. |
-| [ADR-045](arquitectura/decisiones/0045-evaluacion-aws-privada.md) | Staging privado y evaluación AWS efímera sin controles locales expuestos | Cambie la topología, permisos o método de evaluación en AWS. |
-| [ADR-046](arquitectura/decisiones/0046-demo-publica-multisesion.md) | Demo temporal abierta con mundos aislados por cookie anónima | Cambie el modo público, sus límites o topología temporal. |
-| [ADR-047](arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) | Despliegue de `master` en Lightsail mediante GitHub Actions y SSH | Cambie la cadena de build, conectividad, rollback o destino. |
-| [ADR-050](arquitectura/decisiones/0050-despliegue-lightsail-oidc-firewall-temporal.md) | CD con OIDC y acceso SSH temporal acotado al runner | Cambie identidad AWS, permisos o firewall temporal de Actions. |
+| [ADR-045](arquitectura/decisiones/0045-evaluacion-aws-privada.md) | Staging privado y evaluación efímera AWS (histórico) | Referencia histórica; AWS ya no es destino activo (ADR-055). |
+| [ADR-046](arquitectura/decisiones/0046-demo-publica-multisesion.md) | Demo pública con mundos aislados por cookie; hosting inicial Lightsail (histórico) | Cambie aislamiento de sesión; topología activa está en ADR-054/055. |
+| [ADR-047](arquitectura/decisiones/0047-despliegue-lightsail-desde-github-actions.md) | CD histórico de `master` a Lightsail | No operativo; pipeline/script retirado en CAM-161. |
+| [ADR-050](arquitectura/decisiones/0050-despliegue-lightsail-oidc-firewall-temporal.md) | CD histórico a Lightsail con OIDC y SSH temporal | No operativo; plantilla/job retirados en CAM-161. |
 | [ADR-051](arquitectura/decisiones/0051-replanificacion-a-refugio-alternativo.md) | Elegir un refugio alcanzable cuando el objetivo asignado pierde toda ruta legal | Cambie la política de destino alternativo del planificador. |
 | [ADR-052](arquitectura/decisiones/0052-perfiles-narrativos-aislados.md) | Perfiles narrativos ficticios estables, sin alterar el RNG del mundo | Cambie catálogo, asignación o alcance narrativo. |
 | [ADR-053](arquitectura/decisiones/0053-sectores-por-poligonos-geomanta.md) | Asignar barrio/parroquia de refugios por polígonos GeoManta, con snapshot local | Cambie fuente, método espacial o cobertura de etiquetas territoriales. |
 | [ADR-054](arquitectura/decisiones/0054-hosting-vercel-render-free.md) | Hosting temporal Vercel + Render Free con proxy del mismo origen y un worker | Cambie proveedores, proxy, límites de sesión o supuesto de hosting gratuito. |
+| [ADR-055](arquitectura/decisiones/0055-retirar-aws-como-infraestructura-activa.md) | Retirar AWS como hosting activo y conservar despliegues previos como historial | Cambie el proveedor activo o se compruebe el estado de recursos AWS remotos. |
 | [ADR-048](arquitectura/decisiones/0048-puente-r2-como-condicion-inicial.md) | Aplicar el puente colapsado de R2 al inicio antes de la primera decisión | Cambie el calendario/semántica inicial del puente del Reto. |
 | [guia-clean-architecture.md](arquitectura/guia-clean-architecture.md) | Regla de dependencia, capas objetivo, línea base y pasos de migración de backend y frontend | Cambie una capa, un puerto o un paso de migración. |
 
@@ -119,7 +120,7 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 | [SPEC-002](metodo/especificaciones/SPEC-002-motor-paso.md) | Motor y siguiente paso (`/paso`) | Cambie el contrato o la política de `/paso`. |
 | [SPEC-003](metodo/especificaciones/SPEC-003-panel-vivo.md) | Panel de observación en vivo | Cambie el panel o su transporte. |
 | [SPEC-004](metodo/especificaciones/SPEC-004-juego-humano.md) | Personaje humano | Cambie el modo juego. |
-| [SPEC-005](metodo/especificaciones/SPEC-005-aws-evaluacion.md) | AWS, evaluación y entrega | Cambie la infraestructura o la entrega. |
+| [SPEC-005](metodo/especificaciones/SPEC-005-aws-evaluacion.md) | Evaluación/entrega AWS (sustituida; evidencia histórica) | Cambie su estado histórico; SPEC-011 describe hosting vigente. |
 | [SPEC-006](metodo/especificaciones/SPEC-006-metodologia.md) | PRD, TRD, ODDD y SDD | Cambie el método documental. |
 | [SPEC-007](metodo/especificaciones/SPEC-007-panel-operador-local.md) | Criterios del tablero y control local de demo, incluida pausa confirmada por servidor (CAM-134/T-60) | Cambie el flujo local de operación; no autoriza control administrativo público. |
 | [SPEC-008](metodo/especificaciones/SPEC-008-mapa-cartografico-3d.md) | Criterios del mapa vectorial, vista 3D, precarga y etiquetas de calles por zoom (CAM-134/T-59, CAM-142/T-64) | Cambie el renderer/cartografía del panel; no convierte el proveedor en motor de simulación. |
@@ -194,8 +195,8 @@ Seguir [AGENTS.md](../AGENTS.md): primero este índice, [contexto](producto/cont
 
 | Documento | Fuente principal de | Actualizar cuando |
 |---|---|---|
-| [infraestructura.md](operacion/infraestructura.md) | Despliegue AWS y alternativa Vercel/Render preparada | Cambie un recurso o procedimiento de publicación. |
-| [guia-paso-a-paso-despliegue.md](operacion/guia-paso-a-paso-despliegue.md) | Guía interactiva de preparación para despliegue | Cambien sus pasos o requisitos previos. |
+| [infraestructura.md](operacion/infraestructura.md) | Operación activa Vercel + Render y estado histórico AWS | Cambie el hosting, proxy, límites o estado remoto verificable. |
+| [guia-paso-a-paso-despliegue.md](operacion/guia-paso-a-paso-despliegue.md) | Historial de guía AWS retirada; no contiene pasos vigentes | Nueva evidencia histórica o sustitución por guía del hosting activo. |
 | [seguridad.md](operacion/seguridad.md) | Autenticación y límites de confianza | Cambien accesos o secretos. |
 | [costos.md](operacion/costos.md) | Estimación y gasto real | Cambie infraestructura o consumo. |
 

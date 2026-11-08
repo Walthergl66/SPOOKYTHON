@@ -1,7 +1,7 @@
 # ADR-047 — Actualizaciones de Lightsail desde GitHub Actions
 
 Fecha: 2026-10-28  
-Estado: aceptada; protocolo de despliegue y rollback vigente; autenticación/conectividad actualizadas por ADR-050 (CAM-140)
+Estado: histórica y retirada por ADR-055/CAM-161; protocolo/script eliminado del repositorio. La evidencia del intento/deploy anterior se conserva.
 Origen: solicitud del usuario de automatizar la actualización de Navira tras cambios en el repositorio.
 
 ## Contexto

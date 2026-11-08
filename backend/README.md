@@ -37,7 +37,7 @@ El smoke valida `GET /salud`, la inclusión del fixture Manta, la ejecución com
 CONTAINER_ENGINE=podman backend/scripts/smoke_docker.sh
 ```
 
-La imagen mantiene un worker Uvicorn y no habilita `NAVIRA_LOCAL_DEMO_CONTROL`, `NAVIRA_DEMO` ni `NAVIRA_GAME_DEMO`. La configuración de ECS deberá inyectar `NAVIRA_API_KEY` desde Secrets Manager y definir la salud de la tarea. La imagen local no constituye un despliegue AWS ni configura TLS/red.
+La imagen mantiene un worker Uvicorn y no habilita `NAVIRA_LOCAL_DEMO_CONTROL`, `NAVIRA_DEMO` ni `NAVIRA_GAME_DEMO`. El servicio activo Render usa un worker; consulte [infraestructura vigente](../docs/operacion/infraestructura.md). La imagen local no configura TLS/proxy ni constituye prueba del deployment remoto. Los experimentos históricos ECS/Fargate se describen en CAM-125 y no son el destino operativo actual.
 
 ### Modos de arranque
 
@@ -46,7 +46,7 @@ La imagen mantiene un worker Uvicorn y no habilita `NAVIRA_LOCAL_DEMO_CONTROL`, 
 | `NAVIRA_API_KEY` | Clave de servicio para `POST /paso`. Obligatoria en todos los modos. |
 | `NAVIRA_DEMO=1` | Simulador sintético en memoria. Sin esta variable, el backend responde con el respaldo de espera. |
 | `NAVIRA_GAME_DEMO=1` | Juego humano sintético local, en lugar de `NAVIRA_DEMO=1`. Reloj de dos segundos; pierde su estado al reiniciar. |
-| `NAVIRA_LOCAL_DEMO_CONTROL=1` | Permite iniciar, pausar, continuar y reiniciar la demo desde el tablero. Solo loopback y origen same-host; no habilitar en AWS ni detrás de un proxy público. |
+| `NAVIRA_LOCAL_DEMO_CONTROL=1` | Permite iniciar, pausar, continuar y reiniciar la demo desde el tablero. Solo loopback y origen same-host; no habilitar en hosting público. |
 | `NAVIRA_DEMO_MAP` | Mapa de desarrollo a usar en la demo. Por defecto, el sintético. |
 | `NAVIRA_DEMO_SEED` | Fija la semilla para repetir una partida. Si se omite, se genera una nueva. |
 | `NAVIRA_DEMO_SCENARIO`, `NAVIRA_DEMO_SURVIVORS` | Escenario y población iniciales de la demo. |
@@ -85,7 +85,7 @@ cd backend
 PYTHONPATH=src python -m navira.evaluacion_local --turnos 3 --poblaciones 20 80 200 --concurrencia 200 --semilla 20261026 --periodo-segundos 2
 ```
 
-CAM-029 documenta esta prueba corta de tres turnos por cohorte. CAM-087 mantiene la ventana solicitada aunque la partida termine antes y reporta por separado los turnos de juego y slots ociosos; el período ocioso no genera solicitudes ni cuenta como carga del motor. Para ejecutar los presets Reto R1/R2/R3 en secuencia, usa `PYTHONPATH=src python -m navira.evaluacion_local --campana-reto`; sin `--turnos`, mide 150 slots de 2 s en cada una de las tres rondas. El proceso emite progreso por ronda en stderr y un JSON consolidado en stdout. Esto es evidencia HTTP loopback local, no medición de AWS ni garantía de 150 turnos activos.
+CAM-029 documenta esta prueba corta de tres turnos por cohorte. CAM-087 mantiene la ventana solicitada aunque la partida termine antes y reporta por separado los turnos de juego y slots ociosos; el período ocioso no genera solicitudes ni cuenta como carga del motor. Para ejecutar los presets Reto R1/R2/R3 en secuencia, usa `PYTHONPATH=src python -m navira.evaluacion_local --campana-reto`; sin `--turnos`, mide 150 slots de 2 s en cada una de las tres rondas. El proceso emite progreso por ronda en stderr y un JSON consolidado en stdout. Esto es evidencia HTTP loopback local, no medición de red del hosting activo ni garantía de 150 turnos activos. AWS CAM-125 se conserva como evidencia histórica.
 
 Carga HTTP contra un servidor ya en marcha. Ejecuta el servidor con la misma configuración del cliente y luego el cliente desde otra terminal:
 
@@ -143,13 +143,13 @@ El contrato base de `/paso` se verificó; planificación, idempotencia persistid
 | `pyproject.toml` | Paquete `navira` y dependencias; `[test]` añade la dependencia de pruebas HTTP. |
 | `.env.example` | Variables de entorno de ejemplo, con valores ficticios. |
 
-El dominio no importa FastAPI ni SDKs de AWS. Las capas y dependencias se describen en [módulos backend](../docs/arquitectura/modulos/backend.md) y en la guía para agentes [.agents/backend.md](../.agents/backend.md).
+El dominio no importa FastAPI ni SDKs cloud. Las capas y dependencias se describen en [módulos backend](../docs/arquitectura/modulos/backend.md) y en la guía para agentes [.agents/backend.md](../.agents/backend.md).
 
 ## Especificaciones y documentación
 
 - Arquitectura y límites: [arquitectura](../docs/arquitectura/arquitectura.md), [módulos backend](../docs/arquitectura/modulos/backend.md).
 - Contratos: [API](../docs/arquitectura/contratos/api.md), [eventos](../docs/arquitectura/contratos/eventos.md), [datos](../docs/dominio/datos.md).
 - Reglas y dominio: [reglas del juego](../docs/dominio/reglas-juego.md), [ODDD](../docs/dominio/ODDD.md), [mapa Manta](../docs/dominio/mapa-manta.md).
-- Especificaciones: [SPEC-001 mundo y simulación](../docs/metodo/especificaciones/SPEC-001-mundo-simulacion.md), [SPEC-002 motor de paso](../docs/metodo/especificaciones/SPEC-002-motor-paso.md), [SPEC-005 AWS y evaluación](../docs/metodo/especificaciones/SPEC-005-aws-evaluacion.md).
+- Especificaciones: [SPEC-001 mundo y simulación](../docs/metodo/especificaciones/SPEC-001-mundo-simulacion.md), [SPEC-002 motor de paso](../docs/metodo/especificaciones/SPEC-002-motor-paso.md), [SPEC-005 evaluación AWS (histórica/sustituida)](../docs/metodo/especificaciones/SPEC-005-aws-evaluacion.md) y [SPEC-011 demo pública](../docs/metodo/especificaciones/SPEC-011-demo-publica-multisesion.md).
 - Pruebas: [pruebas](../docs/calidad/pruebas.md) y guía [.agents/pruebas.md](../.agents/pruebas.md).
 - Decisiones relevantes: [ADR-008](../docs/arquitectura/decisiones/0008-simulacion-estocastica-reproducible.md), [ADR-015](../docs/arquitectura/decisiones/0015-control-local-de-demo.md), [ADR-016](../docs/arquitectura/decisiones/0016-mapa-maplibre-openfreemap.md).

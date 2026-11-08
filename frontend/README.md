@@ -49,7 +49,7 @@ El mapa base usa MapLibre GL JS y OpenFreeMap (`https://tiles.openfreemap.org/st
 
 El mapa admite cámara 2D/3D, zoom y rotación; las huellas se extruyen solo cuando la fuente aporta altura. La capa base es visual: no altera el grafo, reglas, rutas ni snapshots de Navira, y los datos de actores y rutas se renderizan localmente sin enviarse al proveedor. Las rutas conectan nodos del fixture mediante segmentos rectos hasta que el dominio conserve geometría completa de calles.
 
-Los límites de seguridad son explícitos: el fixture de Manta tiene cobertura parcial, sus zonas seguras de tsunami no están certificadas ante sismos y no es guía de emergencia. Los controles locales no deben habilitarse en AWS ni detrás de un proxy público.
+Los límites de seguridad son explícitos: el fixture de Manta tiene cobertura parcial, sus zonas seguras de tsunami no están certificadas ante sismos y no es guía de emergencia. Los controles locales no deben habilitarse en hosting público ni detrás de un proxy.
 
 ## Estructura
 

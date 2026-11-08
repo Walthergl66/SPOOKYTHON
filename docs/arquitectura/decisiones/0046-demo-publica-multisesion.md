@@ -1,7 +1,7 @@
 # ADR-046 — Demo pública anónima con mundos aislados
 
-Fecha: 2026-10-28  
-Estado: aceptada para implementación temporal  
+Fecha: 2026-10-28
+Estado: reglas de aislamiento vigentes; despliegue Lightsail histórico, hosting sustituido por ADR-054/055
 Origen: solicitud del usuario para que visitantes públicos prueben Reto, Simulador y Jugar.
 
 ## Contexto
@@ -15,7 +15,7 @@ La decisión previa [ADR-045](0045-evaluacion-aws-privada.md) diseñó staging p
 3. Expirar mundos tras 10.800 segundos de inactividad, cerrar su reloj y perder el estado al reinicio. Cookie de duración máxima de 24 horas. El frontend obtiene cookie antes de montar el dashboard.
 4. Validar Origin same-host en mutaciones y WebSocket. Mantener `/paso` con API key. Nginx sirve UI y API bajo un solo origen/TLS y limita la tasa de endpoints públicos por IP.
 5. Limitar instancias concurrentes conforme al cupo y mantener topes ya definidos por mundo. No usar DynamoDB/Redis en esta demo temporal ni anunciar persistencia, alta disponibilidad o seguridad contra bots sofisticados.
-6. Ejecutar la instancia Lightsail temporal por tres días como máximo previsto y eliminarla al terminar; el Budget de US$10 es alerta, no hard cap.
+6. El despliegue Lightsail descrito originalmente se ejecutó como hosting temporal. Su estado remoto posterior y eliminación no se han verificado; CAM-161 lo retira como destino operativo.
 
 ## Alternativas
 

@@ -1,16 +1,16 @@
 # SPEC-005 — AWS, evaluación y entrega
 
 ID: SPEC-005
-Estado: en-revision
+Estado: sustituida
 Requisitos: PRD-06, PRD-07, PRD-08, TRD-02, TRD-06, TRD-08, TRD-10, TRD-11
 Tareas: P0-03, P0-05, P5-01, P5-02, P5-03, P6-01, P6-02, P6-03
 Pruebas: T-11, T-16, T-18, T-23, T-50
-Cambio: CAM-140
-Evidencia: campañas locales en [CAM-098](../../calidad/resultados/campana-reto-cam098.md) y [CAM-099](../../calidad/resultados/repeticiones-reto-cam099.md); campaña efímera Fargate en AWS en [CAM-125](../../calidad/resultados/campana-aws-cam125.md); demo temporal Lightsail y smoke en CAM-126..128. El workflow para Actions usa OIDC y apertura SSH temporal limitada al runner; la configuración AWS y el primer run están pendientes.
+Cambio: CAM-161
+Evidencia: campañas locales en [CAM-098](../../calidad/resultados/campana-reto-cam098.md) y [CAM-099](../../calidad/resultados/repeticiones-reto-cam099.md); campaña efímera Fargate ejecutada históricamente en [CAM-125](../../calidad/resultados/campana-aws-cam125.md); demo Lightsail y smoke HTTPS histórico CAM-126..128/CAM-158. El uso de AWS y su workflow se retiraron en CAM-161/ADR-055. Esta SPEC ya no autoriza ni instruye aprovisionamiento AWS; la topología pública actual vive en SPEC-011. El estado de recursos AWS remotos queda desconocido (P-25).
 
 ## Objetivo y alcance
 
-Desplegar el sistema vigente, demostrar tres rondas y entregar evidencia defendible. Fuentes: [infraestructura](../../operacion/infraestructura.md), [seguridad](../../operacion/seguridad.md), [costos](../../operacion/costos.md), [pruebas](../../calidad/pruebas.md). No afirma acceso AWS, presupuesto creado o recursos existentes.
+La intención original de evaluación/entrega y sus criterios técnicos se conservan como referencia histórica. La parte específica de AWS quedó sustituida por CAM-161/ADR-055; la medición externa que aún sea necesaria se debe ejecutar sobre la topología activa Vercel + Render y documentar en la tarea correspondiente. Fuentes vigentes: [infraestructura](../../operacion/infraestructura.md), [seguridad](../../operacion/seguridad.md), [costos](../../operacion/costos.md), [pruebas](../../calidad/pruebas.md) y [SPEC-011](SPEC-011-demo-publica-multisesion.md).
 
 ## Criterios de aceptación
 
@@ -23,10 +23,10 @@ Desplegar el sistema vigente, demostrar tres rondas y entregar evidencia defendi
 
 ## Plan y dependencias
 
-P0-03 Budget/permisos y P0-05 salud temprana; P5 mide, revisa seguridad y ejecuta rondas; P6 prepara evidencias y entrega. P-06/P-11 y acceso AWS son dependencias externas; el núcleo local puede avanzar. Mantener aplicación hasta pitch y registrar cualquier interrupción. Ninguna tarifa estimada se declara factura real.
+Este plan de tareas es histórico para despliegues AWS. La estrategia vigente se describe en ADR-054/055. Los requisitos de evaluación de rendimiento todavía pueden aplicar, pero no implican AWS ni despliegue AWS. Ninguna tarifa estimada se declara factura real.
 
-La estrategia de evaluación de [ADR-045](../../arquitectura/decisiones/0045-evaluacion-aws-privada.md) usa una tarea efímera ECS Fargate sin endpoint administrativo remoto. CAM-125 ejecutó R1/R2/R3 en Ohio; el cliente HTTP corre en loopback y no mide ALB/Internet. La demo pública temporal separada de [ADR-046](../../arquitectura/decisiones/0046-demo-publica-multisesion.md) sí está en Lightsail y fue comprobada por HTTPS en CAM-126..128. ADR-047 agrega CI/CD por SHA, checks y rollback local; ADR-050 prepara OIDC y SSH temporal `/32`. Aún se requiere configurar proveedor/rol y variable de Actions y comprobar un primer deploy; no se afirma que el CD ya haya corrido. Estado y sesiones siguen siendo volátiles.
+Históricamente, [ADR-045](../../arquitectura/decisiones/0045-evaluacion-aws-privada.md) usó una tarea efímera Fargate; CAM-125 ejecutó R1/R2/R3 en Ohio con HTTP loopback. La demo pública de [ADR-046](../../arquitectura/decisiones/0046-demo-publica-multisesion.md) fue desplegada en Lightsail y comprobada por HTTPS CAM-126..128/CAM-158. ADR-047/050 registran un CD Lightsail planeado, no exitoso. Estos hechos no describen infraestructura activa ni su estado remoto actual.
 
 ## Verificación
 
-Identificar origen de medición, artefacto y mapa; el reporte CAM-125 registra digest, región, escenarios, métricas y límites. Para completar SPEC-005 aún falta ejecutar CI/CD remoto, validar su conectividad y rollback, probar URL/API/WebSocket y ráfagas remotas, verificar Budget/gasto, recuperación y entregables. No marcar la SPEC verificada con la sola campaña efímera ni con la configuración local del workflow.
+La campaña CAM-125 es evidencia histórica, no evaluación de la topología vigente. No completar ni reactivar esta SPEC AWS. Los criterios de rendimiento, recuperación y entrega que sigan vigentes se deben trazar a requisitos y trabajo nuevos sobre el hosting activo; recursos/cargos AWS siguen en P-25.

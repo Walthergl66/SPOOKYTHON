@@ -32,9 +32,9 @@ Separar credencial de servicio, operador y sesión propietaria. Validar origen, 
 
 Eventos identificados por partida, fase y secuencia; recuperación sin huecos y marca visible de desconexión. Los incidentes aplicados deben publicar ubicación para su marcador y alerta accesibles; el parpadeo se respeta bajo movimiento reducido. El panel permite seleccionar sobrevivientes desde el marcador o una lista accesible y presenta información/ruta calculada solo desde el snapshot vigente. Juego operable con mouse y teclado, foco visible y estados no dependientes solo del color. Detalle: [eventos](../arquitectura/contratos/eventos.md), [frontend](../arquitectura/modulos/frontend.md).
 
-### TRD-08 — AWS y presupuesto
+### TRD-08 — Hosting y control de costos
 
-Desplegar en cuenta/región permitidas, establecer Budget con alerta desde el inicio y conservar evidencia. Stack previsto en [arquitectura](../arquitectura/arquitectura.md) e [infraestructura](../operacion/infraestructura.md); no sustituirlo sin motivo/ADR. El tamaño inicial no garantiza capacidad. Gasto real y estimación completa separados en [costos](../operacion/costos.md).
+El reto original pedía despliegue AWS y Budget. Por decisión posterior del usuario (CAM-161/ADR-055), la única infraestructura activa es Vercel + Render; este requisito de proveedor quedó sustituido para la operación. No crear recursos AWS desde documentos históricos. Conservar evidencia y no declarar costos reales sin estado de cuenta. El tamaño de hosting no garantiza capacidad; separar gasto real y estimaciones en [costos](../operacion/costos.md).
 
 ### TRD-09 — Modularidad del código
 

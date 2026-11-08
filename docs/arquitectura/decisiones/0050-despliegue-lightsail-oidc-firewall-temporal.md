@@ -1,7 +1,7 @@
 # ADR-050 — CD a Lightsail con OIDC y SSH temporal por runner
 
-Fecha: 2026-10-28  
-Estado: aceptada para implementación; configuración AWS pendiente (CAM-140)  
+Fecha: 2026-10-28
+Estado: histórica y retirada por ADR-055/CAM-161; plantilla OIDC y job Lightsail eliminados. No seguir los pasos de configuración siguientes.
 Origen: solicitud del usuario de dejar el despliegue automatizado mediante GitHub Actions.
 
 ## Contexto

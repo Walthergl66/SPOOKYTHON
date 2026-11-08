@@ -2,7 +2,7 @@
 
 Simulación de evacuación sobre el grafo vial de Manta: zombies que se mueven, rutas que se recalculan en cada turno y dos modos de juego sobre las mismas reglas.
 
-> **Estado al 26 de octubre de 2026:** backend y tablero funcionan en local. No hay despliegue en AWS ni persistencia durable todavía. Detalle en [estado actual](docs/seguimiento/estado-actual.md).
+> **Estado al 7 de noviembre de 2026:** Navira está publicada parcialmente en Vercel + Render (health checks HTTP 200); el smoke de sesión y WebSocket sigue pendiente por cupo ocupado. AWS ya no es infraestructura activa, pero no se ha verificado el estado ni facturación de recursos remotos antiguos. No hay persistencia durable. Detalle en [estado actual](docs/seguimiento/estado-actual.md) y [operación](docs/operacion/infraestructura.md).
 
 ## Qué demuestra
 
@@ -48,7 +48,7 @@ Al 26 de octubre: 181 pruebas de backend y 59 de frontend. Los validadores docum
 
 ## Límites
 
-- No hay despliegue en AWS, ni TLS, ni persistencia durable. El mundo, la sesión y las reservas viven en memoria y se pierden al reiniciar.
+- La topología activa Vercel + Render usa HTTPS/proxy, pero conserva mundo y sesiones en memoria; se pierden al reiniciar. La evidencia AWS es histórica y no se ha comprobado si quedan recursos o cargos remotos.
 - El fixture de Manta es parcial, y sus parámetros de amenaza son sintéticos. No es una guía de emergencia ni acredita seguridad sísmica.
 - El mapa base usa tiles públicos de OpenFreeMap y requiere conexión a internet.
 - Las metas de latencia, supervivencia y costos son objetivos. No son mediciones.

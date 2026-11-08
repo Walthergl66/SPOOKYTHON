@@ -34,11 +34,11 @@ Separar espectador, operador y servicio. La interfaz ofrece «Reto» (rondas aut
 
 ### PRD-07 — Evaluación reproducible
 
-Ejecutar secuencialmente las tres rondas de cinco minutos con 20, 80 y 200 sobrevivientes y eventos requeridos. «Reto» prepara los presets; todavía se debe verificar el arranque secuencial temporizado, reportes oficiales y ejecución AWS. La ejecución ordinaria obtiene un estado aleatorio nuevo; al fijar semilla, versión, configuración y eventos se puede reproducir. Conservar esos datos y resultados suficientes para auditar. Prioridad: obligatoria. Vivos, evacuados y pendientes se reportan separados.
+Ejecutar secuencialmente las tres rondas de cinco minutos con 20, 80 y 200 sobrevivientes y eventos requeridos. «Reto» prepara los presets; todavía se debe verificar el arranque secuencial temporizado y reportes oficiales. El reto original pedía AWS, pero la decisión posterior del usuario migró la infraestructura activa a Vercel + Render; no tratar la ejecución AWS como paso operativo (CAM-161/ADR-055). La ejecución ordinaria obtiene un estado aleatorio nuevo; al fijar semilla, versión, configuración y eventos se puede reproducir. Conservar esos datos y resultados suficientes para auditar. Prioridad: obligatoria. Vivos, evacuados y pendientes se reportan separados.
 
 ### PRD-08 — Entrega utilizable y defendible
 
-Aplicación en AWS, repositorio público con historial real, Budget con alerta, README reproducible, arquitectura, costos, pitch y enlaces comprobados según el reto. Prioridad: obligatoria. Fechas y entregables: [contexto](contexto.md), [plan](../seguimiento/plan-implementacion.md).
+El requisito original solicitaba aplicación en AWS y Budget, además de repositorio público, README reproducible, arquitectura, costos, pitch y enlaces comprobados. CAM-161 registra la decisión posterior del usuario: Vercel + Render es el único hosting activo y AWS se conserva solo como historial; estado/billing remoto AWS quedan sin verificar. Prioridad y entregables funcionales permanecen. Fechas y plan: [contexto](contexto.md), [plan](../seguimiento/plan-implementacion.md), [ADR-055](../arquitectura/decisiones/0055-retirar-aws-como-infraestructura-activa.md).
 
 ### PRD-09 — Mejora de rutas demostrable
 
@@ -70,6 +70,6 @@ Comprometido: los requisitos anteriores, implementados de forma incremental. Fue
 
 ## Éxito y aceptación
 
-Una ronda completa vía HTTP real es el primer hito. Después se mide supervivencia/evacuación, eficiencia, latencia y errores en AWS. Metas técnicas y método: [TRD](TRD.md), [pruebas](../calidad/pruebas.md). No establecer un porcentaje de supervivencia inventado; usar escenarios comparables y rúbrica oficial. Aceptación por funcionalidad y vínculos a tareas/pruebas: [trazabilidad](../metodo/trazabilidad.md).
+Una ronda completa vía HTTP real es el primer hito. Después se mide supervivencia/evacuación, eficiencia, latencia y errores en el hosting activo; la campaña AWS CAM-125 es histórica y no sustituye esta medición. Metas técnicas y método: [TRD](TRD.md), [pruebas](../calidad/pruebas.md). No establecer un porcentaje de supervivencia inventado; usar escenarios comparables y rúbrica oficial. Aceptación por funcionalidad y vínculos a tareas/pruebas: [trazabilidad](../metodo/trazabilidad.md).
 
 Cambiar alcance requiere actualizar este PRD, la especificación afectada y el historial; una instrucción actual del usuario puede autorizar ese ajuste sin repetir aprobaciones rutinarias.

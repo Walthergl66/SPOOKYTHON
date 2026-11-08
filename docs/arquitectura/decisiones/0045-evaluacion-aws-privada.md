@@ -1,7 +1,7 @@
 # ADR-045 — Evaluación AWS privada sin exponer controles locales
 
-Fecha: 2026-10-28  
-Estado: sustituida parcialmente por [ADR-046](0046-demo-publica-multisesion.md) para la demo pública solicitada; conserva la separación de campaña efímera  
+Fecha: 2026-10-28
+Estado: histórica/sustituida para la infraestructura activa por [ADR-055](0055-retirar-aws-como-infraestructura-activa.md); conserva evidencia de diseño y evaluación
 Origen: Fase 2 de la guía de despliegue de Navira.
 
 ## Contexto y restricciones
@@ -46,4 +46,4 @@ Origen: Fase 2 de la guía de despliegue de Navira.
 
 ## Evidencia
 
-Diseño registrado en CAM-113. Se deben volver a ejecutar las pruebas existentes de API key y de controles locales al verificar CAM-113. No hay despliegue AWS ni reporte AWS asociado a esta decisión.
+Diseño registrado en CAM-113. La afirmación de esta nota es histórica: después hubo campaña Fargate registrada en CAM-125 y despliegues Lightsail en CAM-126..131/158. Ninguno hace de AWS el destino vigente; CAM-161/ADR-055 retiran esos flujos operativos sin verificar el estado remoto ni su eliminación.

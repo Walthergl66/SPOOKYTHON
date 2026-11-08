@@ -1,3 +1,15 @@
+## CAM-161 — Migrar infraestructura activa de AWS a Vercel + Render
+
+- Fecha: 2026-11-07, America/Guayaquil.
+- Origen: solicitud del usuario de retirar Navira de AWS y mantener Vercel + Render como el único destino operativo.
+- Relación: ADR-055, ADR-054, SPEC-005/SPEC-011, P0-04/P0-05, P-06/P-21/P-24/P-25.
+- Cambios de repositorio observados en el diff: `.github/workflows/ci.yml` elimina `deploy-lightsail` y su requisito `LIGHTSAIL_DEPLOY_ROLE_ARN`; se retiraron `deploy/lightsail/{Dockerfile.frontend,bootstrap-instance.sh,deploy-release.sh,nginx.conf}` y `infra/aws/{campaign.yml,github-lightsail-deploy-role.yml}`.
+- Decisión documental: Vercel + Render es la infraestructura activa. AWS/Fargate/Lightsail y su pipeline quedan como historial. No se afirma que recursos o cargos remotos hayan sido eliminados: no hubo sesión AWS/CLI. La consulta HTTPS a la antigua URL falló por SSL, resultado inconcluso que no demuestra baja del host.
+- Estado desplegado más reciente conocido: Vercel Production `b06e9f9`; Render `dep-dbnb5849v7es73c96qi0` `live`. Vercel Branch Tracking apunta ahora a `master`; guardar no inició un deployment. `origin/master` observado en `4c37d5a` incluye `frontend/vercel.json`. En la última prueba, Vercel `/` y `/salud` dieron 200; `/demo/sesion` y `/panel/estado` dieron 429 por cupo Render ocupado. No se verificaron cookie/bootstrap, REST autenticado ni WebSocket.
+- Archivos documentales: ADR-055, índice ADR y docs, arquitectura, infraestructura, seguridad, costos, guía de despliegue, ADR-045/046/047/050, SPEC-005/011, trazabilidad, plan, pendientes, estado y README.
+- Pendientes: verificar con acceso autorizado el estado/billing/eliminación de cualquier recurso AWS antiguo; completar smoke Vercel/Render al liberarse el cupo sin reiniciar ni elevar límite.
+- No se ejecutaron pruebas de aplicación; verificación documental pendiente al cerrar este CAM.
+
 ## CAM-160 — Provisionar Render y publicar frontend Vercel inicial
 
 - Fecha: 2026-11-07, America/Guayaquil.
