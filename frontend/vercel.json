@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/salud", "destination": "https://navira-api-walthergl66-v9ux.onrender.com/salud" },
+    { "source": "/paso", "destination": "https://navira-api-walthergl66-v9ux.onrender.com/paso" },
+    { "source": "/panel/:path*", "destination": "https://navira-api-walthergl66-v9ux.onrender.com/panel/:path*" },
+    { "source": "/demo/:path*", "destination": "https://navira-api-walthergl66-v9ux.onrender.com/demo/:path*" },
+    { "source": "/reto/:path*", "destination": "https://navira-api-walthergl66-v9ux.onrender.com/reto/:path*" },
+    { "source": "/juego/:path*", "destination": "https://navira-api-walthergl66-v9ux.onrender.com/juego/:path*" },
+    { "source": "/ws/:path*", "destination": "https://navira-api-walthergl66-v9ux.onrender.com/ws/:path*" }
+  ]
+}

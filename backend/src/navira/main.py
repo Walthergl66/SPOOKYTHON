@@ -15,7 +15,7 @@ from navira.adapters.sesiones_memoria import RepositorioSesionesMemoria
 from navira.adapters.sesiones_demo_memoria import LimiteSesionesDemo, RegistroSesionesDemoMemoria
 from navira.api.routes import router
 from navira.api.compresion import cliente_acepta_gzip
-from navira.api.seguridad import ConfiguracionSeguridad, fijar_cookie_demo
+from navira.api.seguridad import ConfiguracionSeguridad, fijar_cookie_demo, normalizar_origen
 from navira.application.coordinador_juego import CoordinadorJuego
 from navira.application.decidir_paso import DecidirPasoEspera
 from navira.application.consultar_panel import ConsultarPanel
@@ -351,6 +351,11 @@ def _crear_app_configurada() -> FastAPI:
         cookie_segura=os.environ.get("NAVIRA_COOKIE_SECURE", "1") != "0",
         control_demo_local=os.environ.get("NAVIRA_LOCAL_DEMO_CONTROL") == "1",
         control_demo_publico=os.environ.get("NAVIRA_PUBLIC_DEMO_CONTROL") == "1",
+        origenes_permitidos=frozenset(
+            origen
+            for valor in os.environ.get("NAVIRA_ALLOWED_ORIGINS", "").split(",")
+            if (origen := normalizar_origen(valor)) is not None
+        ),
     )
 
     if seguridad.control_demo_publico:

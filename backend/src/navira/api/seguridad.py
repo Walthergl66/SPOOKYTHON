@@ -19,6 +19,7 @@ class ConfiguracionSeguridad:
     cookie_segura: bool = True
     control_demo_local: bool = False
     control_demo_publico: bool = False
+    origenes_permitidos: frozenset[str] = field(default_factory=frozenset)
 
 
 def fijar_cookie_sesion(response: Response, token: str, secure: bool) -> None:
@@ -109,14 +110,43 @@ def origen_local_mismo_host(request: Request) -> bool:
 
 
 def origen_mismo_host(conexion: HTTPConnection) -> bool:
-    """Compara netloc completo de Origin y Host; vale para Request y WebSocket."""
+    """Valida origen same-host o uno exacto de la lista configurada para el proxy."""
 
     origen = conexion.headers.get("origin")
     host = conexion.headers.get("host")
     if not origen or not host:
         return False
+    origen_normalizado = normalizar_origen(origen)
+    if origen_normalizado is None:
+        return False
     try:
-        partes = urlsplit(origen)
+        partes = urlsplit(origen_normalizado)
+        host_normalizado = urlsplit(f"//{host}").netloc.casefold()
     except ValueError:
         return False
-    return partes.scheme in {"http", "https"} and partes.netloc.casefold() == host.casefold()
+    if partes.netloc.casefold() == host_normalizado:
+        return True
+
+    seguridad = getattr(conexion.app.state, "seguridad", None)
+    origenes_permitidos = getattr(seguridad, "origenes_permitidos", frozenset())
+    return origen_normalizado in origenes_permitidos
+
+
+def normalizar_origen(valor: str) -> str | None:
+    """Normaliza un origen HTTP(S), descartando URL con ruta, credencial o query."""
+
+    try:
+        partes = urlsplit(valor.strip())
+    except ValueError:
+        return None
+    if (
+        partes.scheme.lower() not in {"http", "https"}
+        or partes.hostname is None
+        or partes.username is not None
+        or partes.password is not None
+        or partes.path not in {"", "/"}
+        or partes.query
+        or partes.fragment
+    ):
+        return None
+    return f"{partes.scheme.lower()}://{partes.netloc.casefold()}"

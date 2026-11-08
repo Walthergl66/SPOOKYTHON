@@ -47,7 +47,7 @@ El diagrama describe flujo de ejecución. Las dependencias de código se definen
 | Panel → observación | `WS /ws/panel`, snapshots completos por versión | Origen del mismo host; memoria local; no ofrece replay durable. |
 | Navegador → proveedor cartográfico | Tiles vectoriales del área visible para la capa base del mapa | Solicitud externa de lectura; no envía estado de juego ni credenciales Navira; servicio público sin SLA. Véase [ADR-016](decisiones/0016-mapa-maplibre-openfreemap.md). |
 | Operador → simulador | Inicio/cierre/eventos | Credencial administrativa distinta en el futuro productivo. |
-| Tablero → demo sintética | Control/colocación de Reto, Simulador y Jugar operador | Local: opt-in/loopback; demo pública: cookie opaca por navegador, aislamiento en memoria, límite de sesiones y Origin same-host. `/paso` conserva API key. Ver [SPEC-011](../metodo/especificaciones/SPEC-011-demo-publica-multisesion.md) y [ADR-046](decisiones/0046-demo-publica-multisesion.md). |
+| Tablero → demo sintética | Control/colocación de Reto, Simulador y Jugar operador | Local: opt-in/loopback; demo pública: cookie opaca por navegador, aislamiento en memoria, límite de sesiones y validación same-host o allowlist exacta para el proxy Vercel/Render propuesto. `/paso` conserva API key. Ver [SPEC-011](../metodo/especificaciones/SPEC-011-demo-publica-multisesion.md), [ADR-046](decisiones/0046-demo-publica-multisesion.md) y [ADR-054](decisiones/0054-hosting-vercel-render-free.md). |
 | Núcleo → almacenamiento | Puertos de aplicación | Rol IAM y adaptador de infraestructura. |
 
 Los contratos públicos previstos están en [API](contratos/api.md) y [eventos](contratos/eventos.md). Identidades y almacenamiento, en [datos](../dominio/datos.md).

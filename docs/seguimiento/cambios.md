@@ -1,3 +1,25 @@
+## CAM-160 — Provisionar Render y publicar frontend Vercel inicial
+
+- Fecha: 2026-11-07, America/Guayaquil.
+- Origen: continuación solicitada por el usuario para desplegar Navira en Vercel con backend Render Free.
+- Relación: SPEC-011, P0-05/P4-07/P5-02, T-58, ADR-054 y P-24.
+- Cambio operativo: Render Blueprint `exs-dbnb3v5g1s2s73c732eg` aplicado en el workspace. Web Service `navira-api-walthergl66-v9ux` (`srv-dbnb4dbrjlhs7389k8sg`) está en plan Free, región Ohio, un worker y health check `/salud`; URL confirmada `https://navira-api-walthergl66-v9ux.onrender.com`. `NAVIRA_ALLOWED_ORIGINS` se configuró con `https://navira-two.vercel.app`; el deployment Render `dep-dbnb5849v7es73c96qi0` quedó `live` y `/salud` volvió a responder 200 después de ese redeploy.
+- Vercel: proyecto `navira` (ruta del panel `vercel.com/projects-2323/navira`), raíz `frontend`, dominio de producción `https://navira-two.vercel.app`. El preview `f19cac0` está `Ready` en `https://navira-b1qnbidfv-projects-2323.vercel.app` y Vercel Production Branch Tracking quedó configurado para `codex/vercel-render-deploy`. El preview está protegido: un GET anónimo a `/salud` recibió pantalla de acceso con HTTP 200, no una respuesta del backend y no cuenta como smoke de salud. Guardar Branch Tracking no dispara deploy; el siguiente push de esa rama creará el deployment Production. La publicación previa de `master` (`febaddcc`) es anterior y no contiene los rewrites.
+- Verificación: Render directo `GET /salud` respondió HTTP 200 con `{"estado":"activo","servicio":"navira"}` tanto antes como después del redeploy. No se ha probado Production Vercel integrada: proxy HTTP, cookie de sesión, mutaciones, WebSocket, mapa o arranque frío siguen pendientes. El HTTP 200 de la ruta protegida del preview no es evidencia de salud del backend. No declarar listo el despliegue integrado.
+- Archivos: `frontend/vercel.json` fue actualizado fuera de este cambio documental; en esta tarea solo se actualizaron documentos de infraestructura, ADR-054, SPEC-011, trazabilidad, pruebas y seguimiento. No se creó commit ni se hizo push.
+- Siguiente paso: hacer push autorizado de la rama `codex/vercel-render-deploy` para disparar Production desde el Branch Tracking ya configurado; verificar deployment Ready y ejecutar smoke por `https://navira-two.vercel.app` para `/salud`, bootstrap/cookie, rutas REST, `WS /ws/panel` y arranque frío. El push no se ha realizado en este registro.
+
+## CAM-159 — Preparar despliegue alternativo Vercel + Render Free
+
+- Fecha: 2026-11-06, America/Guayaquil.
+- Origen: solicitud del usuario de desplegar Navira en Vercel y usar un backend gratuito.
+- Relación: SPEC-011, P0-05/P4-07/P5-02, T-58, ADR-054 y P-24.
+- Cambio: `frontend/vercel.json` enruta REST y `/ws/*` a Render para conservar un origen de navegador; `frontend/.env.production` activa el bootstrap público; `render.yaml` describe un Web Service Python gratuito con un worker, un cupo concurrente y TTL de inactividad de 900 s. El backend acepta para mutaciones y WebSocket una allowlist exacta `NAVIRA_ALLOWED_ORIGINS` además del origen same-host. Render generará `NAVIRA_API_KEY`; no se añade al cliente. El hostname configurado en Vercel y el dominio Vercel de producción aún deben confirmarse.
+- Verificación local: `backend/tests/test_public_demo.py` 6/6, incluidos dominio permitido con Host Render y rechazo de sufijo atacante; frontend `npm test` 97/97; `npm run build`; `python -m compileall -q src/navira`; `python scripts/check_docs.py` (151 Markdown); `python scripts/check_sdd.py` (11 SPEC). El build conserva la advertencia previa de chunk de mapa >500 kB. Intento de `python -m unittest discover -s tests` con Python del sistema 3.14: emitió errores al inicio y siguió ejecutándose durante más de cuatro minutos; fue interrumpido sin resumen final. Resultado inconcluso y causa desconocida; no se confirma como falla de baseline. No se inició sesión en Vercel/Render ni se crearon servicios; no existen URLs o smoke remoto de esta alternativa. El plan Render Free puede dormir/reiniciar y destruir mundos efímeros; la memoria con el mapa cargado no está medida.
+- Archivos de implementación: `backend/src/navira/api/seguridad.py`, `backend/src/navira/main.py`, `backend/tests/test_public_demo.py`, `render.yaml`, `frontend/vercel.json`, `frontend/.env.production`. Documentación: ADR-054, arquitectura, infraestructura, seguridad, costos, SPEC-011, T-58, trazabilidad, plan, pendientes, estado e índices.
+- Siguiente paso: autenticar las cuentas ya existentes, provisionar Render desde `render.yaml`, verificar el hostname real y publicar el build Vercel que incluye `.env.production`; introducir el dominio Vercel exacto en `NAVIRA_ALLOWED_ORIGINS`, validar el destino del proxy, y ejecutar smoke de cookie, `/salud`, mutación, WebSocket y arranque frío antes de compartir la URL.
+- Commit o PR: no solicitado ni creado.
+
 ## CAM-158 — Desplegar cuatro sesiones y TTL de inactividad de 15 minutos
 
 - Fecha: 2026-10-28, America/Guayaquil.
