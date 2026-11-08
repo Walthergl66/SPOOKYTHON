@@ -1,7 +1,7 @@
 # ADR-054 — Hosting temporal con Vercel y Render Free
 
 Fecha: 2026-11-06  
-Estado: aceptada para implementación; despliegue real pendiente  
+Estado: topología desplegada parcialmente; integración Vercel–Render pendiente (CAM-160)
 Origen: solicitud del usuario de publicar Navira en Vercel y usar un backend gratuito.
 
 ## Contexto
@@ -25,10 +25,12 @@ El tablero Vite hace solicitudes HTTP y abre `WS /ws/panel` en su mismo origen. 
 
 Render Free puede dormir el servicio tras 15 minutos sin tráfico, tardar alrededor de un minuto en despertar y reiniciarlo; su filesystem es efímero. Una caída o despliegue destruye partidas y sesiones en memoria. No se promete disponibilidad continua, persistencia, SLA o capacidad de producción. El plan Vercel Hobby está limitado por sus términos a uso personal/no comercial.
 
-La configuración local apunta a `https://navira-api-walthergl66.onrender.com`; se debe comprobar que el servicio provisionado tenga exactamente ese hostname antes del despliegue. El dominio de producción Vercel todavía debe obtenerse y añadirse a `NAVIRA_ALLOWED_ORIGINS`. Ninguno de los dos proveedores se ha autenticado ni desplegado en CAM-159; el proxy REST/WebSocket, el bootstrap con cookie y el smoke externo siguen pendientes.
+CAM-160 aplicó el Blueprint Render `exs-dbnb3v5g1s2s73c732eg` y creó el servicio Free Ohio `navira-api-walthergl66-v9ux` (`srv-dbnb4dbrjlhs7389k8sg`), con un worker y health check `/salud`. El deployment `dep-dbnb5849v7es73c96qi0` está `live`; el endpoint `/salud` respondió HTTP 200 con `{"estado":"activo","servicio":"navira"}` también después del redeploy que configuró `NAVIRA_ALLOWED_ORIGINS=https://navira-two.vercel.app`.
+
+El proyecto Vercel `navira` tiene raíz `frontend` y dominio `https://navira-two.vercel.app`. El preview `f19cac0` está `Ready` en `https://navira-b1qnbidfv-projects-2323.vercel.app`, pero protegido; el GET anónimo a `/salud` devolvió la pantalla de acceso HTTP 200, no una respuesta de salud del backend. Production Branch Tracking apunta a `codex/vercel-render-deploy`; guardar esa configuración no ejecuta un deploy, y el siguiente push a esa rama creará Production. La publicación previa de `master` (`febaddcc`) no contiene los rewrites. Aún falta desplegar Production y probar el proxy integrado: bootstrap/cookie, REST y WebSocket a través del dominio de producción, incluyendo arranque frío.
 
 ## Vínculos
 
-[SPEC-011](../../metodo/especificaciones/SPEC-011-demo-publica-multisesion.md), [infraestructura](../../operacion/infraestructura.md), [seguridad](../../operacion/seguridad.md), [CAM-159](../../seguimiento/cambios.md#cam-159-preparar-despliegue-vercel-y-render-free).
+[SPEC-011](../../metodo/especificaciones/SPEC-011-demo-publica-multisesion.md), [infraestructura](../../operacion/infraestructura.md), [seguridad](../../operacion/seguridad.md), [CAM-159](../../seguimiento/cambios.md#cam-159-preparar-despliegue-vercel-y-render-free) y [CAM-160](../../seguimiento/cambios.md#cam-160-provisionar-render-y-publicar-frontend-vercel-inicial).
 
 Referencias de límites: [Render Free](https://render.com/docs/free), [WebSockets en Render](https://render.com/docs/websocket), [términos Vercel Hobby](https://vercel.com/legal/terms).

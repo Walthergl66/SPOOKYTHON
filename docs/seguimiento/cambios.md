@@ -1,3 +1,14 @@
+## CAM-160 — Provisionar Render y publicar frontend Vercel inicial
+
+- Fecha: 2026-11-07, America/Guayaquil.
+- Origen: continuación solicitada por el usuario para desplegar Navira en Vercel con backend Render Free.
+- Relación: SPEC-011, P0-05/P4-07/P5-02, T-58, ADR-054 y P-24.
+- Cambio operativo: Render Blueprint `exs-dbnb3v5g1s2s73c732eg` aplicado en el workspace. Web Service `navira-api-walthergl66-v9ux` (`srv-dbnb4dbrjlhs7389k8sg`) está en plan Free, región Ohio, un worker y health check `/salud`; URL confirmada `https://navira-api-walthergl66-v9ux.onrender.com`. `NAVIRA_ALLOWED_ORIGINS` se configuró con `https://navira-two.vercel.app`; el deployment Render `dep-dbnb5849v7es73c96qi0` quedó `live` y `/salud` volvió a responder 200 después de ese redeploy.
+- Vercel: proyecto `navira` (ruta del panel `vercel.com/projects-2323/navira`), raíz `frontend`, dominio de producción `https://navira-two.vercel.app`. El preview `f19cac0` está `Ready` en `https://navira-b1qnbidfv-projects-2323.vercel.app` y Vercel Production Branch Tracking quedó configurado para `codex/vercel-render-deploy`. El preview está protegido: un GET anónimo a `/salud` recibió pantalla de acceso con HTTP 200, no una respuesta del backend y no cuenta como smoke de salud. Guardar Branch Tracking no dispara deploy; el siguiente push de esa rama creará el deployment Production. La publicación previa de `master` (`febaddcc`) es anterior y no contiene los rewrites.
+- Verificación: Render directo `GET /salud` respondió HTTP 200 con `{"estado":"activo","servicio":"navira"}` tanto antes como después del redeploy. No se ha probado Production Vercel integrada: proxy HTTP, cookie de sesión, mutaciones, WebSocket, mapa o arranque frío siguen pendientes. El HTTP 200 de la ruta protegida del preview no es evidencia de salud del backend. No declarar listo el despliegue integrado.
+- Archivos: `frontend/vercel.json` fue actualizado fuera de este cambio documental; en esta tarea solo se actualizaron documentos de infraestructura, ADR-054, SPEC-011, trazabilidad, pruebas y seguimiento. No se creó commit ni se hizo push.
+- Siguiente paso: hacer push autorizado de la rama `codex/vercel-render-deploy` para disparar Production desde el Branch Tracking ya configurado; verificar deployment Ready y ejecutar smoke por `https://navira-two.vercel.app` para `/salud`, bootstrap/cookie, rutas REST, `WS /ws/panel` y arranque frío. El push no se ha realizado en este registro.
+
 ## CAM-159 — Preparar despliegue alternativo Vercel + Render Free
 
 - Fecha: 2026-11-06, America/Guayaquil.
